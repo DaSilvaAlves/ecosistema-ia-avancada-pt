@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp comunidade/squads.html marketplace/pages/)",
+      "Bash(cp comunidade/squad-detalhe.html marketplace/pages/)",
+      "Bash(cp comunidade/squad-sucesso.html marketplace/pages/)",
+      "Bash(cp comunidade/guia-squads.html marketplace/pages/)",
+      "Bash(cp comunidade/guia-clone-hormozi.html marketplace/pages/)",
+      "Bash(cp docs/PRD-SQUADMARKET.md marketplace/docs/)",
+      "Bash(cp docs/ARCH-SQUADMARKET.md marketplace/docs/)",
+      "Bash(cp docs/migrations/001-squadmarket.sql marketplace/docs/)",
+      "Bash(cd:*)",
+      "Bash(grep -n \"slug = ''squads-aiox''\" 003-seed-products.sql)",
+      "Bash(ls \"C:/Users/XPS/Documents/ecosistema-ia-avancada-pt/imersao-tools/comunidade/\"*.html)",
+      "Bash(cp marketplace/pages/squads.html comunidade/squads.html)",
+      "Bash(cp marketplace/pages/squad-detalhe.html comunidade/squad-detalhe.html)",
+      "Bash(cp marketplace/pages/squad-sucesso.html comunidade/squad-sucesso.html)",
+      "Bash(ls -t *nano_banana*)",
+      "Bash(zip -r clone-hormozi.zip clone-hormozi/ -x \"clone-hormozi/.DS_Store\")",
+      "Bash(powershell -Command \"Compress-Archive -Path ''clone-hormozi\\\\*'' -DestinationPath ''clone-hormozi.zip'' -Force\")",
+      "Bash(ls -la \"C:\\\\Users\\\\XPS\\\\Documents\\\\ecosistema-ia-avancada-pt\\\\imersao-tools\\\\marketplace\\\\packages/\"*.zip)",
+      "Bash(cp imersao-tools/marketplace/pages/squads.html imersao-tools/comunidade/squads.html)",
+      "Bash(cp imersao-tools/marketplace/pages/squad-detalhe.html imersao-tools/comunidade/squad-detalhe.html)",
+      "Bash(cp imersao-tools/marketplace/pages/squad-sucesso.html imersao-tools/comunidade/squad-sucesso.html)",
+      "Bash(wc -l /c/Users/XPS/Documents/ecosistema-ia-avancada-pt/imersao-tools/marketplace/docs/*.md)",
+      "Bash(npx vercel:*)",
+      "Bash(vercel env:*)",
+      "Bash(vercel --prod)",
+      "Bash(vercel logs:*)",
+      "Bash(vercel inspect:*)",
+      "Bash(curl:*)",
+      "Bash(vercel --prod --force)"
+    ]
+  }
+}

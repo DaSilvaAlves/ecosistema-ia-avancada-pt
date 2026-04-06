@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "WebFetch(domain:design-system-visual.vercel.app)",
+      "WebFetch(domain:imers-o-zeta.vercel.app)",
+      "WebFetch(domain:tradutor-pro-docx.vercel.app)",
+      "WebFetch(domain:roda-da-vida-interativa.vercel.app)",
+      "WebFetch(domain:manuel-manero.vercel.app)",
+      "WebFetch(domain:iaapt-olam.vercel.app)",
+      "WebFetch(domain:nexus-crm-lac.vercel.app)",
+      "WebFetch(domain:aios-control-center-web.vercel.app)",
+      "WebFetch(domain:prototype-vision.vercel.app)",
+      "WebFetch(domain:comunidade-ia-avancada.vercel.app)",
+      "WebFetch(domain:student-profiler.vercel.app)",
+      "WebFetch(domain:briefing-generator.vercel.app)",
+      "WebFetch(domain:starter-builder.vercel.app)",
+      "WebFetch(domain:prompt-optimizer.vercel.app)",
+      "WebFetch(domain:aios-compiler.vercel.app)",
+      "WebFetch(domain:prompt-optimizer-imersao.vercel.app)",
+      "WebFetch(domain:prompt-optimizer-ia.vercel.app)",
+      "Bash(npx vercel:*)",
+      "WebFetch(domain:prompt-optimizer-nos72zz4p-euricojsalves-4744s-projects.vercel.app)",
+      "WebFetch(domain:student-profiler-one.vercel.app)",
+      "WebFetch(domain:briefing-generator-delta.vercel.app)",
+      "WebFetch(domain:starter-builder-euricojsalves-4744s-projects.vercel.app)",
+      "WebFetch(domain:prompt-optimizer-ruddy-omega.vercel.app)"
+    ]
+  }
+}

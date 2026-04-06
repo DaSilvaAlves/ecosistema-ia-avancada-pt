@@ -1,0 +1,4 @@
+requests
+gradio_client
+imageio-ffmpeg
+gtts

@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IA Avançada PT — Comunidade de Elite | Eurico Alves</title>
+  <meta name="description" content="A primeira comunidade de elite em Portugal onde a IA trabalha para ti. Imersões incluídas. Método quântico. Eurico Alves."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#04040A;
+      --glass:rgba(255,255,255,0.03);
+      --glass-border:rgba(255,255,255,0.08);
+      --cyan:#00F5FF;
+      --magenta:#FF006E;
+      --gold:#FFB800;
+      --purple:#9D00FF;
+      --white:#F0F4FF;
+      --grey:#8892A4;
+      --grey2:#4A5568;
+    }
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Inter',sans-serif;
+      background:var(--bg);
+      color:var(--white);
+      overflow-x:hidden;
+      line-height:1.6;
+    }
+
+    /* ═══ CANVAS ═══ */
+    #quantumBg{
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      z-index:0;pointer-events:none;opacity:0.65;
+    }
+
+    /* ═══ LAYOUT ═══ */
+    .layer{position:relative;z-index:1}
+
+    /* ═══ NAV ═══ */
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      display:flex;justify-content:space-between;align-items:center;
+      padding:1rem 2rem;
+      background:rgba(4,4,10,0.7);
+      backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(0,245,255,0.1);
+    }
+    .nav-logo{
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.85rem;font-weight:800;letter-spacing:0.12em;
+      color:var(--cyan);text-transform:uppercase;
+    }
+    .nav-logo span{color:var(--magenta)}
+    .nav-cta{
+      background:transparent;
+      border:1px solid var(--cyan);
+      color:var(--cyan);
+      padding:0.5rem 1.25rem;border-radius:4px;
+      text-decoration:none;font-weight:700;font-size:0.8rem;
+      letter-spacing:0.08em;text-transform:uppercase;
+      transition:all 0.3s;
+      box-shadow:0 0 12px rgba(0,245,255,0.2);
+    }
+    .nav-cta:hover{
+      background:var(--cyan);color:var(--bg);
+      box-shadow:0 0 24px rgba(0,245,255,0.5);
+    }
+
+    /* ═══ HERO ═══ */
+    .hero{
+      min-height:100vh;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      align-items:center;
+      padding:6rem 4rem 4rem;
+      gap:2rem;
+      position:relative;
+      overflow:hidden;
+    }
+    @media(max-width:900px){
+      .hero{grid-template-columns:1fr;padding:6rem 1.5rem 3rem;text-align:center}
+      .hero-img-wrap{order:-1;max-width:320px;margin:0 auto}
+    }
+
+    /* Scan line effect */
+    .hero::after{
+      content:'';position:absolute;inset:0;
+      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,245,255,0.015) 2px,rgba(0,245,255,0.015) 4px);
+      pointer-events:none;
+    }
+
+    .hero-badge{
+      display:inline-flex;align-items:center;gap:0.5rem;
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.7rem;font-weight:700;letter-spacing:0.15em;
+      text-transform:uppercase;color:var(--cyan);
+      margin-bottom:1.5rem;
+      padding:0.4rem 1rem;
+      border:1px solid rgba(0,245,255,0.3);
+      border-radius:2px;
+      background:rgba(0,245,255,0.05);
+    }
+    .hero-badge .dot{
+      width:6px;height:6px;border-radius:50%;
+      background:var(--cyan);
+      box-shadow:0 0 8px var(--cyan);
+      animation:blink 1.5s infinite;
+    }
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+    h1{
+      font-size:clamp(2.4rem,5.5vw,4.2rem);
+      font-weight:900;line-height:1.05;
+      letter-spacing:-0.03em;
+      margin-bottom:1.25rem;
+    }
+    h1 .line1{display:block;color:var(--white)}
+    h1 .line2{
+      display:block;
+      background:linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .hero-tagline{
+      font-size:clamp(0.95rem,2vw,1.1rem);
+      color:var(--grey);
+      max-width:520px;
+      margin-bottom:2.5rem;
+      line-height:1.8;
+    }
+    @media(max-width:900px){.hero-tagline{margin:0 auto 2.5rem}}
+
+    .hero-num-strip{
+      display:flex;gap:1.5rem;align-items:center;
+      margin-bottom:2.5rem;
+    }
+    @media(max-width:900px){.hero-num-strip{justify-content:center}}
+    .num-chip{
+      font-family:'JetBrains Mono',monospace;
+      font-size:1.1rem;font-weight:800;
+      padding:0.4rem 0.9rem;
+      border-radius:4px;
+      letter-spacing:0.1em;
+    }
+    .num-741{color:var(--cyan);border:1px solid rgba(0,245,255,0.4);background:rgba(0,245,255,0.05);box-shadow:0 0 16px rgba(0,245,255,0.2)}
+    .num-520{color:var(--magenta);border:1px solid rgba(255,0,110,0.4);background:rgba(255,0,110,0.05);box-shadow:0 0 16px rgba(255,0,110,0.2)}
+    .num-inf{color:var(--gold);border:1px solid rgba(255,184,0,0.4);background:rgba(255,184,0,0.05);box-shadow:0 0 16px rgba(255,184,0,0.2);font-size:1.4rem}
+    .num-sep{color:var(--grey2);font-size:0.7rem;letter-spacing:0.1em}
+
+    .hero-ctas{display:flex;gap:1rem;flex-wrap:wrap}
+    @media(max-width:900px){.hero-ctas{justify-content:center}}
+
+    .btn-glow{
+      display:inline-flex;align-items:center;gap:0.5rem;
+      background:linear-gradient(135deg,var(--cyan),var(--purple));
+      color:var(--bg);padding:1rem 2rem;border-radius:4px;
+      text-decoration:none;font-weight:800;font-size:0.95rem;
+      letter-spacing:0.05em;
+      box-shadow:0 0 30px rgba(0,245,255,0.4),0 0 60px rgba(0,245,255,0.15);
+      transition:all 0.3s;
+    }
+    .btn-glow:hover{
+      transform:translateY(-2px);
+      box-shadow:0 0 40px rgba(0,245,255,0.6),0 0 80px rgba(0,245,255,0.2);
+    }
+    .btn-ghost{
+      display:inline-flex;align-items:center;gap:0.5rem;
+      background:transparent;border:1px solid var(--glass-border);
+      color:var(--white);padding:1rem 2rem;border-radius:4px;
+      text-decoration:none;font-weight:600;font-size:0.9rem;
+      transition:all 0.3s;
+    }
+    .btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+
+    /* ═══ HERO IMAGE ═══ */
+    .hero-img-wrap{
+      position:relative;display:flex;justify-content:flex-end;
+    }
+    .hero-img-frame{
+      position:relative;
+      width:100%;max-width:480px;
+    }
+    .hero-img-frame::before{
+      content:'';position:absolute;
+      inset:-2px;border-radius:8px;
+      background:linear-gradient(135deg,var(--cyan),var(--purple),var(--magenta));
+      z-index:-1;
+      animation:borderRotate 4s linear infinite;
+      filter:blur(2px);
+    }
+    @keyframes borderRotate{
+      0%{filter:blur(2px) hue-rotate(0deg)}
+      100%{filter:blur(2px) hue-rotate(360deg)}
+    }
+    .hero-img-frame img{
+      width:100%;border-radius:6px;display:block;
+      filter:saturate(1.1) contrast(1.05);
+    }
+    .hero-img-frame .corner{
+      position:absolute;width:20px;height:20px;
+    }
+    .corner-tl{top:-4px;left:-4px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+    .corner-tr{top:-4px;right:-4px;border-top:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+    .corner-bl{bottom:-4px;left:-4px;border-bottom:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+    .corner-br{bottom:-4px;right:-4px;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+
+    /* Hero floating label */
+    .hero-float-label{
+      position:absolute;
+      bottom:1.5rem;left:-1.5rem;
+      background:rgba(4,4,10,0.85);
+      backdrop-filter:blur(12px);
+      border:1px solid rgba(0,245,255,0.25);
+      border-radius:6px;
+      padding:0.75rem 1rem;
+      font-size:0.75rem;
+    }
+    .hero-float-label .label-num{
+      font-family:'JetBrains Mono',monospace;
+      font-size:1.5rem;font-weight:800;color:var(--gold);
+      display:block;line-height:1;
+    }
+    .hero-float-label .label-text{color:var(--grey);margin-top:0.25rem}
+    @media(max-width:900px){.hero-float-label{left:50%;transform:translateX(-50%);bottom:-1rem;white-space:nowrap}}
+
+    /* ═══ SECTIONS ═══ */
+    section.layer{padding:5rem 1.5rem}
+    .container{max-width:1100px;margin:0 auto}
+    .container-sm{max-width:780px;margin:0 auto}
+
+    .section-tag{
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.7rem;font-weight:700;
+      color:var(--cyan);letter-spacing:0.18em;
+      text-transform:uppercase;margin-bottom:0.75rem;display:block;
+    }
+    h2{
+      font-size:clamp(1.75rem,4vw,2.75rem);
+      font-weight:900;line-height:1.15;
+      letter-spacing:-0.025em;margin-bottom:1rem;
+    }
+    .lead{color:var(--grey);font-size:1rem;max-width:620px;margin-bottom:3rem;line-height:1.8}
+
+    /* Glass card */
+    .glass{
+      background:rgba(255,255,255,0.025);
+      backdrop-filter:blur(20px);
+      border:1px solid var(--glass-border);
+      border-radius:12px;
+    }
+    .glass-cyan{border-color:rgba(0,245,255,0.2);box-shadow:0 0 30px rgba(0,245,255,0.05)}
+    .glass-magenta{border-color:rgba(255,0,110,0.2);box-shadow:0 0 30px rgba(255,0,110,0.05)}
+    .glass-gold{border-color:rgba(255,184,0,0.2);box-shadow:0 0 30px rgba(255,184,0,0.05)}
+
+    /* ═══ PROBLEMA ═══ */
+    .problema{background:linear-gradient(180deg,var(--bg),rgba(255,0,110,0.03),var(--bg))}
+    .prob-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem}
+    .prob-card{
+      padding:1.75rem;
+    }
+    .prob-icon{font-size:2rem;margin-bottom:1rem}
+    .prob-card h3{font-size:1rem;font-weight:700;margin-bottom:0.5rem}
+    .prob-card p{color:var(--grey);font-size:0.875rem;line-height:1.7}
+
+    /* ═══ MODELO ═══ */
+    .model-box{
+      display:grid;grid-template-columns:1fr 1fr;gap:2rem;
+    }
+    @media(max-width:700px){.model-box{grid-template-columns:1fr}}
+    .model-card{padding:2rem;position:relative;overflow:hidden}
+    .model-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:3px;
+      background:linear-gradient(90deg,var(--cyan),var(--purple));
+    }
+    .model-card.gold::before{background:linear-gradient(90deg,var(--gold),var(--magenta))}
+    .model-num{
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.7rem;color:var(--grey2);
+      letter-spacing:0.1em;margin-bottom:0.5rem;
+    }
+    .model-card h3{font-size:1.25rem;font-weight:800;margin-bottom:0.75rem}
+    .model-card p{color:var(--grey);font-size:0.875rem;line-height:1.7;margin-bottom:1rem}
+    .model-price{
+      font-family:'JetBrains Mono',monospace;
+      font-size:2rem;font-weight:900;color:var(--cyan);
+    }
+    .model-price.gold{color:var(--gold)}
+    .model-price sub{font-size:0.9rem;font-weight:500;color:var(--grey)}
+
+    /* ═══ O QUE INCLUI ═══ */
+    .include-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+    .include-item{
+      display:flex;gap:1rem;align-items:flex-start;
+      padding:1.25rem;
+    }
+    .include-icon{
+      width:40px;height:40px;border-radius:8px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.25rem;
+      background:rgba(0,245,255,0.08);
+      border:1px solid rgba(0,245,255,0.15);
+    }
+    .include-item h4{font-size:0.9rem;font-weight:700;margin-bottom:0.25rem}
+    .include-item p{color:var(--grey);font-size:0.8rem;line-height:1.5}
+
+    /* ═══ PROGRAMA ═══ */
+    .programa-bg{background:linear-gradient(180deg,var(--bg),rgba(0,245,255,0.02),var(--bg))}
+    .day-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+    @media(max-width:700px){.day-grid{grid-template-columns:1fr}}
+    .day-card{padding:2rem}
+    .day-label{
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.68rem;font-weight:700;letter-spacing:0.15em;
+      color:var(--cyan);text-transform:uppercase;margin-bottom:0.5rem;
+    }
+    .day-card h3{font-size:1.15rem;font-weight:800;margin-bottom:1.5rem}
+    .sched{display:flex;gap:0.85rem;margin-bottom:1rem;align-items:flex-start}
+    .sched-time{
+      font-family:'JetBrains Mono',monospace;font-size:0.7rem;
+      color:var(--cyan);font-weight:700;min-width:72px;padding-top:0.15rem;flex-shrink:0;
+    }
+    .sched h4{font-size:0.875rem;font-weight:700;margin-bottom:0.1rem}
+    .sched p{color:var(--grey);font-size:0.8rem;line-height:1.5}
+
+    /* Ponto Socorro */
+    .socorro{
+      margin-top:2rem;
+      background:linear-gradient(135deg,rgba(255,0,110,0.08),rgba(255,0,110,0.03));
+      border:1px solid rgba(255,0,110,0.25);
+      border-radius:10px;padding:1.5rem;
+    }
+    .socorro h4{color:#FF8FAB;font-weight:700;margin-bottom:0.4rem;font-size:0.95rem}
+    .socorro p{color:var(--grey);font-size:0.82rem}
+
+    /* ═══ ECOSSISTEMA ═══ */
+    .eco-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+    @media(max-width:700px){.eco-grid{grid-template-columns:1fr}}
+    .eco-card{padding:2rem;position:relative;overflow:hidden}
+    .eco-bg-num{
+      position:absolute;bottom:-0.5rem;right:1rem;
+      font-family:'JetBrains Mono',monospace;
+      font-size:6rem;font-weight:900;
+      color:rgba(0,245,255,0.04);line-height:1;
+    }
+    .eco-chip{
+      display:inline-block;
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.65rem;font-weight:700;
+      padding:0.2rem 0.6rem;border-radius:2px;
+      background:rgba(0,245,255,0.1);border:1px solid rgba(0,245,255,0.2);
+      color:var(--cyan);letter-spacing:0.1em;margin-bottom:1rem;
+    }
+    .eco-card h3{font-size:1rem;font-weight:800;margin-bottom:0.6rem}
+    .eco-card p{color:var(--grey);font-size:0.85rem;line-height:1.6}
+
+    /* ═══ NUMEROLOGIA SECTION ═══ */
+    .quantum-section{
+      padding:4rem 1.5rem;
+      text-align:center;
+      background:linear-gradient(180deg,var(--bg),rgba(157,0,255,0.04),var(--bg));
+    }
+    .num-sequence{
+      display:flex;justify-content:center;align-items:center;
+      gap:1.5rem;flex-wrap:wrap;margin:2rem 0;
+    }
+    .seq-item{text-align:center}
+    .seq-num{
+      font-family:'JetBrains Mono',monospace;
+      font-size:3rem;font-weight:900;line-height:1;
+      display:block;margin-bottom:0.5rem;
+    }
+    .seq-741 .seq-num{
+      color:var(--cyan);
+      text-shadow:0 0 20px var(--cyan),0 0 40px rgba(0,245,255,0.5);
+    }
+    .seq-520 .seq-num{
+      color:var(--magenta);
+      text-shadow:0 0 20px var(--magenta),0 0 40px rgba(255,0,110,0.5);
+    }
+    .seq-inf .seq-num{
+      color:var(--gold);font-size:5rem;
+      text-shadow:0 0 20px var(--gold),0 0 40px rgba(255,184,0,0.5),0 0 80px rgba(255,184,0,0.3);
+    }
+    .seq-label{font-size:0.72rem;color:var(--grey);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:0.3rem}
+    .seq-deep{font-size:0.65rem;color:var(--grey2);letter-spacing:0.03em;text-transform:uppercase;font-style:italic;margin-top:0.2rem;opacity:0.7}
+    .seq-divider{
+      font-family:'JetBrains Mono',monospace;
+      font-size:1.5rem;color:var(--grey2);align-self:center;
+    }
+    .quantum-text{color:var(--grey);max-width:600px;margin:0 auto;font-size:0.9rem;line-height:1.8}
+
+    /* ═══ TESTEMUNHOS ═══ */
+    .testi-section{background:linear-gradient(180deg,var(--bg),rgba(0,245,255,0.02),var(--bg))}
+    .testi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1.5rem}
+    .testi-card{
+      padding:2rem;position:relative;
+      display:flex;flex-direction:column;gap:1.25rem;
+    }
+    .testi-card::before{
+      content:'"';
+      position:absolute;top:1rem;right:1.5rem;
+      font-size:5rem;line-height:1;
+      color:rgba(0,245,255,0.08);
+      font-family:Georgia,serif;font-weight:900;
+    }
+    .testi-stars{display:flex;gap:3px;margin-bottom:0.25rem}
+    .testi-stars span{color:var(--gold);font-size:0.9rem}
+    .testi-quote{
+      font-size:0.95rem;line-height:1.75;color:var(--white);
+      font-style:italic;flex:1;
+    }
+    .testi-quote.placeholder{
+      color:var(--grey2);font-style:normal;
+      background:rgba(255,255,255,0.03);
+      border:1px dashed rgba(255,255,255,0.08);
+      border-radius:6px;padding:1rem;
+      font-size:0.82rem;text-align:center;
+    }
+    .testi-author{display:flex;align-items:center;gap:0.85rem;border-top:1px solid var(--glass-border);padding-top:1rem}
+    .testi-avatar{
+      width:40px;height:40px;border-radius:50%;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:800;font-size:0.9rem;color:var(--bg);
+    }
+    .testi-info strong{display:block;font-size:0.875rem;font-weight:700}
+    .testi-info span{font-size:0.75rem;color:var(--grey)}
+    .testi-placeholder-note{
+      text-align:center;margin-top:2rem;
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.72rem;color:var(--grey2);
+      letter-spacing:0.05em;
+    }
+
+    /* ═══ MENTOR ═══ */
+    .mentor-wrap{
+      display:grid;grid-template-columns:300px 1fr;gap:3rem;align-items:start;
+    }
+    @media(max-width:800px){.mentor-wrap{grid-template-columns:1fr}}
+    .mentor-photo{
+      position:relative;
+    }
+    .mentor-photo img{
+      width:100%;border-radius:8px;
+      filter:saturate(1.1);
+    }
+    .mentor-photo::after{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(to bottom,transparent 60%,var(--bg));
+      border-radius:8px;
+    }
+    .mentor-glow{
+      position:absolute;
+      inset:-1px;border-radius:9px;
+      background:linear-gradient(135deg,rgba(0,245,255,0.3),transparent,rgba(157,0,255,0.3));
+      z-index:-1;filter:blur(4px);
+    }
+    .mentor-name{font-size:2rem;font-weight:900;margin-bottom:0.25rem}
+    .mentor-role{
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.75rem;color:var(--cyan);
+      letter-spacing:0.1em;margin-bottom:1.5rem;
+    }
+    .mentor-bio{color:var(--grey);line-height:1.8;margin-bottom:1.5rem;font-size:0.95rem}
+    .mentor-tags{display:flex;gap:0.5rem;flex-wrap:wrap}
+    .mtag{
+      font-size:0.72rem;font-weight:600;
+      padding:0.25rem 0.65rem;border-radius:3px;
+      background:rgba(0,245,255,0.07);
+      border:1px solid rgba(0,245,255,0.15);
+      color:var(--cyan);letter-spacing:0.05em;
+    }
+
+    /* ═══ PREÇO ═══ */
+    .preco-bg{background:linear-gradient(180deg,var(--bg),rgba(0,245,255,0.02),var(--bg))}
+    .preco-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1.5rem;max-width:1100px;margin:0 auto}
+    .preco-card{
+      padding:2.5rem;position:relative;
+    }
+    .preco-card.featured{
+      border-color:rgba(0,245,255,0.4);
+      background:rgba(0,245,255,0.03);
+    }
+    .featured-badge{
+      position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+      background:linear-gradient(90deg,var(--cyan),var(--purple));
+      color:var(--bg);font-size:0.68rem;font-weight:800;
+      padding:0.3rem 1rem;border-radius:999px;
+      white-space:nowrap;letter-spacing:0.1em;text-transform:uppercase;
+    }
+    .preco-tier{
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.7rem;letter-spacing:0.15em;
+      color:var(--grey);text-transform:uppercase;margin-bottom:0.5rem;
+    }
+    .preco-name{font-size:1.25rem;font-weight:800;margin-bottom:1rem}
+    .preco-value{
+      font-family:'JetBrains Mono',monospace;
+      font-size:3.5rem;font-weight:900;line-height:1;
+      color:var(--cyan);margin-bottom:0.25rem;
+    }
+    .preco-value.gold-price{color:var(--gold)}
+    .preco-period{color:var(--grey);font-size:0.82rem;margin-bottom:1.5rem}
+    .preco-strike{
+      text-decoration:line-through;color:var(--grey2);font-size:1rem;margin-right:0.5rem;
+    }
+    .preco-features{list-style:none;margin-bottom:2rem}
+    .preco-features li{
+      display:flex;gap:0.6rem;align-items:flex-start;
+      padding:0.45rem 0;border-bottom:1px solid rgba(255,255,255,0.04);
+      font-size:0.875rem;
+    }
+    .preco-features li:last-child{border:none}
+    .preco-features .check{color:var(--cyan);flex-shrink:0;font-size:0.9rem}
+    .preco-features .check.gold{color:var(--gold)}
+    .preco-btn{
+      display:block;text-align:center;width:100%;
+      padding:1rem;border-radius:4px;font-weight:800;
+      text-decoration:none;font-size:0.9rem;letter-spacing:0.06em;
+      text-transform:uppercase;transition:all 0.3s;
+    }
+    .preco-btn.primary{
+      background:linear-gradient(135deg,var(--cyan),var(--purple));
+      color:var(--bg);
+      box-shadow:0 0 24px rgba(0,245,255,0.3);
+    }
+    .preco-btn.primary:hover{box-shadow:0 0 40px rgba(0,245,255,0.5);transform:translateY(-2px)}
+    .preco-btn.secondary{
+      border:1px solid var(--glass-border);color:var(--white);
+    }
+    .preco-btn.secondary:hover{border-color:var(--cyan);color:var(--cyan)}
+    .preco-urgency{
+      text-align:center;margin-top:2rem;
+      font-size:0.82rem;color:var(--gold);
+      font-family:'JetBrains Mono',monospace;
+    }
+
+    /* ═══ FAQ ═══ */
+    .faq-bg{background:linear-gradient(180deg,var(--bg),rgba(157,0,255,0.02),var(--bg))}
+    .faq-list{max-width:720px;margin:0 auto}
+    details.faq-item{
+      border-bottom:1px solid var(--glass-border);
+    }
+    details.faq-item summary{
+      padding:1.25rem 0;cursor:pointer;
+      font-weight:600;font-size:0.95rem;
+      display:flex;justify-content:space-between;align-items:center;
+      list-style:none;gap:1rem;
+    }
+    details.faq-item summary::-webkit-details-marker{display:none}
+    details.faq-item summary::after{
+      content:'+';font-size:1.4rem;
+      color:var(--cyan);font-weight:300;flex-shrink:0;
+      transition:transform 0.3s;
+    }
+    details[open] summary::after{content:'−'}
+    details.faq-item p{
+      color:var(--grey);font-size:0.875rem;line-height:1.8;
+      padding-bottom:1.25rem;
+    }
+
+    /* ═══ CTA FINAL ═══ */
+    .cta-final{
+      text-align:center;padding:7rem 1.5rem;
+      position:relative;
+    }
+    .cta-final::before{
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(0,245,255,0.07) 0%,transparent 70%);
+      pointer-events:none;
+    }
+    .cta-final h2{margin-bottom:1rem}
+    .cta-final p{color:var(--grey);max-width:500px;margin:0 auto 2rem;line-height:1.8}
+    .cta-scarcity{
+      margin-top:1rem;
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.75rem;color:var(--magenta);letter-spacing:0.05em;
+    }
+
+    /* ═══ FOOTER ═══ */
+    footer{
+      border-top:1px solid rgba(0,245,255,0.1);
+      padding:2rem;text-align:center;
+      color:var(--grey2);font-size:0.78rem;
+    }
+    footer a{color:var(--grey);text-decoration:none}
+    footer a:hover{color:var(--cyan)}
+    .footer-logo{
+      font-family:'JetBrains Mono',monospace;
+      font-size:0.9rem;font-weight:800;
+      color:var(--cyan);margin-bottom:0.75rem;display:block;
+      letter-spacing:0.1em;
+    }
+
+    /* ═══ DIVIDER ═══ */
+    .neon-divider{
+      height:1px;
+      background:linear-gradient(90deg,transparent,rgba(0,245,255,0.3),transparent);
+      margin:0;
+    }
+
+    /* ═══ TRANSFORM ═══ */
+    .transform-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+    @media(max-width:700px){.transform-grid{grid-template-columns:1fr}}
+    .t-col h3{
+      font-size:0.72rem;font-weight:700;letter-spacing:0.12em;
+      text-transform:uppercase;margin-bottom:1rem;
+      padding-bottom:0.75rem;border-bottom:1px solid var(--glass-border);
+    }
+    .t-col.before h3{color:#FF8FAB}
+    .t-col.after h3{color:#6EE7B7}
+    .t-item{
+      display:flex;gap:0.75rem;font-size:0.875rem;
+      padding:0.6rem 0;border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+    .t-item:last-child{border:none}
+    .t-item .mk{flex-shrink:0;font-size:0.9rem}
+  /* ═══ WAITLIST FORM ═══ */
+  .ml-section{background:linear-gradient(180deg,var(--bg),rgba(0,245,255,0.03),var(--bg));padding:5rem 1.5rem}
+  .ml-section .container-sm{text-align:center}
+  .ml-section h2{margin-bottom:0.75rem}
+  .ml-section .lead{margin:0 auto 2.5rem}
+  .lista-espera-bg{background:linear-gradient(180deg,var(--bg),rgba(255,0,110,0.04),rgba(0,245,255,0.04),var(--bg));padding:5rem 1.5rem;text-align:center}
+  .lista-espera-badges{display:flex;flex-wrap:wrap;justify-content:center;gap:0.75rem;margin:1.75rem auto 2.25rem}
+  .lista-espera-badges span{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:50px;padding:0.4rem 1rem;font-size:0.82rem;color:var(--grey);letter-spacing:0.02em}
+  .wl-form{max-width:520px;margin:0 auto;background:rgba(255,255,255,0.03);border:1px solid rgba(0,245,255,0.2);border-radius:12px;padding:2rem}
+  .wl-form h4{color:#F0F4FF;font-size:1.25rem;font-weight:700;margin-bottom:0.5rem}
+  .wl-form p{color:#8892A4;font-size:0.9rem;margin-bottom:1.25rem}
+  .wl-form input[type=email],.wl-form input[type=text]{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:0.85rem 1rem;color:#F0F4FF;font-size:0.95rem;outline:none;transition:border-color 0.2s;margin-bottom:0.75rem;font-family:'Inter',sans-serif}
+  .wl-form input[type=email]:focus,.wl-form input[type=text]:focus{border-color:var(--cyan)}
+  .wl-form input[type=email]::placeholder,.wl-form input[type=text]::placeholder{color:#4A5568}
+  .wl-form button{width:100%;background:#00F5FF;color:#04040A;font-weight:800;font-size:0.95rem;padding:0.9rem;border:none;border-radius:6px;cursor:pointer;transition:opacity 0.2s;letter-spacing:0.04em}
+  .wl-form button:hover{opacity:0.88}
+  .wl-form button:disabled{opacity:0.5;cursor:not-allowed}
+  .wl-msg{margin-top:0.75rem;font-size:0.85rem;min-height:1.2em}
+  .wl-msg.ok{color:#00F5FF}
+  .wl-msg.err{color:#FF006E}
+  </style>
+</head>
+<body>
+
+<!-- WHATSAPP FLOAT BUTTON -->
+<style>
+  .wa-float{
+    position:fixed;bottom:1.75rem;left:1.75rem;z-index:999;
+    display:flex;align-items:center;gap:0.75rem;
+    background:rgba(4,4,10,0.85);
+    backdrop-filter:blur(16px);
+    border:1px solid rgba(37,211,102,0.35);
+    border-radius:50px;
+    padding:0.65rem 1.1rem 0.65rem 0.65rem;
+    text-decoration:none;
+    box-shadow:0 0 20px rgba(37,211,102,0.2);
+    opacity:0;transform:translateY(20px);
+    transition:opacity 0.4s,transform 0.4s,box-shadow 0.3s;
+    pointer-events:none;
+  }
+  .wa-float.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+  .wa-float:hover{box-shadow:0 0 32px rgba(37,211,102,0.45)}
+  .wa-icon{
+    width:38px;height:38px;border-radius:50%;
+    background:#25D366;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .wa-icon svg{width:20px;height:20px;fill:#fff}
+  .wa-text{line-height:1.2}
+  .wa-text strong{display:block;font-size:0.8rem;color:#fff;font-weight:700}
+  .wa-text span{font-size:0.7rem;color:rgba(255,255,255,0.5)}
+</style>
+<a class="wa-float" id="waFloat"
+   href="https://wa.me/351932066328?text=Ol%C3%A1%20Eurico%2C%20vim%20da%20landing%20page%20da%20IA%20Avan%C3%A7ada%20PT%20e%20quero%20saber%20mais%20sobre%20a%20comunidade."
+   target="_blank" rel="noopener">
+  <div class="wa-icon">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </div>
+  <div class="wa-text">
+    <strong>Falar com Eurico</strong>
+    <span>Responde em minutos</span>
+  </div>
+</a>
+<script>
+  window.addEventListener('scroll',function(){
+    const el=document.getElementById('waFloat');
+    if(window.scrollY>300){el.classList.add('visible')}
+    else{el.classList.remove('visible')}
+  });
+</script>
+
+<!-- QUANTUM CANVAS BACKGROUND -->
+<canvas id="quantumBg"></canvas>
+
+<!-- NAV -->
+<nav class="layer">
+  <div class="nav-logo">IA <span>Avançada</span> PT</div>
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <a href="https://iaavancada.expressia.pt" target="_blank" style="font-size:0.78rem;color:var(--cyan);text-decoration:none;font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;opacity:0.8;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">Área de Membros</a>
+    <a href="#preco" class="nav-cta">Entrar na Comunidade</a>
+  </div>
+</nav>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero layer">
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Online · Portugal · Vagas Limitadas
+    </div>
+
+    <h1>
+      <span class="line1">A Comunidade</span>
+      <span class="line2">IA Avançada PT</span>
+    </h1>
+
+    <p class="hero-tagline">
+      Não é um curso. Não vai ficar desatualizado amanhã.<br>
+      É a comunidade de elite onde a IA trabalha para ti —<br>
+      com imersões intensivas incluídas.
+    </p>
+
+    <div class="hero-num-strip">
+      <span class="num-chip num-741">741</span>
+      <span class="num-sep">·</span>
+      <span class="num-chip num-520">520</span>
+      <span class="num-sep">·</span>
+      <span class="num-chip num-inf">∞</span>
+    </div>
+
+    <div class="hero-ctas">
+      <a href="#preco" class="btn-glow">Quero Entrar — €188 →</a>
+      <a href="#programa" class="btn-ghost">Ver o Programa</a>
+    </div>
+  </div>
+
+  <div class="hero-img-wrap">
+    <div class="hero-img-frame">
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      <img src="eurico.png" alt="Eurico Alves — IA Avançada PT"/>
+      <div class="hero-float-label">
+        <span class="label-num">188</span>
+        <span class="label-text">Preço de Lançamento · €</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- ═══════════════ PROBLEMA ═══════════════ -->
+<section class="layer problema">
+  <div class="container">
+    <span class="section-tag">// o problema</span>
+    <h2>Usas IA de nível 1<br>num mundo de nível 4.</h2>
+    <p class="lead">A maioria das pessoas faz exatamente o mesmo: pede ao ChatGPT para escrever um email. Enquanto isso, outros constroem sistemas que trabalham por eles 24 horas por dia.</p>
+    <div class="prob-grid">
+      <div class="glass glass-magenta prob-card">
+        <div class="prob-icon">📚</div>
+        <h3>Cursos que ficam velhos em 3 meses</h3>
+        <p>Pagas centenas de euros por conteúdo gravado que amanhã já não corresponde ao estado da arte. A IA avança mais depressa do que qualquer curso consegue acompanhar.</p>
+      </div>
+      <div class="glass glass-magenta prob-card">
+        <div class="prob-icon">🔄</div>
+        <h3>Informação infinita, mudança zero</h3>
+        <p>Vês tutoriais, ouves podcasts, lês threads no X — e no fim da semana não mudas absolutamente nada no teu trabalho. A teoria sem prática é ruído.</p>
+      </div>
+      <div class="glass glass-magenta prob-card">
+        <div class="prob-icon">⏳</div>
+        <h3>Vês outros a avançar e ficas para trás</h3>
+        <p>A janela de vantagem competitiva da IA está a fechar. Quem dominar estas ferramentas agora fica 3 anos à frente de quem esperar mais 6 meses.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ MODELO ═══════════════ -->
+<section class="layer">
+  <div class="container">
+    <span class="section-tag">// a solução</span>
+    <h2>Não é um curso.<br>É uma comunidade viva.</h2>
+    <p class="lead">A IA muda todos os meses. A tua formação tem de mudar com ela. Por isso criámos um modelo diferente: uma comunidade que cresce com o mercado e imersões intensivas que te colocam em prática no fim de semana.</p>
+    <div class="model-box">
+      <div class="glass glass-cyan model-card">
+        <div class="model-num">PRODUTO 01</div>
+        <h3>Comunidade IA Avançada PT</h3>
+        <p>Acesso permanente à comunidade privada. Sessões de atualização mensais. Partilha em tempo real das melhores ferramentas e estratégias. Nunca ficas desatualizado.</p>
+        <div class="model-price">€188 <sub>lançamento vitalício</sub></div>
+      </div>
+      <div class="glass glass-gold model-card gold">
+        <div class="model-num">PRODUTO 02</div>
+        <h3>Imersões Intensivas</h3>
+        <p>Fins de semana onde transformas uma ideia numa solução real com IA. Online, ao vivo, em grupo pequeno. Incluídas na comunidade — não vendem avulso.</p>
+        <div class="model-price gold">INCLUÍDO <sub>com a comunidade</sub></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ O QUE INCLUI ═══════════════ -->
+<section class="layer">
+  <div class="container">
+    <span class="section-tag">// o que está incluído</span>
+    <h2>Tudo o que precisas<br>num único lugar.</h2>
+    <div class="include-grid">
+      <div class="glass include-item">
+        <div class="include-icon">🚀</div>
+        <div><h4>Imersões de fim de semana</h4><p>Online ao vivo. De ideia a solução pronta em 48 horas.</p></div>
+      </div>
+      <div class="glass include-item">
+        <div class="include-icon">🔄</div>
+        <div><h4>Sessões mensais de atualização</h4><p>O que mudou na IA este mês. As novas ferramentas. O que usar e o que ignorar.</p></div>
+      </div>
+      <div class="glass include-item">
+        <div class="include-icon">🛠️</div>
+        <div><h4>Ecossistema técnico proprietário</h4><p>Student Profiler, Briefing Generator, Starter Builder — ferramentas exclusivas da comunidade.</p></div>
+      </div>
+      <div class="glass include-item">
+        <div class="include-icon">🚑</div>
+        <div><h4>Ponto Socorro</h4><p>Suporte em direto durante as imersões. Via Google Meet + WhatsApp. Ninguém fica bloqueado.</p></div>
+      </div>
+      <div class="glass include-item">
+        <div class="include-icon">🤝</div>
+        <div><h4>Rede de elite em Portugal</h4><p>Liga-te a profissionais e empresários que usam IA a sério. Oportunidades reais surgem desta rede.</p></div>
+      </div>
+      <div class="glass include-item">
+        <div class="include-icon">♾️</div>
+        <div><h4>Acesso vitalício (lançamento)</h4><p>Preço de lançamento €188 — por tempo limitado. Depois o preço aumenta.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- ═══════════════ TRANSFORMAÇÃO ═══════════════ -->
+<section class="layer">
+  <div class="container">
+    <span class="section-tag">// a transformação</span>
+    <h2>O que muda em 48 horas</h2>
+    <div class="transform-grid">
+      <div class="t-col before glass glass-magenta" style="padding:1.75rem;border-radius:12px">
+        <h3>❌ Antes da Imersão</h3>
+        <div class="t-item"><span class="mk">→</span><span>Usas o ChatGPT para tarefas pontuais e básicas</span></div>
+        <div class="t-item"><span class="mk">→</span><span>Copias prompts de YouTube sem perceber o porquê</span></div>
+        <div class="t-item"><span class="mk">→</span><span>Não sabes transformar um problema real numa solução</span></div>
+        <div class="t-item"><span class="mk">→</span><span>Sentes que a IA é complicada demais para o teu caso</span></div>
+        <div class="t-item"><span class="mk">→</span><span>Vês outros a avançar e não sabes como acompanhar</span></div>
+      </div>
+      <div class="t-col after glass glass-cyan" style="padding:1.75rem;border-radius:12px">
+        <h3>✓ Depois da Imersão</h3>
+        <div class="t-item"><span class="mk">→</span><span>Tens uma solução real construída por ti, pronta a usar</span></div>
+        <div class="t-item"><span class="mk">→</span><span>Dominas o método para transformar qualquer "dor" em produto</span></div>
+        <div class="t-item"><span class="mk">→</span><span>Sabes usar o ecossistema para construir em horas, não semanas</span></div>
+        <div class="t-item"><span class="mk">→</span><span>Fazes parte de uma comunidade que continua a avançar contigo</span></div>
+        <div class="t-item"><span class="mk">→</span><span>Estás no nível 4 — onde a IA trabalha para ti</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ PROGRAMA ═══════════════ -->
+<section class="layer programa-bg" id="programa">
+  <div class="container">
+    <span class="section-tag">// a imersão</span>
+    <h2>48 horas. Zero slides vazios.<br>Uma solução real.</h2>
+    <p class="lead">Cada bloco tem um objetivo concreto. Sais de cada sessão com algo feito — não com notas por organizar.</p>
+    <div class="day-grid">
+      <div class="glass glass-cyan day-card">
+        <div class="day-label">DIA 01 — SÁBADO</div>
+        <h3>Do Conceito à Prática</h3>
+        <div class="sched">
+          <div class="sched-time">10:00</div>
+          <div><h4>Realidade Real</h4><p>O impacto da IA no mercado. Porque "brincar com GPTs" já não chega.</p></div>
+        </div>
+        <div class="sched">
+          <div class="sched-time">11:00</div>
+          <div><h4>Treino de Mecânica</h4><p>Todos constroem um Gestor de Tarefas com o Starter Builder. Aprendes fazendo.</p></div>
+        </div>
+        <div class="sched">
+          <div class="sched-time">13:00</div>
+          <div><h4>Pausa</h4><p>Intervalo e troca de ideias com o grupo.</p></div>
+        </div>
+        <div class="sched">
+          <div class="sched-time">15:00</div>
+          <div><h4>Mão na Massa</h4><p>Cada participante desenvolve o seu projeto real com base na sua "dor" identificada.</p></div>
+        </div>
+        <div class="socorro">
+          <h4>🚑 22:00 — Ponto Socorro</h4>
+          <p>Sessão de desbloqueio ao vivo via Google Meet. Ninguém fica para trás.</p>
+        </div>
+      </div>
+      <div class="glass glass-cyan day-card">
+        <div class="day-label">DIA 02 — DOMINGO</div>
+        <h3>Refinamento e Entrega</h3>
+        <div class="sched">
+          <div class="sched-time">10:00</div>
+          <div><h4>Refinamento</h4><p>Finalização da lógica e do design. Os projetos tomam forma definitiva.</p></div>
+        </div>
+        <div class="sched">
+          <div class="sched-time">13:00</div>
+          <div><h4>Pausa</h4><p>Intervalo e preparação mental para a entrega final.</p></div>
+        </div>
+        <div class="sched">
+          <div class="sched-time">15:00</div>
+          <div><h4>Validação Final</h4><p>Cada projeto é validado e está pronto a ser usado no dia seguinte.</p></div>
+        </div>
+        <div class="socorro">
+          <h4>🚑 22:00 — Ponto Socorro Final</h4>
+          <p>Validação das ferramentas prontas + celebração com o grupo.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ ECOSSISTEMA ═══════════════ -->
+<section class="layer">
+  <div class="container">
+    <span class="section-tag">// o método</span>
+    <h2>O Ecossistema Técnico</h2>
+    <p class="lead">Três ferramentas proprietárias que transformam qualquer "dor" numa solução em horas — não em semanas.</p>
+    <div class="eco-grid">
+      <div class="glass eco-card">
+        <div class="eco-bg-num">01</div>
+        <div class="eco-chip">DIAGNÓSTICO</div>
+        <h3>Student Profiler</h3>
+        <p>Diagnóstico estratégico psicológico e técnico. Identifica a tua "dor" real e o projeto exato que tens de construir. Sem este passo, não há direção.</p>
+      </div>
+      <div class="glass eco-card">
+        <div class="eco-bg-num">02</div>
+        <div class="eco-chip">ESTRUTURA</div>
+        <h3>Briefing Generator</h3>
+        <p>Transforma a tua "dor" num PRD técnico de nível premium — o documento que a IA precisa para construir exatamente o que pretendes.</p>
+      </div>
+      <div class="glass eco-card">
+        <div class="eco-bg-num">03</div>
+        <div class="eco-chip">EXECUÇÃO</div>
+        <h3>Starter Builder</h3>
+        <p>Gera as soluções completas com os nossos templates avançados proprietários. Os mesmos que produzem os resultados que vês aqui. De briefing a produto funcional numa tarde.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ NUMEROLOGIA ═══════════════ -->
+<section class="layer quantum-section">
+  <div class="container-sm">
+    <span class="section-tag">// a frequência do método</span>
+    <h2>Construído sobre<br>sequências de energia.</h2>
+    <div class="num-sequence">
+      <div class="seq-item seq-741">
+        <span class="seq-num">741</span>
+        <span class="seq-label">Despertar · Intuição</span>
+        <span class="seq-deep">Resolução Imediata de Problemas</span>
+      </div>
+      <span class="seq-divider">·</span>
+      <div class="seq-item seq-520">
+        <span class="seq-num">520</span>
+        <span class="seq-label">Equilíbrio · Harmonia</span>
+        <span class="seq-deep">Entrada de Valor Inesperado</span>
+      </div>
+      <span class="seq-divider">·</span>
+      <div class="seq-item seq-inf">
+        <span class="seq-num">∞</span>
+        <span class="seq-label">Abundância · Ciclos</span>
+        <span class="seq-deep">Envio o Pedido ao Universo</span>
+      </div>
+    </div>
+    <p class="quantum-text">
+      O método da Imersão IA não é apenas técnico — é uma abordagem que integra
+      a inteligência humana com a máquina. A tua intenção define o resultado.
+      Cada sequência está codificada numa etapa do processo:
+      o despertar do problema, a entrada de valor que transforma,
+      e o envio da intenção ao universo para receber o que é teu.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════ TESTEMUNHOS ═══════════════ -->
+<section class="layer testi-section">
+  <div class="container">
+    <span class="section-tag">// o que dizem</span>
+    <h2>Resultados que falam<br>por si próprios.</h2>
+    <p class="lead">Pessoas e empresas que viram de perto o que é possível fazer com IA quando usada ao nível certo.</p>
+
+    <div class="testi-grid">
+
+      <!-- TESTEMUNHO 1 — TÚLIO COSTA -->
+      <div class="glass glass-cyan testi-card" style="padding:0;overflow:hidden;">
+        <div style="position:relative;">
+          <img src="tulio-costa.png" alt="Túlio Costa" style="width:100%;height:200px;object-fit:cover;object-position:center 20%;display:block;">
+          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(4,4,10,0.92));padding:1rem 1.25rem 0.85rem;">
+            <strong style="display:block;font-size:1.05rem;font-weight:700;color:#F0F4FF;">Túlio Costa</strong>
+            <span style="font-size:0.75rem;color:var(--cyan);">Restauração &amp; Adega Vinícola · Algarve, PT</span>
+          </div>
+        </div>
+        <div style="padding:1.25rem 1.5rem 1.5rem;display:flex;flex-direction:column;gap:0.85rem;">
+          <div class="testi-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          <div class="testi-quote">"O trabalho foi excelente, rápido, eficiente — dentro daquilo que se pretendia. Recomendo sem hesitar."</div>
+        </div>
+      </div>
+
+      <!-- TESTEMUNHO 2 — RÚBEN SILVA -->
+      <div class="glass glass-cyan testi-card" style="padding:0;overflow:hidden;">
+        <div style="position:relative;">
+          <img src="ruben-silva.png" alt="Rúben Silva" style="width:100%;height:200px;object-fit:cover;object-position:center 20%;display:block;">
+          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(4,4,10,0.92));padding:1rem 1.25rem 0.85rem;">
+            <strong style="display:block;font-size:1.05rem;font-weight:700;color:#F0F4FF;">R. Corvo</strong>
+            <span style="font-size:0.72rem;color:var(--cyan);line-height:1.4;display:block;">Professor de Português, História e Estudos Sociais<br>Ministério da Educação · Mestre em Gestão de RH</span>
+          </div>
+        </div>
+        <div style="padding:1.25rem 1.5rem 1.5rem;display:flex;flex-direction:column;gap:0.85rem;">
+          <div class="testi-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+          <div class="testi-quote">"Ferramenta eficaz, de grande utilidade diária e muito intuitiva. Facilitou, e muito, o meu dia a dia, na tradução de conteúdos de investigação académica, em idiomas que não domino na sua totalidade. Recomendo vivamente."</div>
+        </div>
+      </div>
+
+      <!-- TESTEMUNHO 3 — PLACEHOLDER -->
+      <div class="glass glass-cyan testi-card">
+        <div>
+          <div class="testi-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+        </div>
+        <div class="testi-quote placeholder">
+          Testemunho a chegar em breve.<br>
+          <span style="opacity:0.5;font-size:0.75rem">— Em processo de recolha</span>
+        </div>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--gold),var(--magenta))">?</div>
+          <div class="testi-info">
+            <strong style="color:var(--grey)">Nome</strong>
+            <span>Área · Portugal</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <p class="testi-placeholder-note">⚡ Testemunhos reais a ser adicionados em breve</p>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- ═══════════════ MENTOR ═══════════════ -->
+<section class="layer">
+  <div class="container">
+    <span class="section-tag">// o mentor</span>
+    <div class="mentor-wrap">
+      <div class="mentor-photo">
+        <div class="mentor-glow"></div>
+        <img src="eurico.png" alt="Eurico Alves"/>
+      </div>
+      <div>
+        <div class="mentor-name">Eurico Alves</div>
+        <div class="mentor-role">FUNDADOR · IA AVANÇADA PT · ESPECIALISTA AIOS</div>
+        <p class="mentor-bio">
+          Não ensino teoria — mostro sistemas que funcionam em produção.
+          Desenvolvi o ecossistema AIOS e trabalho com IA a nível 4:
+          não uso ferramentas de IA, construo com elas.
+          A minha formação integra física quântica, numerologia e inteligência artificial avançada —
+          porque acredito que o verdadeiro poder está na intersecção entre a intenção humana e a capacidade computacional.
+        </p>
+        <p class="mentor-bio">
+          Esta comunidade e estas imersões são o destilado de tudo o que aprendi —
+          para que consigas em 48 horas o que a maioria das pessoas levaria 2 anos a descobrir.
+          O meu objetivo é que sejas pioneiro na tua área antes que toda a gente chegue.
+        </p>
+        <div class="mentor-tags">
+          <span class="mtag">AIOS Framework</span>
+          <span class="mtag">Claude Code</span>
+          <span class="mtag">IA Avançada</span>
+          <span class="mtag">Portugal</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ LEAD MAGNET / FORM ═══════════════ -->
+<section class="layer ml-section" id="guia-gratis">
+  <div class="container-sm">
+    <span class="section-tag">// recurso gratuito</span>
+    <h2>Ainda não estás pronto para entrar?</h2>
+    <p class="lead">
+      Recebe primeiro o guia gratuito — <strong style="color:var(--cyan)">As 8 Ferramentas IA que os Profissionais Usam em 2026</strong>.<br>
+      Entrega imediata no teu email.
+    </p>
+    <div class="wl-form">
+      <h4>Recebe o guia agora</h4>
+      <p>Entrega imediata no teu email</p>
+      <input type="text" id="guia-nome" placeholder="Nome" autocomplete="given-name"/>
+      <input type="email" id="guia-email" placeholder="Email" autocomplete="email"/>
+      <button onclick="submitWaitlist('guia-gratis')">Quero o Guia Gratuito →</button>
+      <div class="wl-msg" id="guia-msg"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ PREÇO ═══════════════ -->
+<section class="layer preco-bg" id="preco">
+  <div class="container">
+    <span class="section-tag">// investimento</span>
+    <h2 style="text-align:center">Escolhe a tua entrada</h2>
+    <p class="lead" style="text-align:center;margin-left:auto;margin-right:auto;margin-bottom:3rem">
+      A comunidade é gratuita. A imersão é para quem quer ir mais fundo.
+      Todos os preços terminam em 8 — por design.
+    </p>
+    <div class="preco-grid">
+
+      <div class="glass preco-card">
+        <div class="preco-tier" style="color:var(--lime)">Gratuito</div>
+        <div class="preco-name">Comunidade [IA]Avançada</div>
+        <div class="preco-value" style="color:var(--lime)">€0</div>
+        <div class="preco-period">Acesso imediato — sem cartão, sem truques</div>
+        <ul class="preco-features">
+          <li><span class="check" style="color:var(--lime)">✓</span> 7 ferramentas do pipeline completo</li>
+          <li><span class="check" style="color:var(--lime)">✓</span> 4 formações gratuitas desde o dia 1</li>
+          <li><span class="check" style="color:var(--lime)">✓</span> Feed com conteúdo real e desafios</li>
+          <li><span class="check" style="color:var(--lime)">✓</span> Chat Eurico IA (assistente treinado)</li>
+          <li><span class="check" style="color:var(--lime)">✓</span> Directório de membros</li>
+          <li><span class="check" style="color:var(--lime)">✓</span> Biblioteca de ebooks</li>
+        </ul>
+        <a href="https://iaavancada.expressia.pt" target="_blank" rel="noopener" class="preco-btn primary" style="background:#39FF14;color:#04040A;box-shadow:0 0 20px rgba(57,255,20,0.4)">Entrar na Comunidade — Grátis →</a>
+      </div>
+
+      <div class="glass preco-card">
+        <div class="preco-tier">Imersão 48h</div>
+        <div class="preco-name">Membro Fundador</div>
+        <div class="preco-value">€188</div>
+        <div class="preco-period">Vagas limitadas — Preço exclusivo para os primeiros membros</div>
+        <ul class="preco-features">
+          <li><span class="check">✓</span> Tudo da comunidade gratuita</li>
+          <li><span class="check">✓</span> Imersão de fim de semana (Sáb + Dom)</li>
+          <li><span class="check">✓</span> Sessões mensais de actualização</li>
+          <li><span class="check">✓</span> Ponto Socorro (suporte em directo)</li>
+          <li><span class="check">✓</span> Ecossistema técnico proprietário</li>
+          <li><span class="check">✓</span> Acesso vitalício ao preço de lançamento</li>
+        </ul>
+        <a href="https://buy.stripe.com/8x26oI0A0dnUgD225WdEs06" target="_blank" rel="noopener" class="preco-btn primary">Garantir o Meu Lugar — €188 →</a>
+      </div>
+
+      <div class="glass featured preco-card">
+        <div class="featured-badge">Empresas &amp; Equipas</div>
+        <div class="preco-tier">Corporate</div>
+        <div class="preco-name">Equipa IA Avançada</div>
+        <div class="preco-period" style="margin-top:0.5rem;font-size:0.95rem;color:var(--grey)">Proposta personalizada · Faturação empresa</div>
+        <ul class="preco-features" style="margin-top:1.5rem">
+          <li><span class="check gold">✓</span> Vários acessos à comunidade para a equipa</li>
+          <li><span class="check gold">✓</span> Todas as imersões incluídas</li>
+          <li><span class="check gold">✓</span> Sessão estratégica privada (1h)</li>
+          <li><span class="check gold">✓</span> Diagnóstico de IA para a empresa</li>
+          <li><span class="check gold">✓</span> Suporte prioritário via WhatsApp</li>
+          <li><span class="check gold">✓</span> Possibilidade de imersão exclusiva para a equipa</li>
+        </ul>
+        <a href="https://wa.me/351932066328?text=Ol%C3%A1%20Eurico%2C%20vim%20da%20landing%20page%20da%20IA%20Avan%C3%A7ada%20PT%20e%20tenho%20interesse%20em%20saber%20mais%20sobre%20o%20plano%20para%20Empresas%20%26%20Equipas." target="_blank" rel="noopener" class="preco-btn primary" style="background:linear-gradient(135deg,var(--gold),var(--magenta));color:var(--bg)">Falar com o Eurico →</a>
+      </div>
+
+    </div>
+    <p class="preco-urgency">⚡ Preço exclusivo de fundador · Vagas limitadas — máximo 12 membros por imersão</p>
+  </div>
+</section>
+
+<!-- ═══════════════ LISTA DE ESPERA ═══════════════ -->
+<section class="layer lista-espera-bg" id="lista-espera">
+  <div class="container-sm">
+    <span class="section-tag">// próxima imersão de 48h</span>
+    <h2>Lista de espera — Imersão 48h</h2>
+    <p class="lead">
+      A próxima imersão de 48 horas está a ser preparada.<br>
+      Os primeiros a entrar garantem o preço de membro fundador: <strong style="color:var(--cyan)">€188 vitalício</strong>.<br>
+      Vagas limitadas — máximo 12 membros por imersão.<br>
+      <span style="color:var(--lime);font-size:0.85rem">A comunidade é gratuita — <a href="https://iaavancada.expressia.pt" style="color:var(--lime);text-decoration:underline">entra aqui</a> sem lista de espera.</span>
+    </p>
+    <div class="lista-espera-badges">
+      <span>🔒 Preço de fundador garantido</span>
+      <span>📅 Aviso antecipado da data</span>
+      <span>✦ Máximo 12 membros por imersão</span>
+    </div>
+    <div class="wl-form">
+      <h4>Reserva o teu lugar</h4>
+      <p>Garante o preço de membro fundador: €188</p>
+      <input type="text" id="espera-nome" placeholder="Nome" autocomplete="given-name"/>
+      <input type="email" id="espera-email" placeholder="Email" autocomplete="email"/>
+      <button onclick="submitWaitlist('lista-espera')">Entrar na lista de espera →</button>
+      <div class="wl-msg" id="espera-msg"></div>
+    </div>
+    <p style="color:var(--grey);font-size:0.82rem;margin-top:1.25rem">Sem spam. Apenas o aviso da data e o link de acesso.</p>
+
+    <div style="margin-top:2rem;padding-top:1.75rem;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+      <p style="color:var(--grey);font-size:0.85rem;margin-bottom:0.85rem">Preferes uma imersão privada — a teu ritmo, nas tuas datas?</p>
+      <a href="https://wa.me/351932066328?text=Ol%C3%A1%20Eurico%2C%20tenho%20interesse%20na%20Imers%C3%A3o%20Privada%20%282%20dias%20a%20combinar%29."
+         target="_blank" rel="noopener"
+         style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.3);color:var(--gold);padding:0.65rem 1.4rem;border-radius:6px;font-size:0.82rem;font-weight:700;text-decoration:none;transition:all 0.2s;letter-spacing:0.03em;">
+        Imersão Privada · Falar com o Eurico →
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FAQ ═══════════════ -->
+<section class="layer faq-bg">
+  <div class="container">
+    <span class="section-tag">// perguntas frequentes</span>
+    <h2 style="text-align:center;margin-bottom:2.5rem">Perguntas frequentes</h2>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>Preciso de saber programar para participar?</summary>
+        <p>Não. O ecossistema foi desenhado para que qualquer pessoa consiga construir soluções sem escrever código. O que precisas é de um problema real que queiras resolver e vontade de aprender a usar as ferramentas certas.</p>
+      </details>
+      <details class="faq-item">
+        <summary>O que é exatamente o acesso vitalício da comunidade?</summary>
+        <p>Pagas €188 uma vez (preço de lançamento) e tens acesso permanente à comunidade, a todas as imersões futuras e a todas as sessões de atualização mensais. Não há mensalidades nem renovações enquanto mantiveres este preço de fundador.</p>
+      </details>
+      <details class="faq-item">
+        <summary>A imersão é online ou presencial?</summary>
+        <p>Online ao vivo, via Google Meet. As sessões do Ponto Socorro são também online — o que te permite participar de qualquer parte de Portugal ou do mundo.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Este formato não vai ficar desatualizado?</summary>
+        <p>É exatamente por isso que é uma comunidade viva e não um curso gravado. As sessões mensais refletem o estado da arte atual — o que mudou, o que funciona agora, o que ignorar. A imersão usa sempre as ferramentas mais recentes e o método adapta-se continuamente.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Posso levar a minha empresa ou equipa?</summary>
+        <p>Sim, e é um dos casos de uso mais poderosos da comunidade. Fala diretamente com o Eurico via WhatsApp para uma proposta personalizada para a tua equipa — incluindo sessão estratégica privada e diagnóstico de IA para a empresa.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Quanto tempo demora até ver resultados reais?</summary>
+        <p>A primeira imersão dura 48 horas e sais com uma solução funcional pronta a usar. Não é uma promessa — é o modelo do programa. O que constróis no fim de semana fica operacional na segunda-feira.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Há algum requisito técnico mínimo de hardware ou software?</summary>
+        <p>Precisas de um computador com acesso à internet e browser atualizado. Tudo o que usamos funciona no browser — não há instalações complexas. Uma boa ligação à internet é suficiente para participar nas sessões ao vivo.</p>
+      </details>
+      <details class="faq-item">
+        <summary>O que acontece se não conseguir terminar o projeto durante o fim de semana?</summary>
+        <p>O Ponto Socorro existe exatamente para isso. Às 22:00h de sábado e domingo, o Eurico está em direto via Google Meet para desbloquear qualquer situação. O suporte via WhatsApp continua durante todo o processo. Ninguém sai sem a sua solução.</p>
+      </details>
+      <details class="faq-item">
+        <summary>O preço de €188 é mesmo vitalício ou vai aumentar?</summary>
+        <p>É o preço de lançamento para os primeiros membros fundadores. Uma vez garantido o teu lugar a €188, manténs esse valor para sempre — independentemente de quanto o preço subir nas próximas edições. Quanto mais esperas, mais pagas.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ CTA FINAL ═══════════════ -->
+<section class="layer cta-final">
+  <div class="container-sm">
+    <span class="section-tag">// próximo passo</span>
+    <h2>Pronto para sair do nível 1?</h2>
+    <p>
+      Em 48 horas podes ter uma solução real, construída por ti.<br>
+      A janela de vantagem está aberta — por quanto tempo, não sabemos.
+    </p>
+    <a href="#lista-espera" class="btn-glow">
+      Entrar na Lista de Espera →
+    </a>
+    <p class="cta-scarcity">⚡ Preço de lançamento · Vagas limitadas · Tudo termina em 8</p>
+  </div>
+</section>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer class="layer">
+  <div class="container">
+    <span class="footer-logo">IA AVANÇADA PT</span>
+    <p style="margin-bottom:0.5rem">
+      por <strong style="color:var(--white)">Eurico Alves</strong> ·
+      <a href="mailto:euricojsalves@gmail.com">euricojsalves@gmail.com</a>
+    </p>
+    <p>© 2026 IA Avançada PT · Todos os direitos reservados · Portugal</p>
+  </div>
+</footer>
+
+<!-- ═══════════════ WAITLIST SCRIPT ═══════════════ -->
+<script>
+const SB_URL  = 'https://hpqowjelvtejbutyvojo.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwcW93amVsdnRlamJ1dHl2b2pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NzcyNjEsImV4cCI6MjA4NzU1MzI2MX0.045EKU7I7A6Reap0qiVcNXbXuvElmOnjO7lLMwnwluw';
+
+async function submitWaitlist(source) {
+  const isEspera = source === 'lista-espera';
+  const nomeId   = isEspera ? 'espera-nome'  : 'guia-nome';
+  const inputId  = isEspera ? 'espera-email' : 'guia-email';
+  const msgId    = isEspera ? 'espera-msg'   : 'guia-msg';
+  const nomeEl   = document.getElementById(nomeId);
+  const input    = document.getElementById(inputId);
+  const msg      = document.getElementById(msgId);
+  const btn      = input.nextElementSibling;
+  const nome     = nomeEl.value.trim();
+  const email    = input.value.trim();
+
+  if (!nome) {
+    msg.className = 'wl-msg err';
+    msg.textContent = 'Insere o teu nome.';
+    nomeEl.focus();
+    return;
+  }
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msg.className = 'wl-msg err';
+    msg.textContent = 'Insere um email válido.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'A enviar…';
+  msg.textContent = '';
+
+  try {
+    const res = await fetch(SB_URL + '/rest/v1/waitlist', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_ANON,
+        'Authorization': 'Bearer ' + SB_ANON,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ name: nome, email, source })
+    });
+
+    if (res.ok || res.status === 201) {
+      msg.className = 'wl-msg ok';
+      msg.textContent = isEspera
+        ? '✓ Lugar reservado! Avisamos quando a próxima imersão abrir.'
+        : '✓ Guia enviado! Verifica o teu email.';
+      nomeEl.value = '';
+      input.value = '';
+      btn.textContent = isEspera ? 'Lugar reservado ✓' : 'Guia enviado ✓';
+    } else if (res.status === 409) {
+      msg.className = 'wl-msg ok';
+      msg.textContent = '✓ Este email já está na lista — avisamos quando abrir.';
+      btn.disabled = false;
+      btn.textContent = isEspera ? 'Entrar na lista de espera →' : 'Quero o Guia Gratuito →';
+    } else {
+      throw new Error('status ' + res.status);
+    }
+  } catch (e) {
+    msg.className = 'wl-msg err';
+    msg.textContent = 'Erro ao registar. Tenta novamente ou contacta via WhatsApp.';
+    btn.disabled = false;
+    btn.textContent = isEspera ? 'Entrar na lista de espera →' : 'Quero o Guia Gratuito →';
+  }
+}
+</script>
+
+<!-- ═══════════════ QUANTUM CANVAS SCRIPT ═══════════════ -->
+<script>
+(function(){
+  const canvas = document.getElementById('quantumBg');
+  const ctx = canvas.getContext('2d');
+
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // ── Number Particles ──
+  const SEQS = ['741','520','8','∞','7','4','1','5','2','0','∞8'];
+  const COLORS = ['#00F5FF','#FF006E','#FFB800','#9D00FF'];
+
+  class NumParticle {
+    constructor(){ this.init(true) }
+    init(random){
+      this.x = Math.random() * canvas.width;
+      this.y = random ? Math.random() * canvas.height : canvas.height + 40;
+      this.text = SEQS[Math.floor(Math.random() * SEQS.length)];
+      this.size = Math.random() * 28 + 10;
+      this.opacity = 0;
+      this.maxOpacity = Math.random() * 0.35 + 0.06;
+      this.speed = Math.random() * 0.4 + 0.1;
+      this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      this.life = 0;
+      this.maxLife = Math.random() * 400 + 200;
+      this.fadeIn = true;
+    }
+    update(){
+      this.y -= this.speed;
+      this.life++;
+      if(this.fadeIn){
+        this.opacity = Math.min(this.opacity + 0.008, this.maxOpacity);
+        if(this.opacity >= this.maxOpacity) this.fadeIn = false;
+      } else if(this.life > this.maxLife * 0.65){
+        this.opacity = Math.max(this.opacity - 0.004, 0);
+      }
+      if(this.opacity <= 0 || this.y < -60) this.init(false);
+    }
+    draw(){
+      ctx.save();
+      ctx.globalAlpha = this.opacity;
+      ctx.fillStyle = this.color;
+      ctx.font = `700 ${this.size}px 'JetBrains Mono', monospace`;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 18;
+      ctx.fillText(this.text, this.x, this.y);
+      ctx.restore();
+    }
+  }
+
+  // ── Network Particles ──
+  class Dot {
+    constructor(){
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.vx = (Math.random() - 0.5) * 0.4;
+      this.vy = (Math.random() - 0.5) * 0.4;
+      this.r = Math.random() * 1.5 + 0.5;
+    }
+    update(){
+      this.x += this.vx;
+      this.y += this.vy;
+      if(this.x < 0 || this.x > canvas.width) this.vx *= -1;
+      if(this.y < 0 || this.y > canvas.height) this.vy *= -1;
+    }
+    draw(){
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(0,245,255,0.5)';
+      ctx.shadowColor = '#00F5FF';
+      ctx.shadowBlur = 6;
+      ctx.fill();
+    }
+  }
+
+  const numCount = window.innerWidth < 768 ? 18 : 35;
+  const dotCount = window.innerWidth < 768 ? 30 : 60;
+  const nums = Array.from({length: numCount}, () => new NumParticle());
+  const dots = Array.from({length: dotCount}, () => new Dot());
+  const MAX_DIST = 120;
+
+  function drawLines(){
+    for(let i = 0; i < dots.length; i++){
+      for(let j = i+1; j < dots.length; j++){
+        const dx = dots[i].x - dots[j].x;
+        const dy = dots[i].y - dots[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < MAX_DIST){
+          ctx.beginPath();
+          ctx.moveTo(dots[i].x, dots[i].y);
+          ctx.lineTo(dots[j].x, dots[j].y);
+          ctx.strokeStyle = `rgba(0,245,255,${0.12 * (1 - dist/MAX_DIST)})`;
+          ctx.lineWidth = 0.6;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  // ── Sequence Sweep ──
+  // Periodically show "741 · 520 · ∞" sweeping across the center
+  let sweepTimer = 0;
+  let sweepActive = false;
+  let sweepX = -200;
+  const sweepText = '741  ·  520  ·  ∞';
+
+  function drawSweep(){
+    if(!sweepActive) return;
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.fillStyle = '#00F5FF';
+    ctx.font = `900 80px 'JetBrains Mono', monospace`;
+    ctx.shadowColor = '#00F5FF';
+    ctx.shadowBlur = 30;
+    ctx.fillText(sweepText, sweepX, canvas.height/2 + 40);
+    ctx.restore();
+    sweepX += 1.2;
+    if(sweepX > canvas.width + 400){
+      sweepActive = false;
+      sweepX = -400;
+      sweepTimer = 0;
+    }
+  }
+
+  function loop(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Dots network
+    dots.forEach(d => { d.update(); d.draw(); });
+    drawLines();
+
+    // Number particles
+    nums.forEach(n => { n.update(); n.draw(); });
+
+    // Sweep
+    sweepTimer++;
+    if(sweepTimer > 600 && !sweepActive){
+      sweepActive = true;
+      sweepX = -600;
+    }
+    drawSweep();
+
+    requestAnimationFrame(loop);
+  }
+
+  loop();
+})();
+</script>
+
+</body>
+</html>

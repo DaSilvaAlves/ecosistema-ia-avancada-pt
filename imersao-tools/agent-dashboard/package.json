@@ -1,0 +1,13 @@
+{
+  "name": "aiox-agent-arena",
+  "version": "2.0.0",
+  "description": "AIOX Agent Arena — Gamified Dashboard V2",
+  "private": true,
+  "scripts": {
+    "dashboard": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}

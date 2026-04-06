@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "typeRoots": [
+      "./types",
+      "./node_modules/@types"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "aiox-core": ["./.aiox-core/core"],
+      "aiox-core/*": ["./.aiox-core/core/*"]
+    }
+  },
+  "include": [
+    "types/**/*.d.ts",
+    ".aiox-core/**/*",
+    "tools/**/*",
+    "scripts/**/*",
+    "src/**/*",
+    "common/**/*",
+    "bin/**/*",
+    "*.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".tsbuildinfo",
+    "coverage",
+    ".test-temp",
+    "**/*-tmpl.*",
+    "**/*.tmpl.*",
+    "**/*-template.*",
+    ".aiox-core/development/templates/**",
+    ".aiox-core.backup*/**",
+    "aiox-core.backup*/**",
+    "aiox-core-deprecated/**",
+    "aiox-core-depracated/**",
+    "eslint.config.js"
+  ]
+}

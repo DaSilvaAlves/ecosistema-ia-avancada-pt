@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"639\\\\|Downloads\\\\|Gratuitos\" /c/Users/XPS/Documents/ecosistema-ia-avancada-pt/imersao-tools --include=*.md --include=*.html --include=*.json --include=*.js --include=*.yaml)",
+      "Bash(grep -E \"\\\\.\\(sql|md\\)$\")",
+      "WebFetch(domain:squads.sh)",
+      "Bash(for dir:*)",
+      "Bash(do)",
+      "Bash(echo \"=== $dir ===\")",
+      "Read(//c/Users/XPS/Documents/ecosistema-ia-avancada-pt/imersao-tools/docs/squad-packages/**)",
+      "Bash(done)",
+      "Bash(curl:*)",
+      "Bash(gh api:*)",
+      "Read(//c/Users/XPS/Documents/ecosistema-ia-avancada-pt/imersao-tools/docs/squad-packages/$HOME/**)",
+      "Read(//c/Users/XPS/Documents/**)",
+      "Read(//c/Users/XPS/mega-brain/.claude/commands/**)",
+      "Read(//c/Users/XPS/mega-brain/.claude/skills/**)"
+    ]
+  }
+}

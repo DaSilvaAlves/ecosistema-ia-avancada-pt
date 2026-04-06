@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Brandbook Estratégico — IA Avançada PT</title>
+<meta name="description" content="Brandbook estratégico completo da marca IA Avançada PT. Identidade visual, verbal, estratégia e design system."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════════════════
+   BRANDBOOK ESTRATÉGICO — IA AVANÇADA PT
+   V1.0 // DARK COCKPIT EDITION
+   ═══════════════════════════════════════════════════════ */
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#04040A;
+  --bg2:#0A0A14;
+  --bg3:#10101E;
+  --glass:rgba(255,255,255,0.03);
+  --glass-hover:rgba(255,255,255,0.06);
+  --glass-border:rgba(255,255,255,0.08);
+  --glass-border-hover:rgba(255,255,255,0.15);
+  --white:#F0F4FF;
+  --grey:#8892A4;
+  --grey2:#4A5568;
+  --grey3:#2D3748;
+  --gold:#FFB800;
+  --cyan:#00F5FF;
+  --purple:#9D00FF;
+  --magenta:#FF006E;
+  --lime:#39FF14;
+  --accent:var(--cyan);
+  --accent-glow:rgba(0,245,255,0.15);
+  --accent-border:rgba(0,245,255,0.25);
+  --font-sans:'Inter',system-ui,-apple-system,sans-serif;
+  --font-mono:'JetBrains Mono','Fira Code',monospace;
+  --sidebar-w:280px;
+  --header-h:96px;
+  --radius:6px;
+  --radius-lg:12px;
+  --transition:0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--grey3) var(--bg)}
+body{
+  font-family:var(--font-sans);
+  background:var(--bg);
+  color:var(--white);
+  overflow-x:hidden;
+  line-height:1.7;
+  font-size:15px;
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--grey3);border-radius:3px}
+
+/* ═══ CANVAS ═══ */
+#quantumBg{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  z-index:0;pointer-events:none;opacity:0.5;
+}
+
+/* ═══ HEADER ═══ */
+.header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(4,4,10,0.85);
+  backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--glass-border);
+}
+.header-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;height:52px;
+  border-bottom:1px solid var(--glass-border);
+}
+.header-logo{
+  font-family:var(--font-mono);
+  font-size:0.78rem;font-weight:800;
+  letter-spacing:0.14em;text-transform:uppercase;
+}
+.header-logo .hl{color:var(--accent)}
+.header-nav{display:flex;gap:0;height:100%}
+.header-nav a{
+  display:flex;align-items:center;
+  padding:0 1rem;height:100%;
+  font-family:var(--font-mono);
+  font-size:0.65rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--grey);text-decoration:none;
+  border-bottom:2px solid transparent;
+  transition:var(--transition);
+}
+.header-nav a:hover,.header-nav a.active{
+  color:var(--white);
+  border-bottom-color:var(--accent);
+}
+.theme-switch{display:flex;gap:6px;align-items:center}
+.theme-btn{
+  width:28px;height:28px;border-radius:4px;
+  border:1px solid var(--glass-border);
+  cursor:pointer;transition:var(--transition);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.6rem;font-weight:800;
+  font-family:var(--font-mono);
+}
+.theme-btn:hover{border-color:var(--glass-border-hover)}
+.theme-btn.active{border-width:2px}
+.theme-btn[data-theme="cyan"]{background:rgba(0,245,255,0.15);color:#00F5FF;border-color:rgba(0,245,255,0.4)}
+.theme-btn[data-theme="gold"]{background:rgba(255,184,0,0.15);color:#FFB800;border-color:rgba(255,184,0,0.4)}
+.theme-btn[data-theme="lime"]{background:rgba(57,255,20,0.15);color:#39FF14;border-color:rgba(57,255,20,0.4)}
+
+.header-bottom{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;height:44px;
+}
+.header-title{
+  font-family:var(--font-mono);
+  font-size:0.7rem;font-weight:700;
+  letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--accent);
+}
+.header-version{
+  font-family:var(--font-mono);
+  font-size:0.65rem;font-weight:400;
+  letter-spacing:0.08em;
+  color:var(--grey2);
+}
+
+/* ═══ LAYOUT ═══ */
+.layout{
+  display:flex;
+  padding-top:var(--header-h);
+  min-height:100vh;
+  position:relative;z-index:1;
+}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar{
+  position:fixed;top:var(--header-h);left:0;bottom:0;
+  width:var(--sidebar-w);
+  overflow-y:auto;
+  padding:1.5rem 0;
+  background:rgba(4,4,10,0.6);
+  backdrop-filter:blur(12px);
+  border-right:1px solid var(--glass-border);
+  z-index:50;
+}
+.sidebar-group{margin-bottom:1.25rem}
+.sidebar-group-title{
+  font-family:var(--font-mono);
+  font-size:0.6rem;font-weight:700;
+  letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--grey2);
+  padding:0.5rem 1.5rem 0.4rem;
+}
+.sidebar-link{
+  display:flex;align-items:center;gap:0.75rem;
+  padding:0.5rem 1.5rem;
+  font-size:0.8rem;font-weight:500;
+  color:var(--grey);text-decoration:none;
+  transition:var(--transition);
+  border-left:2px solid transparent;
+}
+.sidebar-link:hover{
+  color:var(--white);
+  background:var(--glass);
+  border-left-color:var(--accent);
+}
+.sidebar-link.active{
+  color:var(--accent);
+  background:var(--accent-glow);
+  border-left-color:var(--accent);
+}
+.sidebar-num{
+  font-family:var(--font-mono);
+  font-size:0.65rem;font-weight:800;
+  color:var(--grey2);
+  min-width:22px;
+}
+
+/* ═══ MAIN ═══ */
+.main{
+  margin-left:var(--sidebar-w);
+  flex:1;
+  padding:2.5rem 3rem 6rem;
+  max-width:960px;
+}
+
+/* ═══ SECTIONS ═══ */
+.section{
+  margin-bottom:5rem;
+  scroll-margin-top:calc(var(--header-h) + 2rem);
+  animation:fadeUp 0.6s ease-out both;
+}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(24px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.section-num{
+  font-family:var(--font-mono);
+  font-size:0.65rem;font-weight:800;
+  letter-spacing:0.2em;
+  color:var(--accent);
+  display:block;margin-bottom:0.5rem;
+}
+.section h2{
+  font-size:clamp(1.6rem,3vw,2.2rem);
+  font-weight:800;line-height:1.15;
+  letter-spacing:-0.02em;
+  margin-bottom:1rem;
+}
+.section h3{
+  font-size:1.15rem;font-weight:700;
+  margin:2rem 0 0.75rem;
+  color:var(--white);
+}
+.section h4{
+  font-size:0.95rem;font-weight:700;
+  margin:1.5rem 0 0.5rem;
+  color:var(--white);
+}
+.section p,.section li{
+  color:var(--grey);
+  line-height:1.8;
+  max-width:680px;
+}
+.section .lead{
+  font-size:1.05rem;
+  color:var(--grey);
+  margin-bottom:1.5rem;
+}
+.section blockquote{
+  border-left:3px solid var(--accent);
+  padding:1rem 1.5rem;
+  margin:1.5rem 0;
+  background:var(--glass);
+  border-radius:0 var(--radius) var(--radius) 0;
+  font-style:italic;
+  color:var(--grey);
+  font-size:1rem;
+}
+.section blockquote strong{color:var(--white);font-style:normal}
+
+/* ═══ GLASS CARD ═══ */
+.glass-card{
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);
+  padding:1.75rem;
+  transition:var(--transition);
+}
+.glass-card:hover{
+  background:var(--glass-hover);
+  border-color:var(--glass-border-hover);
+}
+
+/* ═══ TAG ═══ */
+.tag{
+  display:inline-flex;align-items:center;
+  padding:0.25rem 0.65rem;
+  border-radius:3px;
+  font-family:var(--font-mono);
+  font-size:0.65rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;
+}
+.tag-cyan{background:rgba(0,245,255,0.1);color:#00F5FF;border:1px solid rgba(0,245,255,0.25)}
+.tag-gold{background:rgba(255,184,0,0.1);color:#FFB800;border:1px solid rgba(255,184,0,0.25)}
+.tag-purple{background:rgba(157,0,255,0.1);color:#9D00FF;border:1px solid rgba(157,0,255,0.25)}
+.tag-magenta{background:rgba(255,0,110,0.1);color:#FF006E;border:1px solid rgba(255,0,110,0.25)}
+.tag-lime{background:rgba(57,255,20,0.1);color:#39FF14;border:1px solid rgba(57,255,20,0.25)}
+
+/* ═══ DIVIDER ═══ */
+.divider{
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--glass-border),transparent);
+  margin:3rem 0;
+}
+
+/* ═══ COLOR PALETTE ═══ */
+.palette-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:1rem;margin:1.5rem 0;
+}
+.color-swatch{
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  border:1px solid var(--glass-border);
+  transition:var(--transition);
+}
+.color-swatch:hover{border-color:var(--glass-border-hover);transform:translateY(-2px)}
+.swatch-block{
+  height:80px;display:flex;align-items:flex-end;
+  padding:0.5rem 0.75rem;
+}
+.swatch-info{
+  padding:0.75rem;background:var(--bg2);
+}
+.swatch-name{
+  font-family:var(--font-mono);font-size:0.7rem;font-weight:700;
+  color:var(--white);display:block;margin-bottom:2px;
+}
+.swatch-hex{
+  font-family:var(--font-mono);font-size:0.65rem;
+  color:var(--grey);
+}
+.swatch-var{
+  font-family:var(--font-mono);font-size:0.6rem;
+  color:var(--grey2);display:block;margin-top:2px;
+}
+
+/* ═══ CONTRAST TABLE ═══ */
+.contrast-table{
+  width:100%;border-collapse:collapse;
+  margin:1.5rem 0;font-size:0.82rem;
+}
+.contrast-table th,.contrast-table td{
+  padding:0.6rem 1rem;text-align:left;
+  border-bottom:1px solid var(--glass-border);
+}
+.contrast-table th{
+  font-family:var(--font-mono);font-size:0.65rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--grey2);
+}
+.contrast-table td{color:var(--grey)}
+.pass{color:#39FF14;font-weight:700}
+.fail{color:#FF006E;font-weight:700}
+
+/* ═══ TYPOGRAPHY SPECIMENS ═══ */
+.type-specimen{
+  padding:2rem;
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);
+  margin:1rem 0;
+}
+.type-label{
+  font-family:var(--font-mono);
+  font-size:0.6rem;font-weight:700;
+  letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--grey2);
+  margin-bottom:0.5rem;
+}
+.type-sample{color:var(--white);margin-bottom:0.25rem}
+.type-meta{
+  font-family:var(--font-mono);
+  font-size:0.65rem;color:var(--grey2);
+}
+
+/* ═══ GLASSMORPHISM DEMO ═══ */
+.glass-demo-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:1.25rem;margin:1.5rem 0;
+}
+.glass-demo{
+  padding:1.5rem;border-radius:var(--radius-lg);
+  display:flex;flex-direction:column;gap:0.5rem;
+  transition:var(--transition);
+}
+.glass-demo:hover{transform:translateY(-2px)}
+.glass-demo .label{
+  font-family:var(--font-mono);
+  font-size:0.65rem;font-weight:700;
+  letter-spacing:0.12em;text-transform:uppercase;
+}
+.glass-demo .value{
+  font-family:var(--font-mono);
+  font-size:0.6rem;color:var(--grey2);
+}
+
+/* ═══ COMPONENT DEMOS ═══ */
+.btn-demo{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  padding:0.65rem 1.4rem;border-radius:var(--radius);
+  font-family:var(--font-mono);font-size:0.78rem;font-weight:700;
+  letter-spacing:0.06em;text-transform:uppercase;
+  cursor:pointer;transition:var(--transition);
+  text-decoration:none;border:none;
+}
+.btn-primary{
+  background:var(--accent);color:var(--bg);
+  box-shadow:0 0 20px var(--accent-glow);
+}
+.btn-primary:hover{box-shadow:0 0 32px var(--accent-glow),0 0 60px var(--accent-glow)}
+.btn-ghost{
+  background:transparent;color:var(--accent);
+  border:1px solid var(--accent-border);
+}
+.btn-ghost:hover{
+  background:var(--accent-glow);
+  border-color:var(--accent);
+}
+.btn-disabled{
+  opacity:0.35;cursor:not-allowed;
+  background:var(--grey3);color:var(--grey2);
+}
+
+.badge-demo{
+  display:inline-flex;align-items:center;
+  padding:0.2rem 0.6rem;border-radius:3px;
+  font-family:var(--font-mono);font-size:0.6rem;font-weight:700;
+  letter-spacing:0.08em;text-transform:uppercase;
+}
+.input-demo{
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius);
+  padding:0.65rem 1rem;
+  color:var(--white);font-size:0.85rem;
+  font-family:var(--font-sans);
+  width:100%;max-width:400px;
+  transition:var(--transition);
+  outline:none;
+}
+.input-demo:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+.input-demo::placeholder{color:var(--grey2)}
+
+.card-demo{
+  background:var(--glass);border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);padding:1.75rem;
+  max-width:380px;transition:var(--transition);
+}
+.card-demo:hover{
+  border-color:var(--accent-border);
+  box-shadow:0 4px 40px var(--accent-glow);
+  transform:translateY(-3px);
+}
+.card-demo h4{margin-top:0}
+
+/* ═══ ICON GRID ═══ */
+.icon-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));
+  gap:1rem;margin:1.5rem 0;
+}
+.icon-item{
+  display:flex;flex-direction:column;align-items:center;gap:0.5rem;
+  padding:1.25rem 0.75rem;
+  background:var(--glass);border:1px solid var(--glass-border);
+  border-radius:var(--radius);transition:var(--transition);
+}
+.icon-item:hover{border-color:var(--accent-border)}
+.icon-item svg{width:24px;height:24px;color:var(--accent)}
+.icon-item span{font-size:0.6rem;color:var(--grey2);text-align:center}
+
+/* ═══ JOURNEY ═══ */
+.journey-steps{
+  display:flex;flex-direction:column;gap:0;
+  margin:1.5rem 0;position:relative;
+}
+.journey-step{
+  display:flex;gap:1.5rem;padding:1.5rem 0;
+  border-left:2px solid var(--glass-border);
+  margin-left:1rem;padding-left:2rem;
+  position:relative;
+}
+.journey-step::before{
+  content:'';position:absolute;left:-7px;top:1.75rem;
+  width:12px;height:12px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 12px var(--accent-glow);
+}
+.journey-step:last-child{border-left-color:transparent}
+
+/* ═══ VOCAB TABLE ═══ */
+.vocab-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;
+  margin:1.5rem 0;
+}
+.vocab-col{
+  padding:1.5rem;border-radius:var(--radius-lg);
+}
+.vocab-use{
+  background:rgba(0,245,255,0.04);
+  border:1px solid rgba(0,245,255,0.15);
+}
+.vocab-avoid{
+  background:rgba(255,0,110,0.04);
+  border:1px solid rgba(255,0,110,0.15);
+}
+.vocab-col h4{margin-top:0}
+.vocab-col ul{list-style:none;padding:0}
+.vocab-col li{
+  padding:0.4rem 0;
+  font-size:0.88rem;
+  border-bottom:1px solid var(--glass-border);
+}
+.vocab-col li:last-child{border-bottom:none}
+
+/* ═══ BRANDSCRIPT ═══ */
+.bs-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1rem;margin:1.5rem 0;
+}
+.bs-card{
+  padding:1.5rem;
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);
+}
+.bs-card h4{color:var(--accent);margin-top:0;font-family:var(--font-mono);font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase}
+
+/* ═══ TESTIMONIAL PLACEHOLDERS ═══ */
+.testi-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.25rem;margin:1.5rem 0;
+}
+.testi-card{
+  padding:1.5rem;
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);
+}
+.testi-card .stars{color:var(--gold);font-size:0.9rem;margin-bottom:0.75rem;letter-spacing:2px}
+.testi-card .quote{color:var(--grey);font-style:italic;margin-bottom:1rem;font-size:0.9rem}
+.testi-card .author{
+  display:flex;align-items:center;gap:0.75rem;
+  padding-top:0.75rem;border-top:1px solid var(--glass-border);
+}
+.testi-card .avatar{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:0.8rem;
+}
+.testi-card .author-name{font-weight:600;font-size:0.85rem;color:var(--white)}
+.testi-card .author-role{font-size:0.72rem;color:var(--grey2)}
+
+/* ═══ POSITIONING MAP ═══ */
+.pos-map{
+  position:relative;
+  width:100%;max-width:580px;
+  height:360px;
+  margin:2rem 0;
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+}
+.pos-axis{
+  position:absolute;
+  font-family:var(--font-mono);
+  font-size:0.6rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--grey2);
+}
+.pos-axis.x-left{left:1rem;bottom:1rem}
+.pos-axis.x-right{right:1rem;bottom:1rem}
+.pos-axis.y-top{left:1rem;top:1rem}
+.pos-axis.y-bottom{left:1rem;bottom:2.5rem}
+.pos-dot{
+  position:absolute;
+  width:12px;height:12px;border-radius:50%;
+  transform:translate(-50%,-50%);
+}
+.pos-label{
+  position:absolute;
+  font-family:var(--font-mono);
+  font-size:0.6rem;font-weight:600;
+  transform:translate(-50%,16px);
+  white-space:nowrap;
+}
+.pos-line-x,.pos-line-y{
+  position:absolute;background:var(--glass-border);
+}
+.pos-line-x{left:0;right:0;top:50%;height:1px}
+.pos-line-y{top:0;bottom:0;left:50%;width:1px}
+
+/* ═══ TRUELINE ═══ */
+.trueline{
+  padding:1rem 1.5rem;
+  background:var(--glass);
+  border-left:3px solid var(--accent);
+  border-radius:0 var(--radius) var(--radius) 0;
+  margin:0.75rem 0;
+  font-size:0.95rem;
+  color:var(--white);
+  font-weight:500;
+}
+
+/* ═══ SPACING SCALE ═══ */
+.spacing-demo{display:flex;flex-direction:column;gap:1rem;margin:1.5rem 0}
+.spacing-row{display:flex;align-items:center;gap:1rem}
+.spacing-bar{height:16px;background:var(--accent);border-radius:2px;opacity:0.6}
+.spacing-label{
+  font-family:var(--font-mono);font-size:0.65rem;color:var(--grey2);
+  min-width:80px;
+}
+
+/* ═══ SHOWCASE STATS BAR ═══ */
+.showcase-stats{
+  display:flex;align-items:center;gap:2rem;
+  padding:1rem 1.5rem;margin:1.5rem 0;
+  background:var(--glass);border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);
+  font-family:var(--font-mono);font-size:0.75rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--grey);
+}
+.showcase-stats .stat-num{color:var(--accent);font-size:1.1rem;margin-right:0.35rem}
+.showcase-stats .stat-sep{color:var(--grey3)}
+
+/* ═══ SHOWCASE FILTERS ═══ */
+.showcase-filters{
+  display:flex;gap:0.5rem;margin:1.25rem 0;
+  overflow-x:auto;padding-bottom:0.5rem;
+  scrollbar-width:thin;scrollbar-color:var(--grey3) transparent;
+}
+.showcase-filters::-webkit-scrollbar{height:4px}
+.showcase-filters::-webkit-scrollbar-thumb{background:var(--grey3);border-radius:2px}
+.filter-chip{
+  flex-shrink:0;
+  padding:0.35rem 0.85rem;border-radius:3px;
+  font-family:var(--font-mono);font-size:0.6rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--grey);background:var(--glass);
+  border:1px solid var(--glass-border);
+  cursor:pointer;transition:var(--transition);
+  white-space:nowrap;
+}
+.filter-chip:hover,.filter-chip.active{
+  color:var(--accent);border-color:var(--accent-border);
+  background:var(--accent-glow);
+}
+
+/* ═══ SHOWCASE DROPDOWN ═══ */
+.showcase-dropdown{
+  position:relative;display:inline-block;margin:1rem 0;
+}
+.showcase-dropdown-btn{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  padding:0.55rem 1.2rem;border-radius:var(--radius);
+  font-family:var(--font-mono);font-size:0.7rem;font-weight:700;
+  letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--accent);background:var(--glass);
+  border:1px solid var(--accent-border);
+  cursor:pointer;transition:var(--transition);
+}
+.showcase-dropdown-btn:hover{background:var(--accent-glow)}
+.showcase-dropdown-btn::after{content:'▾';font-size:0.8rem}
+.showcase-dropdown-menu{
+  display:none;position:absolute;top:100%;left:0;
+  margin-top:4px;min-width:180px;
+  background:var(--bg2);border:1px solid var(--glass-border);
+  border-radius:var(--radius);overflow:hidden;z-index:10;
+}
+.showcase-dropdown.open .showcase-dropdown-menu{display:block}
+.showcase-dropdown-item{
+  display:block;padding:0.55rem 1.2rem;
+  font-family:var(--font-mono);font-size:0.65rem;font-weight:700;
+  letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--grey);cursor:pointer;transition:var(--transition);
+  text-decoration:none;
+}
+.showcase-dropdown-item:hover,.showcase-dropdown-item.active{
+  color:var(--accent);background:var(--accent-glow);
+}
+
+/* ═══ MOCKUP GRID ═══ */
+.mockup-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1.25rem;margin:1.5rem 0;
+}
+.mockup-card{
+  position:relative;border-radius:var(--radius-lg);
+  overflow:hidden;aspect-ratio:4/5;
+  border:1px solid var(--glass-border);
+  cursor:pointer;transition:var(--transition);
+  display:flex;flex-direction:column;justify-content:flex-end;
+}
+.mockup-card:hover{
+  border-color:var(--accent-border);
+  transform:translateY(-4px);
+  box-shadow:0 8px 32px var(--accent-glow);
+}
+.mockup-card-bg{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.mockup-card-bg .mockup-icon{
+  font-size:3.5rem;opacity:0.3;transition:var(--transition);
+}
+.mockup-card:hover .mockup-icon{opacity:0.5;transform:scale(1.1)}
+.mockup-card-num{
+  position:absolute;top:0.75rem;left:0.75rem;
+  font-family:var(--font-mono);font-size:0.6rem;font-weight:800;
+  letter-spacing:0.15em;color:rgba(255,255,255,0.4);
+}
+.mockup-card-info{
+  position:relative;z-index:1;
+  padding:1rem;
+  background:linear-gradient(transparent,rgba(0,0,0,0.7));
+}
+.mockup-card-name{
+  font-family:var(--font-mono);font-size:0.8rem;font-weight:800;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--white);display:block;
+}
+.mockup-card-label{
+  font-family:var(--font-mono);font-size:0.55rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--grey);margin-top:0.25rem;display:block;
+}
+.mockup-card-overlay{
+  position:absolute;inset:0;
+  background:var(--accent-glow);
+  opacity:0;transition:var(--transition);
+  display:flex;align-items:center;justify-content:center;
+}
+.mockup-card:hover .mockup-card-overlay{opacity:1}
+.mockup-card-overlay span{
+  font-family:var(--font-mono);font-size:0.7rem;font-weight:700;
+  letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--accent);
+  padding:0.4rem 0.8rem;
+  border:1px solid var(--accent-border);
+  border-radius:var(--radius);
+}
+
+/* ═══ MOBILE TOGGLE ═══ */
+.mobile-toggle{
+  display:none;
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:200;
+  width:48px;height:48px;border-radius:50%;
+  background:var(--accent);color:var(--bg);
+  border:none;cursor:pointer;
+  font-size:1.2rem;font-weight:800;
+  box-shadow:0 4px 20px var(--accent-glow);
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1024px){
+  .main{padding:2rem 2rem 4rem}
+  .mockup-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:768px){
+  .sidebar{
+    transform:translateX(-100%);
+    transition:transform 0.3s ease;
+    z-index:150;
+    width:260px;
+    background:rgba(4,4,10,0.95);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0;padding:1.5rem 1.25rem 4rem}
+  .mobile-toggle{display:flex;align-items:center;justify-content:center}
+  .header-nav{display:none}
+  .header-top{padding:0 1rem}
+  .header-bottom{padding:0 1rem}
+  .palette-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .vocab-grid{grid-template-columns:1fr}
+  .bs-grid{grid-template-columns:1fr}
+  .pos-map{height:280px}
+}
+@media(max-width:480px){
+  .main{padding:1rem 1rem 3rem}
+  .section h2{font-size:1.4rem}
+  .mockup-grid{grid-template-columns:1fr}
+  .showcase-stats{flex-wrap:wrap;gap:1rem}
+}
+</style>
+</head>
+<body>
+
+<canvas id="quantumBg"></canvas>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="header">
+  <div class="header-top">
+    <div class="header-logo" style="display:flex;align-items:center;gap:0.5rem">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32" aria-label="IA Avancada PT">
+        <g transform="translate(50, 50)">
+          <polygon points="0,-38 33,-19 33,19 0,38 -33,19 -33,-19" fill="none" stroke="var(--accent)" stroke-width="2" opacity="0.4"/>
+          <line x1="-12" y1="16" x2="0" y2="-16" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="12" y1="16" x2="0" y2="-16" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="-7" y1="4" x2="7" y2="4" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="0" cy="-38" r="2.5" fill="var(--accent)" opacity="0.6"/>
+          <circle cx="33" cy="-19" r="2.5" fill="var(--accent)" opacity="0.6"/>
+          <circle cx="33" cy="19" r="2" fill="var(--accent)" opacity="0.4"/>
+          <circle cx="0" cy="38" r="2.5" fill="var(--accent)" opacity="0.6"/>
+          <circle cx="-33" cy="19" r="2" fill="var(--accent)" opacity="0.4"/>
+          <circle cx="-33" cy="-19" r="2.5" fill="var(--accent)" opacity="0.6"/>
+          <circle cx="0" cy="-16" r="3.5" fill="var(--gold)" opacity="0.9"/>
+        </g>
+      </svg>
+      <span>IA_AVA<span class="hl">NCADA_PT</span></span>
+    </div>
+    <nav class="header-nav">
+      <a href="#s01" class="active" data-group="fundamentos">Fundamentos</a>
+      <a href="#s04" data-group="estrategia">Estratégia</a>
+      <a href="#s07" data-group="verbal">Identidade Verbal</a>
+      <a href="#s09" data-group="jornada">Jornada</a>
+      <a href="#s11" data-group="visual">Identidade Visual</a>
+      <a href="#s15" data-group="sistema">Design System</a>
+      <a href="#s16" data-group="showcase">Showcase</a>
+    </nav>
+    <div class="theme-switch">
+      <button class="theme-btn active" data-theme="cyan" title="Tema Cyan" onclick="setTheme('cyan')">CY</button>
+      <button class="theme-btn" data-theme="gold" title="Tema Gold" onclick="setTheme('gold')">AU</button>
+      <button class="theme-btn" data-theme="lime" title="Tema Lime" onclick="setTheme('lime')">LM</button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <span class="header-title">Brandbook Estratégico</span>
+    <span class="header-version">V1.0 // Dark Cockpit Edition</span>
+  </div>
+</header>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-group">
+    <div class="sidebar-group-title">Fundamentos</div>
+    <a href="#s01" class="sidebar-link active"><span class="sidebar-num">01</span>Manifesto</a>
+    <a href="#s02" class="sidebar-link"><span class="sidebar-num">02</span>Propósito</a>
+    <a href="#s03" class="sidebar-link"><span class="sidebar-num">03</span>Arquétipo</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-title">Estratégia</div>
+    <a href="#s04" class="sidebar-link"><span class="sidebar-num">04</span>Posicionamento</a>
+    <a href="#s05" class="sidebar-link"><span class="sidebar-num">05</span>BrandScript</a>
+    <a href="#s06" class="sidebar-link"><span class="sidebar-num">06</span>Truelines</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-title">Identidade Verbal</div>
+    <a href="#s07" class="sidebar-link"><span class="sidebar-num">07</span>Naming</a>
+    <a href="#s08" class="sidebar-link"><span class="sidebar-num">08</span>Vocabulário</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-title">Jornada & Prova</div>
+    <a href="#s09" class="sidebar-link"><span class="sidebar-num">09</span>Jornada do Herói</a>
+    <a href="#s10" class="sidebar-link"><span class="sidebar-num">10</span>Depoimentos</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-title">Identidade Visual</div>
+    <a href="#s11" class="sidebar-link"><span class="sidebar-num">11</span>Marcas & Cores</a>
+    <a href="#s12" class="sidebar-link"><span class="sidebar-num">12</span>Tipografia</a>
+    <a href="#s13" class="sidebar-link"><span class="sidebar-num">13</span>Glassmorphism</a>
+    <a href="#s14" class="sidebar-link"><span class="sidebar-num">14</span>Componentes</a>
+    <a href="#s15" class="sidebar-link"><span class="sidebar-num">15</span>Ícones & Ilustrações</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-title">Showcase</div>
+    <a href="#s16" class="sidebar-link"><span class="sidebar-num">16</span>Mockups</a>
+  </div>
+</aside>
+
+<!-- ═══════════════ MOBILE TOGGLE ═══════════════ -->
+<button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()" aria-label="Menu">&#9776;</button>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<main class="layout">
+<div class="main">
+
+<!-- ═══ 01 MANIFESTO ═══ -->
+<section class="section" id="s01">
+  <span class="section-num">01 // MANIFESTO</span>
+  <h2>A IA redefine o trabalho.<br>Quem domina as ferramentas domina o futuro.</h2>
+  <div class="divider"></div>
+  <p class="lead">Numa era em que a inteligência artificial transforma todos os sectores, existe uma linha clara entre quem usa a IA de nível 1 -- pedindo ao ChatGPT para escrever um email -- e quem opera de nível 4, construindo sistemas que trabalham 24 horas por dia.</p>
+
+  <blockquote>
+    <strong>A IA Avançada PT existe para eliminar essa distância.</strong><br>
+    Somos a primeira comunidade de elite em Portugal onde profissionais, empreendedores e criadores aprendem a construir com IA -- não apenas a usar.
+  </blockquote>
+
+  <h3>Visão</h3>
+  <p>Um Portugal onde cada profissional domina a IA ao nível mais avançado e a transforma numa vantagem competitiva real -- não numa curiosidade passageira.</p>
+
+  <h3>Missão</h3>
+  <p>Acelerar a transformação de profissionais portugueses através de imersões intensivas, ferramentas proprietárias e uma comunidade viva que evolui ao ritmo da própria IA.</p>
+
+  <h3>Valores</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:1rem">
+    <span class="tag tag-cyan">Excelência Técnica</span>
+    <span class="tag tag-gold">Resultados Reais</span>
+    <span class="tag tag-purple">Comunidade de Elite</span>
+    <span class="tag tag-magenta">Evolução Contínua</span>
+    <span class="tag tag-lime">Prática > Teoria</span>
+  </div>
+</section>
+
+<!-- ═══ 02 PROPOSITO ═══ -->
+<section class="section" id="s02">
+  <span class="section-num">02 // PROPÓSITO</span>
+  <h2>Por que existimos</h2>
+  <div class="divider"></div>
+
+  <h3>O problema</h3>
+  <p>O mercado está inundado de cursos de IA que ficam obsoletos em três meses. Tutoriais infinitos no YouTube que não mudam nada na prática. A maioria dos profissionais em Portugal usa a IA ao nível mais básico -- e vê outros avançar sem perceber como.</p>
+
+  <h3>A transformação que prometemos</h3>
+  <p>Em 48 horas, sais com uma solução real, construída por ti, pronta a usar na segunda-feira. Não é uma promessa -- é o modelo do programa. Usas ferramentas proprietárias que transformam qualquer problema real num produto funcional.</p>
+
+  <h3>Para quem existimos</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:1.5rem 0">
+    <div class="glass-card">
+      <h4 style="margin-top:0;color:var(--accent)">Profissionais</h4>
+      <p style="font-size:0.85rem">Querem integrar IA no seu trabalho diário e ganhar vantagem competitiva real.</p>
+    </div>
+    <div class="glass-card">
+      <h4 style="margin-top:0;color:var(--accent)">Empreendedores</h4>
+      <p style="font-size:0.85rem">Precisam de automatizar processos e construir ferramentas que escalem.</p>
+    </div>
+    <div class="glass-card">
+      <h4 style="margin-top:0;color:var(--accent)">Criadores</h4>
+      <p style="font-size:0.85rem">Querem usar IA para criar conteúdo, produtos e serviços únicos.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 03 ARQUETIPO ═══ -->
+<section class="section" id="s03">
+  <span class="section-num">03 // ARQUÉTIPO</span>
+  <h2>O Sábio + O Herói</h2>
+  <div class="divider"></div>
+  <p class="lead">A marca IA Avançada PT combina dois arquétipos: a autoridade intelectual do Sábio com a energia de acção do Herói.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:2rem 0">
+    <div class="glass-card">
+      <div style="font-size:2rem;margin-bottom:0.75rem">&#129504;</div>
+      <h4 style="margin-top:0;color:var(--accent)">O Sábio</h4>
+      <p style="font-size:0.85rem">Domínio técnico profundo. Conhecimento real, não superficial. Postura de autoridade intelectual que inspira confiança. Fala com dados e resultados, não com hype.</p>
+      <p style="font-size:0.78rem;color:var(--grey2);margin-top:0.75rem"><strong style="color:var(--grey)">Tom:</strong> Preciso, fundamentado, sem jargão desnecessário</p>
+    </div>
+    <div class="glass-card">
+      <div style="font-size:2rem;margin-bottom:0.75rem">&#9876;&#65039;</div>
+      <h4 style="margin-top:0;color:var(--gold)">O Herói</h4>
+      <p style="font-size:0.85rem">Energia de acção. Desafio ao status quo. Urgência real -- a janela de vantagem está a fechar. Empurra para a acção com coragem e determinação.</p>
+      <p style="font-size:0.78rem;color:var(--grey2);margin-top:0.75rem"><strong style="color:var(--grey)">Tom:</strong> Directo, desafiador, orientado a resultados</p>
+    </div>
+  </div>
+
+  <h3>Postura da marca</h3>
+  <p>Nunca condescendente. Nunca genérico. Fala como quem já fez, não como quem ensina teoria. O mentor que te mostra o caminho porque já o percorreu -- e te desafia a ir mais longe.</p>
+</section>
+
+<!-- ═══ 04 POSICIONAMENTO ═══ -->
+<section class="section" id="s04">
+  <span class="section-num">04 // POSICIONAMENTO</span>
+  <h2>A primeira comunidade de elite em Portugal onde a IA trabalha para ti.</h2>
+  <div class="divider"></div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:2rem">
+    <span class="tag tag-cyan">Método Quântico</span>
+    <span class="tag tag-gold">Imersões Incluídas</span>
+    <span class="tag tag-purple">Ferramentas Proprietárias</span>
+  </div>
+
+  <h3>Mapa de posicionamento</h3>
+  <div class="pos-map">
+    <div class="pos-line-x"></div>
+    <div class="pos-line-y"></div>
+    <span class="pos-axis x-left">Genérico</span>
+    <span class="pos-axis x-right">Especializado</span>
+    <span class="pos-axis y-top">Premium</span>
+    <span class="pos-axis" style="left:1rem;bottom:1rem">Acessivel</span>
+
+    <!-- IA Avançada PT -->
+    <div class="pos-dot" style="right:15%;top:18%;background:var(--accent);box-shadow:0 0 16px var(--accent-glow);width:16px;height:16px"></div>
+    <span class="pos-label" style="right:15%;top:18%;color:var(--accent);font-weight:800">IA Avançada PT</span>
+
+    <!-- Competitors -->
+    <div class="pos-dot" style="left:25%;top:55%;background:var(--grey2)"></div>
+    <span class="pos-label" style="left:25%;top:55%;color:var(--grey2)">Cursos Udemy</span>
+
+    <div class="pos-dot" style="left:40%;top:35%;background:var(--grey2)"></div>
+    <span class="pos-label" style="left:40%;top:35%;color:var(--grey2)">Workshops genéricos</span>
+
+    <div class="pos-dot" style="right:30%;top:45%;background:var(--grey2)"></div>
+    <span class="pos-label" style="right:30%;top:45%;color:var(--grey2)">Bootcamps tech</span>
+
+    <div class="pos-dot" style="left:30%;top:70%;background:var(--grey2)"></div>
+    <span class="pos-label" style="left:30%;top:70%;color:var(--grey2)">Tutoriais YouTube</span>
+  </div>
+
+  <h3>Diferenciadores-chave</h3>
+  <ul style="list-style:none;padding:0">
+    <li style="padding:0.5rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">1.</strong> Comunidade viva que evolui mensalmente -- não conteúdo gravado que envelhece</li>
+    <li style="padding:0.5rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">2.</strong> Ferramentas proprietárias (Student Profiler, Briefing Generator, Starter Builder)</li>
+    <li style="padding:0.5rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">3.</strong> Imersões de 48h com resultado funcional garantido</li>
+    <li style="padding:0.5rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">4.</strong> Ponto Socorro -- suporte em directo, ninguém fica bloqueado</li>
+    <li style="padding:0.5rem 0"><strong style="color:var(--accent)">5.</strong> Foco exclusivo em Portugal -- contexto local, língua nativa, rede relevante</li>
+  </ul>
+</section>
+
+<!-- ═══ 05 BRANDSCRIPT ═══ -->
+<section class="section" id="s05">
+  <span class="section-num">05 // BRANDSCRIPT</span>
+  <h2>Framework StoryBrand</h2>
+  <div class="divider"></div>
+  <p class="lead">A narrativa da marca segue o framework StoryBrand de Donald Miller, onde o membro é o herói e a IA Avançada PT é o guia.</p>
+
+  <div class="bs-grid">
+    <div class="bs-card">
+      <h4>O Herói</h4>
+      <p style="font-size:0.85rem">O profissional, empreendedor ou criador português que quer usar IA para transformar o seu trabalho e ganhar vantagem competitiva real.</p>
+    </div>
+    <div class="bs-card">
+      <h4>O Problema</h4>
+      <p style="font-size:0.85rem"><strong style="color:var(--white)">Externo:</strong> Usa IA de nível 1 num mundo de nível 4.<br>
+      <strong style="color:var(--white)">Interno:</strong> Sente que está a ficar para trás enquanto outros avançam.<br>
+      <strong style="color:var(--white)">Filosófico:</strong> Não devia ser preciso anos para dominar algo que muda a cada mês.</p>
+    </div>
+    <div class="bs-card">
+      <h4>O Guia</h4>
+      <p style="font-size:0.85rem">Eurico Alves e a comunidade IA Avançada PT. Empatia (compreende a frustração) + Autoridade (já construiu os sistemas que ensina).</p>
+    </div>
+    <div class="bs-card">
+      <h4>O Plano</h4>
+      <p style="font-size:0.85rem">1. Entra na comunidade<br>2. Participa na imersão de 48h<br>3. Constrói a tua solução com ferramentas proprietárias<br>4. Evolui com a comunidade mensalmente</p>
+    </div>
+    <div class="bs-card">
+      <h4>O CTA</h4>
+      <p style="font-size:0.85rem"><strong style="color:var(--accent)">Directo:</strong> "Entrar na Lista de Espera" / "Quero Entrar -- EUR 188"<br>
+      <strong style="color:var(--grey)">Transitório:</strong> "Receber o Guia Gratuito"</p>
+    </div>
+    <div class="bs-card">
+      <h4>Sucesso vs Falha</h4>
+      <p style="font-size:0.85rem"><strong style="color:var(--lime)">Sucesso:</strong> Solução real em 48h. Vantagem competitiva. Rede de elite. Não fica desactualizado.<br>
+      <strong style="color:var(--magenta)">Falha:</strong> Continua no nível 1. Vê outros avançar. A janela de vantagem fecha.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 06 TRUELINES ═══ -->
+<section class="section" id="s06">
+  <span class="section-num">06 // TRUELINES</span>
+  <h2>Frases verdadeiras e irrefutáveis</h2>
+  <div class="divider"></div>
+  <p class="lead">Cada trueline é uma declaração que define a marca -- impossível de contestar e imediatamente reconhecível.</p>
+
+  <div class="trueline">Não é um curso. Não vai ficar desactualizado amanhã. É a comunidade de elite onde a IA trabalha para ti.</div>
+  <div class="trueline">Em 48 horas, sais com uma solução real, construída por ti, pronta a usar na segunda-feira.</div>
+  <div class="trueline">A maioria usa IA de nível 1. Nós operamos no nível 4 -- onde a IA trabalha para ti, não ao contrário.</div>
+  <div class="trueline">A IA muda todos os meses. A tua formação tem de mudar com ela.</div>
+  <div class="trueline">Quem dominar estas ferramentas agora fica 3 anos à frente de quem esperar mais 6 meses.</div>
+</section>
+
+<!-- ═══ 07 NAMING ═══ -->
+<section class="section" id="s07">
+  <span class="section-num">07 // NAMING</span>
+  <h2>IA Avançada PT</h2>
+  <div class="divider"></div>
+
+  <h3>Análise do nome</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:1.5rem 0">
+    <div class="glass-card">
+      <h4 style="margin-top:0;font-family:var(--font-mono);font-size:0.75rem;color:var(--accent)">IA</h4>
+      <p style="font-size:0.85rem">Inteligência Artificial -- o domínio. Imediatamente reconhecível. Universalmente compreendido.</p>
+    </div>
+    <div class="glass-card">
+      <h4 style="margin-top:0;font-family:var(--font-mono);font-size:0.75rem;color:var(--accent)">AVANCADA</h4>
+      <p style="font-size:0.85rem">Diferenciador de nível. Não é básico, não é genérico. Implica profundidade, domínio técnico, nível 4.</p>
+    </div>
+    <div class="glass-card">
+      <h4 style="margin-top:0;font-family:var(--font-mono);font-size:0.75rem;color:var(--accent)">PT</h4>
+      <p style="font-size:0.85rem">Portugal. Âncora geográfica e cultural. Define o público-alvo e o contexto local de forma inequívoca.</p>
+    </div>
+  </div>
+
+  <h3>Variantes de uso</h3>
+  <table class="contrast-table">
+    <thead>
+      <tr><th>Variante</th><th>Contexto</th><th>Exemplo</th></tr>
+    </thead>
+    <tbody>
+      <tr><td style="color:var(--white);font-weight:600">IA Avançada PT</td><td>Nome completo oficial</td><td>Branding, documentos formais</td></tr>
+      <tr><td style="color:var(--white);font-weight:600">IA_AVANÇADA_PT</td><td>Logótipo técnico / monospace</td><td>Header, watermarks</td></tr>
+      <tr><td style="color:var(--white);font-weight:600">IAPT</td><td>Abreviatura interna</td><td>Comunicação rápida, hashtags</td></tr>
+      <tr><td style="color:var(--white);font-weight:600">Comunidade IA Avançada</td><td>Referência ao produto</td><td>Copy, landing page</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Sub-taglines</h3>
+  <div style="margin:1rem 0;display:flex;flex-direction:column;gap:0.5rem">
+    <span class="tag tag-cyan" style="font-size:0.75rem;padding:0.4rem 0.8rem">Método Quântico. Imersões incluídas.</span>
+    <span class="tag tag-gold" style="font-size:0.75rem;padding:0.4rem 0.8rem">A primeira comunidade de elite em Portugal onde a IA trabalha para ti.</span>
+  </div>
+</section>
+
+<!-- ═══ 08 VOCABULARIO ═══ -->
+<section class="section" id="s08">
+  <span class="section-num">08 // VOCABULÁRIO</span>
+  <h2>Tom de voz e linguagem</h2>
+  <div class="divider"></div>
+  <p class="lead">O tom é directo, técnico mas acessível, desafiador sem ser arrogante. Fala como quem já fez, não como quem ensina teoria.</p>
+
+  <div class="vocab-grid">
+    <div class="vocab-col vocab-use">
+      <h4 style="color:#39FF14;margin-top:0">Palavras que usamos</h4>
+      <ul>
+        <li><strong style="color:var(--white)">Construir</strong> -- não "aprender sobre"</li>
+        <li><strong style="color:var(--white)">Solução real</strong> -- não "exercício"</li>
+        <li><strong style="color:var(--white)">Transformação</strong> -- não "informação"</li>
+        <li><strong style="color:var(--white)">Elite</strong> -- não "premium" (demasiado genérico)</li>
+        <li><strong style="color:var(--white)">Nível 4</strong> -- não "avançado" (mais concreto)</li>
+        <li><strong style="color:var(--white)">Ferramentas proprietárias</strong> -- autoridade técnica</li>
+        <li><strong style="color:var(--white)">Comunidade viva</strong> -- não "plataforma"</li>
+        <li><strong style="color:var(--white)">Imersão</strong> -- não "workshop" ou "aula"</li>
+      </ul>
+    </div>
+    <div class="vocab-col vocab-avoid">
+      <h4 style="color:#FF006E;margin-top:0">Palavras que evitamos</h4>
+      <ul>
+        <li><strong style="color:var(--white)">Curso</strong> -- implica conteúdo estático</li>
+        <li><strong style="color:var(--white)">Fácil</strong> -- desvaloriza o processo</li>
+        <li><strong style="color:var(--white)">Qualquer pessoa pode</strong> -- contradiz "elite"</li>
+        <li><strong style="color:var(--white)">Revolucionário</strong> -- buzzword vazio</li>
+        <li><strong style="color:var(--white)">Disruptivo</strong> -- cliché tech</li>
+        <li><strong style="color:var(--white)">Grátis</strong> -- exceto para lead magnets específicos</li>
+        <li><strong style="color:var(--white)">Automático</strong> -- implica falta de controlo</li>
+        <li><strong style="color:var(--white)">Garantido</strong> -- evitar promessas absolutas</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Exemplos de copy</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0">
+    <div class="glass-card" style="border-color:rgba(255,0,110,0.2)">
+      <div class="type-label" style="color:var(--magenta)">NÃO USAR</div>
+      <p style="font-size:0.85rem">"Aprende IA facilmente com o nosso curso online completo para iniciantes."</p>
+    </div>
+    <div class="glass-card" style="border-color:rgba(0,245,255,0.2)">
+      <div class="type-label" style="color:var(--accent)">CORRECTO</div>
+      <p style="font-size:0.85rem">"Constrói a tua solução em 48 horas. A IA trabalha para ti -- não ao contrário."</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 09 JORNADA DO HEROI ═══ -->
+<section class="section" id="s09">
+  <span class="section-num">09 // JORNADA DO HERÓI</span>
+  <h2>Pipeline da transformação</h2>
+  <div class="divider"></div>
+  <p class="lead">Cada membro percorre uma jornada clara: da descoberta ao resultado concreto.</p>
+
+  <div class="journey-steps">
+    <div class="journey-step">
+      <div>
+        <div class="type-label" style="color:var(--accent)">FASE 01 -- DESCOBERTA</div>
+        <h4 style="margin-top:0.25rem">Reconhece o problema</h4>
+        <p style="font-size:0.85rem">O profissional percebe que usa IA de nível 1 e que outros avançam mais depressa. Encontra a IA Avançada PT e identifica-se com o posicionamento.</p>
+      </div>
+    </div>
+    <div class="journey-step">
+      <div>
+        <div class="type-label" style="color:var(--gold)">FASE 02 -- IMERSÃO</div>
+        <h4 style="margin-top:0.25rem">48 horas de construção</h4>
+        <p style="font-size:0.85rem">Participa na imersão de fim de semana. Usa o Student Profiler para diagnosticar, o Briefing Generator para estruturar e o Starter Builder para executar. Constrói a primeira solução real.</p>
+      </div>
+    </div>
+    <div class="journey-step">
+      <div>
+        <div class="type-label" style="color:var(--purple)">FASE 03 -- APLICAÇÃO</div>
+        <h4 style="margin-top:0.25rem">Resultado no dia seguinte</h4>
+        <p style="font-size:0.85rem">Na segunda-feira, a solução está em produção. O membro vê resultados concretos no seu trabalho e percebe o poder do método.</p>
+      </div>
+    </div>
+    <div class="journey-step">
+      <div>
+        <div class="type-label" style="color:var(--lime)">FASE 04 -- EVOLUÇÃO</div>
+        <h4 style="margin-top:0.25rem">Comunidade contínua</h4>
+        <p style="font-size:0.85rem">Participa nas sessões mensais. A comunidade evolui com o mercado. O membro está sempre actualizado e constrói novas soluções a cada imersão.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 10 DEPOIMENTOS ═══ -->
+<section class="section" id="s10">
+  <span class="section-num">10 // DEPOIMENTOS</span>
+  <h2>Prova social</h2>
+  <div class="divider"></div>
+  <p class="lead">Testemunhos reais de membros e clientes que experienciaram a transformação.</p>
+
+  <div class="testi-grid">
+    <div class="testi-card">
+      <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="quote">"O trabalho foi excelente, rápido, eficiente -- dentro daquilo que se pretendia. Recomendo sem hesitar."</div>
+      <div class="author">
+        <div class="avatar" style="background:linear-gradient(135deg,var(--cyan),var(--purple))">TC</div>
+        <div>
+          <div class="author-name">Tulio Costa</div>
+          <div class="author-role">Restauração & Adega Vinícola -- Algarve, PT</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="quote">"Ferramenta eficaz, de grande utilidade diária e muito intuitiva. Facilitou, e muito, o meu dia a dia na tradução de conteúdos de investigação académica."</div>
+      <div class="author">
+        <div class="avatar" style="background:linear-gradient(135deg,var(--gold),var(--magenta))">RC</div>
+        <div>
+          <div class="author-name">R. Corvo</div>
+          <div class="author-role">Professor -- Ministério da Educação, PT</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card" style="border-style:dashed">
+      <div class="stars" style="opacity:0.3">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="quote" style="opacity:0.4">"[RESULTADO do membro após a imersão. Descrever a transformação concreta que obteve em 48 horas.]"</div>
+      <div class="author">
+        <div class="avatar" style="background:var(--grey3)">?</div>
+        <div>
+          <div class="author-name" style="color:var(--grey2)">[NOME]</div>
+          <div class="author-role">[AREA] -- Portugal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:0.75rem;color:var(--grey2);margin-top:1rem;font-family:var(--font-mono)">NOTA: Os placeholders serão substituídos por depoimentos reais conforme forem recolhidos.</p>
+</section>
+
+<!-- ═══ 11 MARCAS & CORES ═══ -->
+<section class="section" id="s11">
+  <span class="section-num">11 // MARCAS & CORES</span>
+  <h2>Logótipo</h2>
+  <div class="divider"></div>
+
+  <!-- === LOGO SHOWCASE === -->
+  <p class="lead">O logótipo da IA Avançada PT combina o conceito de "Quantum Node" -- um nó de rede neural dentro de uma estrutura hexagonal -- com a letra "A" estilizada ao centro. O ponto dourado no topo representa a direcção ascendente, o avanço.</p>
+
+  <h3>Logo completo -- fundo escuro</h3>
+  <div class="glass-card" style="padding:2.5rem;text-align:center;background:#04040A;margin-bottom:1.5rem">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" style="max-width:400px;width:100%">
+      <g transform="translate(50, 50)">
+        <polygon points="0,-38 33,-19 33,19 0,38 -33,19 -33,-19" fill="none" stroke="#00F5FF" stroke-width="1.8" opacity="0.35"/>
+        <polygon points="0,-26 22.5,-13 22.5,13 0,26 -22.5,13 -22.5,-13" fill="none" stroke="#00F5FF" stroke-width="1.2" opacity="0.2" transform="rotate(30)"/>
+        <line x1="0" y1="-38" x2="0" y2="-18" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+        <line x1="33" y1="-19" x2="15" y2="-9" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+        <line x1="33" y1="19" x2="15" y2="9" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+        <line x1="0" y1="38" x2="0" y2="18" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+        <line x1="-33" y1="19" x2="-15" y2="9" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+        <line x1="-33" y1="-19" x2="-15" y2="-9" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+        <line x1="-12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="2.8" stroke-linecap="round"/>
+        <line x1="12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="2.8" stroke-linecap="round"/>
+        <line x1="-7" y1="4" x2="7" y2="4" stroke="#00F5FF" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="0" cy="-38" r="2.5" fill="#00F5FF" opacity="0.7"/>
+        <circle cx="33" cy="-19" r="2.5" fill="#00F5FF" opacity="0.7"/>
+        <circle cx="33" cy="19" r="2" fill="#00F5FF" opacity="0.5"/>
+        <circle cx="0" cy="38" r="2.5" fill="#00F5FF" opacity="0.7"/>
+        <circle cx="-33" cy="19" r="2" fill="#00F5FF" opacity="0.5"/>
+        <circle cx="-33" cy="-19" r="2.5" fill="#00F5FF" opacity="0.7"/>
+        <circle cx="0" cy="-16" r="3" fill="#FFB800" opacity="0.9"/>
+        <line x1="0" y1="-42" x2="0" y2="-48" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+        <line x1="-3" y1="-45" x2="0" y2="-48" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+        <line x1="3" y1="-45" x2="0" y2="-48" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+      </g>
+      <g transform="translate(105, 50)">
+        <text x="0" y="-4" fill="#F0F4FF" font-family="'JetBrains Mono','Fira Code',monospace" font-size="22" font-weight="800" letter-spacing="0.12em">IA AVAN<tspan fill="#00F5FF">C</tspan>ADA</text>
+        <text x="0" y="20" fill="#00F5FF" font-family="'JetBrains Mono','Fira Code',monospace" font-size="16" font-weight="800" letter-spacing="0.2em">PT</text>
+        <line x1="0" y1="25" x2="38" y2="25" stroke="#FFB800" stroke-width="2" stroke-linecap="round"/>
+      </g>
+    </svg>
+  </div>
+
+  <h3>Logo completo -- fundo claro</h3>
+  <div class="glass-card" style="padding:2.5rem;text-align:center;background:#F0F4FF;margin-bottom:1.5rem;border-color:rgba(0,0,0,0.1)">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" style="max-width:400px;width:100%">
+      <g transform="translate(50, 50)">
+        <polygon points="0,-38 33,-19 33,19 0,38 -33,19 -33,-19" fill="none" stroke="#04040A" stroke-width="1.8" opacity="0.3"/>
+        <polygon points="0,-26 22.5,-13 22.5,13 0,26 -22.5,13 -22.5,-13" fill="none" stroke="#04040A" stroke-width="1.2" opacity="0.15" transform="rotate(30)"/>
+        <line x1="0" y1="-38" x2="0" y2="-18" stroke="#04040A" stroke-width="1" opacity="0.3"/>
+        <line x1="33" y1="-19" x2="15" y2="-9" stroke="#04040A" stroke-width="1" opacity="0.3"/>
+        <line x1="33" y1="19" x2="15" y2="9" stroke="#04040A" stroke-width="1" opacity="0.3"/>
+        <line x1="0" y1="38" x2="0" y2="18" stroke="#04040A" stroke-width="1" opacity="0.3"/>
+        <line x1="-33" y1="19" x2="-15" y2="9" stroke="#04040A" stroke-width="1" opacity="0.3"/>
+        <line x1="-33" y1="-19" x2="-15" y2="-9" stroke="#04040A" stroke-width="1" opacity="0.3"/>
+        <line x1="-12" y1="16" x2="0" y2="-16" stroke="#04040A" stroke-width="2.8" stroke-linecap="round"/>
+        <line x1="12" y1="16" x2="0" y2="-16" stroke="#04040A" stroke-width="2.8" stroke-linecap="round"/>
+        <line x1="-7" y1="4" x2="7" y2="4" stroke="#04040A" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="0" cy="-38" r="2.5" fill="#04040A" opacity="0.5"/>
+        <circle cx="33" cy="-19" r="2.5" fill="#04040A" opacity="0.5"/>
+        <circle cx="33" cy="19" r="2" fill="#04040A" opacity="0.35"/>
+        <circle cx="0" cy="38" r="2.5" fill="#04040A" opacity="0.5"/>
+        <circle cx="-33" cy="19" r="2" fill="#04040A" opacity="0.35"/>
+        <circle cx="-33" cy="-19" r="2.5" fill="#04040A" opacity="0.5"/>
+        <circle cx="0" cy="-16" r="3" fill="#FFB800" opacity="0.9"/>
+        <line x1="0" y1="-42" x2="0" y2="-48" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+        <line x1="-3" y1="-45" x2="0" y2="-48" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+        <line x1="3" y1="-45" x2="0" y2="-48" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+      </g>
+      <g transform="translate(105, 50)">
+        <text x="0" y="-4" fill="#04040A" font-family="'JetBrains Mono','Fira Code',monospace" font-size="22" font-weight="800" letter-spacing="0.12em">IA AVAN<tspan fill="#9D00FF">C</tspan>ADA</text>
+        <text x="0" y="20" fill="#04040A" font-family="'JetBrains Mono','Fira Code',monospace" font-size="16" font-weight="800" letter-spacing="0.2em">PT</text>
+        <line x1="0" y1="25" x2="38" y2="25" stroke="#FFB800" stroke-width="2" stroke-linecap="round"/>
+      </g>
+    </svg>
+  </div>
+
+  <h3>Logo compacto / icone</h3>
+  <div style="display:flex;gap:2rem;align-items:center;margin:1.5rem 0;flex-wrap:wrap">
+    <!-- 64px -->
+    <div style="text-align:center">
+      <div class="glass-card" style="padding:1.5rem;display:inline-block;background:#04040A">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
+          <g transform="translate(50, 50)">
+            <polygon points="0,-38 33,-19 33,19 0,38 -33,19 -33,-19" fill="none" stroke="#00F5FF" stroke-width="2" opacity="0.4"/>
+            <line x1="-12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="-7" y1="4" x2="7" y2="4" stroke="#00F5FF" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="0" cy="-38" r="2.5" fill="#00F5FF" opacity="0.6"/>
+            <circle cx="33" cy="-19" r="2.5" fill="#00F5FF" opacity="0.6"/>
+            <circle cx="33" cy="19" r="2" fill="#00F5FF" opacity="0.4"/>
+            <circle cx="0" cy="38" r="2.5" fill="#00F5FF" opacity="0.6"/>
+            <circle cx="-33" cy="19" r="2" fill="#00F5FF" opacity="0.4"/>
+            <circle cx="-33" cy="-19" r="2.5" fill="#00F5FF" opacity="0.6"/>
+            <circle cx="0" cy="-16" r="3.5" fill="#FFB800" opacity="0.9"/>
+          </g>
+        </svg>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--grey2);margin-top:0.5rem">64px</div>
+    </div>
+    <!-- 32px -->
+    <div style="text-align:center">
+      <div class="glass-card" style="padding:1.5rem;display:inline-block;background:#04040A">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
+          <g transform="translate(50, 50)">
+            <polygon points="0,-38 33,-19 33,19 0,38 -33,19 -33,-19" fill="none" stroke="#00F5FF" stroke-width="3" opacity="0.5"/>
+            <line x1="-12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="4.5" stroke-linecap="round"/>
+            <line x1="12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="4.5" stroke-linecap="round"/>
+            <line x1="-7" y1="4" x2="7" y2="4" stroke="#00F5FF" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="0" cy="-16" r="5" fill="#FFB800" opacity="0.9"/>
+          </g>
+        </svg>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--grey2);margin-top:0.5rem">32px</div>
+    </div>
+    <!-- 16px favicon -->
+    <div style="text-align:center">
+      <div class="glass-card" style="padding:1.5rem;display:inline-block;background:#04040A">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="16" height="16">
+          <g transform="translate(50, 50)">
+            <polygon points="0,-38 33,-19 33,19 0,38 -33,19 -33,-19" fill="none" stroke="#00F5FF" stroke-width="5" opacity="0.5"/>
+            <line x1="-12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="7" stroke-linecap="round"/>
+            <line x1="12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="7" stroke-linecap="round"/>
+            <line x1="-7" y1="4" x2="7" y2="4" stroke="#00F5FF" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="0" cy="-16" r="7" fill="#FFB800"/>
+          </g>
+        </svg>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--grey2);margin-top:0.5rem">16px (favicon)</div>
+    </div>
+  </div>
+
+  <h3>Espaco de proteccao (clear space)</h3>
+  <div class="glass-card" style="padding:2.5rem;text-align:center;margin-bottom:1.5rem">
+    <div style="display:inline-block;position:relative;padding:2rem;border:1px dashed var(--cyan);border-radius:var(--radius)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="48" height="48" style="display:block;margin:0 auto">
+        <g transform="translate(50, 50)">
+          <polygon points="0,-38 33,-19 33,19 0,38 -33,19 -33,-19" fill="none" stroke="#00F5FF" stroke-width="2" opacity="0.4"/>
+          <line x1="-12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="-7" y1="4" x2="7" y2="4" stroke="#00F5FF" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="0" cy="-16" r="3.5" fill="#FFB800" opacity="0.9"/>
+        </g>
+      </svg>
+      <div style="position:absolute;top:0.25rem;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:0.55rem;color:var(--cyan);opacity:0.7">1x</div>
+      <div style="position:absolute;bottom:0.25rem;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:0.55rem;color:var(--cyan);opacity:0.7">1x</div>
+      <div style="position:absolute;left:0.35rem;top:50%;transform:translateY(-50%);font-family:var(--font-mono);font-size:0.55rem;color:var(--cyan);opacity:0.7">1x</div>
+      <div style="position:absolute;right:0.35rem;top:50%;transform:translateY(-50%);font-family:var(--font-mono);font-size:0.55rem;color:var(--cyan);opacity:0.7">1x</div>
+    </div>
+    <p style="font-size:0.75rem;color:var(--grey2);margin-top:1rem;font-family:var(--font-mono)">Zona minima de proteccao = 1x a altura do simbolo hexagonal em todas as direccoes</p>
+  </div>
+
+  <h3>Usos correctos vs incorrectos</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0">
+    <div class="glass-card" style="border-color:rgba(57,255,20,0.2)">
+      <div class="type-label" style="color:var(--lime)">CORRECTO</div>
+      <ul style="list-style:none;padding:0;font-size:0.82rem">
+        <li style="padding:0.3rem 0">Simbolo + wordmark na horizontal (composicao primaria)</li>
+        <li style="padding:0.3rem 0">Simbolo sozinho para favicon, avatar e espacos reduzidos</li>
+        <li style="padding:0.3rem 0">Versao escura sobre fundo #04040A (uso primario)</li>
+        <li style="padding:0.3rem 0">Versao invertida sobre fundo claro</li>
+        <li style="padding:0.3rem 0">Respeitar espaco de proteccao minimo (1x)</li>
+      </ul>
+    </div>
+    <div class="glass-card" style="border-color:rgba(255,0,110,0.2)">
+      <div class="type-label" style="color:var(--magenta)">INCORRECTO</div>
+      <ul style="list-style:none;padding:0;font-size:0.82rem">
+        <li style="padding:0.3rem 0">Alterar proporcoes do simbolo ou do wordmark</li>
+        <li style="padding:0.3rem 0">Usar cores nao-aprovadas no simbolo</li>
+        <li style="padding:0.3rem 0">Colocar sobre fundos com muito ruido visual</li>
+        <li style="padding:0.3rem 0">Reduzir abaixo de 16px (perde legibilidade)</li>
+        <li style="padding:0.3rem 0">Adicionar sombras, gradientes ou efeitos ao simbolo</li>
+      </ul>
+    </div>
+  </div>
+
+  <p style="font-size:0.8rem;margin:1rem 0"><a href="logo.svg" download style="color:var(--accent);text-decoration:none;font-family:var(--font-mono);font-weight:700;letter-spacing:0.05em">DOWNLOAD logo.svg</a></p>
+
+  <div class="divider"></div>
+
+  <h2>Paleta de cores</h2>
+  <p class="lead">A paleta da IA Avançada PT é construída sobre um fundo escuro (Dark Cockpit) com cores de alta energia e contraste. Cada cor tem um propósito específico.</p>
+
+  <h3>Cores principais</h3>
+  <div class="palette-grid">
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#04040A"><span style="color:#F0F4FF;font-family:var(--font-mono);font-size:0.7rem;font-weight:700">Bg</span></div>
+      <div class="swatch-info"><span class="swatch-name">Background</span><span class="swatch-hex">#04040A</span><span class="swatch-var">--bg</span></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#F0F4FF"><span style="color:#04040A;font-family:var(--font-mono);font-size:0.7rem;font-weight:700">Aa</span></div>
+      <div class="swatch-info"><span class="swatch-name">White</span><span class="swatch-hex">#F0F4FF</span><span class="swatch-var">--white</span></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#8892A4"><span style="color:#04040A;font-family:var(--font-mono);font-size:0.7rem;font-weight:700">Aa</span></div>
+      <div class="swatch-info"><span class="swatch-name">Grey</span><span class="swatch-hex">#8892A4</span><span class="swatch-var">--grey</span></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#4A5568"><span style="color:#F0F4FF;font-family:var(--font-mono);font-size:0.7rem;font-weight:700">Aa</span></div>
+      <div class="swatch-info"><span class="swatch-name">Grey 2</span><span class="swatch-hex">#4A5568</span><span class="swatch-var">--grey2</span></div>
+    </div>
+  </div>
+
+  <h3>Cores de acento</h3>
+  <div class="palette-grid">
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#00F5FF"><span style="color:#04040A;font-family:var(--font-mono);font-size:0.7rem;font-weight:700">Aa</span></div>
+      <div class="swatch-info"><span class="swatch-name">Cyan</span><span class="swatch-hex">#00F5FF</span><span class="swatch-var">--cyan</span><span class="swatch-var" style="color:var(--accent)">Cor principal / acento (accent)</span></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#FFB800"><span style="color:#04040A;font-family:var(--font-mono);font-size:0.7rem;font-weight:700">Aa</span></div>
+      <div class="swatch-info"><span class="swatch-name">Gold</span><span class="swatch-hex">#FFB800</span><span class="swatch-var">--gold</span><span class="swatch-var" style="color:var(--gold)">Premium / elite</span></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#9D00FF"><span style="color:#F0F4FF;font-family:var(--font-mono);font-size:0.7rem;font-weight:700">Aa</span></div>
+      <div class="swatch-info"><span class="swatch-name">Purple</span><span class="swatch-hex">#9D00FF</span><span class="swatch-var">--purple</span><span class="swatch-var" style="color:var(--purple)">Profundidade / tech</span></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#FF006E"><span style="color:#F0F4FF;font-family:var(--font-mono);font-size:0.7rem;font-weight:700">Aa</span></div>
+      <div class="swatch-info"><span class="swatch-name">Magenta</span><span class="swatch-hex">#FF006E</span><span class="swatch-var">--magenta</span><span class="swatch-var" style="color:var(--magenta)">Energia / urgência</span></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:#39FF14"><span style="color:#04040A;font-family:var(--font-mono);font-size:0.7rem;font-weight:700">Aa</span></div>
+      <div class="swatch-info"><span class="swatch-name">Lime</span><span class="swatch-hex">#39FF14</span><span class="swatch-var">--lime</span><span class="swatch-var" style="color:var(--lime)">Sucesso / confirmação</span></div>
+    </div>
+  </div>
+
+  <h3>Superfícies glass</h3>
+  <div class="palette-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)"><span style="color:#F0F4FF;font-family:var(--font-mono);font-size:0.65rem;font-weight:700">Glass</span></div>
+      <div class="swatch-info"><span class="swatch-name">Glass Default</span><span class="swatch-hex">rgba(255,255,255,0.03)</span><span class="swatch-var">--glass</span></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-block" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)"><span style="color:#8892A4;font-family:var(--font-mono);font-size:0.65rem;font-weight:700">Border</span></div>
+      <div class="swatch-info"><span class="swatch-name">Glass Border</span><span class="swatch-hex">rgba(255,255,255,0.08)</span><span class="swatch-var">--glass-border</span></div>
+    </div>
+  </div>
+
+  <h3>Ratios de contraste (WCAG AA)</h3>
+  <table class="contrast-table">
+    <thead>
+      <tr><th>Combinação</th><th>Ratio</th><th>WCAG AA</th><th>WCAG AAA</th></tr>
+    </thead>
+    <tbody>
+      <tr><td style="color:var(--white)">#F0F4FF sobre #04040A</td><td>18.2:1</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+      <tr><td style="color:var(--grey)">#8892A4 sobre #04040A</td><td>6.8:1</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+      <tr><td style="color:var(--cyan)">#00F5FF sobre #04040A</td><td>12.4:1</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+      <tr><td style="color:var(--gold)">#FFB800 sobre #04040A</td><td>10.8:1</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+      <tr><td style="color:var(--magenta)">#FF006E sobre #04040A</td><td>5.1:1</td><td class="pass">PASS</td><td class="fail">FAIL</td></tr>
+      <tr><td style="color:var(--purple)">#9D00FF sobre #04040A</td><td>3.6:1</td><td class="fail">FAIL*</td><td class="fail">FAIL</td></tr>
+      <tr><td style="color:var(--grey2)">#4A5568 sobre #04040A</td><td>3.2:1</td><td class="fail">FAIL*</td><td class="fail">FAIL</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.72rem;color:var(--grey2);margin-top:0.5rem">* Usar apenas em texto decorativo, labels secundários ou elementos de grande dimensão (18pt+). Nunca como cor principal de texto de leitura.</p>
+
+  <h3>Uso correcto vs incorrecto</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0">
+    <div class="glass-card" style="border-color:rgba(57,255,20,0.2)">
+      <div class="type-label" style="color:var(--lime)">CORRECTO</div>
+      <ul style="list-style:none;padding:0;font-size:0.82rem">
+        <li style="padding:0.3rem 0">Cyan como cor de acento principal e CTAs</li>
+        <li style="padding:0.3rem 0">Gold para elementos premium e destaques</li>
+        <li style="padding:0.3rem 0">Magenta para urgência e alertas</li>
+        <li style="padding:0.3rem 0">Purple para gradientes e profundidade</li>
+        <li style="padding:0.3rem 0">Lime (#39FF14) para sucesso e confirmação</li>
+      </ul>
+    </div>
+    <div class="glass-card" style="border-color:rgba(255,0,110,0.2)">
+      <div class="type-label" style="color:var(--magenta)">INCORRECTO</div>
+      <ul style="list-style:none;padding:0;font-size:0.82rem">
+        <li style="padding:0.3rem 0">Purple ou Grey2 como texto de leitura</li>
+        <li style="padding:0.3rem 0">Mais de 2 cores de acento no mesmo componente</li>
+        <li style="padding:0.3rem 0">Fundos claros (quebra a estética Dark Cockpit)</li>
+        <li style="padding:0.3rem 0">Lime escuro (#4F604F) -- usar #39FF14</li>
+        <li style="padding:0.3rem 0">Cores sem glow/shadow em elementos interactivos</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 12 TIPOGRAFIA ═══ -->
+<section class="section" id="s12">
+  <span class="section-num">12 // TIPOGRAFIA</span>
+  <h2>Hierarquia tipográfica</h2>
+  <div class="divider"></div>
+
+  <h3>Inter -- Corpo e UI</h3>
+  <p>Fonte primária para todo o texto de leitura, parágrafo e interface. Limpa, legível, neutra.</p>
+
+  <div class="type-specimen">
+    <div class="type-label">Display / H1</div>
+    <div class="type-sample" style="font-family:var(--font-sans);font-size:2.4rem;font-weight:900;letter-spacing:-0.03em;line-height:1.1">A IA trabalha para ti</div>
+    <div class="type-meta">Inter 900 (Black) -- 2.4rem -- letter-spacing: -0.03em -- line-height: 1.1</div>
+  </div>
+  <div class="type-specimen">
+    <div class="type-label">Heading / H2</div>
+    <div class="type-sample" style="font-family:var(--font-sans);font-size:1.6rem;font-weight:800;letter-spacing:-0.02em;line-height:1.15">Comunidade de elite em Portugal</div>
+    <div class="type-meta">Inter 800 (ExtraBold) -- 1.6rem -- letter-spacing: -0.02em</div>
+  </div>
+  <div class="type-specimen">
+    <div class="type-label">Subheading / H3</div>
+    <div class="type-sample" style="font-family:var(--font-sans);font-size:1.15rem;font-weight:700;line-height:1.3">Ferramentas proprietárias que transformam</div>
+    <div class="type-meta">Inter 700 (Bold) -- 1.15rem -- line-height: 1.3</div>
+  </div>
+  <div class="type-specimen">
+    <div class="type-label">Body</div>
+    <div class="type-sample" style="font-family:var(--font-sans);font-size:0.95rem;font-weight:400;color:var(--grey);line-height:1.8">A maioria das pessoas faz exactamente o mesmo: pede ao ChatGPT para escrever um email. Enquanto isso, outros constroem sistemas que trabalham por eles 24 horas por dia.</div>
+    <div class="type-meta">Inter 400 (Regular) -- 0.95rem -- line-height: 1.8 -- color: --grey</div>
+  </div>
+  <div class="type-specimen">
+    <div class="type-label">Small / Caption</div>
+    <div class="type-sample" style="font-family:var(--font-sans);font-size:0.82rem;font-weight:300;color:var(--grey2);line-height:1.6">Vagas limitadas -- máximo 12 membros por imersão</div>
+    <div class="type-meta">Inter 300 (Light) -- 0.82rem -- color: --grey2</div>
+  </div>
+
+  <h3>JetBrains Mono -- Títulos técnicos, labels e código</h3>
+  <p>Fonte monospace para badges, section tags, dados numéricos, código e elementos que transmitem autoridade técnica.</p>
+
+  <div class="type-specimen">
+    <div class="type-label">Tech Display</div>
+    <div class="type-sample" style="font-family:var(--font-mono);font-size:1.8rem;font-weight:800;letter-spacing:0.05em;color:var(--accent)">IA_AVANCADA_PT</div>
+    <div class="type-meta">JetBrains Mono 800 -- 1.8rem -- letter-spacing: 0.05em</div>
+  </div>
+  <div class="type-specimen">
+    <div class="type-label">Section Tag</div>
+    <div class="type-sample" style="font-family:var(--font-mono);font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent)">// O MÉTODO</div>
+    <div class="type-meta">JetBrains Mono 700 -- 0.7rem -- letter-spacing: 0.15em -- uppercase</div>
+  </div>
+  <div class="type-specimen">
+    <div class="type-label">Badge / Label</div>
+    <div class="type-sample" style="font-family:var(--font-mono);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey2)">DIAGNÓSTICO</div>
+    <div class="type-meta">JetBrains Mono 700 -- 0.65rem -- letter-spacing: 0.1em -- uppercase</div>
+  </div>
+  <div class="type-specimen">
+    <div class="type-label">Code / Data</div>
+    <div class="type-sample" style="font-family:var(--font-mono);font-size:0.85rem;font-weight:400;color:var(--grey)">const ACCENT = '#00F5FF';</div>
+    <div class="type-meta">JetBrains Mono 400 -- 0.85rem -- inline code</div>
+  </div>
+
+  <h3>Escala tipográfica</h3>
+  <table class="contrast-table">
+    <thead>
+      <tr><th>Nivel</th><th>Tamanho</th><th>Peso</th><th>Fonte</th><th>Uso</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Display</td><td>2.4rem</td><td>900</td><td>Inter</td><td>Hero headlines</td></tr>
+      <tr><td>H1</td><td>2.0rem</td><td>800</td><td>Inter</td><td>Page titles</td></tr>
+      <tr><td>H2</td><td>1.6rem</td><td>800</td><td>Inter</td><td>Section titles</td></tr>
+      <tr><td>H3</td><td>1.15rem</td><td>700</td><td>Inter</td><td>Subsections</td></tr>
+      <tr><td>H4</td><td>0.95rem</td><td>700</td><td>Inter</td><td>Card titles</td></tr>
+      <tr><td>Body</td><td>0.95rem</td><td>400</td><td>Inter</td><td>Paragraphs</td></tr>
+      <tr><td>Small</td><td>0.82rem</td><td>300-400</td><td>Inter</td><td>Captions, notes</td></tr>
+      <tr><td>Tech Display</td><td>1.8rem</td><td>800</td><td>JetBrains</td><td>Logo, brand marks</td></tr>
+      <tr><td>Tag</td><td>0.7rem</td><td>700</td><td>JetBrains</td><td>Section tags</td></tr>
+      <tr><td>Label</td><td>0.65rem</td><td>700</td><td>JetBrains</td><td>Badges, chips</td></tr>
+      <tr><td>Code</td><td>0.85rem</td><td>400</td><td>JetBrains</td><td>Inline code</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══ 13 GLASSMORPHISM ═══ -->
+<section class="section" id="s13">
+  <span class="section-num">13 // GLASSMORPHISM</span>
+  <h2>Sistema de superfícies</h2>
+  <div class="divider"></div>
+  <p class="lead">O glassmorphism define a linguagem visual de todas as superfícies elevadas. Cada nível tem propriedades específicas que comunicam hierarquia.</p>
+
+  <div class="glass-demo-grid">
+    <div class="glass-demo" style="background:var(--glass);border:1px solid var(--glass-border)">
+      <div class="label" style="color:var(--accent)">Glass Default</div>
+      <div class="value">background: rgba(255,255,255,0.03)</div>
+      <div class="value">border: 1px solid rgba(255,255,255,0.08)</div>
+      <div class="value">Uso: Cards, containers, secções</div>
+    </div>
+    <div class="glass-demo" style="background:var(--glass-hover);border:1px solid var(--glass-border-hover)">
+      <div class="label" style="color:var(--accent)">Glass Hover</div>
+      <div class="value">background: rgba(255,255,255,0.06)</div>
+      <div class="value">border: rgba(255,255,255,0.15)</div>
+      <div class="value">Uso: Estado hover de cards</div>
+    </div>
+    <div class="glass-demo" style="background:rgba(4,4,10,0.7);backdrop-filter:blur(20px);border:1px solid var(--glass-border)">
+      <div class="label" style="color:var(--accent)">Glass Overlay</div>
+      <div class="value">background: rgba(4,4,10,0.7)</div>
+      <div class="value">backdrop-filter: blur(20px)</div>
+      <div class="value">Uso: Nav, modals, overlays</div>
+    </div>
+    <div class="glass-demo" style="background:rgba(0,245,255,0.04);border:1px solid rgba(0,245,255,0.15)">
+      <div class="label" style="color:var(--accent)">Glass Tinted (Cyan)</div>
+      <div class="value">background: rgba(0,245,255,0.04)</div>
+      <div class="value">border: rgba(0,245,255,0.15)</div>
+      <div class="value">Uso: Cards com acento de cor</div>
+    </div>
+  </div>
+
+  <h3>Regras de uso</h3>
+  <ul style="list-style:none;padding:0">
+    <li style="padding:0.5rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">1.</strong> Nunca empilhar mais de 2 níveis de glass (evita sobreposição opaca)</li>
+    <li style="padding:0.5rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">2.</strong> backdrop-filter: blur() apenas em elementos fixos (nav, modals) -- performance</li>
+    <li style="padding:0.5rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">3.</strong> Glass tinted (com cor) apenas para destaque -- máximo 1 por grupo visual</li>
+    <li style="padding:0.5rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">4.</strong> Todos os glass cards devem ter transição de hover (border-color muda)</li>
+    <li style="padding:0.5rem 0"><strong style="color:var(--accent)">5.</strong> Border radius: 12px para cards, 6px para botões/inputs, 3px para badges</li>
+  </ul>
+
+  <h3>Espaçamento</h3>
+  <div class="spacing-demo">
+    <div class="spacing-row"><span class="spacing-label">4px (0.25rem)</span><div class="spacing-bar" style="width:16px"></div><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--grey2)">--space-1</span></div>
+    <div class="spacing-row"><span class="spacing-label">8px (0.5rem)</span><div class="spacing-bar" style="width:32px"></div><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--grey2)">--space-2</span></div>
+    <div class="spacing-row"><span class="spacing-label">12px (0.75rem)</span><div class="spacing-bar" style="width:48px"></div><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--grey2)">--space-3</span></div>
+    <div class="spacing-row"><span class="spacing-label">16px (1rem)</span><div class="spacing-bar" style="width:64px"></div><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--grey2)">--space-4</span></div>
+    <div class="spacing-row"><span class="spacing-label">24px (1.5rem)</span><div class="spacing-bar" style="width:96px"></div><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--grey2)">--space-6</span></div>
+    <div class="spacing-row"><span class="spacing-label">32px (2rem)</span><div class="spacing-bar" style="width:128px"></div><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--grey2)">--space-8</span></div>
+    <div class="spacing-row"><span class="spacing-label">48px (3rem)</span><div class="spacing-bar" style="width:192px"></div><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--grey2)">--space-12</span></div>
+    <div class="spacing-row"><span class="spacing-label">64px (4rem)</span><div class="spacing-bar" style="width:256px"></div><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--grey2)">--space-16</span></div>
+  </div>
+</section>
+
+<!-- ═══ 14 COMPONENTES ═══ -->
+<section class="section" id="s14">
+  <span class="section-num">14 // COMPONENTES</span>
+  <h2>Componentes UI</h2>
+  <div class="divider"></div>
+
+  <h3>Botões</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:1rem;margin:1.5rem 0;align-items:center">
+    <button class="btn-demo btn-primary">Entrar Agora</button>
+    <button class="btn-demo btn-ghost">Ver Programa</button>
+    <button class="btn-demo btn-disabled" disabled>Indisponível</button>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:1rem;margin:1rem 0;align-items:center">
+    <button class="btn-demo btn-primary" style="font-size:0.65rem;padding:0.45rem 1rem">Small</button>
+    <button class="btn-demo btn-primary">Default</button>
+    <button class="btn-demo btn-primary" style="font-size:0.88rem;padding:0.85rem 2rem">Large</button>
+  </div>
+
+  <h3>Badges & Tags</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:1.5rem 0;align-items:center">
+    <span class="badge-demo tag-cyan">Cyan</span>
+    <span class="badge-demo tag-gold">Gold</span>
+    <span class="badge-demo tag-purple">Purple</span>
+    <span class="badge-demo tag-magenta">Magenta</span>
+    <span class="badge-demo tag-lime">Lime</span>
+    <span class="badge-demo" style="background:var(--accent);color:var(--bg);border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:0.6rem">12</span>
+  </div>
+
+  <h3>Inputs</h3>
+  <div style="display:flex;flex-direction:column;gap:1rem;margin:1.5rem 0">
+    <input class="input-demo" type="text" placeholder="Email"/>
+    <input class="input-demo" type="text" value="eurico@iaavancada.pt" style="border-color:var(--accent)"/>
+    <input class="input-demo" type="text" placeholder="Desactivado" disabled style="opacity:0.35" aria-label="Campo desactivado"/>
+  </div>
+
+  <h3>Card</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin:1.5rem 0">
+    <div class="card-demo">
+      <div style="font-family:var(--font-mono);font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:0.75rem">DIAGNÓSTICO</div>
+      <h4 style="margin-top:0">Student Profiler</h4>
+      <p style="font-size:0.85rem;color:var(--grey);margin:0.75rem 0">Diagnóstico estratégico psicológico e técnico. Identifica a tua "dor" real.</p>
+      <button class="btn-demo btn-ghost" style="font-size:0.65rem;padding:0.4rem 1rem;margin-top:0.5rem">Saber Mais</button>
+    </div>
+    <div class="card-demo" style="border-color:rgba(255,184,0,0.2)">
+      <div style="font-family:var(--font-mono);font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">PREMIUM</div>
+      <h4 style="margin-top:0">Imersão Privada</h4>
+      <p style="font-size:0.85rem;color:var(--grey);margin:0.75rem 0">2 dias ao teu ritmo, nas tuas datas. Acompanhamento individual.</p>
+      <button class="btn-demo btn-primary" style="font-size:0.65rem;padding:0.4rem 1rem;margin-top:0.5rem;background:var(--gold);box-shadow:0 0 20px rgba(255,184,0,0.2)">Falar com Eurico</button>
+    </div>
+  </div>
+
+  <h3>Listas e indicadores</h3>
+  <div class="glass-card" style="max-width:400px">
+    <ul style="list-style:none;padding:0">
+      <li style="padding:0.5rem 0;border-bottom:1px solid var(--glass-border);display:flex;gap:0.75rem;align-items:center">
+        <span style="color:var(--accent);font-weight:700">&#10003;</span>
+        <span style="color:var(--grey);font-size:0.88rem">Comunidade privada IA Avançada PT</span>
+      </li>
+      <li style="padding:0.5rem 0;border-bottom:1px solid var(--glass-border);display:flex;gap:0.75rem;align-items:center">
+        <span style="color:var(--accent);font-weight:700">&#10003;</span>
+        <span style="color:var(--grey);font-size:0.88rem">Imersões de fim de semana incluídas</span>
+      </li>
+      <li style="padding:0.5rem 0;border-bottom:1px solid var(--glass-border);display:flex;gap:0.75rem;align-items:center">
+        <span style="color:var(--accent);font-weight:700">&#10003;</span>
+        <span style="color:var(--grey);font-size:0.88rem">Sessões mensais de actualização</span>
+      </li>
+      <li style="padding:0.5rem 0;display:flex;gap:0.75rem;align-items:center">
+        <span style="color:var(--accent);font-weight:700">&#10003;</span>
+        <span style="color:var(--grey);font-size:0.88rem">Ecossistema técnico proprietário</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ 15 ICONES & ILUSTRACOES ═══ -->
+<section class="section" id="s15">
+  <span class="section-num">15 // ÍCONES & ILUSTRAÇÕES</span>
+  <h2>Sistema de ícones</h2>
+  <div class="divider"></div>
+  <p class="lead">Ícones seguem a estética stroke/outline com peso 2px, cantos arredondados e cor de acento. Tamanho padrão: 24x24px.</p>
+
+  <div class="icon-grid">
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <span>Stack</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <span>Energia</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span>Tempo</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Comunidade</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span>Premium</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span>Ecrã</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      <span>Código</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span>Sucesso</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span>Alerta</span>
+    </div>
+    <div class="icon-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Pesquisa</span>
+    </div>
+  </div>
+
+  <h3>Regras de uso</h3>
+  <ul style="list-style:none;padding:0">
+    <li style="padding:0.4rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">Estilo:</strong> Stroke/outline com 2px de espessura, cantos arredondados</li>
+    <li style="padding:0.4rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">Tamanho:</strong> 24x24px padrão, 16x16px para inline, 32x32px para destaque</li>
+    <li style="padding:0.4rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">Cor:</strong> currentColor (herda do contexto) ou --accent para destaque</li>
+    <li style="padding:0.4rem 0;border-bottom:1px solid var(--glass-border)"><strong style="color:var(--accent)">Acessibilidade:</strong> Ícones interactivos devem ter aria-label ou texto adjacente</li>
+    <li style="padding:0.4rem 0"><strong style="color:var(--accent)">Fonte:</strong> Feather Icons ou Lucide como base -- nunca inventar ícones</li>
+  </ul>
+
+  <h3>Emojis em contexto de marca</h3>
+  <p>Emojis são permitidos em copy de marketing e comunicação directa. Nunca em UI de produto, código ou documentação técnica.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin:1rem 0">
+    <span class="tag tag-cyan" style="font-size:0.75rem;padding:0.35rem 0.7rem">&#9889; Urgência</span>
+    <span class="tag tag-gold" style="font-size:0.75rem;padding:0.35rem 0.7rem">&#128640; Acção</span>
+    <span class="tag tag-purple" style="font-size:0.75rem;padding:0.35rem 0.7rem">&#128274; Segurança</span>
+    <span class="tag tag-lime" style="font-size:0.75rem;padding:0.35rem 0.7rem">&#10004; Confirmação</span>
+  </div>
+</section>
+
+<!-- ═══ 16 SHOWCASE / MOCKUPS ═══ -->
+<section class="section" id="s16">
+  <span class="section-num">16 // SHOWCASE</span>
+  <h2>Mockups & Aplicações</h2>
+  <div class="divider"></div>
+  <p class="lead">Visualização da identidade aplicada a produtos e materiais da marca. Todos os mockups seguem a estética Dark Cockpit com as cores do design system.</p>
+
+  <!-- Dropdown -->
+  <div class="showcase-dropdown" id="showcaseDropdown">
+    <button class="showcase-dropdown-btn" onclick="document.getElementById('showcaseDropdown').classList.toggle('open')">Showcase</button>
+    <div class="showcase-dropdown-menu">
+      <a class="showcase-dropdown-item" href="#s16">Editorial</a>
+      <a class="showcase-dropdown-item active" href="#s16">Mockups</a>
+      <a class="showcase-dropdown-item" href="#s16">Apparel</a>
+      <a class="showcase-dropdown-item" href="#s16">Outfits</a>
+      <a class="showcase-dropdown-item" href="#s16">Lifestyle</a>
+    </div>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="showcase-stats">
+    <div><span class="stat-num">10</span> TOTAL ITEMS</div>
+    <span class="stat-sep">|</span>
+    <div><span class="stat-num">17</span> CATEGORIAS</div>
+    <span class="stat-sep">|</span>
+    <div><span class="stat-num">02</span> COLECÇÃO</div>
+  </div>
+
+  <!-- Filters -->
+  <div class="showcase-filters">
+    <button class="filter-chip active">BOTTLE</button>
+    <button class="filter-chip">CAP</button>
+    <button class="filter-chip">CARDS</button>
+    <button class="filter-chip">DETAIL</button>
+    <button class="filter-chip">FLATLAY</button>
+    <button class="filter-chip">HERO</button>
+    <button class="filter-chip">KIT</button>
+    <button class="filter-chip">LIFESTYLE</button>
+    <button class="filter-chip">MUG</button>
+    <button class="filter-chip">PHONE</button>
+    <button class="filter-chip">PREMIUM</button>
+    <button class="filter-chip">TSHIRT</button>
+    <button class="filter-chip">UNBOXING</button>
+  </div>
+
+  <h3>Mockups</h3>
+
+  <!-- Mockup Grid 4 cols -->
+  <div class="mockup-grid">
+
+    <!-- 01 BAG -->
+    <div class="mockup-card" style="background:var(--bg2)">
+      <div class="mockup-card-bg" style="background:linear-gradient(135deg,#0A0A14 0%,#10101E 100%)">
+        <div class="mockup-icon" style="color:var(--accent)">&#128092;</div>
+      </div>
+      <span class="mockup-card-num">01</span>
+      <div class="mockup-card-info">
+        <span class="mockup-card-name">Bag</span>
+        <span class="mockup-card-label">Acessório</span>
+      </div>
+      <div class="mockup-card-overlay"><span>Ver Detalhe</span></div>
+    </div>
+
+    <!-- 02 BOTTLE -->
+    <div class="mockup-card" style="background:#04040A">
+      <div class="mockup-card-bg" style="background:radial-gradient(circle at 50% 60%,rgba(57,255,20,0.08),transparent 70%)">
+        <div class="mockup-icon" style="color:var(--lime)">&#127866;</div>
+      </div>
+      <span class="mockup-card-num">02</span>
+      <div class="mockup-card-info">
+        <span class="mockup-card-name">Bottle</span>
+        <span class="mockup-card-label">Drinkware</span>
+      </div>
+      <div class="mockup-card-overlay"><span>Ver Detalhe</span></div>
+    </div>
+
+    <!-- 03 CAP -->
+    <div class="mockup-card" style="background:var(--lime)">
+      <div class="mockup-card-bg">
+        <div class="mockup-icon" style="color:#04040A;opacity:0.6">&#129506;</div>
+      </div>
+      <span class="mockup-card-num" style="color:rgba(4,4,10,0.4)">03</span>
+      <div class="mockup-card-info" style="background:linear-gradient(transparent,rgba(4,4,10,0.5))">
+        <span class="mockup-card-name">Cap</span>
+        <span class="mockup-card-label">Headwear</span>
+      </div>
+      <div class="mockup-card-overlay"><span>Ver Detalhe</span></div>
+    </div>
+
+    <!-- 04 CARDS -->
+    <div class="mockup-card" style="background:var(--bg2)">
+      <div class="mockup-card-bg" style="background:linear-gradient(180deg,rgba(157,0,255,0.06) 0%,transparent 60%)">
+        <div class="mockup-icon" style="color:var(--grey)">&#127183;</div>
+      </div>
+      <span class="mockup-card-num">04</span>
+      <div class="mockup-card-info">
+        <span class="mockup-card-name">Cards</span>
+        <span class="mockup-card-label">Papelaria</span>
+      </div>
+      <div class="mockup-card-overlay"><span>Ver Detalhe</span></div>
+    </div>
+
+    <!-- 05 TSHIRT -->
+    <div class="mockup-card" style="background:#1A1A2E">
+      <div class="mockup-card-bg" style="background:linear-gradient(180deg,rgba(255,255,255,0.02) 0%,transparent 50%)">
+        <div class="mockup-icon" style="color:var(--white)">&#128085;</div>
+      </div>
+      <span class="mockup-card-num">05</span>
+      <div class="mockup-card-info">
+        <span class="mockup-card-name">T-Shirt</span>
+        <span class="mockup-card-label">Apparel</span>
+      </div>
+      <div class="mockup-card-overlay"><span>Ver Detalhe</span></div>
+    </div>
+
+    <!-- 06 PHONE CASE -->
+    <div class="mockup-card" style="background:var(--purple)">
+      <div class="mockup-card-bg" style="background:radial-gradient(circle at 50% 50%,rgba(255,255,255,0.08),transparent 60%)">
+        <div class="mockup-icon" style="color:rgba(255,255,255,0.7)">&#128241;</div>
+      </div>
+      <span class="mockup-card-num" style="color:rgba(255,255,255,0.4)">06</span>
+      <div class="mockup-card-info">
+        <span class="mockup-card-name">Phone Case</span>
+        <span class="mockup-card-label">Tech Acessório</span>
+      </div>
+      <div class="mockup-card-overlay"><span>Ver Detalhe</span></div>
+    </div>
+
+    <!-- 07 MUG -->
+    <div class="mockup-card" style="background:var(--bg2)">
+      <div class="mockup-card-bg" style="background:radial-gradient(circle at 50% 50%,rgba(255,184,0,0.1),transparent 65%)">
+        <div class="mockup-icon" style="color:var(--gold)">&#9749;</div>
+      </div>
+      <span class="mockup-card-num">07</span>
+      <div class="mockup-card-info">
+        <span class="mockup-card-name">Mug</span>
+        <span class="mockup-card-label">Drinkware</span>
+      </div>
+      <div class="mockup-card-overlay"><span>Ver Detalhe</span></div>
+    </div>
+
+    <!-- 08 KIT -->
+    <div class="mockup-card" style="background:linear-gradient(135deg,var(--bg2),var(--bg3))">
+      <div class="mockup-card-bg" style="background:linear-gradient(135deg,rgba(0,245,255,0.05),rgba(157,0,255,0.05))">
+        <div class="mockup-icon" style="color:var(--accent)">&#127873;</div>
+      </div>
+      <span class="mockup-card-num">08</span>
+      <div class="mockup-card-info">
+        <span class="mockup-card-name">Kit</span>
+        <span class="mockup-card-label">Bundle</span>
+      </div>
+      <div class="mockup-card-overlay"><span>Ver Detalhe</span></div>
+    </div>
+
+    <!-- 09 NOTEBOOK -->
+    <div class="mockup-card" style="background:var(--grey3)">
+      <div class="mockup-card-bg" style="background:linear-gradient(180deg,rgba(255,255,255,0.03) 0%,transparent 40%)">
+        <div class="mockup-icon" style="color:var(--grey)">&#128211;</div>
+      </div>
+      <span class="mockup-card-num">09</span>
+      <div class="mockup-card-info">
+        <span class="mockup-card-name">Notebook</span>
+        <span class="mockup-card-label">Papelaria</span>
+      </div>
+      <div class="mockup-card-overlay"><span>Ver Detalhe</span></div>
+    </div>
+
+    <!-- 10 PREMIUM -->
+    <div class="mockup-card" style="background:var(--bg2)">
+      <div class="mockup-card-bg" style="background:radial-gradient(circle at 40% 40%,rgba(255,0,110,0.12),transparent 60%)">
+        <div class="mockup-icon" style="color:var(--magenta)">&#128142;</div>
+      </div>
+      <span class="mockup-card-num">10</span>
+      <div class="mockup-card-info">
+        <span class="mockup-card-name">Premium</span>
+        <span class="mockup-card-label">Edição Especial</span>
+      </div>
+      <div class="mockup-card-overlay"><span>Ver Detalhe</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<div class="divider" style="margin-top:6rem"></div>
+<footer style="text-align:center;padding:2rem 0 4rem">
+  <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:800;letter-spacing:0.15em;color:var(--grey2);margin-bottom:0.5rem">IA AVANÇADA PT</div>
+  <p style="font-size:0.75rem;color:var(--grey2)">Brandbook Estratégico V1.0 // Dark Cockpit Edition</p>
+  <p style="font-size:0.7rem;color:var(--grey3);margin-top:0.5rem">&copy; 2026 IA Avançada PT -- Eurico Alves -- Todos os direitos reservados</p>
+</footer>
+
+</div>
+</main>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script>
+/* ── Theme Switcher ── */
+const themes={
+  cyan:{accent:'#00F5FF',glow:'rgba(0,245,255,0.15)',border:'rgba(0,245,255,0.25)'},
+  gold:{accent:'#FFB800',glow:'rgba(255,184,0,0.15)',border:'rgba(255,184,0,0.25)'},
+  lime:{accent:'#39FF14',glow:'rgba(57,255,20,0.15)',border:'rgba(57,255,20,0.25)'}
+};
+function setTheme(name){
+  const t=themes[name];if(!t)return;
+  const r=document.documentElement.style;
+  r.setProperty('--accent',t.accent);
+  r.setProperty('--accent-glow',t.glow);
+  r.setProperty('--accent-border',t.border);
+  document.querySelectorAll('.theme-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.theme===name);
+  });
+}
+
+/* ── Sidebar Active Link ── */
+const sections=document.querySelectorAll('.section[id]');
+const sidebarLinks=document.querySelectorAll('.sidebar-link');
+const headerLinks=document.querySelectorAll('.header-nav a');
+
+function updateActive(){
+  let current='';
+  sections.forEach(s=>{
+    const top=s.getBoundingClientRect().top;
+    if(top<200)current=s.id;
+  });
+  sidebarLinks.forEach(l=>{
+    l.classList.toggle('active',l.getAttribute('href')==='#'+current);
+  });
+  // Update header nav
+  const groupMap={
+    s01:'fundamentos',s02:'fundamentos',s03:'fundamentos',
+    s04:'estrategia',s05:'estrategia',s06:'estrategia',
+    s07:'verbal',s08:'verbal',
+    s09:'jornada',s10:'jornada',
+    s11:'visual',s12:'visual',s13:'visual',s14:'visual',
+    s15:'sistema',
+    s16:'showcase'
+  };
+  const g=groupMap[current]||'fundamentos';
+  headerLinks.forEach(l=>{
+    l.classList.toggle('active',l.dataset.group===g);
+  });
+}
+window.addEventListener('scroll',updateActive,{passive:true});
+updateActive();
+
+/* ── Mobile Sidebar ── */
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+}
+sidebarLinks.forEach(l=>{
+  l.addEventListener('click',()=>{
+    document.getElementById('sidebar').classList.remove('open');
+  });
+});
+
+/* ── Scroll Animations ── */
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.style.animationPlayState='running';
+    }
+  });
+},{threshold:0.1});
+sections.forEach(s=>{
+  s.style.animationPlayState='paused';
+  observer.observe(s);
+});
+
+/* ── Quantum Canvas ── */
+(function(){
+  const canvas=document.getElementById('quantumBg');
+  const ctx=canvas.getContext('2d');
+  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight}
+  resize();
+  window.addEventListener('resize',resize);
+
+  const SEQS=['741','520','8','∞','7','4','1','5','2','0'];
+  const COLORS=['#00F5FF','#FF006E','#FFB800','#9D00FF'];
+
+  class NumParticle{
+    constructor(){this.init(true)}
+    init(random){
+      this.x=Math.random()*canvas.width;
+      this.y=random?Math.random()*canvas.height:canvas.height+40;
+      this.text=SEQS[Math.floor(Math.random()*SEQS.length)];
+      this.size=Math.random()*24+8;
+      this.opacity=0;
+      this.maxOpacity=Math.random()*0.25+0.04;
+      this.speed=Math.random()*0.3+0.08;
+      this.color=COLORS[Math.floor(Math.random()*COLORS.length)];
+      this.life=0;
+      this.maxLife=Math.random()*400+200;
+      this.fadeIn=true;
+    }
+    update(){
+      this.y-=this.speed;
+      this.life++;
+      if(this.fadeIn){
+        this.opacity=Math.min(this.opacity+0.006,this.maxOpacity);
+        if(this.opacity>=this.maxOpacity)this.fadeIn=false;
+      }else if(this.life>this.maxLife*0.65){
+        this.opacity=Math.max(this.opacity-0.003,0);
+      }
+      if(this.opacity<=0||this.y<-60)this.init(false);
+    }
+    draw(){
+      ctx.save();
+      ctx.globalAlpha=this.opacity;
+      ctx.fillStyle=this.color;
+      ctx.font=`700 ${this.size}px 'JetBrains Mono',monospace`;
+      ctx.shadowColor=this.color;
+      ctx.shadowBlur=14;
+      ctx.fillText(this.text,this.x,this.y);
+      ctx.restore();
+    }
+  }
+
+  class Dot{
+    constructor(){
+      this.x=Math.random()*canvas.width;
+      this.y=Math.random()*canvas.height;
+      this.vx=(Math.random()-0.5)*0.3;
+      this.vy=(Math.random()-0.5)*0.3;
+      this.r=Math.random()*1.2+0.3;
+    }
+    update(){
+      this.x+=this.vx;this.y+=this.vy;
+      if(this.x<0||this.x>canvas.width)this.vx*=-1;
+      if(this.y<0||this.y>canvas.height)this.vy*=-1;
+    }
+    draw(){
+      ctx.beginPath();
+      ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,245,255,0.35)';
+      ctx.shadowColor='#00F5FF';ctx.shadowBlur=4;
+      ctx.fill();
+    }
+  }
+
+  const isMobile=window.innerWidth<768;
+  const numCount=isMobile?12:25;
+  const dotCount=isMobile?20:45;
+  const nums=Array.from({length:numCount},()=>new NumParticle());
+  const dots=Array.from({length:dotCount},()=>new Dot());
+  const MAX_DIST=100;
+
+  function drawLines(){
+    for(let i=0;i<dots.length;i++){
+      for(let j=i+1;j<dots.length;j++){
+        const dx=dots[i].x-dots[j].x;
+        const dy=dots[i].y-dots[j].y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<MAX_DIST){
+          ctx.beginPath();
+          ctx.moveTo(dots[i].x,dots[i].y);
+          ctx.lineTo(dots[j].x,dots[j].y);
+          ctx.strokeStyle=`rgba(0,245,255,${0.08*(1-dist/MAX_DIST)})`;
+          ctx.lineWidth=0.5;ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function loop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    dots.forEach(d=>{d.update();d.draw()});
+    drawLines();
+    nums.forEach(n=>{n.update();n.draw()});
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+</script>
+
+</body>
+</html>

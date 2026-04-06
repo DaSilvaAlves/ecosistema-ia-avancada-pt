@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIOX Agent Arena — [IA]AVANÇADA PT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #04040A;
+    --cyan: #00F5FF;
+    --gold: #FFB800;
+    --purple: #9D00FF;
+    --lime: #39FF14;
+    --magenta: #FF006E;
+    --grey: #8892A4;
+    --grey2: #4A5568;
+    --white: #F0F4FF;
+    --glass-bg: rgba(255,255,255,0.03);
+    --glass-border: rgba(255,255,255,0.08);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* TITLE BAR */
+  #title-bar {
+    text-align: center;
+    padding: 8px 16px;
+    background: rgba(0,0,0,0.6);
+    border-bottom: 2px solid var(--gold);
+    position: relative;
+    flex-shrink: 0;
+  }
+  #title-bar h1 {
+    font-size: 13px;
+    color: var(--gold);
+    text-shadow: 0 0 10px var(--gold), 0 0 25px rgba(255,184,0,0.6), 0 0 50px rgba(255,184,0,0.3);
+    letter-spacing: 3px;
+  }
+  #status-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 4px;
+  }
+  .status-badge {
+    font-size: 7px;
+    color: var(--grey);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .status-dot { width: 6px; height: 6px; display: inline-block; }
+  .status-dot.green { background: var(--lime); box-shadow: 0 0 4px var(--lime); animation: pulse-green 2s infinite; }
+  .status-dot.red { background: var(--magenta); box-shadow: 0 0 4px var(--magenta); animation: pulse-red 1s infinite; }
+  .status-dot.yellow { background: var(--gold); box-shadow: 0 0 4px var(--gold); animation: pulse-green 1s infinite; }
+
+  @keyframes pulse-green { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* MODE BADGE */
+  #mode-badge {
+    font-size: 7px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: 'Press Start 2P', monospace;
+    letter-spacing: 1px;
+    display: inline-block;
+    margin-left: 12px;
+  }
+  #mode-badge.live {
+    background: rgba(57, 255, 20, 0.15);
+    border: 1px solid rgba(57, 255, 20, 0.4);
+    color: #39FF14;
+    text-shadow: 0 0 6px rgba(57, 255, 20, 0.5);
+  }
+  #mode-badge.demo {
+    background: rgba(255, 184, 0, 0.15);
+    border: 1px solid rgba(255, 184, 0, 0.4);
+    color: #FFB800;
+    text-shadow: 0 0 6px rgba(255, 184, 0, 0.5);
+    animation: demo-pulse 2s infinite;
+  }
+  @keyframes demo-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* MAIN LAYOUT */
+  #main-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    gap: 0;
+  }
+
+  /* COMMAND PANEL — full width centered bar */
+  #command-panel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 16px;
+    flex-shrink: 0;
+    background: rgba(0,0,0,0.5);
+    border-bottom: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+  }
+  #command-panel-inner {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  #command-panel h3 {
+    font-size: 7px;
+    color: var(--cyan);
+    text-shadow: 0 0 6px var(--cyan);
+    white-space: nowrap;
+  }
+  .cmd-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .pixel-select, .pixel-input {
+    background: rgba(0,0,0,0.6);
+    border: 2px solid var(--grey2);
+    color: var(--white);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    padding: 4px 6px;
+    outline: none;
+    border-radius: 0;
+    image-rendering: pixelated;
+  }
+  .pixel-select { min-width: 130px; cursor: pointer; }
+  .pixel-input { flex: 1; min-width: 130px; }
+  .pixel-select:focus, .pixel-input:focus { border-color: var(--cyan); }
+
+  #dispatch-btn {
+    background: var(--cyan);
+    color: var(--bg);
+    border: none;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    padding: 6px 10px;
+    cursor: pointer;
+    text-shadow: none;
+    box-shadow: 0 0 12px rgba(0,245,255,0.5), 4px 4px 0 rgba(0,0,0,0.8);
+    transition: all 0.1s;
+    image-rendering: pixelated;
+    white-space: nowrap;
+  }
+  #dispatch-btn:hover {
+    background: #00ddee;
+    box-shadow: 0 0 20px rgba(0,245,255,0.8), 4px 4px 0 rgba(0,0,0,0.8);
+    transform: translateY(-1px);
+  }
+  #dispatch-btn:active { transform: translateY(1px); box-shadow: 0 0 8px rgba(0,245,255,0.4), 2px 2px 0 rgba(0,0,0,0.8); }
+
+  #stats-mini {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+    border-left: 1px solid var(--glass-border);
+    padding-left: 12px;
+  }
+  .stat-item {
+    font-size: 6px;
+    color: var(--grey);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .stat-val { color: var(--cyan); font-size: 8px; }
+  .stat-val.gold { color: var(--gold); }
+  .stat-val.red { color: var(--magenta); }
+
+  /* GAME CANVAS AREA */
+  #game-section {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+  #game-canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* AGENT STATUS OVERLAY */
+  #agent-status-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+  }
+  .agent-hud-item {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .agent-hud-name {
+    font-size: 5px;
+    color: var(--white);
+    text-align: center;
+    white-space: nowrap;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000;
+    margin-bottom: 1px;
+  }
+  .agent-hud-status {
+    font-size: 5px;
+    text-align: center;
+    white-space: nowrap;
+    text-shadow: 1px 1px 0 #000;
+  }
+  .energy-bar-wrap {
+    width: 32px;
+    height: 4px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--grey2);
+    margin-top: 1px;
+  }
+  .energy-bar-fill {
+    height: 100%;
+    transition: width 0.3s;
+  }
+
+  /* MINI-MAP */
+  #mini-map {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 160px;
+    height: 100px;
+    background: rgba(4,4,15,0.9);
+    border: 1px solid rgba(0,245,255,0.2);
+    border-radius: 4px;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 10;
+  }
+  #mini-map-canvas {
+    display: block;
+    width: 160px;
+    height: 100px;
+    image-rendering: pixelated;
+  }
+
+  /* EVENT LOG */
+  #event-log-section {
+    flex-shrink: 0;
+    background: rgba(0,0,0,0.7);
+    border-top: 2px solid var(--glass-border);
+    height: 130px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  #event-log-title {
+    font-size: 7px;
+    color: var(--grey);
+    padding: 4px 10px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(0,0,0,0.4);
+    flex-shrink: 0;
+  }
+  #event-log {
+    overflow-y: auto;
+    flex: 1;
+    padding: 4px 10px;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 2px;
+  }
+  #event-log::-webkit-scrollbar { width: 4px; }
+  #event-log::-webkit-scrollbar-thumb { background: var(--grey2); }
+  #event-log::-webkit-scrollbar-track { background: transparent; }
+
+  .log-entry {
+    font-size: 6px;
+    line-height: 1.6;
+    padding: 1px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .log-entry.dispatch { color: var(--cyan); }
+  .log-entry.success { color: var(--lime); }
+  .log-entry.error { color: var(--magenta); }
+  .log-entry.working { color: #FFD700; }
+  .log-entry.move { color: var(--grey); }
+  .log-entry.info { color: var(--white); }
+  .log-entry.success-bold { color: var(--lime); font-weight: bold; }
+  .log-time { color: var(--grey2); margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<!-- TITLE BAR -->
+<div id="title-bar">
+  <h1>⚔ AIOX AGENT ARENA ⚔</h1>
+  <div id="status-row">
+    <span class="status-badge">
+      <span class="status-dot red" id="conn-dot"></span>
+      <span id="conn-text">CONNECTING</span>
+      <span id="mode-badge" class="demo">DEMO</span>
+    </span>
+    <span class="status-badge" style="color:var(--cyan)">AGENTS: 10/10 ONLINE</span>
+    <span class="status-badge" style="color:var(--grey)">[IA]AVANÇADA PT</span>
+  </div>
+</div>
+
+<!-- COMMAND PANEL — full width -->
+<div id="command-panel">
+  <div id="command-panel-inner">
+    <h3>▶ DISPATCH</h3>
+    <div class="cmd-row">
+      <select class="pixel-select" id="agent-select">
+        <option value="dev">Dex — Developer</option>
+        <option value="qa">Quinn — QA Tester</option>
+        <option value="architect">Aria — Architect</option>
+        <option value="pm">Morgan — Product Mgr</option>
+        <option value="po">Pax — Product Owner</option>
+        <option value="sm">River — Scrum Master</option>
+        <option value="analyst">Alex — Analyst</option>
+        <option value="data-eng">Dara — Data Eng</option>
+        <option value="ux">Uma — UX Designer</option>
+        <option value="devops">Gage — DevOps</option>
+      </select>
+      <input class="pixel-input" id="cmd-input" type="text" placeholder="ex: analyze_logs" maxlength="40">
+      <button id="dispatch-btn">▶ DISPATCH</button>
+    </div>
+  </div>
+
+  <div id="stats-mini">
+    <div class="stat-item"><span>DONE</span><span class="stat-val gold" id="stat-done">0</span></div>
+    <div class="stat-item"><span>FAIL</span><span class="stat-val red" id="stat-fail">0</span></div>
+    <div class="stat-item"><span>SENT</span><span class="stat-val" id="stat-disp">0</span></div>
+    <div class="stat-item"><span>TIME</span><span class="stat-val" id="stat-uptime">00:00</span></div>
+  </div>
+</div>
+
+<!-- GAME CANVAS -->
+<div id="game-section">
+  <canvas id="game-canvas"></canvas>
+  <div id="agent-status-overlay"></div>
+</div>
+
+<!-- EVENT LOG -->
+<div id="event-log-section">
+  <!-- MINI-MAP -->
+  <div id="mini-map">
+    <canvas id="mini-map-canvas" width="160" height="100"></canvas>
+  </div>
+  <div id="event-log-title">EVENT LOG — AIOX ARENA</div>
+  <div id="event-log"></div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURATION
+// ============================================================
+const AGENTS_DEF = [
+  { id: 'dev',       name: 'Dex',    role: 'Developer',    icon: '💻', color: '#00F5FF' },
+  { id: 'qa',        name: 'Quinn',  role: 'QA Tester',    icon: '🔍', color: '#39FF14' },
+  { id: 'architect', name: 'Aria',   role: 'Architect',    icon: '🏗',  color: '#9D00FF' },
+  { id: 'pm',        name: 'Morgan', role: 'Product Mgr',  icon: '📋', color: '#FF8C00' },
+  { id: 'po',        name: 'Pax',    role: 'Product Owner',icon: '✅', color: '#00CED1' },
+  { id: 'sm',        name: 'River',  role: 'Scrum Master', icon: '🌊', color: '#4169E1' },
+  { id: 'analyst',   name: 'Alex',   role: 'Analyst',      icon: '📊', color: '#FF69B4' },
+  { id: 'data-eng',  name: 'Dara',   role: 'Data Eng',     icon: '🗄', color: '#FF4444' },
+  { id: 'ux',        name: 'Uma',    role: 'UX Designer',  icon: '🎨', color: '#FF006E' },
+  { id: 'devops',    name: 'Gage',   role: 'DevOps',       icon: '🚀', color: '#32CD32' },
+];
+
+const COMMANDS = [
+  'analyze_logs','run_tests','review_code','deploy_staging',
+  'write_story','validate_spec','db_migration','optimize_queries',
+  'create_wireframes','plan_sprint','research_competitors','fix_bug',
+  'audit_security','update_docs','generate_report','refactor_module',
+];
+
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  agents: {},
+  particles: [],
+  connections: [],
+  stats: { done: 0, fail: 0, dispatched: 0 },
+  startTime: Date.now(),
+  sparkles: [],
+  wsConnected: false,
+  demoMode: true,
+  lastAutoEvent: 0,
+};
+
+// Chief position on game canvas (set after resize)
+let chiefCanvasX = 0;
+let chiefCanvasY = 80;
+
+// Chief animation state
+let chiefAura = 0;
+let chiefArmPhase = 0;
+let chiefBobPhase = 0;
+
+// ============================================================
+// CANVAS SETUP
+// ============================================================
+const gameCanvas = document.getElementById('game-canvas');
+const ctx = gameCanvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+const miniMapCanvas = document.getElementById('mini-map-canvas');
+const mmCtx = miniMapCanvas.getContext('2d');
+mmCtx.imageSmoothingEnabled = false;
+
+function resizeCanvas() {
+  const section = document.getElementById('game-section');
+  gameCanvas.width = section.clientWidth;
+  gameCanvas.height = section.clientHeight;
+  chiefCanvasX = gameCanvas.width / 2;
+  chiefCanvasY = 80;
+  placeAgents();
+}
+
+// ============================================================
+// AGENT BASE POSITIONS — rows at 45% and 70%
+// ============================================================
+function placeAgents() {
+  const W = gameCanvas.width;
+  const H = gameCanvas.height;
+  const count = AGENTS_DEF.length;
+  const perRow = Math.ceil(count / 2);
+
+  AGENTS_DEF.forEach((def, i) => {
+    const row = i < perRow ? 0 : 1;
+    const col = i < perRow ? i : i - perRow;
+    const totalInRow = row === 0 ? perRow : count - perRow;
+    const xStart = W * 0.08;
+    const xEnd = W * 0.92;
+    const xSpacing = (xEnd - xStart) / (totalInRow - 1 || 1);
+    const baseX = totalInRow === 1 ? (xStart + xEnd) / 2 : xStart + col * xSpacing;
+    const baseY = row === 0 ? H * 0.45 : H * 0.70;
+
+    const ag = state.agents[def.id];
+    if (!ag) {
+      state.agents[def.id] = {
+        ...def,
+        x: baseX, y: baseY,
+        baseX, baseY,
+        targetX: baseX, targetY: baseY,
+        state: 'idle',
+        prevState: 'idle',
+        energy: 1.0,
+        blinkTimer: Math.random() * 300,
+        walkPhase: 0,
+        armPhase: 0,
+        bobPhase: Math.random() * Math.PI * 2,
+        shakeOffset: 0,
+        stateTimer: 0,
+        workX: null, workY: null,
+        taskLabel: '',
+        particleTimer: 0,
+        orbitAngle: Math.random() * Math.PI * 2,
+      };
+    } else {
+      ag.baseX = baseX;
+      ag.baseY = baseY;
+      if (ag.state === 'idle') { ag.x = baseX; ag.y = baseY; ag.targetX = baseX; ag.targetY = baseY; }
+    }
+  });
+}
+
+// ============================================================
+// DRAW CHIEF — directly on game canvas, centered top
+// ============================================================
+function drawChief(dt) {
+  chiefAura += dt * 0.002;
+  chiefArmPhase += dt * 0.003;
+  chiefBobPhase += dt * 0.002;
+
+  const cx = chiefCanvasX;
+  const S = 4.5; // 1.5x regular agent scale
+  const bob = Math.sin(chiefBobPhase) * 2;
+  const cy = chiefCanvasY + bob;
+
+  // === PULSING GOLD AURA (concentric rings) ===
+  for (let r = 0; r < 5; r++) {
+    const radius = 38 + r * 14 + Math.sin(chiefAura + r * 0.8) * 5;
+    const baseAlpha = 0.18 - r * 0.03;
+    const alpha = baseAlpha + Math.sin(chiefAura * 2 + r) * 0.04;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255,184,0,${Math.max(0, alpha)})`;
+    ctx.lineWidth = 2 + (5 - r) * 0.5;
+    ctx.stroke();
+  }
+
+  // Soft gold glow beneath
+  const auraGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 55);
+  auraGrad.addColorStop(0, 'rgba(255,184,0,0.18)');
+  auraGrad.addColorStop(0.5, 'rgba(255,184,0,0.07)');
+  auraGrad.addColorStop(1, 'rgba(255,184,0,0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 55, 0, Math.PI * 2);
+  ctx.fill();
+
+  // === LARGE STONE/GOLD PEDESTAL ===
+  // Base shadow
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 58, 38, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Pedestal bottom step
+  ctx.fillStyle = '#3a3028';
+  ctx.fillRect(cx - 34, cy + 46, 68, 12);
+  ctx.fillStyle = '#4a3a30';
+  ctx.fillRect(cx - 32, cy + 44, 64, 4);
+
+  // Pedestal top step
+  ctx.fillStyle = '#5a4a35';
+  ctx.fillRect(cx - 26, cy + 38, 52, 10);
+  ctx.fillStyle = '#7a5a3a';
+  ctx.fillRect(cx - 24, cy + 36, 48, 4);
+
+  // Gold trim on pedestal
+  ctx.fillStyle = '#FFB800';
+  ctx.fillRect(cx - 34, cy + 44, 68, 2);
+  ctx.fillRect(cx - 26, cy + 36, 52, 2);
+
+  // Pedestal jewels
+  const pjColors = ['#FF0000', '#00FFFF', '#FF00FF', '#FFD700'];
+  for (let j = 0; j < 4; j++) {
+    const jx = cx - 24 + j * 16;
+    ctx.fillStyle = pjColors[j];
+    ctx.fillRect(jx, cy + 39, 4, 4);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillRect(jx, cy + 39, 2, 2);
+  }
+
+  // === BODY ===
+  ctx.fillStyle = '#cc9900';
+  ctx.fillRect(cx - Math.round(S * 3), cy + Math.round(S * 3.5), Math.round(S * 6), Math.round(S * 6.5));
+
+  // Gold shimmer
+  ctx.fillStyle = '#ffcc00';
+  ctx.fillRect(cx - Math.round(S * 0.7), cy + Math.round(S * 4.5), Math.round(S * 1.3), Math.round(S * 2.5));
+
+  // Body badge
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(cx - Math.round(S * 1.5), cy + Math.round(S * 4), Math.round(S * 3), Math.round(S * 3));
+  ctx.fillStyle = '#FFD700';
+  ctx.font = `${Math.round(S * 2.2)}px "Press Start 2P"`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('C', cx, cy + Math.round(S * 5.5));
+
+  // === ARMS ===
+  const la = Math.sin(chiefArmPhase) * 8;
+  ctx.fillStyle = '#cc9900';
+  ctx.fillRect(cx - Math.round(S * 5), cy + Math.round(S * 4) + la, Math.round(S * 1.8), Math.round(S * 4.5));
+  ctx.fillRect(cx + Math.round(S * 3.2), cy + Math.round(S * 4) - la, Math.round(S * 1.8), Math.round(S * 4.5));
+
+  // Scepter in right hand
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx + Math.round(S * 4.5), cy + Math.round(S * 4) - la);
+  ctx.lineTo(cx + Math.round(S * 4.5), cy + Math.round(S * 4) - la - 22);
+  ctx.stroke();
+  ctx.fillStyle = '#FF0000';
+  ctx.beginPath();
+  ctx.arc(cx + Math.round(S * 4.5), cy + Math.round(S * 4) - la - 24, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.beginPath();
+  ctx.arc(cx + Math.round(S * 4.5) - 1, cy + Math.round(S * 4) - la - 25, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // === LEGS ===
+  ctx.fillStyle = '#996600';
+  ctx.fillRect(cx - Math.round(S * 2.5), cy + Math.round(S * 10), Math.round(S * 2.2), Math.round(S * 2.8));
+  ctx.fillRect(cx + Math.round(S * 0.3), cy + Math.round(S * 10), Math.round(S * 2.2), Math.round(S * 2.8));
+
+  // === HEAD ===
+  ctx.fillStyle = '#ffdd88';
+  ctx.fillRect(cx - Math.round(S * 3.2), cy - Math.round(S * 3.5), Math.round(S * 6.4), Math.round(S * 6.5));
+
+  // Head outline
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - Math.round(S * 3.2), cy - Math.round(S * 3.5), Math.round(S * 6.4), Math.round(S * 6.5));
+
+  // Eyes (gold glow)
+  ctx.fillStyle = '#FFD700';
+  ctx.fillRect(cx - Math.round(S * 2.2), cy - Math.round(S * 1.5), Math.round(S * 1.5), Math.round(S * 1.5));
+  ctx.fillRect(cx + Math.round(S * 0.7), cy - Math.round(S * 1.5), Math.round(S * 1.5), Math.round(S * 1.5));
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(cx - Math.round(S * 1.8), cy - Math.round(S * 1.2), Math.round(S * 0.7), Math.round(S * 0.7));
+  ctx.fillRect(cx + Math.round(S * 1.1), cy - Math.round(S * 1.2), Math.round(S * 0.7), Math.round(S * 0.7));
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(cx - Math.round(S * 2.2), cy - Math.round(S * 1.5), Math.round(S * 0.5), Math.round(S * 0.5));
+  ctx.fillRect(cx + Math.round(S * 0.7), cy - Math.round(S * 1.5), Math.round(S * 0.5), Math.round(S * 0.5));
+
+  // === CROWN ===
+  const crownY = cy - Math.round(S * 5.5);
+  ctx.fillStyle = '#FFB800';
+  // Crown base
+  ctx.fillRect(cx - Math.round(S * 3.5), crownY + Math.round(S * 2), Math.round(S * 7), Math.round(S * 2));
+  // Crown points
+  ctx.fillRect(cx - Math.round(S * 3.5), crownY - Math.round(S * 1), Math.round(S * 1.8), Math.round(S * 3));
+  ctx.fillRect(cx - Math.round(S * 1), crownY - Math.round(S * 2.5), Math.round(S * 2), Math.round(S * 4.5));
+  ctx.fillRect(cx + Math.round(S * 1.7), crownY - Math.round(S * 1), Math.round(S * 1.8), Math.round(S * 3));
+
+  // Animated crown jewels
+  const jewels = [
+    { x: cx - Math.round(S * 2.8), y: crownY, color: '#FF0000' },
+    { x: cx - Math.round(S * 0.5), y: crownY - Math.round(S * 1.5), color: '#00FFFF' },
+    { x: cx + Math.round(S * 2), y: crownY, color: '#FF00FF' },
+  ];
+  jewels.forEach((j, idx) => {
+    const pulse = 0.7 + Math.sin(chiefAura * 3 + idx * 1.2) * 0.3;
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = j.color;
+    ctx.fillRect(j.x, j.y, Math.round(S * 1.2), Math.round(S * 1.2));
+    // Jewel shine
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.fillRect(j.x, j.y, Math.round(S * 0.5), Math.round(S * 0.5));
+    ctx.globalAlpha = 1;
+  });
+
+  // Crown glow
+  ctx.globalAlpha = 0.12 + Math.sin(chiefAura * 2) * 0.05;
+  const cg = ctx.createRadialGradient(cx, crownY, 0, cx, crownY, 28);
+  cg.addColorStop(0, '#FFB800');
+  cg.addColorStop(1, 'transparent');
+  ctx.fillStyle = cg;
+  ctx.beginPath();
+  ctx.arc(cx, crownY, 28, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Chief label
+  ctx.fillStyle = '#FFD700';
+  ctx.font = '7px "Press Start 2P"';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = '#FFD700';
+  ctx.shadowBlur = 8;
+  ctx.fillText('CHIEF', cx, cy + Math.round(S * 14) + 6);
+  ctx.shadowBlur = 0;
+}
+
+// ============================================================
+// PIXEL SPRITE DRAW (regular agents)
+// ============================================================
+function drawAgent(ag, dt) {
+  const cx = ag.x;
+  const cy = ag.y;
+
+  ag.bobPhase += dt * 0.002;
+  ag.walkPhase += dt * 0.004;
+  ag.armPhase += dt * 0.003;
+  ag.blinkTimer -= dt;
+  if (ag.blinkTimer < 0) ag.blinkTimer = 200 + Math.random() * 3000;
+  ag.orbitAngle += dt * 0.004;
+
+  const isBlinking = ag.blinkTimer < 120;
+  const bob = ag.state === 'idle' ? Math.sin(ag.bobPhase) * 1.5 : 0;
+  const shake = ag.state === 'error' ? (Math.random() - 0.5) * 3 : 0;
+
+  const rx = cx + shake;
+  const ry = cy + bob;
+
+  // Walking legs
+  let lLegY = 0, rLegY = 0;
+  if (ag.state === 'walking') {
+    lLegY = Math.sin(ag.walkPhase) * 4;
+    rLegY = -Math.sin(ag.walkPhase) * 4;
+  }
+
+  // Arms
+  let lArmY = 0, rArmY = 0;
+  if (ag.state === 'working') {
+    lArmY = Math.sin(ag.armPhase) * 8;
+    rArmY = -Math.sin(ag.armPhase) * 8;
+  } else if (ag.state === 'success') {
+    rArmY = -12;
+  } else if (ag.state === 'walking') {
+    lArmY = Math.sin(ag.walkPhase) * 4;
+    rArmY = -Math.sin(ag.walkPhase) * 4;
+  }
+
+  const col = ag.color;
+
+  // Shadow
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.ellipse(rx, ry + 46, 14, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Working: orbiting dots
+  if (ag.state === 'working') {
+    for (let od = 0; od < 3; od++) {
+      const oa = ag.orbitAngle + od * (Math.PI * 2 / 3);
+      const ox = rx + Math.cos(oa) * 18;
+      const oy = ry + Math.sin(oa) * 14;
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = col;
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 4;
+      ctx.beginPath();
+      ctx.arc(ox, oy, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Legs
+  const legCol = darken(col, 0.6);
+  ctx.fillStyle = legCol;
+  ctx.fillRect(rx - 8, ry + 30 + lLegY, 7, 14);
+  ctx.fillRect(rx + 1, ry + 30 + rLegY, 7, 14);
+
+  // Body
+  ctx.fillStyle = col;
+  ctx.fillRect(rx - 9, ry + 10, 18, 22);
+
+  // Body detail — letter
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillRect(rx - 5, ry + 14, 10, 10);
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = '7px "Press Start 2P"';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(ag.name[0], rx, ry + 20);
+
+  // Left arm
+  ctx.fillStyle = col;
+  ctx.fillRect(rx - 15, ry + 11 + lArmY, 6, 14);
+
+  // Right arm
+  ctx.fillRect(rx + 9, ry + 11 + rArmY, 6, 14);
+
+  // Head
+  ctx.fillStyle = lighten(col, 0.3);
+  ctx.fillRect(rx - 10, ry - 10, 20, 20);
+
+  // Head outline
+  ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(rx - 10, ry - 10, 20, 20);
+
+  // Eyes
+  let eyeColor = '#ffffff';
+  if (ag.state === 'working') eyeColor = '#FFD700';
+  else if (ag.state === 'success') eyeColor = '#39FF14';
+  else if (ag.state === 'error') eyeColor = '#FF4444';
+
+  if (!isBlinking) {
+    ctx.fillStyle = eyeColor;
+    ctx.fillRect(rx - 7, ry - 5, 5, 5);
+    ctx.fillRect(rx + 2, ry - 5, 5, 5);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(rx - 6, ry - 4, 2, 2);
+    ctx.fillRect(rx + 3, ry - 4, 2, 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(rx - 6, ry - 5, 1, 1);
+    ctx.fillRect(rx + 3, ry - 5, 1, 1);
+  } else {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(rx - 7, ry - 3, 5, 2);
+    ctx.fillRect(rx + 2, ry - 3, 5, 2);
+  }
+
+  // State indicators above head
+  if (ag.state === 'error') {
+    // Pulsing ! indicator
+    const pulse = 0.6 + Math.sin(Date.now() * 0.008) * 0.4;
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = '#FF4444';
+    ctx.font = 'bold 16px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('!', rx, ry - 16);
+    ctx.globalAlpha = 1;
+
+    // Crack lines
+    ctx.strokeStyle = '#FF4444';
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.5;
+    for (let c = 0; c < 4; c++) {
+      const ca = (c / 4) * Math.PI * 2 + Math.PI / 8;
+      ctx.beginPath();
+      ctx.moveTo(rx + Math.cos(ca) * 12, ry + Math.sin(ca) * 10);
+      ctx.lineTo(rx + Math.cos(ca) * 22, ry + Math.sin(ca) * 18);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  } else if (ag.state === 'working') {
+    ctx.font = '10px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText('⚙', rx, ry - 12);
+  } else if (ag.state === 'receiving_order') {
+    ctx.font = '9px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('📡', rx, ry - 12);
+  }
+}
+
+function darken(hex, factor) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.round(r*factor)},${Math.round(g*factor)},${Math.round(b*factor)})`;
+}
+function lighten(hex, factor) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.min(255,Math.round(r+(255-r)*factor))},${Math.min(255,Math.round(g+(255-g)*factor))},${Math.min(255,Math.round(b+(255-b)*factor))})`;
+}
+
+// ============================================================
+// TILE MAP (ground)
+// ============================================================
+const TILE_W = 32;
+const TILE_H = 16;
+const tileCache = {};
+
+function getTile(type) {
+  if (tileCache[type]) return tileCache[type];
+  const tc = document.createElement('canvas');
+  tc.width = TILE_W; tc.height = TILE_H;
+  const tx = tc.getContext('2d');
+  tx.imageSmoothingEnabled = false;
+
+  if (type === 'grass1') {
+    tx.fillStyle = '#1a3a1a';
+    tx.fillRect(0,0,TILE_W,TILE_H);
+    tx.fillStyle = '#2a4a2a';
+    tx.fillRect(2,2,TILE_W-4,TILE_H-4);
+    tx.fillStyle = '#1e3e1e';
+    tx.fillRect(4,4,4,4); tx.fillRect(18,6,3,3); tx.fillRect(8,10,5,3);
+    tx.fillStyle = '#3a5a3a';
+    tx.fillRect(12,3,3,2); tx.fillRect(6,8,2,3); tx.fillRect(22,11,4,2);
+  } else if (type === 'grass2') {
+    tx.fillStyle = '#162e16';
+    tx.fillRect(0,0,TILE_W,TILE_H);
+    tx.fillStyle = '#224422';
+    tx.fillRect(2,2,TILE_W-4,TILE_H-4);
+    tx.fillStyle = '#2d5a2d';
+    tx.fillRect(6,4,4,2); tx.fillRect(16,8,3,4); tx.fillRect(10,11,6,2);
+    tx.fillStyle = '#1a3a1a';
+    tx.fillRect(0,0,2,TILE_H); tx.fillRect(TILE_W-2,0,2,TILE_H);
+  } else if (type === 'stone1') {
+    tx.fillStyle = '#3a4a55';
+    tx.fillRect(0,0,TILE_W,TILE_H);
+    tx.fillStyle = '#455566';
+    tx.fillRect(2,2,TILE_W/2-3,TILE_H-4);
+    tx.fillRect(TILE_W/2+1,2,TILE_W/2-3,TILE_H-4);
+    tx.fillStyle = '#2a3a44';
+    tx.fillRect(0,0,2,TILE_H); tx.fillRect(TILE_W-2,0,2,TILE_H);
+    tx.fillRect(0,0,TILE_W,2); tx.fillRect(0,TILE_H-2,TILE_W,2);
+    tx.fillRect(TILE_W/2-1,2,2,TILE_H-4);
+  } else if (type === 'stone2') {
+    tx.fillStyle = '#303d47';
+    tx.fillRect(0,0,TILE_W,TILE_H);
+    tx.fillStyle = '#3c4c58';
+    tx.fillRect(2,2,TILE_W-4,TILE_H-4);
+    tx.fillStyle = '#4a5c6a';
+    tx.fillRect(4,4,8,4); tx.fillRect(16,6,10,4); tx.fillRect(8,10,6,3);
+    tx.fillStyle = '#2a3540';
+    tx.fillRect(12,0,2,TILE_H); tx.fillRect(0,8,TILE_W,2);
+  } else if (type === 'path') {
+    tx.fillStyle = '#4a5056';
+    tx.fillRect(0,0,TILE_W,TILE_H);
+    tx.fillStyle = '#565e66';
+    tx.fillRect(1,1,TILE_W-2,TILE_H-2);
+    tx.fillStyle = '#626a74';
+    tx.fillRect(3,3,4,4); tx.fillRect(14,5,5,3); tx.fillRect(22,9,4,4);
+    tx.fillStyle = '#3e4448';
+    tx.fillRect(0,0,1,TILE_H); tx.fillRect(TILE_W-1,0,1,TILE_H);
+  }
+
+  tileCache[type] = tc;
+  return tc;
+}
+
+// Sparkle state for ground tiles
+function initSparkles(W, H) {
+  state.sparkles = [];
+  const cols = Math.ceil(W / TILE_W);
+  const rows = Math.ceil(H / TILE_H);
+  const totalTiles = cols * rows;
+  const count = Math.floor(totalTiles * 0.05);
+  for (let i = 0; i < count; i++) {
+    state.sparkles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      life: Math.random(),
+      maxLife: 0.5 + Math.random() * 0.5,
+      timer: 0,
+      duration: 400 + Math.random() * 600,
+      delay: Math.random() * 3000,
+    });
+  }
+}
+
+function drawGround(now) {
+  const W = gameCanvas.width;
+  const H = gameCanvas.height;
+  const seed = 42;
+  function rand(x, y) {
+    const n = Math.sin(x * 127.1 + y * 311.7 + seed) * 43758.5453;
+    return n - Math.floor(n);
+  }
+
+  for (let row = 0; row < Math.ceil(H / TILE_H) + 1; row++) {
+    for (let col = 0; col < Math.ceil(W / TILE_W) + 1; col++) {
+      const r = rand(col, row);
+      let type;
+      if (r < 0.05) type = 'path';
+      else if (r < 0.15) type = 'stone1';
+      else if (r < 0.25) type = 'stone2';
+      else if (r < 0.6) type = 'grass1';
+      else type = 'grass2';
+      ctx.drawImage(getTile(type), col * TILE_W, row * TILE_H);
+    }
+  }
+
+  // Ground bands
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.fillRect(0, 0, W, H * 0.12);
+  ctx.fillRect(0, H * 0.88, W, H * 0.12);
+
+  // Sparkle pixels
+  if (state.sparkles.length === 0) initSparkles(W, H);
+  for (const sp of state.sparkles) {
+    sp.timer += 16;
+    if (sp.timer < sp.delay) continue;
+    const t = (sp.timer - sp.delay) % (sp.duration * 2);
+    const phase = t < sp.duration ? t / sp.duration : 1 - (t - sp.duration) / sp.duration;
+    ctx.globalAlpha = phase * 0.18;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(sp.x, sp.y, 1, 1);
+    ctx.globalAlpha = 1;
+  }
+
+  // Scanline overlay — retro CRT
+  ctx.fillStyle = 'rgba(0,0,0,0.05)';
+  for (let sy = 0; sy < H; sy += 2) {
+    ctx.fillRect(0, sy, W, 1);
+  }
+
+  // Vignette — darker corners
+  const vig = ctx.createRadialGradient(W/2, H/2, H * 0.3, W/2, H/2, H * 0.9);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.35)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+}
+
+// ============================================================
+// IMPROVED PARTICLES
+// ============================================================
+function spawnParticles(x, y, type, color) {
+  if (type === 'success') {
+    const count = 15 + Math.floor(Math.random() * 6);
+    const particleColors = ['#FFD700', '#39FF14', '#00F5FF', '#FFFFFF', '#FFB800'];
+    const shapes = ['star', 'circle', 'square', 'star4'];
+
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.8;
+      const speed = 2 + Math.random() * 3.5;
+      state.particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 3.5 - Math.random() * 2, // upward bias
+        life: 1.0,
+        decay: 0.007 + Math.random() * 0.006,
+        size: 6 + Math.random() * 5,
+        color: particleColors[i % particleColors.length],
+        type,
+        shape: shapes[Math.floor(Math.random() * shapes.length)],
+        spin: Math.random() * Math.PI * 2,
+        spinSpeed: (Math.random() - 0.5) * 0.15,
+      });
+    }
+
+    // Burst shockwave ring
+    state.particles.push({
+      x, y, vx: 0, vy: 0,
+      life: 1.0, decay: 0.025,
+      size: 8,
+      color: '#FFD700',
+      type: 'ring',
+      shape: 'ring',
+      spin: 0, spinSpeed: 0,
+    });
+
+  } else if (type === 'error') {
+    const count = 10 + Math.floor(Math.random() * 4);
+    const errColors = ['#FF4444', '#CC0000', '#FF6600'];
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.6;
+      const speed = 1.5 + Math.random() * 2.5;
+      state.particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1,
+        life: 1.0,
+        decay: 0.01 + Math.random() * 0.01,
+        size: 4 + Math.random() * 4,
+        color: errColors[Math.floor(Math.random() * errColors.length)],
+        type,
+        shape: 'square',
+        spin: 0, spinSpeed: 0,
+      });
+    }
+  } else {
+    // Idle/misc
+    const count = 4;
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 / count) * i;
+      state.particles.push({
+        x, y,
+        vx: Math.cos(angle) * 1.5,
+        vy: Math.sin(angle) * 1.5 - 1,
+        life: 1.0,
+        decay: 0.02,
+        size: 3,
+        color,
+        type,
+        shape: 'circle',
+        spin: 0, spinSpeed: 0,
+      });
+    }
+  }
+}
+
+function drawStar5(ctx, x, y, size) {
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const angle = (i * Math.PI * 2) / 5 - Math.PI / 2;
+    const ox = x + Math.cos(angle) * size;
+    const oy = y + Math.sin(angle) * size;
+    if (i === 0) ctx.moveTo(ox, oy); else ctx.lineTo(ox, oy);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawStar4(ctx, x, y, size, spin) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(spin);
+  ctx.beginPath();
+  for (let i = 0; i < 4; i++) {
+    const a = (i * Math.PI * 2) / 4;
+    const ia = a + Math.PI / 4;
+    ctx.lineTo(Math.cos(a) * size, Math.sin(a) * size);
+    ctx.lineTo(Math.cos(ia) * size * 0.4, Math.sin(ia) * size * 0.4);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function updateParticles(dt) {
+  for (let i = state.particles.length - 1; i >= 0; i--) {
+    const p = state.particles[i];
+    p.x += p.vx * dt * 0.05;
+    p.y += p.vy * dt * 0.05;
+    p.vy += 0.04 * dt * 0.05;
+    p.life -= p.decay * dt * 0.05;
+    if (p.spin !== undefined) p.spin += (p.spinSpeed || 0);
+    if (p.life <= 0) { state.particles.splice(i, 1); continue; }
+
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+
+    if (p.shape === 'ring') {
+      const radius = (1 - p.life) * 60 + 8;
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 3 * p.life;
+      ctx.globalAlpha = p.life * 0.7;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (p.shape === 'star') {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.spin || 0);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.life;
+      const s = p.size * Math.max(0.2, p.life);
+      drawStar5(ctx, 0, 0, s);
+      ctx.restore();
+    } else if (p.shape === 'star4') {
+      drawStar4(ctx, p.x, p.y, p.size * Math.max(0.2, p.life), p.spin || 0);
+    } else if (p.shape === 'circle') {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * Math.max(0.2, p.life) / 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      const s = p.size * Math.max(0.2, p.life);
+      ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ============================================================
+// CONNECTIONS — dramatic glowing dashed lines with data packets
+// ============================================================
+function drawConnections() {
+  const chiefX = chiefCanvasX;
+  const chiefY = chiefCanvasY + 60; // bottom of chief pedestal
+
+  for (let i = state.connections.length - 1; i >= 0; i--) {
+    const conn = state.connections[i];
+    conn.life -= 0.006;
+    if (conn.life <= 0) { state.connections.splice(i, 1); continue; }
+
+    const ag = state.agents[conn.agentId];
+    if (!ag) continue;
+
+    const tx = ag.x;
+    const ty = ag.y - 20;
+    const dx = tx - chiefX;
+    const dy = ty - chiefY;
+    const lineLen = Math.sqrt(dx*dx + dy*dy);
+
+    ctx.save();
+
+    // Pass 1: outer glow (8px, very transparent)
+    ctx.globalAlpha = conn.life * 0.15;
+    ctx.strokeStyle = '#00F5FF';
+    ctx.lineWidth = 8;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(chiefX, chiefY);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+
+    // Pass 2: mid glow (5px)
+    ctx.globalAlpha = conn.life * 0.3;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(chiefX, chiefY);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+
+    // Pass 3: core line with dash (3px)
+    ctx.globalAlpha = conn.life * 0.85;
+    ctx.strokeStyle = '#00F5FF';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 6]);
+    ctx.lineDashOffset = -(Date.now() * 0.1 % 16);
+    ctx.beginPath();
+    ctx.moveTo(chiefX, chiefY);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+    // Target indicator at agent end — pulsing concentric circles
+    const pulseT = (Date.now() % 1200) / 1200;
+    const outerR = 6 + pulseT * 10;
+    ctx.globalAlpha = conn.life * (1 - pulseT) * 0.6;
+    ctx.strokeStyle = '#00F5FF';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(tx, ty, outerR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.globalAlpha = conn.life * 0.9;
+    ctx.fillStyle = '#00F5FF';
+    ctx.beginPath();
+    ctx.arc(tx, ty, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Source pulse at chief end
+    const sPulse = (Date.now() % 800) / 800;
+    ctx.globalAlpha = conn.life * (1 - sPulse) * 0.4;
+    ctx.strokeStyle = '#FFB800';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(chiefX, chiefY, 6 + sPulse * 15, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Data packet dots traveling along the line
+    if (!conn.packets) {
+      conn.packets = [0.15, 0.4, 0.65, 0.9].map(t => ({ t, speed: 0.0004 + Math.random() * 0.0002 }));
+    }
+    for (const pk of conn.packets) {
+      pk.t += pk.speed * 16;
+      if (pk.t > 1) pk.t -= 1;
+      const px = chiefX + dx * pk.t;
+      const py = chiefY + dy * pk.t;
+      ctx.globalAlpha = conn.life * 0.85;
+      ctx.fillStyle = '#00F5FF';
+      ctx.shadowColor = '#00F5FF';
+      ctx.shadowBlur = 5;
+      ctx.beginPath();
+      ctx.arc(px, py, 3, 0, Math.PI * 2);
+      ctx.fill();
+      // Tiny trail
+      const prevT = pk.t - 0.04;
+      if (prevT > 0) {
+        const ppx = chiefX + dx * prevT;
+        const ppy = chiefY + dy * prevT;
+        ctx.globalAlpha = conn.life * 0.3;
+        ctx.beginPath();
+        ctx.arc(ppx, ppy, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.restore();
+
+    // Arrow head at agent end
+    ctx.save();
+    ctx.globalAlpha = conn.life;
+    ctx.fillStyle = '#00F5FF';
+    if (lineLen > 0) {
+      const ux = dx / lineLen, uy = dy / lineLen;
+      const ax = tx - ux * 14, ay = ty - uy * 14;
+      ctx.beginPath();
+      ctx.moveTo(ax + ux * 8, ay + uy * 8);
+      ctx.lineTo(ax - uy * 5, ay + ux * 5);
+      ctx.lineTo(ax + uy * 5, ay - ux * 5);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+// ============================================================
+// AGENT MOVEMENT
+// ============================================================
+const MOVE_SPEED = 0.06;
+
+function updateAgentPosition(ag, dt) {
+  const dx = ag.targetX - ag.x;
+  const dy = ag.targetY - ag.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist > 2) {
+    ag.x += dx * MOVE_SPEED * dt * 0.1;
+    ag.y += dy * MOVE_SPEED * dt * 0.1;
+  } else {
+    ag.x = ag.targetX;
+    ag.y = ag.targetY;
+  }
+}
+
+// ============================================================
+// AGENT HUD OVERLAY
+// ============================================================
+function updateAgentHUD() {
+  const overlay = document.getElementById('agent-status-overlay');
+  overlay.innerHTML = '';
+
+  Object.values(state.agents).forEach(ag => {
+    const item = document.createElement('div');
+    item.className = 'agent-hud-item';
+
+    const relX = ag.x;
+    const relY = ag.y - 62;
+
+    item.style.left = relX + 'px';
+    item.style.top = relY + 'px';
+
+    let stateColor = '#8892A4';
+    let stateIcon = '●';
+    let stateText = 'IDLE';
+    if (ag.state === 'working') { stateColor = '#FFD700'; stateIcon = '⚙'; stateText = 'WORKING'; }
+    else if (ag.state === 'success') { stateColor = '#39FF14'; stateIcon = '✓'; stateText = 'DONE'; }
+    else if (ag.state === 'error') { stateColor = '#FF4444'; stateIcon = '✗'; stateText = 'ERROR'; }
+    else if (ag.state === 'walking') { stateColor = '#00F5FF'; stateIcon = '→'; stateText = 'MOVING'; }
+    else if (ag.state === 'receiving_order') { stateColor = '#00F5FF'; stateIcon = '📡'; stateText = 'ORDER'; }
+
+    const energyPct = Math.max(0, Math.min(1, ag.energy));
+    const energyColor = energyPct > 0.6 ? '#39FF14' : energyPct > 0.3 ? '#FFD700' : '#FF4444';
+
+    item.innerHTML = `
+      <div class="agent-hud-name" style="color:${ag.color}">${ag.name}</div>
+      <div class="agent-hud-status" style="color:${stateColor}">${stateIcon} ${stateText}</div>
+      <div class="energy-bar-wrap">
+        <div class="energy-bar-fill" style="width:${energyPct*100}%;background:${energyColor}"></div>
+      </div>
+    `;
+
+    overlay.appendChild(item);
+  });
+}
+
+// ============================================================
+// MINI-MAP
+// ============================================================
+function drawMiniMap() {
+  const W = gameCanvas.width;
+  const H = gameCanvas.height;
+  const mW = 180;
+  const mH = 120;
+
+  mmCtx.clearRect(0, 0, mW, mH);
+
+  // Background
+  mmCtx.fillStyle = '#0a0a15';
+  mmCtx.fillRect(0, 0, mW, mH);
+
+  // Title
+  mmCtx.fillStyle = 'rgba(255,255,255,0.4)';
+  mmCtx.font = '4px "Press Start 2P"';
+  mmCtx.textAlign = 'left';
+  mmCtx.textBaseline = 'top';
+  mmCtx.fillText('MAP', 3, 3);
+
+  // Active connections on mini-map
+  const chiefMX = (chiefCanvasX / W) * mW;
+  const chiefMY = (chiefCanvasY / H) * mH;
+
+  for (const conn of state.connections) {
+    const ag = state.agents[conn.agentId];
+    if (!ag) continue;
+    const ax = (ag.x / W) * mW;
+    const ay = (ag.y / H) * mH;
+    mmCtx.globalAlpha = conn.life * 0.5;
+    mmCtx.strokeStyle = '#00F5FF';
+    mmCtx.lineWidth = 0.8;
+    mmCtx.beginPath();
+    mmCtx.moveTo(chiefMX, chiefMY);
+    mmCtx.lineTo(ax, ay);
+    mmCtx.stroke();
+    mmCtx.globalAlpha = 1;
+  }
+
+  // Agent dots
+  Object.values(state.agents).forEach(ag => {
+    const ax = (ag.x / W) * mW;
+    const ay = (ag.y / H) * mH;
+    const isWorking = ag.state === 'working';
+    const pulse = isWorking ? 0.6 + Math.sin(Date.now() * 0.006) * 0.4 : 1;
+
+    // Glow
+    mmCtx.globalAlpha = 0.4 * pulse;
+    mmCtx.fillStyle = ag.color;
+    mmCtx.beginPath();
+    mmCtx.arc(ax, ay, 5, 0, Math.PI * 2);
+    mmCtx.fill();
+
+    // Dot
+    mmCtx.globalAlpha = pulse;
+    mmCtx.fillStyle = ag.color;
+    mmCtx.beginPath();
+    mmCtx.arc(ax, ay, 3, 0, Math.PI * 2);
+    mmCtx.fill();
+    mmCtx.globalAlpha = 1;
+
+    // Label
+    mmCtx.fillStyle = 'rgba(255,255,255,0.6)';
+    mmCtx.font = '3px "Press Start 2P"';
+    mmCtx.textAlign = 'left';
+    mmCtx.textBaseline = 'middle';
+    mmCtx.fillText(ag.name[0], ax + 4, ay);
+  });
+
+  // Chief dot (gold, larger)
+  const chiefPulse = 0.7 + Math.sin(Date.now() * 0.003) * 0.3;
+  mmCtx.globalAlpha = 0.4 * chiefPulse;
+  mmCtx.fillStyle = '#FFB800';
+  mmCtx.beginPath();
+  mmCtx.arc(chiefMX, chiefMY, 9, 0, Math.PI * 2);
+  mmCtx.fill();
+  mmCtx.globalAlpha = chiefPulse;
+  mmCtx.fillStyle = '#FFD700';
+  mmCtx.beginPath();
+  mmCtx.arc(chiefMX, chiefMY, 5, 0, Math.PI * 2);
+  mmCtx.fill();
+  mmCtx.globalAlpha = 1;
+
+  // Chief label
+  mmCtx.fillStyle = '#FFD700';
+  mmCtx.font = '3px "Press Start 2P"';
+  mmCtx.textAlign = 'left';
+  mmCtx.textBaseline = 'middle';
+  mmCtx.fillText('C', chiefMX + 6, chiefMY);
+
+  // Border
+  mmCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+  mmCtx.lineWidth = 1;
+  mmCtx.strokeRect(0, 0, mW, mH);
+}
+
+// ============================================================
+// AGENT STATE MACHINE
+// ============================================================
+function setAgentState(agId, newState, options = {}) {
+  const ag = state.agents[agId];
+  if (!ag) return;
+  ag.prevState = ag.state;
+  ag.state = newState;
+  ag.stateTimer = 0;
+
+  if (options.taskLabel) ag.taskLabel = options.taskLabel;
+  if (options.targetX !== undefined) { ag.targetX = options.targetX; ag.targetY = options.targetY; }
+}
+
+function dispatchToAgent(agentId, command) {
+  const ag = state.agents[agentId];
+  if (!ag) return;
+
+  state.stats.dispatched++;
+  updateStats();
+
+  state.connections.push({ agentId, life: 1.0, packets: null });
+
+  logEvent(`Chief → ${ag.name}: "${command}"`, 'dispatch');
+
+  setAgentState(agentId, 'receiving_order', { taskLabel: command });
+
+  setTimeout(() => {
+    if (!state.agents[agentId]) return;
+    const wx = ag.baseX + (Math.random() - 0.5) * 60;
+    const wy = ag.baseY + (Math.random() - 0.5) * 20;
+    setAgentState(agentId, 'walking', { targetX: wx, targetY: wy });
+    ag.energy = Math.max(0.1, ag.energy - 0.2);
+    logEvent(`${ag.name} moving to work position`, 'move');
+  }, 900);
+
+  const workDuration = 2000 + Math.random() * 3000;
+  setTimeout(() => {
+    if (!state.agents[agentId]) return;
+    setAgentState(agentId, 'working');
+    logEvent(`${ag.name} executing: "${command}"`, 'working');
+  }, 900 + 800);
+
+  const totalTime = 900 + 800 + workDuration;
+  setTimeout(() => {
+    if (!state.agents[agentId]) return;
+    const success = Math.random() > 0.1;
+    if (success) {
+      setAgentState(agentId, 'success');
+      spawnParticles(ag.x, ag.y, 'success', ag.color);
+      state.stats.done++;
+      logEvent(`**${ag.name}** completed: "${command}"`, 'success-bold');
+    } else {
+      setAgentState(agentId, 'error');
+      spawnParticles(ag.x, ag.y, 'error', '#FF4444');
+      state.stats.fail++;
+      logEvent(`${ag.name} FAILED: "${command}"`, 'error');
+    }
+    ag.energy = Math.min(1, ag.energy + 0.1);
+    updateStats();
+
+    setTimeout(() => {
+      if (!state.agents[agentId]) return;
+      setAgentState(agentId, 'walking', { targetX: ag.baseX, targetY: ag.baseY });
+      setTimeout(() => {
+        if (!state.agents[agentId]) return;
+        setAgentState(agentId, 'idle');
+        ag.energy = Math.min(1, ag.energy + 0.15);
+      }, 1200);
+    }, 1000);
+  }, totalTime);
+}
+
+// ============================================================
+// DEMO MODE — auto-event generator
+// ============================================================
+let demoInitialDispatchDone = false;
+
+function autoEvent(now) {
+  if (!state.demoMode) return;
+  const interval = 2000 + Math.random() * 3000;
+  if (now - state.lastAutoEvent < interval) return;
+  state.lastAutoEvent = now;
+
+  const agentIds = Object.keys(state.agents);
+  const agId = agentIds[Math.floor(Math.random() * agentIds.length)];
+  const ag = state.agents[agId];
+  if (!ag || ag.state !== 'idle') return;
+
+  const cmd = COMMANDS[Math.floor(Math.random() * COMMANDS.length)];
+  dispatchToAgent(agId, cmd);
+}
+
+function enterDemoMode() {
+  if (state.demoMode) return;
+  state.demoMode = true;
+  const badge = document.getElementById('mode-badge');
+  badge.className = 'demo';
+  badge.textContent = 'DEMO';
+}
+
+function enterLiveMode() {
+  if (!state.demoMode) return;
+  state.demoMode = false;
+  // Reset stats and clear log on switch to live
+  state.stats = { done: 0, fail: 0, dispatched: 0 };
+  updateStats();
+  logEntries.length = 0;
+  document.getElementById('event-log').innerHTML = '';
+  const badge = document.getElementById('mode-badge');
+  badge.className = 'live';
+  badge.textContent = 'LIVE';
+}
+
+function staggeredInitialDispatch() {
+  const agentIds = Object.keys(state.agents);
+  agentIds.forEach((agId, i) => {
+    if (Math.random() < 0.5) {
+      setTimeout(() => {
+        const ag = state.agents[agId];
+        if (ag && ag.state === 'idle') {
+          const cmd = COMMANDS[Math.floor(Math.random() * COMMANDS.length)];
+          dispatchToAgent(agId, cmd);
+        }
+      }, 500 + i * 400 + Math.random() * 600);
+    }
+  });
+}
+
+// ============================================================
+// WEBSOCKET CONNECTION MANAGER
+// ============================================================
+const WS_URL = 'ws://localhost:5195';
+const HTTP_EVENT_URL = 'http://localhost:5195/event';
+const MAX_RECONNECT_ATTEMPTS = 50;
+
+let ws = null;
+let reconnectAttempts = 0;
+let reconnectTimer = null;
+let initialConnectTimer = null;
+
+function setConnectionStatus(status) {
+  // status: 'connected' | 'disconnected' | 'reconnecting'
+  const dot = document.getElementById('conn-dot');
+  const text = document.getElementById('conn-text');
+  const btn = document.getElementById('dispatch-btn');
+
+  dot.className = 'status-dot';
+
+  if (status === 'connected') {
+    state.wsConnected = true;
+    dot.classList.add('green');
+    text.textContent = 'CONNECTED';
+    btn.disabled = false;
+    btn.textContent = '▶ DISPATCH';
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.cursor = 'pointer';
+  } else if (status === 'reconnecting') {
+    state.wsConnected = false;
+    dot.classList.add('yellow');
+    text.textContent = `RECONNECTING... (${reconnectAttempts})`;
+    // button stays enabled in demo mode
+    if (!state.demoMode) {
+      btn.disabled = false;
+    }
+  } else {
+    // disconnected
+    state.wsConnected = false;
+    dot.classList.add('red');
+    text.textContent = 'DISCONNECTED';
+    // button stays enabled (demo mode handles dispatch)
+    btn.disabled = false;
+    btn.textContent = '▶ DISPATCH';
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.cursor = 'pointer';
+  }
+}
+
+function handleWsMessage(data) {
+  let msg;
+  try { msg = JSON.parse(data); } catch { return; }
+
+  if (msg.event === 'initial_state') {
+    // Set all known agent states from server
+    if (msg.agents) {
+      Object.values(msg.agents).forEach(srv => {
+        const ag = state.agents[srv.agentId];
+        if (!ag) return;
+        // Only set non-idle states (idle is default)
+        if (srv.status && srv.status !== 'idle') {
+          applyAgentStatus(srv.agentId, srv.status, srv.command || '', srv.agentName || '');
+        }
+      });
+    }
+    logEvent('Server state synchronized', 'info');
+    return;
+  }
+
+  if (msg.event === 'agent_status') {
+    applyAgentStatus(msg.agentId, msg.status, msg.command || '', msg.agentName || msg.agentId || '');
+  }
+}
+
+function applyAgentStatus(agentId, status, command, agentName) {
+  const ag = state.agents[agentId];
+  if (!ag) return;
+
+  if (status === 'working') {
+    // receiving_order → walk → working
+    state.connections.push({ agentId, life: 1.0, packets: null });
+    state.stats.dispatched++;
+    updateStats();
+    logEvent(`Chief → ${agentName || ag.name}: "${command}"`, 'dispatch');
+    setAgentState(agentId, 'receiving_order', { taskLabel: command });
+
+    setTimeout(() => {
+      if (!state.agents[agentId] || !state.wsConnected) return;
+      const wx = ag.baseX + (Math.random() - 0.5) * 60;
+      const wy = ag.baseY + (Math.random() - 0.5) * 20;
+      setAgentState(agentId, 'walking', { targetX: wx, targetY: wy });
+      ag.energy = Math.max(0.1, ag.energy - 0.2);
+      logEvent(`${agentName || ag.name} moving to work position`, 'move');
+    }, 800);
+
+    setTimeout(() => {
+      if (!state.agents[agentId] || !state.wsConnected) return;
+      setAgentState(agentId, 'working');
+      logEvent(`${agentName || ag.name} executing: "${command}"`, 'working');
+    }, 800 + 1200);
+
+  } else if (status === 'success') {
+    setAgentState(agentId, 'success');
+    spawnParticles(ag.x, ag.y, 'success', ag.color);
+    state.stats.done++;
+    logEvent(`**${agentName || ag.name}** completed: "${command}"`, 'success-bold');
+    ag.energy = Math.min(1, ag.energy + 0.1);
+    updateStats();
+    setTimeout(() => {
+      if (!state.agents[agentId]) return;
+      setAgentState(agentId, 'walking', { targetX: ag.baseX, targetY: ag.baseY });
+      setTimeout(() => {
+        if (!state.agents[agentId]) return;
+        setAgentState(agentId, 'idle');
+        ag.energy = Math.min(1, ag.energy + 0.15);
+      }, 1200);
+    }, 1500);
+
+  } else if (status === 'error') {
+    setAgentState(agentId, 'error');
+    spawnParticles(ag.x, ag.y, 'error', '#FF4444');
+    state.stats.fail++;
+    logEvent(`${agentName || ag.name} FAILED: "${command}"`, 'error');
+    ag.energy = Math.max(0.1, ag.energy - 0.1);
+    updateStats();
+    setTimeout(() => {
+      if (!state.agents[agentId]) return;
+      setAgentState(agentId, 'walking', { targetX: ag.baseX, targetY: ag.baseY });
+      setTimeout(() => {
+        if (!state.agents[agentId]) return;
+        setAgentState(agentId, 'idle');
+        ag.energy = Math.min(1, ag.energy + 0.1);
+      }, 1200);
+    }, 2000);
+
+  } else if (status === 'idle') {
+    setAgentState(agentId, 'walking', { targetX: ag.baseX, targetY: ag.baseY });
+    setTimeout(() => {
+      if (!state.agents[agentId]) return;
+      setAgentState(agentId, 'idle');
+    }, 1200);
+  }
+}
+
+function connectWebSocket() {
+  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+
+  ws = new WebSocket(WS_URL);
+
+  // 5-second timeout for initial connection attempt — fall back to demo
+  if (!demoInitialDispatchDone && initialConnectTimer === null) {
+    initialConnectTimer = setTimeout(() => {
+      if (!state.wsConnected) {
+        // Server not available — activate demo mode
+        initialConnectTimer = null;
+        if (state.demoMode) {
+          logEvent('DEMO MODE — simulated agent activity', 'working');
+          const badge = document.getElementById('mode-badge');
+          badge.className = 'demo';
+          badge.textContent = 'DEMO';
+        }
+        if (!demoInitialDispatchDone) {
+          demoInitialDispatchDone = true;
+          staggeredInitialDispatch();
+        }
+      }
+    }, 5000);
+  }
+
+  ws.onopen = () => {
+    reconnectAttempts = 0;
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    if (initialConnectTimer) { clearTimeout(initialConnectTimer); initialConnectTimer = null; }
+
+    const wasDemo = state.demoMode;
+    setConnectionStatus('connected');
+    enterLiveMode();
+
+    if (wasDemo) {
+      logEvent('Server connected — LIVE MODE activated', 'success');
+    } else {
+      logEvent('LIVE MODE — connected to AIOX Arena Server', 'success');
+    }
+  };
+
+  ws.onmessage = evt => { handleWsMessage(evt.data); };
+
+  ws.onclose = () => {
+    setConnectionStatus('disconnected');
+
+    const wasLive = !state.demoMode;
+    enterDemoMode();
+    if (wasLive) {
+      logEvent('Server disconnected — DEMO MODE activated', 'error');
+      if (!demoInitialDispatchDone) {
+        demoInitialDispatchDone = true;
+        staggeredInitialDispatch();
+      }
+    }
+
+    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      reconnectAttempts++;
+      setConnectionStatus('reconnecting');
+      reconnectTimer = setTimeout(connectWebSocket, 5000);
+    }
+  };
+
+  ws.onerror = () => {
+    // onclose fires after onerror — let onclose handle reconnect
+  };
+}
+
+// Start WS connection on load — demo mode is active by default
+connectWebSocket();
+
+// ============================================================
+// EVENT LOG
+// ============================================================
+const MAX_LOG = 15;
+const logEntries = [];
+
+function logEvent(msg, type = 'info') {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  const time = `${hh}:${mm}:${ss}`;
+
+  logEntries.unshift({ msg, type, time });
+  if (logEntries.length > MAX_LOG) logEntries.pop();
+
+  const logEl = document.getElementById('event-log');
+  logEl.innerHTML = logEntries.map(e => {
+    const isBold = e.type === 'success-bold';
+    const displayMsg = isBold ? e.msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') : e.msg;
+    const cssClass = isBold ? 'success' : e.type;
+    return `<div class="log-entry ${cssClass}"><span class="log-time">[${e.time}]</span>${displayMsg}</div>`;
+  }).join('');
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function updateStats() {
+  document.getElementById('stat-done').textContent = state.stats.done;
+  document.getElementById('stat-fail').textContent = state.stats.fail;
+  document.getElementById('stat-disp').textContent = state.stats.dispatched;
+}
+
+function updateUptime() {
+  const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+  const m = String(Math.floor(elapsed / 60)).padStart(2,'0');
+  const s = String(elapsed % 60).padStart(2,'0');
+  document.getElementById('stat-uptime').textContent = `${m}:${s}`;
+}
+
+// ============================================================
+// ENERGY REGEN
+// ============================================================
+function regenEnergy(dt) {
+  Object.values(state.agents).forEach(ag => {
+    if (ag.state === 'idle') {
+      ag.energy = Math.min(1, ag.energy + 0.0001 * dt);
+    }
+  });
+}
+
+// ============================================================
+// MAIN LOOP
+// ============================================================
+let lastTime = 0;
+function loop(now) {
+  const dt = Math.min(now - lastTime, 50);
+  lastTime = now;
+
+  ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+  // Ground (with sparkles, scanlines, vignette)
+  drawGround(now);
+
+  // Connections
+  drawConnections();
+
+  // Agents
+  Object.values(state.agents).forEach(ag => {
+    updateAgentPosition(ag, dt);
+    drawAgent(ag, dt);
+  });
+
+  // Particles
+  updateParticles(dt);
+
+  // Chief — drawn on top of ground, behind HUD
+  drawChief(dt);
+
+  // Mini-map
+  drawMiniMap();
+
+  // HUD
+  updateAgentHUD();
+
+  // Energy regen
+  regenEnergy(dt);
+
+  // Demo mode auto-events
+  if (state.demoMode) autoEvent(now);
+
+  requestAnimationFrame(loop);
+}
+
+// ============================================================
+// DISPATCH BUTTON — HTTP POST in live mode, local dispatch in demo
+// ============================================================
+document.getElementById('dispatch-btn').addEventListener('click', () => {
+  const agentId = document.getElementById('agent-select').value;
+  const cmd = document.getElementById('cmd-input').value.trim() ||
+    COMMANDS[Math.floor(Math.random() * COMMANDS.length)];
+  document.getElementById('cmd-input').value = '';
+
+  if (state.demoMode) {
+    // Demo mode: dispatch locally
+    dispatchToAgent(agentId, cmd);
+    return;
+  }
+
+  // Live mode: POST to server
+  fetch(HTTP_EVENT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      event: 'dispatch',
+      agentId,
+      command: cmd,
+      timestamp: new Date().toISOString(),
+    }),
+  }).catch(() => {
+    logEvent('Erro ao enviar comando — servidor inacessível', 'error');
+    // Fall back to local dispatch
+    dispatchToAgent(agentId, cmd);
+  });
+});
+
+document.getElementById('cmd-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('dispatch-btn').click();
+});
+
+// ============================================================
+// UPTIME TICKER
+// ============================================================
+setInterval(updateUptime, 1000);
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+logEvent('AIOX Agent Arena V2 online', 'info');
+logEvent('Chief — orchestrator active', 'info');
+logEvent('Connecting to server ws://localhost:5195...', 'working');
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

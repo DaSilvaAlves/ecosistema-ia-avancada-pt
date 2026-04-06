@@ -1,0 +1,446 @@
+═══════════════════════════════════════════════════════════════════════
+  SYNKRA AIOX — Estado do Ecossistema Completo
+  Versão Framework: 2.1.0 | Data: 2026-03-14
+  Revisão manual → atualização automática completa
+═══════════════════════════════════════════════════════════════════════
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 1. AGENTES CORE AIOX  (/AIOX:agents:... ou @agent)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌───────────────────────────────┬─────────────────────────┬──────────────────────────────────┐
+│            Comando            │         Persona         │          Uso Principal           │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:dev              │ @dev (Dex)              │ Implementação de código          │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:qa               │ @qa (Quinn)             │ Testes e qualidade               │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:architect        │ @architect (Aria)       │ Arquitetura e design técnico     │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:pm               │ @pm (Morgan)            │ Product Management, Epics        │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:po               │ @po (Pax)               │ Product Owner, stories           │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:sm               │ @sm (River)             │ Scrum Master, criação de stories │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:analyst          │ @analyst (Alex)         │ Pesquisa e análise               │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:data-engineer    │ @data-engineer (Dara)   │ Database, schemas, migrações     │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:devops           │ @devops (Gage)          │ CI/CD, git push (EXCLUSIVO)      │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:ux-design-expert │ @ux-design-expert (Uma) │ UX/UI design                     │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:aiox-master      │ @aiox-master (Orion)    │ Governança total do framework    │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:squad-creator    │ —                       │ Criar novos squads               │
+├───────────────────────────────┼─────────────────────────┼──────────────────────────────────┤
+│ /AIOX:agents:monster          │ @monster                │ Agente avançado/especial         │
+└───────────────────────────────┴─────────────────────────┴──────────────────────────────────┘
+
+Autoridade exclusiva por agente:
+  @devops → git push, gh pr create/merge, MCP management, CI/CD, releases
+  @pm     → *create-epic, *execute-epic, spec pipeline, EPIC-EXECUTION.yaml
+  @po     → *validate-story-draft, backlog prioritization, epic context
+  @sm     → *draft / *create-story, story templates
+  @dev    → git add/commit/status/diff/log (SEM push)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 2. COHORT SQUAD  (/cohort-squad:agents:...)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────────────────────────────┬──────────────────────────────────────┐
+│               Comando                │             Descrição                │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ /cohort-squad:agents:cohort-manager  │ Gestão de cohorts e turmas           │
+└──────────────────────────────────────┴──────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 3. SYNAPSE  (/synapse:...) — Motor de contexto inteligente
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────────────────────────────┬──────────────────────────────────────┐
+│               Comando                │             Descrição                │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ /synapse                             │ SYNAPSE context engine overview      │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ /synapse:manager                     │ Gerir domínios e regras de contexto  │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ /synapse:tasks:add-rule              │ Adicionar nova regra ao contexto     │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ /synapse:tasks:create-command        │ Criar novo slash command             │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ /synapse:tasks:create-domain         │ Criar novo domínio de contexto       │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ /synapse:tasks:diagnose-synapse      │ Diagnosticar o motor SYNAPSE         │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ /synapse:tasks:edit-rule             │ Editar regra existente               │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ /synapse:tasks:suggest-domain        │ Sugerir domínios relevantes          │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ /synapse:tasks:toggle-domain         │ Activar/desactivar domínio           │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ /synapse:utils:manifest-parser-ref   │ Referência de formato de manifesto   │
+└──────────────────────────────────────┴──────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 4. DESIGN SYSTEM  (/design-system:agents:...)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌─────────────────────────────────────────────┬──────────────────────────────────────┐
+│                   Comando                   │           Especialidade              │
+├─────────────────────────────────────────────┼──────────────────────────────────────┤
+│ /design-system:agents:design-chief          │ Director de design system            │
+├─────────────────────────────────────────────┼──────────────────────────────────────┤
+│ /design-system:agents:brad-frost            │ Atomic design, componentes           │
+├─────────────────────────────────────────────┼──────────────────────────────────────┤
+│ /design-system:agents:dan-mall              │ Design system strategy               │
+├─────────────────────────────────────────────┼──────────────────────────────────────┤
+│ /design-system:agents:dave-malouf           │ DesignOps, UX systems                │
+├─────────────────────────────────────────────┼──────────────────────────────────────┤
+│ /design-system:agents:nano-banana-generator │ Geração de assets com IA (Gemini)    │
+└─────────────────────────────────────────────┴──────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 5. SKILLS UTILITÁRIOS  (/ commands globais)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────────────┬────────────────────────────────────────────────┐
+│       Comando        │                  Descrição                     │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ /greet               │ Saudação contextual com estado da sessão       │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ /simplify            │ Rever código alterado e simplificar            │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ /loop                │ Executar prompt/comando em intervalo recorrente│
+├──────────────────────┼────────────────────────────────────────────────┤
+│ /claude-api          │ Builder apps com Claude API / Anthropic SDK    │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ /architect-first     │ Guia Architect-First development philosophy    │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ /checklist-runner    │ Motor genérico de execução de checklists       │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ /coderabbit-review   │ CodeRabbit CLI via WSL, self-healing loop      │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ /tech-search         │ Deep tech research (WebSearch + Haiku workers) │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ /mcp-builder         │ Guia criação de MCP servers (FastMCP/TS SDK)   │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ /skill-creator       │ Guia criação de skills para Claude Code        │
+└──────────────────────┴────────────────────────────────────────────────┘
+
+Skills de Marketing  (/market-*):
+
+┌───────────────────────┬──────────────────────────────────────────────┐
+│        Comando        │                 Descrição                    │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market               │ AI Marketing Suite — Orquestrador principal  │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-ads           │ Ad Creative & Copy Generation                │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-audit         │ Marketing Audit Orchestrator                 │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-brand         │ Brand Voice Analysis & Guidelines            │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-competitors   │ Competitive Intelligence Analysis            │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-copy          │ Copywriting Analysis & Generation            │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-emails        │ Email Sequence Generation                    │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-funnel        │ Sales Funnel Analysis & Optimization         │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-landing       │ Landing Page CRO Analysis                   │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-launch        │ Product/Service Launch Playbook              │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-proposal      │ Client Proposal Generator                    │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-report        │ Marketing Report (Markdown)                  │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-report-pdf    │ Marketing Report (PDF)                       │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-seo           │ SEO Content Audit                            │
+├───────────────────────┼──────────────────────────────────────────────┤
+│ /market-social        │ Social Media Content Calendar & Generation   │
+└───────────────────────┴──────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 6. STORIES  (/AIOX:stories:...)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────────────────┬──────────────────────────────────────────────┐
+│         Comando          │                 Descrição                    │
+├──────────────────────────┼──────────────────────────────────────────────┤
+│ /AIOX:stories:story-6.1.4│ Unified Greeting System Integration (v4)     │
+└──────────────────────────┴──────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 7. HOOKS ACTIVOS (automáticos)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌────────────────────────────────────┬────────────────────┬────────────────────────────────────────────┐
+│               Hook                 │  Quando executa    │               O que faz                    │
+├────────────────────────────────────┼────────────────────┼────────────────────────────────────────────┤
+│ synapse-engine.cjs                 │ UserPromptSubmit   │ Processa domínios SYNAPSE em cada prompt   │
+├────────────────────────────────────┼────────────────────┼────────────────────────────────────────────┤
+│ code-intel-pretool.cjs             │ Antes de Write/Edit│ Code intelligence pre-validation           │
+├────────────────────────────────────┼────────────────────┼────────────────────────────────────────────┤
+│ precompact-session-digest.cjs      │ Antes de compactar │ Digest da sessão antes de compactação      │
+└────────────────────────────────────┴────────────────────┴────────────────────────────────────────────┘
+
+Git Hooks (via Husky):
+
+┌─────────────────┬───────────────────┬──────────────────────────────────────────────────────────────┐
+│      Hook       │   Quando executa  │                          O que faz                           │
+├─────────────────┼───────────────────┼──────────────────────────────────────────────────────────────┤
+│ pre-commit      │ A cada git commit │ IDE sync dos agentes + lint-staged (ESLint, Prettier)        │
+├─────────────────┼───────────────────┼──────────────────────────────────────────────────────────────┤
+│ pre-push        │ A cada git push   │ Sincroniza entity registry AIOX antes de enviar              │
+├─────────────────┼───────────────────┼──────────────────────────────────────────────────────────────┤
+│ post-commit     │ Após cada commit  │ Invalida cache do ProjectStatusLoader (async, não bloqueia)  │
+└─────────────────┴───────────────────┴──────────────────────────────────────────────────────────────┘
+
+Repositórios com hooks configurados:
+  ~/.husky/ (global)                          → pre-commit + pre-push
+  ~/aios-core/                                → pre-commit + pre-push + post-commit
+  ~/Documents/aios-control-center/            → pre-commit + pre-push + post-commit
+  ~/Documents/ecosistema-ia-avancada-pt/...  → setup via setup-git-hooks.sh
+
+Para novo repositório:
+  bash .aiox-core/scripts/setup-git-hooks.sh
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 8. REGRAS ACTIVAS  (.claude/rules/)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌────────────────────────────────┬──────────────────────────────────────────────────────────────────┐
+│           Ficheiro             │                         Descrição                                │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ agent-authority.md             │ Delegation matrix — operações exclusivas por agente              │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ agent-handoff.md               │ Protocolo de compactação de contexto entre agentes (~379 tokens) │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ agent-memory-imports.md        │ Ciclo de vida de agent memory e ownership                        │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ coderabbit-integration.md      │ Code review automático com CodeRabbit CLI                        │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ ids-principles.md              │ Incremental Development System — REUSE/ADAPT/CREATE              │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ mcp-usage.md                   │ MCP server rules, tool selection priority (3 Tiers)              │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ story-lifecycle.md             │ Story status transitions, quality gates                          │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ tool-examples.md               │ Exemplos concretos de uso de ferramentas (+18pp accuracy)        │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ tool-response-filtering.md     │ Filtragem e parsing de respostas de ferramentas                  │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ workflow-execution.md          │ 4 workflows: SDC, QA Loop, Spec Pipeline, Brownfield             │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ cohort-manager-authority.md    │ Autoridade cohort-manager: operações MCP, limites, segurança     │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ monster-agent-protocol.md      │ Protocolo @monster: quando activar, modos, mapa de delegação     │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ imersao-pipeline-rules.md      │ Pipeline Imersão 6 passos, portas protegidas, contratos de dados │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ skill-creation-standards.md    │ Estrutura, nomenclatura, skill vs agente, autoridade de criação  │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ synapse-domain-governance.md   │ Quando criar domínios SYNAPSE, autoridade, activação             │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ agent-creation-standards.md    │ Estrutura YAML obrigatória, autoridade, validação pós-criação    │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ design-system-authority.md     │ Routing entre os 5 agentes de design system, âmbito e delegação  │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ marketing-suite-rules.md       │ Âmbito /market-*, routing por necessidade, coordenação AIOX      │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ language-standards.md          │ PT-PT obrigatório, vocabulário PT-PT vs PT-BR, termos EN aceites │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ output-format-standards.md     │ Tabelas ASCII, markdown, YAML, emojis com moderação, concisão    │
+└────────────────────────────────┴──────────────────────────────────────────────────────────────────┘
+
+  Total: 20 regras activas | Backlog: LIMPO ✅
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 9. CONSTITUTION AIOX — Artigos Fundamentais
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Ficheiro: .aiox-core/constitution.md
+
+┌───────────┬─────────────────────┬───────────────────┐
+│  Artigo   │     Princípio       │    Severidade     │
+├───────────┼─────────────────────┼───────────────────┤
+│     I     │ CLI First           │ NON-NEGOTIABLE    │
+├───────────┼─────────────────────┼───────────────────┤
+│    II     │ Agent Authority     │ NON-NEGOTIABLE    │
+├───────────┼─────────────────────┼───────────────────┤
+│    III    │ Story-Driven Dev    │ MUST              │
+├───────────┼─────────────────────┼───────────────────┤
+│    IV     │ No Invention        │ MUST              │
+├───────────┼─────────────────────┼───────────────────┤
+│     V     │ Quality First       │ MUST              │
+├───────────┼─────────────────────┼───────────────────┤
+│    VI     │ Absolute Imports    │ SHOULD            │
+└───────────┴─────────────────────┴───────────────────┘
+
+  Prioridade de camadas:  CLI First → Observability Second → UI Third
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 10. REGRAS EM FALTA — BACKLOG DE CRIAÇÃO  ⚠ PRIORITÁRIO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Estado actual: os comandos existem, as regras formais NÃO existem.
+  Estas regras devem ser criadas em .claude/rules/ com frontmatter YAML.
+
+  Regras criadas (Story 2.1 — 2026-03-14):
+
+┌──────────────────────────────────────┬───────────────────┬────────────────────────────────────────────────────────┐
+│               Regra                  │      Estado       │                    Descrição                           │
+├──────────────────────────────────────┼───────────────────┼────────────────────────────────────────────────────────┤
+│ cohort-manager-authority.md          │ ✅ CRIADA         │ Autoridade do cohort-manager: operações, limites, MCP  │
+├──────────────────────────────────────┼───────────────────┼────────────────────────────────────────────────────────┤
+│ monster-agent-protocol.md            │ ✅ CRIADA         │ Protocolo @monster: modos, delegação, CLI First        │
+├──────────────────────────────────────┼───────────────────┼────────────────────────────────────────────────────────┤
+│ imersao-pipeline-rules.md            │ ✅ CRIADA         │ Pipeline 6 passos, portas, contratos de dados          │
+└──────────────────────────────────────┴───────────────────┴────────────────────────────────────────────────────────┘
+
+  Regras criadas (Story 2.2 — 2026-03-14):
+
+┌──────────────────────────────────────┬───────────────────┬────────────────────────────────────────────────────────┐
+│               Regra                  │      Estado       │                    Descrição                           │
+├──────────────────────────────────────┼───────────────────┼────────────────────────────────────────────────────────┤
+│ skill-creation-standards.md          │ ✅ CRIADA         │ Estrutura, nomenclatura, skill vs agente, autoridade   │
+├──────────────────────────────────────┼───────────────────┼────────────────────────────────────────────────────────┤
+│ synapse-domain-governance.md         │ ✅ CRIADA         │ Quando criar domínios, autoridade, activação           │
+├──────────────────────────────────────┼───────────────────┼────────────────────────────────────────────────────────┤
+│ agent-creation-standards.md          │ ✅ CRIADA         │ Estrutura YAML obrigatória, autoridade, validação      │
+├──────────────────────────────────────┼───────────────────┼────────────────────────────────────────────────────────┤
+│ design-system-authority.md           │ ✅ CRIADA         │ Routing entre os 5 agentes de design system            │
+├──────────────────────────────────────┼───────────────────┼────────────────────────────────────────────────────────┤
+│ marketing-suite-rules.md             │ ✅ CRIADA         │ Âmbito /market-*, routing, coordenação com agentes     │
+├──────────────────────────────────────┼───────────────────┼────────────────────────────────────────────────────────┤
+│ language-standards.md                │ ✅ CRIADA         │ PT-PT obrigatório, vocabulário, termos técnicos EN     │
+├──────────────────────────────────────┼───────────────────┼────────────────────────────────────────────────────────┤
+│ output-format-standards.md           │ ✅ CRIADA         │ Tabelas, markdown, YAML, emojis, concisão              │
+└──────────────────────────────────────┴───────────────────┴────────────────────────────────────────────────────────┘
+
+  Backlog: LIMPO — todas as regras identificadas foram criadas ✅
+
+  Como criar uma regra:
+    1. Criar .claude/rules/{nome}.md com frontmatter:
+       ---
+       description: "Uma linha — usada para decidir relevância"
+       paths: ["*.ts", "*.tsx"]   # opcional — só carrega para estes ficheiros
+       ---
+    2. Adicionar à lista acima quando criada
+    3. Referenciar em CLAUDE.md se for regra crítica
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 11. WORKFLOWS PRINCIPAIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Story Development Cycle (SDC) — workflow principal:
+    @sm *draft → @po *validate-story-draft → @dev *develop → *run-tests
+    → @qa *qa-gate → @devops *push
+
+  QA Loop — revisão iterativa (max 5 ciclos):
+    @qa review → REJECT → @dev fix → re-review → APPROVE
+
+  Spec Pipeline — features complexas:
+    @pm gather → @architect assess → @analyst research → @pm spec
+    → @qa critique → @architect plan
+
+  Brownfield Discovery — assessment de código legado:
+    @architect (arch) → @data-engineer (schema) → @ux (frontend)
+    → @architect (debt draft) → @qa (gate) → @pm (epics)
+
+  Pipeline Imersão IA Portugal:
+    Student Profiler (5191)
+      ↓ ProfileData
+    Briefing Generator (5190)
+      ↓ BriefingOutput
+    Starter Builder (5192)
+      ↓ DesignTokens
+    Prompt Optimizer (5193)
+      ↓ OptimizedPrompt
+    AIOS Compiler (5194)
+      ↓ React 19 Code
+    GitHub Push → AI Velocity Dashboard → Vercel Deploy
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 12. ESTRUTURA DO ECOSSISTEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ecosistema-ia-avancada-pt/
+  ├── aios-imersao/               # Synkra AIOX v2.1.0 — framework base
+  │   ├── .aiox-core/             # L1/L2 protegido — NUNCA modificar
+  │   │   ├── constitution.md
+  │   │   ├── core-config.yaml   (installedAt: 2026-03-03)
+  │   │   ├── development/agents/ (12 agentes core)
+  │   │   └── development/tasks/  (100+ tasks)
+  │   ├── .claude/
+  │   │   ├── rules/             (10 regras activas + backlog)
+  │   │   ├── hooks/             (3 hooks core)
+  │   │   └── settings.json      (deny/allow rules L1-L4)
+  │   └── meu-projeto/            # Subprojeto AIOX
+  │
+  ├── imersao-build/              # Imersão IA Portugal — workshop
+  │   ├── .claude/agents/         (12 agentes GSD)
+  │   ├── .claude/skills/         (22+ skills especializados)
+  │   └── packages/               (5 serviços: 5190-5196)
+  │
+  ├── imersao-tools/              # Ferramentas pipeline (5190-5192)
+  │   ├── student-profiler/       (porta 5191)
+  │   ├── briefing-generator/     (porta 5190)
+  │   └── starter-builder/        (porta 5192)
+  │
+  ├── imersao/                    # AIOS legacy (imersão anterior)
+  │   └── .aios-core/
+  │
+  └── portal-imersao-ai/          # Portal (porta 5333 — deprecated)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 13. REFERÊNCIA RÁPIDA — COMANDOS MAIS USADOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Diagnóstico:
+    npx aiox-core doctor        → health check do sistema
+    npx aiox-core info          → info do sistema
+    /synapse:tasks:diagnose-synapse → diagnóstico SYNAPSE
+
+  Desenvolvimento:
+    @sm *draft {epic-id}        → criar story
+    @po *validate-story-draft   → validar story
+    @dev *develop {story-id}    → implementar
+    @qa *qa-gate                → quality gate
+    @devops *push               → push para remote (EXCLUSIVO)
+
+  Criar novos componentes:
+    /skill-creator              → criar nova skill
+    @aiox-master *create-agent  → criar novo agente
+    /synapse:tasks:create-domain → criar domínio SYNAPSE
+    /synapse:tasks:add-rule     → adicionar regra de contexto
+
+  Marketing e conteúdo:
+    /market                     → orquestrador marketing
+    /market-copy                → copywriting
+    /market-social              → social media
+    /market-landing             → landing page CRO
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Última actualização: 2026-03-14 (Stories 2.1 + 2.2 — 10 regras criadas via workflow AIOX)
+  Framework: Synkra AIOX v2.1.0 | Constitution: 6 artigos | Regras: 20 activas | Backlog: LIMPO ✅
+  CLI First | Observability Second | UI Third
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

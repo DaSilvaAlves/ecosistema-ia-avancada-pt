@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Compra confirmada — [IA]AVANÇADA PT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#04040A;--glass:rgba(255,255,255,0.03);--glass-border:rgba(255,255,255,0.08);
+      --cyan:#00F5FF;--magenta:#FF006E;--gold:#FFB800;--purple:#9D00FF;--lime:#39FF14;
+      --white:#F0F4FF;--grey:#8892A4;--grey2:#4A5568;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--white);min-height:100vh;}
+
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;
+      display:flex;justify-content:space-between;align-items:center;padding:0.85rem 2rem;
+      background:rgba(4,4,10,0.96);backdrop-filter:blur(24px);
+      border-bottom:1px solid var(--glass-border);}
+    .nav-back{display:flex;align-items:center;gap:0.5rem;color:var(--grey);
+      font-size:0.78rem;background:none;border:none;cursor:pointer;
+      font-family:'Inter',sans-serif;transition:color 0.2s;text-decoration:none;}
+    .nav-back:hover{color:var(--white);}
+    .nav-brand{font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:800;color:var(--cyan);letter-spacing:0.1em;}
+
+    /* MAIN */
+    main{padding-top:80px;position:relative;z-index:1;max-width:600px;margin:0 auto;padding-bottom:4rem;padding-left:2rem;padding-right:2rem;}
+
+    /* SUCCESS CARD */
+    .success-card{text-align:center;padding:3rem 2rem;margin-top:2rem;
+      background:rgba(255,255,255,0.025);border:1px solid var(--glass-border);
+      border-radius:16px;backdrop-filter:blur(12px);}
+
+    .success-icon{width:80px;height:80px;border-radius:50%;margin:0 auto 1.5rem;
+      background:linear-gradient(135deg,rgba(57,255,20,0.15),rgba(0,245,255,0.15));
+      border:2px solid rgba(57,255,20,0.3);display:flex;align-items:center;justify-content:center;
+      font-size:2.2rem;animation:pulse-success 2s ease-in-out infinite;}
+    @keyframes pulse-success{0%,100%{box-shadow:0 0 20px rgba(57,255,20,0.2);}50%{box-shadow:0 0 40px rgba(57,255,20,0.4);}}
+
+    .success-title{font-size:1.6rem;font-weight:900;margin-bottom:0.5rem;}
+    .success-sub{font-size:0.95rem;color:var(--grey);margin-bottom:1.75rem;line-height:1.6;}
+    .success-squad{color:var(--cyan);font-weight:700;}
+
+
+    /* BUTTONS */
+    .btn-row{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem;}
+    .btn{padding:0.7rem 1.6rem;border:none;border-radius:8px;cursor:pointer;
+      font-family:'Inter',sans-serif;font-weight:800;font-size:0.88rem;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;}
+    .btn-download{background:var(--lime);color:#04040A;box-shadow:0 0 20px rgba(57,255,20,0.3);}
+    .btn-download:hover{box-shadow:0 0 30px rgba(57,255,20,0.5);}
+    .btn-ghost{background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);color:var(--grey);font-weight:600;font-size:0.82rem;}
+    .btn-ghost:hover{border-color:rgba(0,245,255,0.3);color:var(--white);}
+
+    /* LOADING */
+    .loading{text-align:center;padding:3rem;color:var(--grey);font-size:0.85rem;}
+    .spinner{width:24px;height:24px;border:2px solid var(--glass-border);border-top-color:var(--cyan);
+      border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 0.75rem;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    @media(max-width:480px){
+      main{padding-left:1rem;padding-right:1rem;}
+      .success-card{padding:2rem 1rem;}
+      .success-title{font-size:1.25rem;}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="squads.html" class="nav-back">&#8592; Catálogo</a>
+  <span class="nav-brand">[IA] MARKETPLACE</span>
+  <div></div>
+</nav>
+
+<main>
+  <div class="loading" id="loadingState">
+    <div class="spinner"></div>
+    A carregar...
+  </div>
+
+  <div id="content" style="display:none;">
+    <div class="success-card">
+      <div class="success-icon">&#10003;</div>
+      <div class="success-title">Compra confirmada!</div>
+      <div class="success-sub">O squad <span class="success-squad" id="squadName"></span> está pronto para ser transferido.</div>
+
+      <div class="btn-row">
+        <button class="btn btn-download" id="btnDownload" onclick="downloadZip()">Transferir ZIP</button>
+      </div>
+      <div class="btn-row">
+        <a class="btn btn-ghost" href="squads.html">Voltar ao catálogo</a>
+        <a class="btn btn-ghost" href="meus-squads.html">A minha biblioteca</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+let currentUser = null;
+let currentProfile = null;
+let squadId = null;
+let compraData = null;
+
+(async function init() {
+  squadId = new URLSearchParams(window.location.search).get('squad_id');
+  if (!squadId) { window.location.href = 'squads.html'; return; }
+
+  const session = await requireAuth('index.html');
+  if (!session) return;
+  currentUser = session.user;
+  currentProfile = await getProfile(currentUser.id);
+
+  await loadCompraInfo(squadId);
+})();
+
+async function loadCompraInfo(sqId) {
+  // Fetch compra
+  const { data: compra, error: compraErr } = await sb.from('squad_compras')
+    .select('*, squads(titulo, slug, preco)')
+    .eq('squad_id', sqId)
+    .eq('user_id', currentUser.id)
+    .eq('status', 'completed')
+    .maybeSingle();
+
+  if (compraErr || !compra) {
+    document.getElementById('loadingState').innerHTML = '<div style="color:var(--magenta);">Compra não encontrada.</div><br><a href="squads.html" style="color:var(--cyan);">Voltar ao catálogo</a>';
+    return;
+  }
+
+  compraData = compra;
+  const squad = compra.squads;
+
+  document.getElementById('squadName').textContent = squad?.titulo || 'Squad';
+
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+}
+
+async function downloadZip() {
+  if (!currentUser || !squadId) return;
+
+  // Buscar zip_path do squad
+  const { data: sq } = await sb.from('squads').select('zip_path, titulo').eq('id', squadId).single();
+  if (!sq?.zip_path) { alert('Ficheiro ZIP não encontrado.'); return; }
+
+  // Retirar prefixo do bucket se existir
+  const storagePath = sq.zip_path.replace(/^squad-files\//, '');
+
+  // Gerar signed URL (60 minutos)
+  const { data: signedData, error } = await sb.storage
+    .from('squad-files')
+    .createSignedUrl(storagePath, 3600);
+
+  if (error || !signedData?.signedUrl) {
+    alert('Erro ao gerar link de download. O ficheiro pode ainda não estar disponível.');
+    console.error('Download error:', error);
+    return;
+  }
+
+  // Registar download na base de dados
+  if (compraData && compraData.id) {
+    await sb.from('squad_downloads').insert({
+      squad_id: squadId,
+      user_id: currentUser.id,
+      compra_id: compraData.id
+    });
+  }
+
+  // Iniciar download
+  const a = document.createElement('a');
+  a.href = signedData.signedUrl;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>

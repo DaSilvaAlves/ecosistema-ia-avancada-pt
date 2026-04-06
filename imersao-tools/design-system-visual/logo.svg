@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" id="ia-avancada-logo">
+  <defs>
+    <style>
+      .logo-symbol { fill: #00F5FF; }
+      .logo-symbol-accent { fill: #FFB800; }
+      .logo-text { fill: #F0F4FF; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+      .logo-text-highlight { fill: #00F5FF; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    </style>
+  </defs>
+
+  <!-- === SYMBOL: Quantum Node === -->
+  <g id="logo-symbol" transform="translate(50, 50)">
+    <!-- Outer hexagon -->
+    <polygon id="hex-outer" points="0,-38 33,-19 33,19 0,38 -33,19 -33,-19" fill="none" stroke="#00F5FF" stroke-width="1.8" opacity="0.35"/>
+    <!-- Inner hexagon rotated 30deg -->
+    <polygon id="hex-inner" points="0,-26 22.5,-13 22.5,13 0,26 -22.5,13 -22.5,-13" fill="none" stroke="#00F5FF" stroke-width="1.2" opacity="0.2" transform="rotate(30)"/>
+    <!-- Connection lines (neural network) -->
+    <line x1="0" y1="-38" x2="0" y2="-18" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+    <line x1="33" y1="-19" x2="15" y2="-9" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+    <line x1="33" y1="19" x2="15" y2="9" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+    <line x1="0" y1="38" x2="0" y2="18" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+    <line x1="-33" y1="19" x2="-15" y2="9" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+    <line x1="-33" y1="-19" x2="-15" y2="-9" stroke="#00F5FF" stroke-width="1" opacity="0.4"/>
+    <!-- Central "A" letterform as paths -->
+    <g id="letter-a">
+      <!-- Left leg of A -->
+      <line x1="-12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="2.8" stroke-linecap="round"/>
+      <!-- Right leg of A -->
+      <line x1="12" y1="16" x2="0" y2="-16" stroke="#00F5FF" stroke-width="2.8" stroke-linecap="round"/>
+      <!-- Crossbar of A -->
+      <line x1="-7" y1="4" x2="7" y2="4" stroke="#00F5FF" stroke-width="2.2" stroke-linecap="round"/>
+    </g>
+    <!-- Node dots at hexagon vertices -->
+    <circle cx="0" cy="-38" r="2.5" fill="#00F5FF" opacity="0.7"/>
+    <circle cx="33" cy="-19" r="2.5" fill="#00F5FF" opacity="0.7"/>
+    <circle cx="33" cy="19" r="2" fill="#00F5FF" opacity="0.5"/>
+    <circle cx="0" cy="38" r="2.5" fill="#00F5FF" opacity="0.7"/>
+    <circle cx="-33" cy="19" r="2" fill="#00F5FF" opacity="0.5"/>
+    <circle cx="-33" cy="-19" r="2.5" fill="#00F5FF" opacity="0.7"/>
+    <!-- Central node (apex of A) -->
+    <circle cx="0" cy="-16" r="3" fill="#FFB800" opacity="0.9"/>
+    <!-- Directional accent (subtle upward arrow/vector) -->
+    <line x1="0" y1="-42" x2="0" y2="-48" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+    <line x1="-3" y1="-45" x2="0" y2="-48" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+    <line x1="3" y1="-45" x2="0" y2="-48" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  </g>
+
+  <!-- === WORDMARK === -->
+  <g id="logo-wordmark" transform="translate(105, 50)">
+    <!-- "IA AVANCADA" main text -->
+    <text x="0" y="-4" class="logo-text" font-size="22" font-weight="800" letter-spacing="0.12em">IA AVAN<tspan class="logo-text-highlight">C</tspan>ADA</text>
+    <!-- "PT" highlighted -->
+    <text x="0" y="20" class="logo-text-highlight" font-size="16" font-weight="800" letter-spacing="0.2em">PT</text>
+    <!-- Accent line under PT -->
+    <line x1="0" y1="25" x2="38" y2="25" stroke="#FFB800" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>

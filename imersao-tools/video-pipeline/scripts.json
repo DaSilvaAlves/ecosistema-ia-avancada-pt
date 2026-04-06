@@ -1,0 +1,117 @@
+{
+  "_info": "Scripts prontos para gerar video. Cada entrada e um video. Campo 'slug' e usado no nome do ficheiro.",
+
+  "scripts": [
+    {
+      "id": "01-A",
+      "titulo": "Launch Day — Ainda fazes isto manualmente?",
+      "plataforma": "tiktok-reels",
+      "duracao_seg": 21,
+      "slug": "launch-manualmente",
+      "script": "Ainda fazes isto manualmente?\n\nEm Portugal, ainda há pessoas a perder horas em tarefas que a IA resolve em segundos.\n\nCriei uma comunidade para acabar com isso. Ferramentas reais. Método proprietário. Em quarenta e oito horas, mudas a forma de trabalhar.\n\nLink na bio. Cento e oitenta e oito euros, vitalício. Os oitos não mentem.",
+      "caption": "A IA não vai substituir-te.\nMas alguém que sabe usá-la, vai.\nComunidade IA Avançada PT — online desde 8.03\nLink na bio\n#IAPortugal #InteligênciaArtificial #Portugal #Produtividade #TikTokPortugal",
+      "prioridade": "HOJE"
+    },
+    {
+      "id": "01-B",
+      "titulo": "Launch Day — Testemunho Rúben Silva",
+      "plataforma": "tiktok-reels",
+      "duracao_seg": 25,
+      "slug": "launch-testemunho-ruben",
+      "script": "Um professor do Ministério da Educação disse isto:\n\n\"Ferramenta eficaz, de grande utilidade diária e muito intuitiva. Facilitou o meu dia a dia na tradução de conteúdos de investigação académica em idiomas que não domino na sua totalidade. Recomendo vivamente.\"\n\nIsto é o que acontece quando aprendes a usar IA de nível quatro. Não é magia. É método. Comunidade IA Avançada PT.\n\nLink na bio. Cento e oitenta e oito euros. Vitalício. Portugal.",
+      "caption": "Método testado. Resultados reais.\nComunidade IA Avançada PT — link na bio\n#IAPortugal #Testemunho #Portugal #IA2026",
+      "prioridade": "HOJE"
+    },
+    {
+      "id": "02",
+      "titulo": "O que é nível 4",
+      "plataforma": "tiktok-reels",
+      "duracao_seg": 25,
+      "slug": "nivel-4-explicado",
+      "script": "A maioria das pessoas usa IA de nível um. Pergunta, recebe resposta, e para.\n\nNível quatro é diferente. São sistemas que trabalham enquanto dormes. Que processam informação, tomam decisões, e entregam resultados sem precisares de estar presente.\n\nNão é ficção científica. É o que construímos em quarenta e oito horas.\n\nLink na bio. Cento e oitenta e oito euros vitalício.",
+      "caption": "Nível 1 vs Nível 4 — a diferença que ninguém explica.\n#IAPortugal #Automacao #Nivel4 #Portugal",
+      "prioridade": "AMANHA"
+    },
+    {
+      "id": "03",
+      "titulo": "Por que 48 horas?",
+      "plataforma": "tiktok-reels",
+      "duracao_seg": 22,
+      "slug": "porque-48-horas",
+      "script": "Por que é que a imersão dura só quarenta e oito horas?\n\nPorque mais tempo não é mais aprendizagem. É mais distância do problema real.\n\nEm quarenta e oito horas tens o teu problema. Tens as ferramentas. Tens suporte direto. E sais com uma solução a funcionar.\n\nMáximo doze pessoas. Verifica se ainda há vagas — link na bio.",
+      "caption": "48h. Problema real. Solução real.\n#IAPortugal #Imersao #Portugal #Produtividade",
+      "prioridade": "ESTA_SEMANA"
+    },
+    {
+      "id": "04",
+      "titulo": "Testemunho Túlio Costa",
+      "plataforma": "tiktok-reels",
+      "duracao_seg": 22,
+      "slug": "testemunho-tulio",
+      "script": "O dono de uma adega no Algarve implementou IA em quarenta e oito horas.\n\nTúlio Costa, restauração e adega vinícola. \"O trabalho foi excelente, rápido, eficiente — dentro daquilo que se pretendia.\"\n\nNão é magia. É método.\n\nO teu negócio também pode. Link na bio.",
+      "caption": "Do Algarve para o futuro. Método IA Avançada PT.\n#IAPortugal #CasoDeEstudo #Algarve #Negocios",
+      "prioridade": "ESTA_SEMANA"
+    },
+    {
+      "id": "05",
+      "titulo": "O erro mais comum com IA",
+      "plataforma": "tiktok-reels",
+      "duracao_seg": 24,
+      "slug": "erro-mais-comum-ia",
+      "script": "O erro que noventa por cento das pessoas comete com o ChatGPT.\n\nUsam-no como motor de busca. Fazem uma pergunta, recebem uma resposta. E param.\n\nIA de nível quatro não é isso. São sistemas que trabalham enquanto dormes. E ensino-te a construí-los em quarenta e oito horas.\n\nCento e oitenta e oito euros vitalício. Link na bio.",
+      "caption": "Usas IA como pesquisa no Google? Isso é nível 1.\n#IAPortugal #ChatGPT #AutomacaoIA #Portugal",
+      "prioridade": "ESTA_SEMANA"
+    },
+    {
+      "id": "06",
+      "titulo": "O que está incluído na comunidade",
+      "plataforma": "tiktok-reels",
+      "duracao_seg": 26,
+      "slug": "o-que-esta-incluido",
+      "script": "O que é que tens dentro da Comunidade IA Avançada PT?\n\nPrimeiro: imersões de quarenta e oito horas ao vivo. Segundo: ferramentas proprietárias com método testado. Terceiro: suporte direto via WhatsApp e Google Meet. Quarto: actualizações mensais conforme a IA evolui. Quinto: rede de profissionais em Portugal.\n\nTudo por cento e oitenta e oito euros, vitalício. Link na bio.",
+      "caption": "Não é um curso. É um ecossistema.\n#ComunidadeIA #IAPortugal #Portugal #Valor",
+      "prioridade": "ESTA_SEMANA"
+    },
+    {
+      "id": "07",
+      "titulo": "O que a IA NÃO faz",
+      "plataforma": "tiktok-reels",
+      "duracao_seg": 23,
+      "slug": "o-que-ia-nao-faz",
+      "script": "A IA não pensa. Não cria estratégia. Não conhece o teu negócio.\n\nTu é que defines o problema. A IA executa.\n\nO que ensinamos é exactamente isso: ser o estratega. Saber formular o problema certo. E deixar a IA fazer o trabalho pesado.\n\nAprende a ser o estratega. Link na bio.",
+      "caption": "A IA é uma ferramenta. Tu és o estratega.\n#IAPortugal #Estrategia #Automacao #Portugal",
+      "prioridade": "SEMANA_2"
+    },
+    {
+      "id": "08",
+      "titulo": "Quanto tempo poupa por semana",
+      "plataforma": "tiktok-reels",
+      "duracao_seg": 25,
+      "slug": "tempo-poupado-semana",
+      "script": "Calcula comigo.\n\nQuantas horas por semana perdes em emails repetitivos, relatórios, pesquisa, formatação? Para mim eram quinze a vinte horas. Hoje são menos de uma hora.\n\nImagina o que fazes com essas horas.\n\nEm quarenta e oito horas podes chegar aqui. Link na bio. Cento e oitenta e oito euros.",
+      "caption": "Quinze horas por semana. Automatizadas. Em 48h.\n#Produtividade #IAPortugal #AutomacaoIA #Portugal",
+      "prioridade": "SEMANA_2"
+    },
+    {
+      "id": "09",
+      "titulo": "Máximo 12 pessoas — porquê",
+      "plataforma": "tiktok-reels",
+      "duracao_seg": 21,
+      "slug": "maximo-12-pessoas",
+      "script": "Por que só aceito doze pessoas por imersão?\n\nPorque com treze, perco a capacidade de garantir que cada pessoa sai com uma solução a funcionar. Não é escassez artificial. É qualidade real.\n\nVerifica disponibilidade. Link na bio.",
+      "caption": "12 pessoas. Não é marketing. É qualidade.\n#IAPortugal #Imersao #QualidadeReal #Portugal",
+      "prioridade": "SEMANA_2"
+    },
+    {
+      "id": "10",
+      "titulo": "LinkedIn — Lançamento",
+      "plataforma": "linkedin",
+      "duracao_seg": 0,
+      "slug": "linkedin-lancamento",
+      "script": "Hoje lançámos a Comunidade IA Avançada PT.\n\nImersões de quarenta e oito horas ao vivo, com máximo de doze participantes. Ferramentas proprietárias com método testado. Suporte directo, sem burocracia.\n\nAcesso vitalício. Cento e oitenta e oito euros. Portugal.\n\nA janela de vantagem competitiva está aberta. Mas não fica aberta para sempre.\n\nia-avancada-pt.vercel.app",
+      "caption": "",
+      "prioridade": "HOJE",
+      "_nota": "Este e um post de texto para LinkedIn — nao precisa de video"
+    }
+  ]
+}

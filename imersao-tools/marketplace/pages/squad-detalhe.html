@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Squad — [IA]AVANÇADA PT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#04040A;--glass:rgba(255,255,255,0.03);--glass-border:rgba(255,255,255,0.08);
+      --cyan:#00F5FF;--magenta:#FF006E;--gold:#FFB800;--purple:#9D00FF;--lime:#39FF14;
+      --white:#F0F4FF;--grey:#8892A4;--grey2:#4A5568;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--white);min-height:100vh;}
+
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;
+      display:flex;justify-content:space-between;align-items:center;padding:0.85rem 2rem;
+      background:rgba(4,4,10,0.96);backdrop-filter:blur(24px);
+      border-bottom:1px solid var(--glass-border);}
+    .nav-back{display:flex;align-items:center;gap:0.5rem;color:var(--grey);
+      font-size:0.78rem;background:none;border:none;cursor:pointer;
+      font-family:'Inter',sans-serif;transition:color 0.2s;text-decoration:none;}
+    .nav-back:hover{color:var(--white);}
+    .nav-brand{font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:800;color:var(--cyan);letter-spacing:0.1em;}
+    .nav-right{display:flex;align-items:center;gap:0.75rem;}
+    .nav-user{font-size:0.75rem;color:var(--grey);font-family:'JetBrains Mono',monospace;}
+    .nav-badge{font-size:0.62rem;padding:0.18rem 0.55rem;border-radius:20px;font-family:'JetBrains Mono',monospace;}
+    .badge-n1{background:rgba(57,255,20,0.08);border:1px solid rgba(57,255,20,0.2);color:var(--lime);}
+    .badge-n2{background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);color:var(--cyan);}
+    .badge-n3{background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.2);color:var(--gold);}
+    .badge-n4{background:rgba(157,0,255,0.08);border:1px solid rgba(157,0,255,0.2);color:var(--purple);}
+
+    .nav-guia-btn{font-size:0.78rem;font-weight:700;color:#04040A;background:var(--cyan);
+      padding:0.4rem 1rem;border-radius:6px;text-decoration:none;font-family:'Inter',sans-serif;
+      transition:all 0.2s;box-shadow:0 0 12px rgba(0,245,255,0.3);}
+    .nav-guia-btn:hover{box-shadow:0 0 20px rgba(0,245,255,0.5);}
+
+    /* MAIN */
+    main{padding-top:80px;position:relative;z-index:1;max-width:900px;margin:0 auto;padding-bottom:4rem;padding-left:2rem;padding-right:2rem;}
+
+    /* BREADCRUMB */
+    .breadcrumb{display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--grey);margin-bottom:1.5rem;padding-top:0.5rem;}
+    .breadcrumb a{color:var(--grey);text-decoration:none;transition:color 0.15s;}
+    .breadcrumb a:hover{color:var(--cyan);}
+    .breadcrumb span{color:var(--grey2);}
+
+    /* COVER */
+    .cover{width:100%;height:240px;border-radius:14px;overflow:hidden;margin-bottom:1.5rem;
+      background:linear-gradient(135deg,rgba(0,245,255,0.08),rgba(157,0,255,0.08));
+      border:1px solid var(--glass-border);}
+    .cover img{width:100%;height:100%;object-fit:cover;}
+
+    /* HEADER */
+    .squad-header{margin-bottom:2rem;}
+    .squad-header h1{font-size:1.8rem;font-weight:900;margin-bottom:0.6rem;line-height:1.2;}
+    .squad-meta{display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;margin-bottom:0.75rem;}
+    .meta-badge{font-family:'JetBrains Mono',monospace;font-size:0.62rem;font-weight:700;
+      padding:0.2rem 0.6rem;border-radius:20px;letter-spacing:0.06em;}
+    .meta-cat{background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);color:var(--cyan);}
+    .meta-free{background:rgba(57,255,20,0.08);border:1px solid rgba(57,255,20,0.2);color:var(--lime);}
+    .meta-premium{background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.2);color:var(--gold);}
+    .squad-stats{display:flex;gap:1.25rem;font-size:0.82rem;color:var(--grey);margin-bottom:0.5rem;}
+    .squad-pub{font-size:0.78rem;color:var(--grey2);}
+
+    /* CTA */
+    .cta-section{background:rgba(255,255,255,0.025);border:1px solid var(--glass-border);
+      border-radius:12px;padding:1.25rem;margin-bottom:2rem;display:flex;flex-wrap:wrap;align-items:center;gap:1rem;}
+    .cta-btn{padding:0.7rem 1.6rem;border:none;border-radius:8px;cursor:pointer;
+      font-family:'Inter',sans-serif;font-weight:800;font-size:0.9rem;transition:all 0.2s;}
+    .cta-buy{background:var(--cyan);color:#04040A;box-shadow:0 0 20px rgba(0,245,255,0.3);}
+    .cta-buy:hover{box-shadow:0 0 30px rgba(0,245,255,0.5);}
+    .cta-download{background:var(--lime);color:#04040A;box-shadow:0 0 20px rgba(57,255,20,0.3);}
+    .cta-download:hover{box-shadow:0 0 30px rgba(57,255,20,0.5);}
+    .cta-free{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#04040A;box-shadow:0 0 20px rgba(0,245,255,0.3);}
+    .cta-free:hover{box-shadow:0 0 30px rgba(0,245,255,0.5);}
+    .cta-login{background:rgba(255,255,255,0.08);color:var(--white);border:1px solid var(--glass-border);}
+    .cta-login:hover{border-color:rgba(0,245,255,0.3);}
+    .cta-notice{font-size:0.72rem;color:var(--grey2);flex:1;min-width:200px;}
+
+    /* SECTION */
+    .section{margin-bottom:2rem;}
+    .section-title{font-size:0.72rem;font-family:'JetBrains Mono',monospace;font-weight:700;
+      letter-spacing:0.12em;text-transform:uppercase;color:var(--grey);margin-bottom:1rem;
+      padding-bottom:0.5rem;border-bottom:1px solid var(--glass-border);}
+
+    /* DESCRIPTION */
+    .desc-content{font-size:0.88rem;color:rgba(240,244,255,0.85);line-height:1.8;}
+    .desc-content h2{font-size:1.1rem;font-weight:800;color:var(--white);margin:1.25rem 0 0.5rem;}
+    .desc-content h3{font-size:0.95rem;font-weight:700;color:var(--white);margin:1rem 0 0.4rem;}
+    .desc-content p{margin-bottom:0.75rem;}
+    .desc-content ul,.desc-content ol{margin:0.5rem 0 0.75rem 1.5rem;}
+    .desc-content li{margin-bottom:0.3rem;}
+    .desc-content code{background:rgba(0,245,255,0.1);padding:0.1rem 0.35rem;border-radius:4px;
+      font-family:'JetBrains Mono',monospace;font-size:0.85em;color:var(--cyan);}
+    .desc-content pre{background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);
+      border-radius:8px;padding:1rem;overflow-x:auto;margin:0.75rem 0;font-size:0.82rem;
+      font-family:'JetBrains Mono',monospace;color:var(--grey);}
+    .desc-content strong{color:var(--white);}
+    .desc-content table{width:100%;border-collapse:collapse;margin:0.75rem 0;font-size:0.82rem;}
+    .desc-content th{text-align:left;padding:0.5rem 0.75rem;border-bottom:1px solid var(--glass-border);
+      color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:0.72rem;
+      letter-spacing:0.06em;text-transform:uppercase;background:rgba(0,245,255,0.04);}
+    .desc-content td{padding:0.5rem 0.75rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+    .desc-content ol{list-style:decimal;}
+
+    /* GUIA */
+    .guia-content{font-size:0.88rem;color:rgba(240,244,255,0.85);line-height:1.8;}
+    .guia-content h2{font-size:1.1rem;font-weight:800;color:var(--white);margin:1.25rem 0 0.5rem;}
+    .guia-content h3{font-size:0.95rem;font-weight:700;color:var(--white);margin:1rem 0 0.4rem;}
+    .guia-content p{margin-bottom:0.75rem;}
+    .guia-content ul,.guia-content ol{margin:0.5rem 0 0.75rem 1.5rem;}
+    .guia-content li{margin-bottom:0.3rem;}
+    .guia-content code{background:rgba(0,245,255,0.1);padding:0.1rem 0.35rem;border-radius:4px;
+      font-family:'JetBrains Mono',monospace;font-size:0.85em;color:var(--cyan);}
+    .guia-content pre{background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);
+      border-radius:8px;padding:1rem;overflow-x:auto;margin:0.75rem 0;font-size:0.82rem;
+      font-family:'JetBrains Mono',monospace;color:var(--grey);}
+    .guia-content strong{color:var(--white);}
+    .guia-content table{width:100%;border-collapse:collapse;margin:0.75rem 0;font-size:0.82rem;}
+    .guia-content th{text-align:left;padding:0.5rem 0.75rem;border-bottom:1px solid var(--glass-border);
+      color:var(--grey);font-family:'JetBrains Mono',monospace;font-size:0.72rem;
+      letter-spacing:0.06em;text-transform:uppercase;}
+    .guia-content td{padding:0.5rem 0.75rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+    .guia-steps{counter-reset:guia-step;list-style:none;padding:0;margin:1rem 0;}
+    .guia-step{counter-increment:guia-step;position:relative;padding:1rem 1rem 1rem 3.5rem;
+      background:rgba(255,255,255,0.02);border:1px solid var(--glass-border);border-radius:10px;
+      margin-bottom:0.75rem;}
+    .guia-step::before{content:counter(guia-step);position:absolute;left:1rem;top:1rem;
+      width:1.6rem;height:1.6rem;border-radius:50%;background:rgba(0,245,255,0.1);
+      border:1px solid rgba(0,245,255,0.3);color:var(--cyan);font-family:'JetBrains Mono',monospace;
+      font-size:0.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .guia-step-title{font-weight:700;color:var(--white);margin-bottom:0.3rem;}
+    .guia-step-desc{font-size:0.82rem;color:var(--grey);}
+
+    /* AGENTS */
+    .agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;}
+    .agent-card{background:rgba(255,255,255,0.025);border:1px solid var(--glass-border);
+      border-radius:10px;padding:0.85rem;transition:border-color 0.15s;}
+    .agent-card:hover{border-color:rgba(0,245,255,0.2);}
+    .agent-name{font-size:0.88rem;font-weight:700;margin-bottom:0.2rem;}
+    .agent-role{font-size:0.72rem;color:var(--cyan);font-family:'JetBrains Mono',monospace;margin-bottom:0.35rem;}
+    .agent-desc{font-size:0.78rem;color:var(--grey);line-height:1.5;}
+
+    /* MSG */
+    .msg{padding:0.65rem 0.9rem;border-radius:8px;font-size:0.82rem;margin-bottom:1rem;display:none;}
+    .msg-ok{background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);color:var(--cyan);}
+    .msg-err{background:rgba(255,0,110,0.08);border:1px solid rgba(255,0,110,0.2);color:var(--magenta);}
+
+    /* LOADING */
+    .loading{text-align:center;padding:3rem;color:var(--grey);font-size:0.85rem;}
+    .spinner{width:24px;height:24px;border:2px solid var(--glass-border);border-top-color:var(--cyan);
+      border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 0.75rem;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* RESPONSIVE */
+    @media(max-width:768px){
+      main{padding-left:1rem;padding-right:1rem;}
+      .cover{height:160px;}
+      .squad-header h1{font-size:1.3rem;}
+      .agents-grid{grid-template-columns:1fr 1fr;}
+      nav{padding:0.75rem 1rem;}
+    }
+    @media(max-width:480px){
+      .agents-grid{grid-template-columns:1fr;}
+      .cta-section{flex-direction:column;}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="squads.html" class="nav-back">&#8592; Catálogo</a>
+  <span class="nav-brand">[IA] MARKETPLACE</span>
+  <div class="nav-right">
+    <a href="#guiaSection" class="nav-guia-btn" id="navGuiaBtn" style="display:none;" onclick="showGuia(event)">Guia de instalação</a>
+    <span class="nav-user" id="navUser"></span>
+    <span class="nav-badge" id="navBadge"></span>
+  </div>
+</nav>
+
+<main>
+  <div class="loading" id="loadingState">
+    <div class="spinner"></div>
+    A carregar squad...
+  </div>
+
+  <div id="content" style="display:none;">
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb">
+      <a href="squads.html">Squads</a>
+      <span>&#8250;</span>
+      <span id="bcCat"></span>
+      <span>&#8250;</span>
+      <span id="bcTitle" style="color:var(--white);"></span>
+    </div>
+
+    <!-- COVER -->
+    <div class="cover" id="coverImg"></div>
+
+    <!-- HEADER -->
+    <div class="squad-header">
+      <h1 id="squadTitle"></h1>
+      <div class="squad-meta" id="squadMeta"></div>
+      <div class="squad-stats" id="squadStats"></div>
+      <div class="squad-pub" id="squadPub"></div>
+    </div>
+
+    <!-- MSG -->
+    <div class="msg" id="msgBox"></div>
+
+    <!-- CTA -->
+    <div class="cta-section" id="ctaSection"></div>
+
+    <!-- DESCRICAO -->
+    <div class="section">
+      <div class="section-title">Descrição</div>
+      <div class="desc-content" id="descContent"></div>
+    </div>
+
+    <!-- GUIA DE INSTALACAO (clones only) -->
+    <div class="section" id="guiaSection" style="display:none;">
+      <div class="section-title">Guia de instalação</div>
+      <div class="guia-content" id="guiaContent"></div>
+    </div>
+
+    <!-- AGENTES -->
+    <div class="section" id="agentesSection" style="display:none;">
+      <div class="section-title">Agentes incluídos</div>
+      <div class="agents-grid" id="agentesGrid"></div>
+    </div>
+
+
+  </div>
+</main>
+
+<script>
+// ── STATE ──
+let currentUser = null;
+let currentProfile = null;
+let squad = null;
+let compra = null;
+
+// ── INIT ──
+(async function init() {
+  const slug = new URLSearchParams(window.location.search).get('slug');
+  if (!slug) { window.location.href = 'squads.html'; return; }
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    currentProfile = await getProfile(currentUser.id);
+    updateNav();
+  }
+
+  await loadSquadDetalhe(slug);
+})();
+
+function updateNav() {
+  if (!currentUser || !currentProfile) return;
+  document.getElementById('navUser').textContent = currentProfile.nome || currentProfile.email?.split('@')[0] || '';
+  const n = currentProfile.nivel || 1;
+  const b = document.getElementById('navBadge');
+  b.textContent = 'N' + n;
+  b.className = 'nav-badge badge-n' + n;
+}
+
+// ── LOAD SQUAD ──
+async function loadSquadDetalhe(slug) {
+  // Fetch squad with categoria
+  const { data, error } = await sb.from('squads')
+    .select('*, squad_categorias(nome, slug, icon)')
+    .eq('slug', slug)
+    .in('status', ['published', 'unlisted'])
+    .single();
+
+  if (error || !data) {
+    document.getElementById('loadingState').innerHTML = '<div style="color:var(--magenta);">Squad não encontrado.</div><br><a href="squads.html" style="color:var(--cyan);">Voltar ao catálogo</a>';
+    return;
+  }
+
+  squad = data;
+  document.title = squad.titulo + ' — [IA]AVANÇADA PT';
+
+  // Check compra
+  if (currentUser) {
+    await checkCompra(squad.id);
+  }
+
+  renderDetalhe();
+
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+}
+
+async function checkCompra(squadId) {
+  const { data } = await sb.from('squad_compras')
+    .select('*')
+    .eq('squad_id', squadId)
+    .eq('user_id', currentUser.id)
+    .eq('status', 'completed')
+    .maybeSingle();
+  compra = data;
+}
+
+// ── RENDER ──
+function renderDetalhe() {
+  const cat = squad.squad_categorias;
+  const preco = parseFloat(squad.preco);
+  const isFree = preco === 0;
+
+  // Breadcrumb
+  document.getElementById('bcCat').textContent = cat?.nome || '';
+  document.getElementById('bcTitle').textContent = squad.titulo;
+
+  // Cover
+  const cover = document.getElementById('coverImg');
+  if (squad.imagem_capa) {
+    cover.innerHTML = `<img src="${squad.imagem_capa}" alt="${esc(squad.titulo)}"/>`;
+  }
+
+  // Title
+  document.getElementById('squadTitle').textContent = squad.titulo;
+
+  // Meta badges
+  let metaHtml = `<span class="meta-badge meta-cat">${esc(cat?.nome || '')}</span>`;
+  if (isFree) metaHtml += '<span class="meta-badge meta-free">GRÁTIS</span>';
+  else metaHtml += `<span class="meta-badge meta-premium">${preco.toFixed(2).replace('.', ',')} EUR</span>`;
+
+  document.getElementById('squadMeta').innerHTML = metaHtml;
+
+  // Stats
+  document.getElementById('squadStats').innerHTML = `
+    <span>${squad.total_downloads || 0} downloads</span>
+  `;
+
+  // Pub
+  const pubDate = squad.created_at ? new Date(squad.created_at).toLocaleDateString('pt-PT') : '';
+  document.getElementById('squadPub').textContent = 'Publicado em ' + pubDate;
+
+  // CTA
+  renderCTA();
+
+  // Description
+  document.getElementById('descContent').innerHTML = renderMarkdown(squad.descricao_longa);
+
+  // Guia de instalacao
+  renderGuia();
+
+  // Agentes
+  renderAgentes(squad.agentes);
+}
+
+function renderCTA() {
+  const cta = document.getElementById('ctaSection');
+  const preco = parseFloat(squad.preco);
+  const isFree = preco === 0;
+
+  if (!currentUser) {
+    cta.innerHTML = `
+      <button class="cta-btn cta-login" onclick="window.location.href='index.html'">Inicia sessão para ${isFree ? 'transferir' : 'comprar'}</button>
+      <span class="cta-notice">Precisas de uma conta [IA]AVANÇADA PT para ${isFree ? 'transferir' : 'adquirir'} squads.</span>
+    `;
+    return;
+  }
+
+  if (compra) {
+    cta.innerHTML = `
+      <button class="cta-btn cta-download" onclick="downloadZip('${squad.id}')">Transferir ZIP</button>
+      <span class="cta-notice">Já adquiriste este squad. Podes transferi-lo quantas vezes precisares.</span>
+    `;
+    return;
+  }
+
+  if (isFree) {
+    cta.innerHTML = `
+      <button class="cta-btn cta-free" onclick="compraGratis('${squad.id}')">Transferir gratuitamente</button>
+      <span class="cta-notice">Squad gratuito — transfere e começa a utilizar.</span>
+    `;
+  } else {
+    cta.innerHTML = `
+      <button class="cta-btn cta-buy" onclick="iniciarCompra('${squad.id}')">Comprar &mdash; ${preco.toFixed(2).replace('.', ',')} EUR</button>
+      <span class="cta-notice">Produto digital &mdash; sem direito a reembolso apos download. Ao comprar, aceitas os termos de servico.</span>
+    `;
+  }
+}
+
+// ── GUIA DE INSTALACAO ──
+function renderGuia() {
+  if (!squad.guia_instalacao) return;
+  const section = document.getElementById('guiaSection');
+  const content = document.getElementById('guiaContent');
+  section.style.display = 'block';
+  content.innerHTML = renderMarkdown(squad.guia_instalacao);
+  document.getElementById('navGuiaBtn').style.display = 'inline-block';
+}
+
+function showGuia(e) {
+  e.preventDefault();
+  document.getElementById('guiaSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── COMPRA GRATIS ──
+async function compraGratis(squadId) {
+  if (!currentUser) { window.location.href = 'index.html'; return; }
+
+  showMsg('A processar...', 'ok');
+  const { data, error } = await sb.from('squad_compras').insert({
+    squad_id: squadId,
+    user_id: currentUser.id,
+    preco_pago: 0,
+    moeda: 'EUR',
+    status: 'completed'
+  }).select().single();
+
+  if (error) {
+    if (error.code === '23505') {
+      showMsg('Ja transferiste este squad.', 'ok');
+      await checkCompra(squadId);
+      renderCTA();
+      return;
+    }
+    showMsg('Erro: ' + error.message, 'err');
+    return;
+  }
+
+  compra = data;
+  showMsg('Squad adquirido com sucesso!', 'ok');
+  renderCTA();
+  downloadZip(squadId);
+}
+
+// ── COMPRA PAGA (STRIPE CHECKOUT) ──
+async function iniciarCompra(squadId) {
+  if (!currentUser) { window.location.href = 'index.html'; return; }
+
+  showMsg('A redirecionar para pagamento...', 'ok');
+
+  try {
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        priceId: squad.stripe_price_id,
+        squadSlug: squad.slug,
+        squadId: squad.id,
+        userId: currentUser.id,
+      }),
+    });
+
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      showMsg('Erro ao criar sessão de pagamento: ' + (data.error || 'Tenta novamente.'), 'err');
+    }
+  } catch (err) {
+    showMsg('Erro de ligação. Verifica a tua internet e tenta novamente.', 'err');
+    console.error('Checkout error:', err);
+  }
+}
+
+// ── DOWNLOAD ZIP ──
+async function downloadZip(squadId) {
+  if (!currentUser) { window.location.href = 'index.html'; return; }
+
+  showMsg('A gerar link de download...', 'ok');
+
+  // Buscar zip_path do squad
+  const targetSquad = squad && squad.id === squadId ? squad : null;
+  let zipPath = targetSquad?.zip_path;
+
+  if (!zipPath) {
+    const { data: sq } = await sb.from('squads').select('zip_path, titulo').eq('id', squadId).single();
+    if (!sq?.zip_path) { showMsg('Ficheiro ZIP não encontrado para este squad.', 'err'); return; }
+    zipPath = sq.zip_path;
+  }
+
+  // Retirar prefixo do bucket se existir (zip_path na DB inclui 'squad-files/')
+  const storagePath = zipPath.replace(/^squad-files\//, '');
+
+  // Gerar signed URL (60 minutos)
+  const { data: signedData, error: signError } = await sb.storage
+    .from('squad-files')
+    .createSignedUrl(storagePath, 3600);
+
+  if (signError || !signedData?.signedUrl) {
+    showMsg('Erro ao gerar link de download. O ficheiro ZIP pode ainda não estar disponível no Storage.', 'err');
+    console.error('Download error:', signError);
+    return;
+  }
+
+  // Registar download na base de dados
+  if (compra && compra.id && compra.id !== 'existing') {
+    await sb.from('squad_downloads').insert({
+      squad_id: squadId,
+      user_id: currentUser.id,
+      compra_id: compra.id
+    });
+  }
+
+  // Iniciar download
+  showMsg('Download iniciado!', 'ok');
+  const a = document.createElement('a');
+  a.href = signedData.signedUrl;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ── AGENTES ──
+function renderAgentes(agentes) {
+  if (!agentes || !Array.isArray(agentes) || agentes.length === 0) return;
+  const section = document.getElementById('agentesSection');
+  const grid = document.getElementById('agentesGrid');
+  section.style.display = 'block';
+
+  grid.innerHTML = agentes.map(a => `
+    <div class="agent-card">
+      <div class="agent-name">${esc(a.nome || a.name || '')}</div>
+      <div class="agent-role">${esc(a.papel || a.role || '')}</div>
+      <div class="agent-desc">${esc(a.descricao || a.description || '')}</div>
+    </div>
+  `).join('');
+}
+
+// ── UTILS ──
+function showMsg(text, type) {
+  const box = document.getElementById('msgBox');
+  box.textContent = text;
+  box.className = 'msg msg-' + type;
+  box.style.display = 'block';
+  setTimeout(() => { box.style.display = 'none'; }, 5000);
+}
+
+function esc(str) {
+  if (!str) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function renderMarkdown(md) {
+  if (!md) return '';
+  const lines = md.split('\n');
+  let html = '';
+  let inCodeBlock = false;
+  let codeContent = '';
+  let inTable = false;
+  let tableRows = [];
+  let inUl = false;
+  let inOl = false;
+
+  function flushTable() {
+    if (tableRows.length === 0) return '';
+    let t = '<table>';
+    tableRows.forEach((row, i) => {
+      // skip separator row (---|---)
+      if (/^\s*\|?\s*[-:]+[-|:\s]+$/.test(row)) return;
+      const cells = row.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+      const tag = i === 0 ? 'th' : 'td';
+      t += '<tr>' + cells.map(c => `<${tag}>${inline(c)}</${tag}>`).join('') + '</tr>';
+    });
+    t += '</table>';
+    tableRows = [];
+    inTable = false;
+    return t;
+  }
+
+  function flushList() {
+    let r = '';
+    if (inUl) { r = '</ul>'; inUl = false; }
+    if (inOl) { r = '</ol>'; inOl = false; }
+    return r;
+  }
+
+  function inline(s) {
+    s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    return s;
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Code blocks
+    if (line.trim().startsWith('```')) {
+      if (!inCodeBlock) {
+        html += flushTable() + flushList();
+        inCodeBlock = true;
+        codeContent = '';
+      } else {
+        html += '<pre>' + codeContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>';
+        inCodeBlock = false;
+      }
+      continue;
+    }
+    if (inCodeBlock) { codeContent += (codeContent ? '\n' : '') + line; continue; }
+
+    // Table rows
+    if (/^\s*\|/.test(line)) {
+      if (!inTable) { html += flushList(); inTable = true; }
+      tableRows.push(line);
+      continue;
+    } else if (inTable) {
+      html += flushTable();
+    }
+
+    // Empty line
+    if (line.trim() === '') {
+      html += flushList();
+      continue;
+    }
+
+    // Headers
+    if (/^### (.+)$/.test(line)) { html += flushList() + '<h3>' + inline(line.replace(/^### /, '')) + '</h3>'; continue; }
+    if (/^## (.+)$/.test(line)) { html += flushList() + '<h2>' + inline(line.replace(/^## /, '')) + '</h2>'; continue; }
+
+    // Numbered list
+    const olMatch = line.match(/^\d+\.\s+(.+)$/);
+    if (olMatch) {
+      if (!inOl) { html += flushList(); html += '<ol>'; inOl = true; }
+      html += '<li>' + inline(olMatch[1]) + '</li>';
+      continue;
+    }
+
+    // Bullet list
+    const ulMatch = line.match(/^[-*]\s+(.+)$/);
+    if (ulMatch) {
+      if (!inUl) { html += flushList(); html += '<ul>'; inUl = true; }
+      html += '<li>' + inline(ulMatch[1]) + '</li>';
+      continue;
+    }
+
+    // Paragraph
+    html += flushList() + '<p>' + inline(line) + '</p>';
+  }
+
+  html += flushTable() + flushList();
+  if (inCodeBlock) html += '<pre>' + codeContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>';
+  return html;
+}
+</script>
+</body>
+</html>
