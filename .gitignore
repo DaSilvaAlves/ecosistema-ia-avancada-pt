@@ -369,3 +369,11 @@ build/
 .aiox/install-log.txt
 imersao-tools/docs/.claude/settings.local.json
 imersao-tools/video-pipeline/config.json
+
+# AIOX-FullStack Framework Files (auto-managed)
+# NOTE: .aiox-core/ is NOT ignored — this repo IS the framework
+# .aiox-core/
+node_modules/@aiox/
+outputs/minds/
+.aiox-installation-config.yaml
+# End AIOX-FullStack auto-managed section

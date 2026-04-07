@@ -101,38 +101,36 @@ class WorkflowValidator {
       return result; // Can't continue without parsed data
     }
 
-    const workflow = this._normalizeWorkflowDocument(parseResult.data);
+    const workflow = parseResult.data;
 
     // 3. Required fields
     const fieldsResult = this.validateRequiredFields(workflow, workflowPath);
     this._mergeResults(result, fieldsResult);
 
-    const phaseSequence = this._getPhaseSequence(workflow);
-
     // 4. Phase sequence
-    if (phaseSequence.length > 0) {
-      const sequenceResult = this.validatePhaseSequence(phaseSequence);
+    if (workflow.workflow && workflow.workflow.sequence) {
+      const sequenceResult = this.validatePhaseSequence(workflow.workflow.sequence);
       this._mergeResults(result, sequenceResult);
 
       // 5. Agent references
-      const agentResult = await this.validateAgentReferences(phaseSequence);
+      const agentResult = await this.validateAgentReferences(workflow.workflow.sequence);
       this._mergeResults(result, agentResult);
 
       // 6. Artifact flow
-      const artifactResult = this.validateArtifactFlow(phaseSequence);
+      const artifactResult = this.validateArtifactFlow(workflow.workflow.sequence);
       this._mergeResults(result, artifactResult);
 
       // 7. Circular dependencies
-      const circularResult = this.detectCircularDeps(phaseSequence);
+      const circularResult = this.detectCircularDeps(workflow.workflow.sequence);
       this._mergeResults(result, circularResult);
 
       // 8. Conditional logic
-      const conditionalResult = this.validateConditionalLogic(phaseSequence);
+      const conditionalResult = this.validateConditionalLogic(workflow.workflow.sequence);
       this._mergeResults(result, conditionalResult);
     }
 
     // 9. Handoff prompts
-    const handoffResult = this.validateHandoffPrompts(workflow, phaseSequence);
+    const handoffResult = this.validateHandoffPrompts(workflow);
     this._mergeResults(result, handoffResult);
 
     // 10. Mermaid diagram
@@ -193,18 +191,18 @@ class WorkflowValidator {
     const result = { valid: true, errors: [], warnings: [], suggestions: [] };
     const filename = path.basename(filePath);
 
-    const wf = workflow.workflow;
-    if (!wf || typeof wf !== 'object') {
+    if (!workflow.workflow) {
       result.valid = false;
       result.errors.push({
         code: WorkflowValidationErrorCodes.WF_MISSING_REQUIRED_FIELD,
-        message: 'Missing workflow payload (expected workflow.id, workflow.name, and sequence/phases)',
+        message: 'Missing top-level "workflow:" key',
         file: filename,
-        suggestion: 'Add workflow: root key or canonical top-level id/name/sequence|phases',
+        suggestion: 'Add workflow: as the root key containing id, name, and sequence',
       });
       return result;
     }
 
+    const wf = workflow.workflow;
     const requiredFields = ['id', 'name'];
 
     for (const field of requiredFields) {
@@ -219,22 +217,13 @@ class WorkflowValidator {
       }
     }
 
-    const hasSequence = Array.isArray(wf.sequence) && wf.sequence.length > 0;
-    const hasPhases = Array.isArray(wf.phases) && wf.phases.length > 0;
-    if (!hasSequence && !hasPhases) {
+    if (!wf.sequence || !Array.isArray(wf.sequence) || wf.sequence.length === 0) {
       result.valid = false;
       result.errors.push({
         code: WorkflowValidationErrorCodes.WF_MISSING_REQUIRED_FIELD,
-        message: 'Missing or empty workflow execution array ("sequence" or "phases")',
+        message: 'Missing or empty "sequence:" array',
         file: filename,
-        suggestion: 'Add workflow.sequence (official) with at least one step; phases is compatibility only',
-      });
-    } else if (!hasSequence && hasPhases) {
-      result.warnings.push({
-        code: WorkflowValidationErrorCodes.WF_MISSING_REQUIRED_FIELD,
-        message: 'Workflow uses workflow.phases without workflow.sequence',
-        file: filename,
-        suggestion: 'Prefer workflow.sequence as canonical execution contract (keep phases only as supplemental metadata)',
+        suggestion: 'Add sequence: with at least one step entry containing agent and creates/action',
       });
     }
 
@@ -550,20 +539,18 @@ class WorkflowValidator {
   /**
    * Validate handoff prompts exist for transitions
    * @param {Object} workflow - Full parsed workflow
-   * @param {Array|null} phaseSequence - Optional resolved phase sequence
    * @returns {Object} Validation result
    */
-  validateHandoffPrompts(workflow, phaseSequence = null) {
+  validateHandoffPrompts(workflow) {
     const result = { valid: true, errors: [], warnings: [], suggestions: [] };
 
     const wf = workflow.workflow;
-    const sequence = Array.isArray(phaseSequence) ? phaseSequence : this._getPhaseSequence(workflow);
-    if (!wf || !Array.isArray(sequence) || sequence.length === 0) return result;
+    if (!wf || !wf.sequence || !Array.isArray(wf.sequence)) return result;
 
     // Count agent transitions (where one agent hands off to another)
     let transitionCount = 0;
     let prevAgent = null;
-    for (const step of sequence) {
+    for (const step of wf.sequence) {
       if (step.agent && step.agent !== prevAgent) {
         if (prevAgent) transitionCount++;
         prevAgent = step.agent;
@@ -699,67 +686,6 @@ class WorkflowValidator {
     if (source.errors && source.errors.length > 0) {
       target.valid = false;
     }
-  }
-
-  /**
-   * Normalize workflow payload to keep backward compatibility across
-   * workflow-wrapped and top-level workflow documents.
-   * @private
-   * @param {Object} data
-   * @returns {Object}
-   */
-  _normalizeWorkflowDocument(data) {
-    if (!data || typeof data !== 'object') {
-      return { workflow: null };
-    }
-
-    if (data.workflow && typeof data.workflow === 'object') {
-      const normalizedWorkflow = { ...data.workflow };
-      if (!normalizedWorkflow.phases && Array.isArray(data.phases)) {
-        normalizedWorkflow.phases = data.phases;
-      }
-      return { ...data, workflow: normalizedWorkflow };
-    }
-
-    const normalizedWorkflow = {
-      id: data.id,
-      name: data.name,
-      version: data.version,
-      description: data.description,
-      type: data.type,
-      orchestrator: data.orchestrator,
-      sequence: Array.isArray(data.sequence) ? data.sequence : undefined,
-      phases: Array.isArray(data.phases) ? data.phases : undefined,
-      handoff_prompts: data.handoff_prompts,
-      flow_diagram: data.flow_diagram,
-    };
-
-    return {
-      ...data,
-      workflow: normalizedWorkflow,
-    };
-  }
-
-  /**
-   * Resolve executable entries from canonical workflow.sequence[], with
-   * workflow.phases[] as compatibility fallback.
-   * @private
-   * @param {Object} workflow
-   * @returns {Array}
-   */
-  _getPhaseSequence(workflow) {
-    const wf = workflow && workflow.workflow ? workflow.workflow : null;
-    if (!wf) return [];
-
-    if (Array.isArray(wf.sequence) && wf.sequence.length > 0) {
-      return wf.sequence;
-    }
-
-    if (Array.isArray(wf.phases) && wf.phases.length > 0) {
-      return wf.phases;
-    }
-
-    return [];
   }
 }
 
