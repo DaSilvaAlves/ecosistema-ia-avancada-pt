@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+# AIOX Post-Merge Hook
+# Auto-syncs .aiox-core/ after git pull/merge to prevent version drift.
+# Non-blocking: failures are logged but do not block the merge.
+
+node scripts/sync-aiox-core.js --quiet 2>/dev/null || echo "[AIOX] Warning: .aiox-core sync failed. Run 'npm run sync:core' manually."

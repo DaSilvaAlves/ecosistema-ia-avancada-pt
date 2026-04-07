@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Synkra AIOX** — Multi-agent AI-orchestrated development framework (v5.0.3).
+**Synkra AIOX** — Multi-agent AI-orchestrated development framework (v5.0.4).
 
 ---
 
@@ -211,10 +211,14 @@ import { useStore } from '../../../stores/feature/store'
 
 ### TypeScript
 - Target: ES2022, module: CommonJS — check-only (`noEmit`), sem transpilação
+- Path alias: `aiox-core` → `.aiox-core/core/`, `aiox-core/*` → `.aiox-core/core/*`
 - Sem `any` - Use tipos apropriados ou `unknown` com type guards
 - Sempre defina interface de props para componentes
 - Use `as const` para objetos/arrays constantes
 - Tipos de ref explícitos: `useRef<HTMLDivElement>(null)`
+
+### Workspaces
+npm workspaces em `packages/*`. Dependências partilhadas instaladas na raiz.
 
 ### Error Handling
 ```typescript
@@ -233,26 +237,31 @@ try {
 
 ### Comandos de Teste
 ```bash
-npm test                              # Jest (timeout: 30s)
+npm test                              # Jest (timeout: 30s, verbose)
 npm run test:watch                    # Jest em watch mode
 npm run test:coverage                 # Jest com cobertura
 npx jest tests/core/config.test.js    # Executar teste individual
 npx jest --testPathPattern="agents"   # Executar testes por padrão
-npm run lint                          # ESLint (com cache)
-npm run typecheck                     # TypeScript (check-only, sem transpilação)
+npm run test:health-check             # Mocha — health-check tests (separados)
+npm run lint                          # ESLint v9 flat config (com cache)
+npm run typecheck                     # TypeScript (check-only, noEmit)
 ```
 
+### Arquitectura de Testes
+- **Jest** para unit/integration — config em `jest.config.js`, setup em `tests/setup.js`
+- **Mocha** para health-check — `tests/health-check/` (timeout: 30s)
+- Muitos testes legacy estão em `testPathIgnorePatterns` (migrações v2.1 pendentes)
+- Testes do `pro/` submodule correm em CI separado (`pro-integration.yml`)
+
 ### Quality Gates (Pre-Push)
-Antes de push, todos os checks devem passar:
 ```bash
 npm run lint && npm run typecheck && npm test
 ```
 
 ### Pre-Commit Hooks (Husky + lint-staged)
-Executam automaticamente em cada commit:
 - **JS/TS:** ESLint fix + Prettier
 - **MD:** Prettier + semantic-lint
-- **Agents:** IDE sync automático se ficheiros de agentes mudarem
+- **Agents (.aiox-core/development/agents/*.md):** IDE sync automático
 
 ---
 
@@ -300,22 +309,9 @@ Seguir Conventional Commits:
 
 ### Context Management (NOG-18 + TOK-4A)
 - Use `/compact` when context feels heavy or approaching limits
-- Context brackets (SYNAPSE) replaced by native compaction
 - Agent memory persists in `.aiox-core/development/agents/{id}/MEMORY.md`
 - Rules with `paths:` frontmatter only load when working on matching files
 - **Agent Handoff:** On agent switch (`@agent`), previous agent is compacted to ~379-token handoff artifact. See `.claude/rules/agent-handoff.md` for full protocol. Max 3 retained summaries, oldest discarded.
-
-### Gerenciamento de Sessão
-- Rastreie progresso da story durante a sessão
-- Atualize checkboxes imediatamente após completar tasks
-- Mantenha contexto da story atual sendo trabalhada
-- Salve estado importante antes de operações longas
-
-### Recuperação de Erros
-- Sempre forneça sugestões de recuperação para falhas
-- Inclua contexto do erro em mensagens ao usuário
-- Sugira procedimentos de rollback quando apropriado
-- Documente quaisquer correções manuais necessárias
 
 ---
 
@@ -407,5 +403,5 @@ tail -f .aiox/logs/agent.log
 
 ---
 
-*Synkra AIOX Claude Code Configuration v4.0*
+*Synkra AIOX Claude Code Configuration v4.1*
 *CLI First | Observability Second | UI Third*
