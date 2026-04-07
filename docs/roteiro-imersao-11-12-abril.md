@@ -7,7 +7,7 @@
 
 ---
 
-## DIA 1 — CLAREZA (11 Abril, Sexta)
+## DIA 1 — CLAREZA (11 Abril, Sábado)
 
 **Tema:** "O problema não é a IA — é a falta de clareza"
 **Output do dia:** Brief aprovado do projecto de cada membro
@@ -99,7 +99,7 @@
 
 ---
 
-## DIA 2 — EXECUÇÃO (12 Abril, Sábado)
+## DIA 2 — EXECUÇÃO (12 Abril, Domingo)
 
 **Tema:** "Da clareza à solução real"
 **Output do dia:** Projecto funcional ou protótipo publicado
