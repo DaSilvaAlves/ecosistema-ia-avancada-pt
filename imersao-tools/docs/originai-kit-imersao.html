@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kit Imersao ORIGINAI | 11-12 Abril 2026 | [IA]AVANCADA PT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #04040A;
+      --white: #F0F4FF;
+      --cyan: #00F5FF;
+      --gold: #FFB800;
+      --purple: #9D00FF;
+      --magenta: #FF006E;
+      --lime: #39FF14;
+      --grey: #8892A4;
+      --grey2: #4A5568;
+      --card-bg: rgba(255,255,255,0.025);
+      --card-border: rgba(255,255,255,0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.8;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      text-align: center;
+      padding: 3rem 1.5rem 2.5rem;
+      background: linear-gradient(135deg, rgba(0,245,255,0.08), rgba(157,0,255,0.08));
+      border-bottom: 1px solid var(--card-border);
+    }
+    .hero h1 {
+      font-size: 2.4rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.4rem;
+    }
+    .hero h1 span { color: var(--cyan); }
+    .hero p { color: var(--grey); font-size: 1rem; max-width: 600px; margin: 0 auto; }
+    .hero .badge {
+      display: inline-block;
+      margin-top: 1rem;
+      background: rgba(0,245,255,0.08);
+      border: 1px solid rgba(0,245,255,0.2);
+      border-radius: 20px;
+      padding: 0.3rem 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      color: var(--cyan);
+    }
+
+    /* ===== NAV TABS ===== */
+    .nav-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1.2rem 1rem;
+      background: rgba(0,0,0,0.4);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      flex-wrap: wrap;
+    }
+    .nav-tab {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.5rem 1.2rem;
+      color: var(--grey);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-tab:hover { border-color: rgba(0,245,255,0.3); color: var(--white); }
+    .nav-tab.active {
+      background: rgba(0,245,255,0.08);
+      border-color: rgba(0,245,255,0.3);
+      color: var(--cyan);
+    }
+
+    /* ===== CONTAINER ===== */
+    .container { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* ===== TAB PANELS ===== */
+    .tab-panel { display: none; padding: 2rem 0; }
+    .tab-panel.active { display: block; }
+
+    /* ===== HEADINGS ===== */
+    h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 1.5rem; }
+    h2 .num {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--gold);
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-right: 0.5rem;
+    }
+    h3 { font-size: 1.15rem; font-weight: 700; margin: 1.5rem 0 0.8rem; color: var(--cyan); }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+    .card.highlight { border-color: rgba(0,245,255,0.2); background: rgba(0,245,255,0.03); }
+    .card.success { border-color: rgba(57,255,20,0.3); background: rgba(57,255,20,0.03); }
+    .card.warning { border-color: rgba(255,184,0,0.2); background: rgba(255,184,0,0.03); }
+
+    /* ===== DAY HEADER ===== */
+    .day-header {
+      background: linear-gradient(135deg, rgba(0,245,255,0.06), rgba(157,0,255,0.06));
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .day-header h2 { margin-bottom: 0.3rem; }
+    .day-header .subtitle { color: var(--grey); font-size: 0.95rem; }
+    .day-header .output { color: var(--lime); font-size: 0.9rem; margin-top: 0.5rem; font-weight: 700; }
+
+    /* ===== BLOCO ===== */
+    .bloco {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .bloco-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .bloco-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--gold);
+      min-width: 40px;
+    }
+    .bloco-title { font-weight: 800; font-size: 1.1rem; }
+    .bloco-meta {
+      font-size: 0.8rem;
+      color: var(--grey);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .bloco-module {
+      display: inline-block;
+      background: rgba(157,0,255,0.1);
+      border: 1px solid rgba(157,0,255,0.2);
+      border-radius: 20px;
+      padding: 0.15rem 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--purple);
+      letter-spacing: 0.05em;
+      margin-left: 0.5rem;
+    }
+
+    /* ===== TIMELINE ===== */
+    .timeline { margin: 0; padding: 0; list-style: none; }
+    .timeline li {
+      display: grid;
+      grid-template-columns: 55px 1fr;
+      gap: 1rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.9rem;
+    }
+    .timeline li:last-child { border-bottom: none; }
+    .timeline .time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--cyan);
+      font-weight: 700;
+    }
+    .timeline .format {
+      display: inline-block;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      padding: 0.1rem 0.5rem;
+      font-size: 0.72rem;
+      color: var(--grey);
+      margin-left: 0.5rem;
+    }
+    .timeline .exercicio { color: var(--lime); font-weight: 700; }
+
+    /* ===== INTERVALO ===== */
+    .intervalo {
+      text-align: center;
+      padding: 1rem;
+      margin: 1rem 0;
+      color: var(--grey2);
+      border: 1px dashed rgba(255,255,255,0.08);
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    /* ===== MATERIAL ===== */
+    .material {
+      margin-top: 0.8rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.82rem;
+      color: var(--grey);
+    }
+    .material strong { color: var(--gold); }
+
+    /* ===== PROMPT BLOCK ===== */
+    .prompt-block {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    .prompt-block h3 { margin-top: 0; }
+    .prompt-code {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--white);
+      white-space: pre-wrap;
+      line-height: 1.6;
+      margin-top: 0.8rem;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(0,245,255,0.1);
+      border: 1px solid rgba(0,245,255,0.3);
+      border-radius: 6px;
+      padding: 0.35rem 0.8rem;
+      color: var(--cyan);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { background: rgba(0,245,255,0.2); }
+    .copy-btn.copied { background: rgba(57,255,20,0.15); border-color: rgba(57,255,20,0.3); color: var(--lime); }
+
+    /* ===== TEMPLATE FORM ===== */
+    .template-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .template-section h3 { margin-top: 0; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 0.4rem;
+      color: var(--grey);
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 0.7rem;
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: rgba(0,245,255,0.4);
+    }
+    .form-group textarea { min-height: 100px; resize: vertical; }
+    .form-group .hint { font-size: 0.78rem; color: var(--grey2); margin-top: 0.3rem; }
+
+    .checklist { list-style: none; }
+    .checklist li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-size: 0.9rem;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist input[type="checkbox"] {
+      width: 18px; height: 18px;
+      accent-color: var(--cyan);
+      cursor: pointer;
+    }
+
+    /* ===== TIMER ===== */
+    .timer-container {
+      text-align: center;
+      padding: 3rem 0;
+    }
+    .timer-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 6rem;
+      font-weight: 800;
+      color: var(--cyan);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.05em;
+    }
+    .timer-display.warning-time { color: var(--gold); }
+    .timer-display.danger-time { color: var(--magenta); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    .timer-buttons {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .timer-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.6rem 1.5rem;
+      color: var(--white);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .timer-btn:hover { border-color: rgba(0,245,255,0.3); }
+    .timer-btn.primary {
+      background: var(--cyan);
+      color: var(--bg);
+      border-color: var(--cyan);
+    }
+    .timer-btn.primary:hover { box-shadow: 0 0 20px rgba(0,245,255,0.4); }
+    .timer-btn.stop { border-color: rgba(255,0,110,0.4); color: var(--magenta); }
+    .timer-btn.stop:hover { background: rgba(255,0,110,0.1); }
+
+    .timer-presets {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .preset-btn {
+      background: rgba(255,184,0,0.08);
+      border: 1px solid rgba(255,184,0,0.2);
+      border-radius: 20px;
+      padding: 0.3rem 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--gold);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preset-btn:hover { background: rgba(255,184,0,0.15); }
+
+    /* ===== FLOW DIAGRAM ===== */
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin: 1.5rem 0;
+      justify-content: center;
+    }
+    .flow-step {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      text-align: center;
+      min-width: 90px;
+    }
+    .flow-step .name { font-weight: 700; font-size: 0.82rem; }
+    .flow-step .pct {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--cyan);
+      margin-top: 0.2rem;
+    }
+    .flow-arrow { color: var(--cyan); font-size: 1.1rem; font-weight: 700; }
+
+    /* ===== MODES ===== */
+    .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin: 1.5rem 0; }
+    .mode-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      text-align: center;
+    }
+    .mode-card.bad { border-color: rgba(255,0,110,0.3); }
+    .mode-card.good { border-color: rgba(57,255,20,0.3); }
+    .mode-card .ratio {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin: 0.4rem 0;
+    }
+    .mode-card.bad .ratio { color: var(--magenta); }
+    .mode-card.good .ratio { color: var(--lime); }
+    .mode-card .label { font-size: 0.82rem; color: var(--grey); }
+
+    /* ===== PRINCIPLES ===== */
+    .principles { list-style: none; counter-reset: p; }
+    .principles li {
+      counter-increment: p;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      gap: 1rem;
+      align-items: baseline;
+    }
+    .principles li:last-child { border-bottom: none; }
+    .principles li::before {
+      content: counter(p, decimal-leading-zero);
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 1rem;
+      min-width: 28px;
+    }
+
+    /* ===== TIERS TABLE ===== */
+    .tiers-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .tiers-table th, .tiers-table td {
+      padding: 0.6rem 0.8rem;
+      border: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.85rem;
+      text-align: left;
+    }
+    .tiers-table th {
+      background: rgba(0,245,255,0.05);
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .tiers-table td:first-child {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    /* ===== EXPORT BUTTONS ===== */
+    .export-bar {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin: 1.5rem 0;
+      flex-wrap: wrap;
+    }
+
+    /* ===== SUMMARY TABLE ===== */
+    .summary-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .summary-table th, .summary-table td {
+      padding: 0.5rem 0.8rem;
+      border: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.85rem;
+    }
+    .summary-table th {
+      background: rgba(255,184,0,0.05);
+      font-weight: 700;
+      color: var(--gold);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    /* ===== BLOCKQUOTE ===== */
+    blockquote {
+      border-left: 3px solid var(--cyan);
+      padding-left: 1.2rem;
+      margin: 1.5rem 0;
+      color: var(--grey);
+      font-style: italic;
+      font-size: 1rem;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--grey2);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--card-border);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      .modes { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 1.8rem; }
+      .flow { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); }
+      .timer-display { font-size: 4rem; }
+      .bloco-header { flex-direction: column; gap: 0.3rem; }
+    }
+
+    /* ===== IMAGE GALLERY ===== */
+    .img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+    .img-grid.single { grid-template-columns: 1fr; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .img-grid.triple { grid-template-columns: 1fr 1fr 1fr; }
+    .img-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .img-card img { width: 100%; height: auto; display: block; }
+    .img-card .img-caption {
+      padding: 0.7rem 1rem;
+      font-size: 0.82rem;
+      color: var(--grey);
+      text-align: center;
+    }
+    .img-card .img-caption strong { color: var(--white); }
+
+    .step-flow {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 2rem 0;
+    }
+    .step-flow .sf-step {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.6rem 0.8rem;
+      text-align: center;
+      min-width: 80px;
+    }
+    .step-flow .sf-step .sf-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--gold);
+      display: block;
+    }
+    .step-flow .sf-step .sf-label { font-size: 0.78rem; font-weight: 700; }
+    .step-flow .sf-arrow { color: var(--cyan); font-weight: 700; font-size: 1.2rem; }
+
+    .pilar-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    .pilar-card .pilar-text { }
+    .pilar-card .pilar-img { border-radius: 8px; overflow: hidden; }
+    .pilar-card .pilar-img img { width: 100%; height: auto; display: block; border-radius: 8px; }
+    .pilar-card .pilar-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1rem;
+      color: var(--gold);
+      font-weight: 800;
+    }
+    .pilar-card .pilar-title { font-weight: 800; font-size: 1.05rem; margin-bottom: 0.5rem; }
+    .pilar-card .pilar-desc { font-size: 0.88rem; color: var(--grey); line-height: 1.6; }
+
+    @media (max-width: 600px) {
+      .img-grid, .img-grid.triple { grid-template-columns: 1fr; }
+      .pilar-card { grid-template-columns: 1fr; }
+      .step-flow { flex-direction: column; }
+      .step-flow .sf-arrow { transform: rotate(90deg); }
+    }
+
+    /* ===== PRINT ===== */
+    @media print {
+      .nav-tabs, .timer-container, .copy-btn, .timer-buttons, .timer-presets { display: none !important; }
+      .tab-panel { display: block !important; page-break-before: always; }
+      body { background: white; color: #111; }
+      .card, .bloco, .template-section, .prompt-block { border: 1px solid #ddd; background: #f9f9f9; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="container">
+      <h1><span>ORIGINAI</span> Kit da Imersao</h1>
+      <p>Tudo o que precisas para os 2 dias. Agenda, templates, prompts e timer.</p>
+      <div class="badge">11-12 ABRIL 2026</div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-tab="agenda">Agenda</div>
+    <div class="nav-tab" data-tab="metodo">O Metodo</div>
+    <div class="nav-tab" data-tab="lego">LEGO</div>
+    <div class="nav-tab" data-tab="blueprint">7 Pilares</div>
+    <div class="nav-tab" data-tab="templates">Templates</div>
+    <div class="nav-tab" data-tab="prompts">Prompts</div>
+    <div class="nav-tab" data-tab="timer">Timer</div>
+  </div>
+
+  <div class="container">
+
+    <!-- ==================== TAB: AGENDA ==================== -->
+    <div id="tab-agenda" class="tab-panel active">
+
+      <!-- DIA 1 -->
+      <div class="day-header">
+        <h2>Dia 1 -- CLAREZA</h2>
+        <div class="subtitle">11 Abril (Sexta) | 18:00 - 21:00</div>
+        <div class="output">Output: Brief aprovado do teu projecto</div>
+      </div>
+
+      <!-- Bloco 1 -->
+      <div class="bloco">
+        <div class="bloco-header">
+          <span class="bloco-num">B1</span>
+          <div>
+            <div class="bloco-title">O Problema <span class="bloco-module">M0</span></div>
+            <div class="bloco-meta">18:00 - 18:30 | 30 min</div>
+          </div>
+        </div>
+        <ul class="timeline">
+          <li><span class="time">0-5</span><span>Abertura -- "Por que 90% falha com IA" <span class="format">Eurico ao vivo</span></span></li>
+          <li><span class="time">5-10</span><span>Imagens 18-19: casa sem projecto, bairro caotico <span class="format">Visual</span></span></li>
+          <li><span class="time">10-15</span><span>Os 2 modos: Ineficiente vs Eficiente <span class="format">Diagrama</span></span></li>
+          <li><span class="time">15-20</span><span>"20 interaccoes para mediano vs 5 para excepcional" <span class="format">Demo ao vivo</span></span></li>
+          <li><span class="time">20-25</span><span>Fluxo da Clareza: 6 niveis, ratio humano/IA <span class="format">Diagrama</span></span></li>
+          <li><span class="time">25-30</span><span>"Vamos construir a vossa clareza agora"</span></li>
+        </ul>
+        <div class="material"><strong>Material:</strong> imagens 18, 19 | diagrama 2 modos | diagrama fluxo</div>
+      </div>
+
+      <!-- Bloco 2 -->
+      <div class="bloco">
+        <div class="bloco-header">
+          <span class="bloco-num">B2</span>
+          <div>
+            <div class="bloco-title">Expressao <span class="bloco-module">M1</span></div>
+            <div class="bloco-meta">18:30 - 19:00 | 30 min</div>
+          </div>
+        </div>
+        <ul class="timeline">
+          <li><span class="time">0-5</span><span>"Esgota o teu cerebro primeiro" -- zero IA, papel e caneta <span class="format">Eurico ao vivo</span></span></li>
+          <li><span class="time">5-20</span><span class="exercicio">EXERCICIO: cada membro escreve 15 min sobre o SEU projecto <span class="format">Timer no ecra</span></span></li>
+          <li><span class="time">20-25</span><span>Partilha rapida: 2-3 membros dizem em 1 frase <span class="format">Interaccao</span></span></li>
+          <li><span class="time">25-30</span><span>"Agora tens materia-prima. Vamos transformar em Brief."</span></li>
+        </ul>
+        <div class="material"><strong>Material:</strong> Timer de 15 min | musica ambiente (opcional)</div>
+      </div>
+
+      <!-- Bloco 3 -->
+      <div class="bloco">
+        <div class="bloco-header">
+          <span class="bloco-num">B3</span>
+          <div>
+            <div class="bloco-title">Brief <span class="bloco-module">M2</span></div>
+            <div class="bloco-meta">19:00 - 19:45 | 45 min</div>
+          </div>
+        </div>
+        <ul class="timeline">
+          <li><span class="time">0-5</span><span>Imagem 22 (planta tecnica) -- "O Brief e a tua planta" <span class="format">Visual</span></span></li>
+          <li><span class="time">5-10</span><span>Os 6 passos: QA1, Pesquisas, Insights, Brief, QA2 <span class="format">Diagrama</span></span></li>
+          <li><span class="time">10-15</span><span>Demo: Eurico faz QA1 com IA Tier S sobre rascunho real <span class="format">Demo</span></span></li>
+          <li><span class="time">15-20</span><span>Demo: le pesquisas, extrai insights (os DELE, nao da IA) <span class="format">Demo</span></span></li>
+          <li><span class="time">20-25</span><span>Demo: cria Brief e aplica Checklist QA2 <span class="format">Demo</span></span></li>
+          <li><span class="time">25-40</span><span class="exercicio">EXERCICIO: membros fazem QA1 + Brief do seu rascunho <span class="format">Pratica guiada</span></span></li>
+          <li><span class="time">40-45</span><span>Validacao rapida: Checklist QA2 -- "Esta pronto para detalhar?" <span class="format">Checklist</span></span></li>
+        </ul>
+        <div class="material"><strong>Material:</strong> imagem 22 | template Brief | checklist QA2 | prompt QA1</div>
+      </div>
+
+      <div class="intervalo">INTERVALO | 19:45 - 20:00</div>
+
+      <!-- Bloco 4 -->
+      <div class="bloco">
+        <div class="bloco-header">
+          <span class="bloco-num">B4</span>
+          <div>
+            <div class="bloco-title">Detalhamento <span class="bloco-module">M3</span></div>
+            <div class="bloco-meta">20:00 - 20:45 | 45 min</div>
+          </div>
+        </div>
+        <ul class="timeline">
+          <li><span class="time">0-5</span><span>Imagem 23 (Casa = Fundacao, Paredes, Telhado) <span class="format">Visual</span></span></li>
+          <li><span class="time">5-10</span><span>Identificar, Agrupar, Sequenciar <span class="format">Diagrama</span></span></li>
+          <li><span class="time">10-15</span><span>Demo: Eurico detalha o Brief da demo com IA <span class="format">Demo</span></span></li>
+          <li><span class="time">15-20</span><span>As 4 perguntas: O que quer? O que faz? Como usar? Design? <span class="format">Slide</span></span></li>
+          <li><span class="time">20-40</span><span class="exercicio">EXERCICIO: membros detalham o seu Brief <span class="format">Pratica guiada</span></span></li>
+          <li><span class="time">40-45</span><span>Partilha: 2-3 membros mostram as suas etapas <span class="format">Interaccao</span></span></li>
+        </ul>
+        <div class="material"><strong>Material:</strong> imagem 23 | template detalhamento</div>
+      </div>
+
+      <!-- Encerramento Dia 1 -->
+      <div class="bloco" style="border-color: rgba(157,0,255,0.2);">
+        <div class="bloco-header">
+          <span class="bloco-num" style="color: var(--purple);">--</span>
+          <div>
+            <div class="bloco-title">Encerramento Dia 1</div>
+            <div class="bloco-meta">20:45 - 21:00 | 15 min</div>
+          </div>
+        </div>
+        <ul class="timeline">
+          <li><span class="time">0-5</span><span>Recap: "Hoje saiste com Brief + Detalhamento"</span></li>
+          <li><span class="time">5-10</span><span>Preview Dia 2: "Amanha transformamos em solucao real"</span></li>
+          <li><span class="time">10-15</span><span>Trabalho de casa (opcional): refinar Brief e Detalhamento</span></li>
+        </ul>
+      </div>
+
+      <!-- ====== DIA 2 ====== -->
+      <div class="day-header" style="margin-top: 3rem;">
+        <h2>Dia 2 -- EXECUCAO</h2>
+        <div class="subtitle">12 Abril (Sabado) | 15:00 - 19:00</div>
+        <div class="output">Output: Projecto funcional ou prototipo publicado</div>
+      </div>
+
+      <!-- Bloco 5 -->
+      <div class="bloco">
+        <div class="bloco-header">
+          <span class="bloco-num">B5</span>
+          <div>
+            <div class="bloco-title">PRD e Etapas <span class="bloco-module">M4</span></div>
+            <div class="bloco-meta">15:00 - 15:45 | 45 min</div>
+          </div>
+        </div>
+        <ul class="timeline">
+          <li><span class="time">0-5</span><span>Recap rapido do Dia 1 -- onde ficamos <span class="format">Eurico</span></span></li>
+          <li><span class="time">5-10</span><span>Imagens 24 + 16 (Regras de Quebra + Pipeline de delegacao) <span class="format">Visual</span></span></li>
+          <li><span class="time">10-15</span><span>Explicar regras: Etapa boa vs Tarefa boa <span class="format">Diagrama</span></span></li>
+          <li><span class="time">15-20</span><span>Demo: Eurico transforma detalhamento em Etapas + Tarefas <span class="format">Demo</span></span></li>
+          <li><span class="time">20-40</span><span class="exercicio">EXERCICIO: membros criam as suas etapas e tarefas <span class="format">Pratica guiada</span></span></li>
+          <li><span class="time">40-45</span><span>Validacao: "Cada tarefa comeca com verbo? 3-7 tarefas por etapa?" <span class="format">Checklist</span></span></li>
+        </ul>
+        <div class="material"><strong>Material:</strong> imagens 16, 24 | template etapas/tarefas</div>
+      </div>
+
+      <!-- Bloco 6 -->
+      <div class="bloco">
+        <div class="bloco-header">
+          <span class="bloco-num">B6</span>
+          <div>
+            <div class="bloco-title">Tarefas + Tiers <span class="bloco-module">M5</span></div>
+            <div class="bloco-meta">15:45 - 16:15 | 30 min</div>
+          </div>
+        </div>
+        <ul class="timeline">
+          <li><span class="time">0-5</span><span>Imagens 25-26 (LEGO) -- "Cada bloco e uma tarefa" <span class="format">Visual</span></span></li>
+          <li><span class="time">5-10</span><span>Tiers de modelos: S/A/B/C -- quando usar cada um <span class="format">Tabela</span></span></li>
+          <li><span class="time">10-15</span><span>Demo: Eurico executa 2 tarefas com Tier correcto <span class="format">Demo</span></span></li>
+          <li><span class="time">15-25</span><span class="exercicio">EXERCICIO: membros executam 3 tarefas com IA <span class="format">Pratica guiada</span></span></li>
+          <li><span class="time">25-30</span><span>"Precisaste de correccoes? Entao o prompt precisava de mais clareza" <span class="format">Reflexao</span></span></li>
+        </ul>
+        <div class="material"><strong>Material:</strong> imagens 25, 26 | tabela de tiers</div>
+      </div>
+
+      <div class="intervalo">INTERVALO | 16:15 - 16:30</div>
+
+      <!-- Bloco 7 -->
+      <div class="bloco">
+        <div class="bloco-header">
+          <span class="bloco-num">B7</span>
+          <div>
+            <div class="bloco-title">Pipeline Tecnico <span class="bloco-module">M6</span></div>
+            <div class="bloco-meta">16:30 - 17:30 | 60 min</div>
+          </div>
+        </div>
+        <ul class="timeline">
+          <li><span class="time">0-5</span><span>O Pipeline: Brief, PRD, Stitch, AI Studio, Design System, Deploy <span class="format">Diagrama</span></span></li>
+          <li><span class="time">5-15</span><span>Demo ao vivo: Eurico percorre o pipeline com projecto real <span class="format">Demo completa</span></span></li>
+          <li><span class="time">15-20</span><span>Os 7 Pilares (Blueprint) -- visao geral rapida <span class="format">Slides</span></span></li>
+          <li><span class="time">20-25</span><span>Prompt Simples vs Prompt Avancado -- quando usar cada <span class="format">Slide</span></span></li>
+          <li><span class="time">25-55</span><span class="exercicio">EXERCICIO: membros avancam o seu projecto pelo pipeline <span class="format">Pratica guiada</span></span></li>
+          <li><span class="time">55-60</span><span>Partilha de resultados: 3-4 membros mostram o que construiram <span class="format">Showcase</span></span></li>
+        </ul>
+        <div class="material"><strong>Material:</strong> pipeline diagrama | blueprint resumo | prompts</div>
+      </div>
+
+      <!-- Fase 3 -->
+      <div class="bloco" style="border-color: rgba(0,245,255,0.2); background: rgba(0,245,255,0.02);">
+        <div class="bloco-header">
+          <span class="bloco-num" style="color: var(--cyan);">F3</span>
+          <div>
+            <div class="bloco-title">Mao na Massa</div>
+            <div class="bloco-meta">Integrado nos Blocos 5-7 | Pratica continua</div>
+          </div>
+        </div>
+        <p style="color: var(--grey); font-size: 0.9rem; margin-bottom: 1rem;">O teu projecto real. Comecas pela dor, geras briefing, pesquisas, crias PRD e entregas a ferramentas que constroem por ti.</p>
+        <ul class="timeline">
+          <li><span class="time">15:00</span><span>Briefing individual -- "qual e a tua dor?" (1:1 com Eurico)</span></li>
+          <li><span class="time">15:15</span><span>Briefing Generator + pesquisa com ferramentas</span></li>
+          <li><span class="time">15:45</span><span>Criar PRD tecnico -- "isto e o que queres?"</span></li>
+          <li><span class="time">16:00</span><span class="exercicio">Construcao -- entregar PRD ao Claude Code, Gemini CLI ou Antigravity (120 min)</span></li>
+          <li><span class="time">18:00</span><span>Primeiro deploy -- URL publica</span></li>
+          <li><span class="time">18:30</span><span>Iteracao -- ajustar, corrigir, melhorar</span></li>
+        </ul>
+      </div>
+
+      <!-- Encerramento -->
+      <div class="bloco" style="border-color: rgba(157,0,255,0.2);">
+        <div class="bloco-header">
+          <span class="bloco-num" style="color: var(--purple);">--</span>
+          <div>
+            <div class="bloco-title">Encerramento</div>
+            <div class="bloco-meta">17:30 - 18:00 (ou 18:30 - 19:00) | 30 min</div>
+          </div>
+        </div>
+        <ul class="timeline">
+          <li><span class="time">0-10</span><span>Os 10 Principios ORIGINAI -- recapitulacao</span></li>
+          <li><span class="time">10-15</span><span>Imagens 20-21 (resultado de excelencia) -- "Isto e o que construiste"</span></li>
+          <li><span class="time">15-20</span><span>Proximos passos na comunidade</span></li>
+          <li><span class="time">20-25</span><span>Ferramentas disponiveis (pipeline da comunidade)</span></li>
+          <li><span class="time">25-30</span><span>"A IA muda todos os meses. O metodo nao."</span></li>
+        </ul>
+      </div>
+
+      <!-- Resumo -->
+      <h3 style="margin-top: 2rem;">Resumo de Tempo</h3>
+      <table class="summary-table">
+        <thead>
+          <tr><th>Bloco</th><th>Duracao</th><th>Teoria</th><th>Pratica</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>B1 -- O Problema</td><td>30 min</td><td>30 min</td><td>--</td></tr>
+          <tr><td>B2 -- Expressao</td><td>30 min</td><td>10 min</td><td>20 min</td></tr>
+          <tr><td>B3 -- Brief</td><td>45 min</td><td>20 min</td><td>25 min</td></tr>
+          <tr><td>B4 -- Detalhamento</td><td>45 min</td><td>15 min</td><td>30 min</td></tr>
+          <tr><td>B5 -- PRD + Etapas</td><td>45 min</td><td>15 min</td><td>30 min</td></tr>
+          <tr><td>B6 -- Tarefas + Tiers</td><td>30 min</td><td>15 min</td><td>15 min</td></tr>
+          <tr><td>B7 -- Pipeline</td><td>60 min</td><td>20 min</td><td>40 min</td></tr>
+          <tr style="font-weight:800; color: var(--cyan);"><td>Total</td><td>~5h30</td><td>~2h05</td><td>~2h40</td></tr>
+        </tbody>
+      </table>
+      <div class="card success" style="text-align: center; margin-top: 1rem;">
+        <strong>Ratio teoria/pratica: 44% / 56%</strong> -- mais pratica do que teoria.
+      </div>
+
+      <!-- Imagens por bloco -->
+      <h3 style="margin-top: 2rem;">Imagens por Bloco</h3>
+      <table class="summary-table">
+        <thead>
+          <tr><th>Bloco</th><th>Imagens</th><th>Descricao</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>B1</td><td>18.jpg, 19.jpg</td><td>Casa sem projecto, bairro caotico</td></tr>
+          <tr><td>B3</td><td>22.jpg</td><td>Planta tecnica</td></tr>
+          <tr><td>B4</td><td>23.jpg</td><td>Casa: fundacao, paredes, telhado</td></tr>
+          <tr><td>B5</td><td>16.png, 24.jpg</td><td>Pipeline delegacao, regras de quebra</td></tr>
+          <tr><td>B6</td><td>25.jpg, 26.jpg</td><td>LEGO -- blocos/tarefas</td></tr>
+          <tr><td>Encerramento</td><td>20.jpg, 21.jpg</td><td>Resultado de excelencia</td></tr>
+        </tbody>
+      </table>
+      <div class="card warning">
+        <strong>Nota:</strong> Todas as imagens estao em <code>imersao-tools/docs/docsoriginai-source/imagens/</code>. Total: 39 imagens (01-16.png + 17-39.jpg).
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB: METODO ==================== -->
+    <div id="tab-metodo" class="tab-panel">
+
+      <h2><span class="num">01</span> O Problema</h2>
+      <p>A maioria das pessoas usa IA com 10% de clareza e 90% de delegacao cega.</p>
+
+      <div class="modes">
+        <div class="mode-card bad">
+          <div class="label">MODO INEFICIENTE</div>
+          <div class="ratio">10% / 90%</div>
+          <div class="label">clareza / delegacao cega</div>
+          <p style="margin-top:0.5rem; font-size:0.85rem; color:var(--grey);">~20 interaccoes para mediano<br>"Vai assim mesmo..."</p>
+        </div>
+        <div class="mode-card good">
+          <div class="label">MODO EFICIENTE</div>
+          <div class="ratio">90% / 10%</div>
+          <div class="label">clareza / delegacao informada</div>
+          <p style="margin-top:0.5rem; font-size:0.85rem; color:var(--grey);">~5 interaccoes para excepcional<br>"Melhor do que imaginava!"</p>
+        </div>
+      </div>
+
+      <blockquote>"Pessoas boas conseguem generalizar. Entender as entrelinhas. A IA nao. A IA precisa de clareza explicita."</blockquote>
+
+      <h2 style="margin-top: 2.5rem;"><span class="num">02</span> O Fluxo da Clareza</h2>
+      <p>O ratio humano/IA inverte-se progressivamente:</p>
+
+      <div class="flow">
+        <div class="flow-step"><div class="name">Expressao</div><div class="pct">90% TU</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step"><div class="name">Brief</div><div class="pct">70% TU</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step"><div class="name">Detalhe</div><div class="pct">30% TU</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step"><div class="name">PRD</div><div class="pct">30% TU</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step"><div class="name">Etapas</div><div class="pct">10% TU</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step"><div class="name">Tarefas</div><div class="pct">10% TU</div></div>
+      </div>
+
+      <h2 style="margin-top: 2.5rem;"><span class="num">03</span> Tiers de Modelos</h2>
+      <table class="tiers-table">
+        <thead><tr><th>Tier</th><th>Modelos</th><th>Usar quando</th></tr></thead>
+        <tbody>
+          <tr><td>S</td><td>Gemini 3, Opus 4.1, Codex High, Grok 4.1</td><td>Contexto grande, auditoria, analise profunda</td></tr>
+          <tr><td>A</td><td>Sonnet 4.5, GPT 5.1</td><td>Tarefas medias, boa capacidade tactica</td></tr>
+          <tr><td>B</td><td>Grok 4 Fast Code, Haiku</td><td>Tarefas rapidas, bem definidas</td></tr>
+          <tr><td>C</td><td>GPT 120 OSS</td><td>Experimentacao</td></tr>
+        </tbody>
+      </table>
+
+      <h2 style="margin-top: 2.5rem;"><span class="num">04</span> Os 10 Principios</h2>
+      <ol class="principles">
+        <li>O problema nao e a IA -- e a falta de clareza do humano</li>
+        <li>Clareza e um processo estruturado -- nao e talento, e metodo</li>
+        <li>O humano lidera no inicio e delega progressivamente</li>
+        <li>Cada nivel de clareza tem QA -- validacao antes de avancar</li>
+        <li>O pipeline comeca pelo design -- nunca pelo codigo</li>
+        <li>A IA e um executor -- o humano e o arquitecto da intencao</li>
+        <li>Esgota o cerebro -- antes de pedir a IA, esgota as tuas ideias</li>
+        <li>Os insights sao teus -- a IA pesquisa, tu interpretas</li>
+        <li>Pragmatismo -- cada QA valida pragmatismo, nao perfeicao</li>
+        <li>Anti-alucinacao -- trabalha so com o que existe, nunca inventes</li>
+      </ol>
+
+    </div>
+
+    <!-- ==================== TAB: LEGO ==================== -->
+    <div id="tab-lego" class="tab-panel">
+
+      <h2><span class="num">L</span> A Narrativa LEGO — De Tarefas a Sistemas</h2>
+      <p style="color:var(--grey); margin-bottom: 1rem;">A analogia central do Bloco 6 (Tarefas + Tiers). Mostra como pecas simples constroem sistemas complexos — exactamente como tarefas bem definidas constroem projectos.</p>
+
+      <h3>A Progressao: Do Caos ao Resultado</h3>
+
+      <div class="step-flow">
+        <div class="sf-step"><span class="sf-num">1</span><span class="sf-label">Caos</span></div>
+        <div class="sf-arrow">&rarr;</div>
+        <div class="sf-step"><span class="sf-num">2</span><span class="sf-label">Organizar</span></div>
+        <div class="sf-arrow">&rarr;</div>
+        <div class="sf-step"><span class="sf-num">3</span><span class="sf-label">Agrupar</span></div>
+        <div class="sf-arrow">&rarr;</div>
+        <div class="sf-step"><span class="sf-num">4</span><span class="sf-label">Instrucoes</span></div>
+        <div class="sf-arrow">&rarr;</div>
+        <div class="sf-step"><span class="sf-num">5</span><span class="sf-label">Construir</span></div>
+        <div class="sf-arrow">&rarr;</div>
+        <div class="sf-step"><span class="sf-num">6</span><span class="sf-label">Resultado</span></div>
+        <div class="sf-arrow">&rarr;</div>
+        <div class="sf-step"><span class="sf-num">7</span><span class="sf-label">MVP</span></div>
+      </div>
+
+      <!-- Step 1-2: Caos → Organizar -->
+      <div class="img-grid">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/27.jpg" alt="Balde LEGO caos" loading="lazy">
+          <div class="img-caption"><strong>1. Caos</strong> — Pecas soltas sem organizacao. E assim que comecam a maioria dos projectos: ideias espalhadas sem estrutura.</div>
+        </div>
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/28.jpg" alt="Criancas a organizar LEGO" loading="lazy">
+          <div class="img-caption"><strong>2. Organizar</strong> — O processo de separar e categorizar. E o que fazes no Brief e no Detalhamento.</div>
+        </div>
+      </div>
+
+      <!-- Step 3-4: Agrupar → Instrucoes -->
+      <div class="img-grid">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/29.jpg" alt="Sacos LEGO organizados" loading="lazy">
+          <div class="img-caption"><strong>3. Agrupar</strong> — Pecas agrupadas por tipo. Cada saco e uma Etapa — contem tudo o que precisas para aquela fase.</div>
+        </div>
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/30.jpg" alt="Manual LEGO instrucoes" loading="lazy">
+          <div class="img-caption"><strong>4. Instrucoes</strong> — Passos 1-9 claros e sequenciais. Cada passo e uma Tarefa: verbo + resultado verificavel.</div>
+        </div>
+      </div>
+
+      <!-- Step 5-6: Construir → Resultado -->
+      <div class="img-grid">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/31.jpg" alt="Construcao LEGO com manual" loading="lazy">
+          <div class="img-caption"><strong>5. Construir</strong> — Execucao com guia. Sabes exactamente o que fazer a seguir. Sem duvidas, sem improvisos.</div>
+        </div>
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/32.jpg" alt="Carro LEGO pronto" loading="lazy">
+          <div class="img-caption"><strong>6. Resultado</strong> — Projecto completo. Todas as etapas executadas, todas as tarefas verificadas.</div>
+        </div>
+      </div>
+
+      <!-- Step 7: MVP -->
+      <div class="img-grid single">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/33.jpg" alt="Carro LEGO mini" loading="lazy">
+          <div class="img-caption"><strong>7. MVP</strong> — Versao simples. Mesma logica, menos pecas. Comeca pequeno, valida, depois expande.</div>
+        </div>
+      </div>
+
+      <div class="card highlight" style="margin-top: 2rem;">
+        <strong>A licao:</strong> Nao e sobre o tamanho do projecto. E sobre a qualidade da decomposicao. Pecas simples, bem organizadas, constroem qualquer coisa.
+      </div>
+
+      <h3 style="margin-top: 2.5rem;">Escala: Blocos Simples → Sistemas Complexos</h3>
+      <div class="img-grid">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/25.jpg" alt="LEGO city complexo" loading="lazy">
+          <div class="img-caption"><strong>Cidade LEGO</strong> — Cada loja, restaurante, rua — construida com as mesmas pecas basicas. Sistemas complexos de blocos simples.</div>
+        </div>
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/26.jpg" alt="LEGO McLaren F1" loading="lazy">
+          <div class="img-caption"><strong>McLaren F1</strong> — Engenharia de precisao. Milhares de pecas simples → resultado excepcional.</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 2.5rem;">Regras de Quebra</h3>
+      <div class="img-grid">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/24.jpg" alt="Regras de Quebra" loading="lazy">
+          <div class="img-caption"><strong>Etapa vs Tarefa</strong> — Etapa: objectivo intermediario, 3-7 tarefas. Tarefa: accao especifica, verbo, verificavel.</div>
+        </div>
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/17.jpg" alt="Fluxo de Quebra" loading="lazy">
+          <div class="img-caption"><strong>Fluxo de Quebra</strong> — "O que quero alcancar?" → Etapas → Tarefas → Teste de qualidade.</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 2.5rem;">Analogia da Casa (Bloco 4)</h3>
+      <div class="img-grid">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/23.jpg" alt="Etapas da casa" loading="lazy">
+          <div class="img-caption"><strong>Construir uma Casa</strong> — Fundacao (Cavar, Nivelar, Concretar) → Paredes (Levantar, Rebocar, Instalar) → Telhado (Estrutura, Telhas, Calhas)</div>
+        </div>
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/22.jpg" alt="Planta tecnica" loading="lazy">
+          <div class="img-caption"><strong>A Planta</strong> — O Brief e a tua planta tecnica. Sem planta, constróis a casa da imagem 18.</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 2.5rem;">Sem Projecto vs Com Projecto</h3>
+      <div class="img-grid">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/18.jpg" alt="Casa sem acabamento" loading="lazy">
+          <div class="img-caption"><strong>Sem projecto</strong> — "Isto e o que temos." Construcao sem planta, sem metodo, sem clareza.</div>
+        </div>
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/20.jpg" alt="Casa de excelencia" loading="lazy">
+          <div class="img-caption"><strong>Com projecto</strong> — "Isto e o que construiste." O resultado de clareza + metodo + execucao.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB: BLUEPRINT / 7 PILARES ==================== -->
+    <div id="tab-blueprint" class="tab-panel">
+
+      <h2><span class="num">B</span> Blueprint do Arquitecto Front-End 2025</h2>
+      <p style="color:var(--grey); margin-bottom: 0.5rem;">Os 7 Pilares tecnicos para o Bloco 7 (Pipeline Tecnico). O metodo que transforma codigo caotico em arquitectura profissional.</p>
+
+      <div class="img-grid single" style="margin-bottom: 2rem;">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/01.png" alt="Blueprint capa" loading="lazy">
+          <div class="img-caption"><strong>O Blueprint</strong> — Target: Next.js/React | Engine: Tailwind v4 | Strictness: Maximum</div>
+        </div>
+      </div>
+
+      <!-- Zona Humana vs Maquina -->
+      <h3>Zona Humana vs Zona Maquina</h3>
+      <div class="img-grid single">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/02.png" alt="Zona Humana vs Maquina" loading="lazy">
+          <div class="img-caption"><strong>A Regra de Ouro:</strong> Esgotar o cerebro humano no papel primeiro. O briefing final aprovado dita a operacao da IA em minutos, nao em dias.</div>
+        </div>
+      </div>
+
+      <!-- 5 Fases -->
+      <h3 style="margin-top: 2rem;">As 5 Fases da Auditoria</h3>
+      <div class="img-grid single">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/05.png" alt="5 Fases" loading="lazy">
+          <div class="img-caption">Descoberta → Planeamento → Auditoria → Recomendacoes → Plano de Accao</div>
+        </div>
+      </div>
+
+      <!-- 7 Pilares -->
+      <h3 style="margin-top: 2.5rem;">Os 7 Pilares</h3>
+
+      <div class="pilar-card">
+        <div class="pilar-text">
+          <div class="pilar-num">PILAR 1</div>
+          <div class="pilar-title">Arquitectura React/Next.js</div>
+          <div class="pilar-desc">Component Tree Topology. Minimizar 'use client'. Server Components por definicao. Extraccao de Hooks. Keys estaveis. Estado derivado em vez de useEffect.</div>
+        </div>
+        <div class="pilar-img"><img src="docsoriginai-source/imagens/06.png" alt="Pilar 1" loading="lazy"></div>
+      </div>
+
+      <div class="pilar-card">
+        <div class="pilar-text">
+          <div class="pilar-num">PILAR 2</div>
+          <div class="pilar-title">Tailwind CSS (v3 → v4)</div>
+          <div class="pilar-desc">Oxide Engine (Rust): Full build 378ms → 100ms. CSS-first config com @theme. OKLCH. Container Queries built-in. Breaking changes: shadow→shadow-sm, outline-none→outline-hidden.</div>
+        </div>
+        <div class="pilar-img"><img src="docsoriginai-source/imagens/07.png" alt="Pilar 2" loading="lazy"></div>
+      </div>
+
+      <div class="pilar-card">
+        <div class="pilar-text">
+          <div class="pilar-num">PILAR 3</div>
+          <div class="pilar-title">Design Tokens (W3C DTCG)</div>
+          <div class="pilar-desc">3 camadas: Global/Primitive (blue-500) → Semantic (color-primary) → Component (button-primary-bg). OKLCH para percepcao uniforme. JSON DTCG v2025.10.</div>
+        </div>
+        <div class="pilar-img"><img src="docsoriginai-source/imagens/08.png" alt="Pilar 3" loading="lazy"></div>
+      </div>
+
+      <div class="pilar-card">
+        <div class="pilar-text">
+          <div class="pilar-num">PILAR 4</div>
+          <div class="pilar-title">Ecossistemas de UI</div>
+          <div class="pilar-desc">shadcn/ui (~2KB) vs Chakra UI (~45KB) vs Material-UI (~87KB). Filosofia copy-paste ownership: zero vendor lock-in, tree-shaking perfeito. Tu manténs o codigo.</div>
+        </div>
+        <div class="pilar-img"><img src="docsoriginai-source/imagens/09.png" alt="Pilar 4" loading="lazy"></div>
+      </div>
+
+      <div class="pilar-card">
+        <div class="pilar-text">
+          <div class="pilar-num">PILAR 5</div>
+          <div class="pilar-title">Acessibilidade (WCAG 2.2 + APCA)</div>
+          <div class="pilar-desc">Contraste 4.5:1 texto, 3:1 UI. focus-visible obrigatorio. sr-only em botoes com icone. APCA alinha com OKLCH. motion-reduce respeitado.</div>
+        </div>
+        <div class="pilar-img"><img src="docsoriginai-source/imagens/10.png" alt="Pilar 5" loading="lazy"></div>
+      </div>
+
+      <div class="pilar-card">
+        <div class="pilar-text">
+          <div class="pilar-num">PILAR 6</div>
+          <div class="pilar-title">Performance</div>
+          <div class="pilar-desc">Referencia: Netflix Top 10 = 6.5KB CSS. LCP &lt; 2.5s, INP &lt; 200ms, CLS &lt; 0.1. Lazy loading, AVIF/WebP, dynamic imports. Tailwind v4: 182x mais rapido incremental.</div>
+        </div>
+        <div class="pilar-img"><img src="docsoriginai-source/imagens/11.png" alt="Pilar 6" loading="lazy"></div>
+      </div>
+
+      <div class="pilar-card">
+        <div class="pilar-text">
+          <div class="pilar-num">PILAR 7</div>
+          <div class="pilar-title">CI/CD Quality Gates</div>
+          <div class="pilar-desc">4 escudos: IDE (Prettier + IntelliSense) → Linting (ESLint + Tailwind plugin) → Commit (Husky + lint-staged) → Pipeline CI (Visual Regression). Codigo que nao passa, nao entra.</div>
+        </div>
+        <div class="pilar-img"><img src="docsoriginai-source/imagens/12.png" alt="Pilar 7" loading="lazy"></div>
+      </div>
+
+      <!-- Anti-Patterns + Filtro -->
+      <h3 style="margin-top: 2.5rem;">Anti-Patterns e Proteccao</h3>
+      <div class="img-grid">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/13.png" alt="Anti-patterns" loading="lazy">
+          <div class="img-caption"><strong>Anti-Patterns → Solucoes</strong> — Classes dinamicas quebradas → mapeamento explicito. @apply excessivo → componente React. Hardcode repetido → tokens W3C.</div>
+        </div>
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/04.png" alt="Filtro Anti-Alucinacao" loading="lazy">
+          <div class="img-caption"><strong>Filtro Anti-Alucinacao</strong> — Existencia Real + Localizacao Exacta + Padrao Encontrado. "ERRO FATAL: Assumir que a stack/padrao existe."</div>
+        </div>
+      </div>
+
+      <!-- Sintese + Operacao -->
+      <h3 style="margin-top: 2rem;">Sintese e Operacao Diaria</h3>
+      <div class="img-grid">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/14.png" alt="Arco de Sintese" loading="lazy">
+          <div class="img-caption"><strong>Arco de Sintese</strong> — React + Tailwind + Tokens + shadcn + A11y + Performance + DX convergem no .cursorrules — a directriz suprema do projecto.</div>
+        </div>
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/15.png" alt="Guia Operacao Diaria" loading="lazy">
+          <div class="img-caption"><strong>Checklist PR</strong> — Componentes, Tokens, Tailwind, Acesso/UX, Evidencia. "O padrao alto nao e estetico. E arquitectural."</div>
+        </div>
+      </div>
+
+      <!-- Atomic Design -->
+      <h3 style="margin-top: 2rem;">Design System: Atomic Design</h3>
+      <div class="img-grid single">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/34.jpg" alt="Atomic Design" loading="lazy">
+          <div class="img-caption"><strong>Ions → Atoms → Molecules → Organisms → Complex Organisms → Species</strong> — Design Tokens → Components → Patterns → Modules → Templates → Products</div>
+        </div>
+      </div>
+
+      <!-- Tiers -->
+      <h3 style="margin-top: 2rem;">Tiers de Modelos</h3>
+      <div class="img-grid">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/03.png" alt="Tiers de modelos" loading="lazy">
+          <div class="img-caption"><strong>Matriz de Decisao</strong> — Tier S: contexto gigante, repositorio inteiro. Tier A: tactica media. Tier B/C: tarefas rapidas.</div>
+        </div>
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/16.png" alt="Pipeline delegacao" loading="lazy">
+          <div class="img-caption"><strong>Pipeline de Delegacao</strong> — ANALISAR(10%H/90%IA) → LISTAR(5%/95%) → DEFINIR(5%/95%) → ESTIMAR(0%/100%) → ATRIBUIR(0%/100%) → QA(5%/95%)</div>
+        </div>
+      </div>
+
+      <!-- Analogias finais -->
+      <h3 style="margin-top: 2rem;">O Resultado</h3>
+      <div class="img-grid">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/37.jpg" alt="Carro velho" loading="lazy">
+          <div class="img-caption"><strong>Sem metodo</strong> — Codigo sem arquitectura, sem tokens, sem testes. Parece que funciona. Nao escala.</div>
+        </div>
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/35.jpg" alt="Ferrari" loading="lazy">
+          <div class="img-caption"><strong>Com metodo</strong> — Engenharia de excelencia. Cada componente desenhado, testado, documentado.</div>
+        </div>
+      </div>
+      <div class="img-grid single" style="margin-top: 1rem;">
+        <div class="img-card">
+          <img src="docsoriginai-source/imagens/36.jpg" alt="Ferrari chassis" loading="lazy">
+          <div class="img-caption"><strong>Por baixo da beleza</strong> — A estrutura que ninguem ve. Tokens, componentes, quality gates. E isto que os 7 Pilares constroem.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB: TEMPLATES ==================== -->
+    <div id="tab-templates" class="tab-panel">
+
+      <h2><span class="num">T1</span> Template Brief</h2>
+
+      <div class="template-section">
+        <h3>Informacao do Projecto</h3>
+        <div class="form-group">
+          <label>Nome do Projecto</label>
+          <input type="text" placeholder="O nome do teu projecto...">
+        </div>
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date">
+        </div>
+        <div class="form-group">
+          <label>O teu nome</label>
+          <input type="text" placeholder="O teu nome...">
+        </div>
+      </div>
+
+      <div class="template-section">
+        <h3>1. Expressao Bruta (M1)</h3>
+        <div class="form-group">
+          <label>O teu rascunho dos 15 minutos</label>
+          <textarea rows="6" placeholder="Sem filtro, sem edicao. Cola aqui tudo o que escreveste..."></textarea>
+          <div class="hint">Esgota o cerebro. Zero IA nesta fase.</div>
+        </div>
+      </div>
+
+      <div class="template-section">
+        <h3>2. QA 1 -- Pontos Cegos</h3>
+        <div class="form-group">
+          <label>Pontos cegos identificados pela IA</label>
+          <textarea rows="4" placeholder="Apos a IA analisar o rascunho, regista aqui os pontos cegos..."></textarea>
+          <div class="hint">Usa o Prompt QA1 (separador Prompts) para gerar esta analise.</div>
+        </div>
+      </div>
+
+      <div class="template-section">
+        <h3>3. Pesquisas</h3>
+        <div class="form-group">
+          <label>Resultados das pesquisas</label>
+          <textarea rows="4" placeholder="Tema | Fonte | Conclusao principal..."></textarea>
+        </div>
+      </div>
+
+      <div class="template-section">
+        <h3>4. Os TEUS Insights</h3>
+        <div class="form-group">
+          <label>O que TU concluiste (nao o que a IA disse)</label>
+          <textarea rows="4" placeholder="1. ...\n2. ...\n3. ..."></textarea>
+          <div class="hint">A IA pesquisa. Tu interpretas. Os insights sao teus.</div>
+        </div>
+      </div>
+
+      <div class="template-section">
+        <h3>5. O Brief</h3>
+        <div class="form-group">
+          <label>O que quero construir</label>
+          <textarea rows="3" placeholder="Em 2-3 frases, descreve o projecto..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Que problema resolve</label>
+          <textarea rows="3" placeholder="Para quem? Que dor elimina?"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Referencias</label>
+          <textarea rows="2" placeholder="Projectos, produtos ou ideias que te inspiram..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>O que NAO e</label>
+          <textarea rows="2" placeholder="O que este projecto NAO faz (delimitar ambito)..."></textarea>
+        </div>
+      </div>
+
+      <div class="template-section">
+        <h3>6. Checklist QA 2 -- Aprovacao</h3>
+        <ul class="checklist">
+          <li><input type="checkbox"> O Brief descreve claramente o que quero construir</li>
+          <li><input type="checkbox"> Sei qual e o problema que estou a resolver</li>
+          <li><input type="checkbox"> Tenho referencias concretas</li>
+          <li><input type="checkbox"> Consigo explicar isto a outra pessoa em 2 minutos</li>
+          <li><input type="checkbox"> Esta pronto para detalhar -- nao preciso de mais pesquisa</li>
+          <li><input type="checkbox"> Pragmatismo alto -- sem perfeccionismo, pronto para avancar</li>
+        </ul>
+      </div>
+
+      <!-- Template Etapas -->
+      <h2 style="margin-top: 3rem;"><span class="num">T2</span> Template Etapas e Tarefas</h2>
+
+      <div class="template-section">
+        <h3>Detalhamento (M3) -- As 4 Perguntas</h3>
+        <div class="form-group">
+          <label>O que quero? (funcionalidades)</label>
+          <textarea rows="4" placeholder="1. ...\n2. ...\n3. ..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>O que faz? (comportamentos)</label>
+          <textarea rows="3" placeholder="1. ...\n2. ...\n3. ..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Como usar? (interaccao)</label>
+          <textarea rows="3" placeholder="Descreve o fluxo principal do utilizador..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Design? (aparencia)</label>
+          <textarea rows="3" placeholder="Referencias visuais, estilo, tom..."></textarea>
+        </div>
+      </div>
+
+      <div class="template-section">
+        <h3>Etapas</h3>
+        <div class="form-group">
+          <label>Etapa 1</label>
+          <input type="text" placeholder="Nome da etapa...">
+          <textarea rows="3" style="margin-top:0.5rem;" placeholder="Tarefas:\n1.1 [verbo] ...\n1.2 [verbo] ...\n1.3 [verbo] ..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Etapa 2</label>
+          <input type="text" placeholder="Nome da etapa...">
+          <textarea rows="3" style="margin-top:0.5rem;" placeholder="Tarefas:\n2.1 [verbo] ...\n2.2 [verbo] ...\n2.3 [verbo] ..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Etapa 3</label>
+          <input type="text" placeholder="Nome da etapa...">
+          <textarea rows="3" style="margin-top:0.5rem;" placeholder="Tarefas:\n3.1 [verbo] ...\n3.2 [verbo] ...\n3.3 [verbo] ..."></textarea>
+        </div>
+      </div>
+
+      <div class="template-section">
+        <h3>Validacao de Tarefas</h3>
+        <ul class="checklist">
+          <li><input type="checkbox"> Cada etapa e explicavel em 1 frase</li>
+          <li><input type="checkbox"> Sei quando cada etapa esta "pronta"</li>
+          <li><input type="checkbox"> Cada etapa tem 3-7 tarefas</li>
+          <li><input type="checkbox"> Cada tarefa comeca com verbo (Criar, Configurar, Testar...)</li>
+          <li><input type="checkbox"> Cada tarefa e verificavel: "fiz ou nao fiz"</li>
+          <li><input type="checkbox"> Cada tarefa leva minutos a poucas horas</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB: PROMPTS ==================== -->
+    <div id="tab-prompts" class="tab-panel">
+
+      <h2><span class="num">P</span> Prompts Prontos</h2>
+      <p style="color:var(--grey); margin-bottom: 2rem;">Clica em "Copiar" para copiar o prompt. Cola na IA e substitui o placeholder pelo teu conteudo.</p>
+
+      <!-- Prompt QA1 -->
+      <div class="prompt-block">
+        <h3>QA 1 -- Analise de Rascunho</h3>
+        <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
+        <p style="color:var(--grey); font-size:0.85rem;">Usa apos a Expressao (M1). A IA analisa o teu rascunho e identifica pontos cegos.</p>
+        <div class="prompt-code">Analisa este rascunho de projecto. Identifica:
+1. Pontos cegos -- o que esta a faltar?
+2. Contradicoes -- alguma ideia contradiz outra?
+3. Perguntas -- o que devia eu responder antes de avancar?
+4. Sugestoes de pesquisa -- o que devia investigar?
+
+Regras:
+- Baseia-te APENAS no que escrevi
+- Nao inventes funcionalidades
+- Se directo e pragmatico
+
+[COLA O TEU RASCUNHO AQUI]</div>
+      </div>
+
+      <!-- Prompt QA2 -->
+      <div class="prompt-block">
+        <h3>QA 2 -- Validacao do Brief</h3>
+        <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
+        <p style="color:var(--grey); font-size:0.85rem;">Usa apos criar o Brief (M2). Verifica se esta pronto para detalhar.</p>
+        <div class="prompt-code">Analisa este Brief e verifica:
+1. Esta claro o que quero construir?
+2. O problema esta bem definido?
+3. O ambito esta delimitado (o que NAO e)?
+4. As referencias fazem sentido?
+5. Esta pronto para ser detalhado -- ou precisa de mais trabalho?
+
+Se pragmatico. Nao elogies -- aponta o que falta.
+
+[COLA O TEU BRIEF AQUI]</div>
+      </div>
+
+      <!-- Prompt Detalhamento -->
+      <div class="prompt-block">
+        <h3>Detalhamento</h3>
+        <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
+        <p style="color:var(--grey); font-size:0.85rem;">Usa para transformar o Brief em funcionalidades agrupadas (M3).</p>
+        <div class="prompt-code">Com base neste Brief aprovado, preciso de:
+
+1. IDENTIFICAR: Lista todas as funcionalidades necessarias
+2. AGRUPAR: Junta funcionalidades relacionadas em clusters
+3. SEQUENCIAR: Ordena por dependencias (o que precisa existir primeiro)
+
+Para cada cluster, define:
+- Input: o que entra
+- Output: o que sai
+- Criterio de sucesso: como sei que esta feito
+
+Brief:
+[COLA O TEU BRIEF AQUI]</div>
+      </div>
+
+      <!-- Prompt Etapas -->
+      <div class="prompt-block">
+        <h3>Criacao de Etapas</h3>
+        <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
+        <p style="color:var(--grey); font-size:0.85rem;">Usa para transformar detalhamento em etapas executaveis (M4).</p>
+        <div class="prompt-code">Transforma este detalhamento em etapas executaveis.
+
+Regras para cada ETAPA:
+- Explicavel em 1 frase
+- Tem criterio de "pronto"
+- Contem 3-7 tarefas
+- Faz sentido sozinha
+
+Regras para cada TAREFA:
+- Comeca com verbo (Criar, Configurar, Testar...)
+- Executavel por 1 pessoa
+- Verificavel: "fiz ou nao fiz"
+- Duracao: minutos a poucas horas
+
+Detalhamento:
+[COLA O TEU DETALHAMENTO AQUI]</div>
+      </div>
+
+      <!-- Prompt Simples -->
+      <div class="prompt-block">
+        <h3>Prompt Simples -- Auditoria Frontend</h3>
+        <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
+        <p style="color:var(--grey); font-size:0.85rem;">Para revisao rapida de codigo e componentizacao.</p>
+        <div class="prompt-code">Revisa a componentizacao e tokenizacao do sistema e verifica se
+estao a seguir as melhores praticas de Tailwind e Shadcn.</div>
+      </div>
+
+      <!-- Prompt Avancado -->
+      <div class="prompt-block">
+        <h3>Prompt Avancado -- Auditoria Profunda</h3>
+        <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
+        <p style="color:var(--grey); font-size:0.85rem;">Auditoria completa: Design System, Tailwind, shadcn, performance, acessibilidade.</p>
+        <div class="prompt-code">Act like um(a) Arquitecto(a) de Software Senior + Tech Lead de
+Frontend (React/Next.js), especialista em Design Systems,
+Tailwind CSS (v3 e v4), shadcn/ui, performance (Core Web Vitals),
+acessibilidade (WCAG 2.2) e DX (tooling/CI).
+
+PREMISSA FUNDAMENTAL:
+Tu JA TENS ACESSO AO CODIGO (repositorio inteiro). NAO pecas
+para colar ficheiros. Faz a analise explorando o repo.
+Se nao conseguires aceder, diz "Nao tenho acesso ao codigo."
+e para. Nao inventes nada.
+
+OBJECTIVO:
+Revisar e elevar o projecto para padrao profissional:
+1. Componentizacao e reutilizacao (Design System)
+2. Tokenizacao solida (W3C Design Tokens, 3 camadas)
+3. Tailwind CSS (v4 quando viavel, OKLCH)
+4. shadcn/ui (copy-paste ownership)
+5. Performance (Core Web Vitals, bundle)
+6. Acessibilidade (WCAG 2.2, APCA)
+7. Tooling/DX (Prettier, ESLint, Husky, CI)
+
+REGRAS ANTI-ALUCINACAO:
+- Trabalha SOMENTE com o que encontrares no repositorio
+- Nunca inventes ficheiros, rotas, APIs ou dependencias
+- Toda afirmacao aponta: ficheiro + simbolo + localizacao
+- Se nao encontrares, diz "nao encontrado no repo"
+
+FORMATO DE SAIDA:
+1. Resumo Executivo (maximo 10 bullets)
+2. Mapa do Projecto (stack, estrutura, configs)
+3. Estado do Tailwind e Tema
+4. Diagnostico por Categoria (7 pilares)
+5. Matriz de Priorizacao (impacto/esforco/risco)
+6. Plano de Accao Incremental (quick wins + roadmap)
+7. Checklist de Qualidade para Novas Features
+
+Comeca agora explorando o repositorio.</div>
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB: TIMER ==================== -->
+    <div id="tab-timer" class="tab-panel">
+
+      <h2 style="text-align: center;"><span class="num">T</span> Timer de Exercicios</h2>
+
+      <div class="timer-container">
+        <div class="timer-display" id="timer-display">15:00</div>
+
+        <div class="timer-buttons">
+          <button class="timer-btn primary" id="btn-start" onclick="startTimer()">Iniciar</button>
+          <button class="timer-btn" id="btn-pause" onclick="pauseTimer()" style="display:none;">Pausar</button>
+          <button class="timer-btn stop" id="btn-reset" onclick="resetTimer()">Reset</button>
+        </div>
+
+        <div class="timer-presets">
+          <button class="preset-btn" onclick="setTimer(5)">5 min</button>
+          <button class="preset-btn" onclick="setTimer(10)">10 min</button>
+          <button class="preset-btn" onclick="setTimer(15)">15 min</button>
+          <button class="preset-btn" onclick="setTimer(20)">20 min</button>
+          <button class="preset-btn" onclick="setTimer(25)">25 min</button>
+          <button class="preset-btn" onclick="setTimer(30)">30 min</button>
+          <button class="preset-btn" onclick="setTimer(45)">45 min</button>
+          <button class="preset-btn" onclick="setTimer(60)">60 min</button>
+        </div>
+
+        <div class="card" style="margin-top: 2rem; text-align: left;">
+          <h3 style="margin-top: 0;">Timers sugeridos por bloco</h3>
+          <table class="summary-table">
+            <thead><tr><th>Bloco</th><th>Exercicio</th><th>Timer</th></tr></thead>
+            <tbody>
+              <tr><td>B2 -- Expressao</td><td>Escrever sobre o projecto</td><td>15 min</td></tr>
+              <tr><td>B3 -- Brief</td><td>QA1 + Brief</td><td>15 min</td></tr>
+              <tr><td>B4 -- Detalhamento</td><td>Detalhar Brief</td><td>20 min</td></tr>
+              <tr><td>B5 -- PRD + Etapas</td><td>Criar etapas e tarefas</td><td>20 min</td></tr>
+              <tr><td>B6 -- Tarefas</td><td>Executar 3 tarefas com IA</td><td>10 min</td></tr>
+              <tr><td>B7 -- Pipeline</td><td>Avancar projecto pelo pipeline</td><td>30 min</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="container">
+      [IA]AVANCADA PT -- Metodo ORIGINAI<br>
+      Clareza antes de execucao. Sempre.<br>
+      <span style="color: var(--gold);">Imersao 11-12 Abril 2026</span>
+    </div>
+  </footer>
+
+  <script>
+    // ===== TAB NAVIGATION =====
+    document.querySelectorAll('.nav-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var target = this.getAttribute('data-tab');
+        document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+        this.classList.add('active');
+        document.getElementById('tab-' + target).classList.add('active');
+        window.scrollTo(0, 0);
+      });
+    });
+
+    // ===== COPY PROMPTS =====
+    function copyPrompt(btn) {
+      var code = btn.parentElement.querySelector('.prompt-code');
+      var text = code.textContent || code.innerText;
+      navigator.clipboard.writeText(text).then(function() {
+        btn.textContent = 'Copiado!';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = 'Copiar';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    // ===== TIMER =====
+    var timerInterval = null;
+    var timerSeconds = 15 * 60;
+    var timerRunning = false;
+    var totalSeconds = 15 * 60;
+
+    function updateDisplay() {
+      var m = Math.floor(timerSeconds / 60);
+      var s = timerSeconds % 60;
+      var display = document.getElementById('timer-display');
+      display.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+
+      display.classList.remove('warning-time', 'danger-time');
+      if (timerSeconds <= 30) {
+        display.classList.add('danger-time');
+      } else if (timerSeconds <= totalSeconds * 0.2) {
+        display.classList.add('warning-time');
+      }
+    }
+
+    function setTimer(min) {
+      if (timerRunning) { pauseTimer(); }
+      timerSeconds = min * 60;
+      totalSeconds = min * 60;
+      updateDisplay();
+    }
+
+    function startTimer() {
+      if (timerRunning) return;
+      timerRunning = true;
+      document.getElementById('btn-start').style.display = 'none';
+      document.getElementById('btn-pause').style.display = 'inline-block';
+      timerInterval = setInterval(function() {
+        timerSeconds--;
+        updateDisplay();
+        if (timerSeconds <= 0) {
+          clearInterval(timerInterval);
+          timerRunning = false;
+          document.getElementById('btn-start').style.display = 'inline-block';
+          document.getElementById('btn-pause').style.display = 'none';
+          document.getElementById('timer-display').textContent = 'FIM!';
+          document.getElementById('timer-display').classList.add('danger-time');
+          try { new Audio('data:audio/wav;base64,UklGRl9vT19teleHRlEAAAA').play(); } catch(e) {}
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      document.getElementById('btn-start').style.display = 'inline-block';
+      document.getElementById('btn-pause').style.display = 'none';
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      timerSeconds = totalSeconds;
+      updateDisplay();
+    }
+  </script>
+
+</body>
+</html>
