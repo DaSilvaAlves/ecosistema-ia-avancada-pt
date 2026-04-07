@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ORIGINAI — Método de Clareza com IA | [IA]AVANÇADA PT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #04040A;
+      --white: #F0F4FF;
+      --cyan: #00F5FF;
+      --gold: #FFB800;
+      --purple: #9D00FF;
+      --magenta: #FF006E;
+      --lime: #39FF14;
+      --grey: #8892A4;
+      --grey2: #4A5568;
+      --card-bg: rgba(255,255,255,0.025);
+      --card-border: rgba(255,255,255,0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.8;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 4rem 0 3rem;
+      background: linear-gradient(135deg, rgba(0,245,255,0.08), rgba(157,0,255,0.08));
+      border-bottom: 1px solid var(--card-border);
+    }
+    .hero h1 {
+      font-size: 2.4rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+    .hero h1 span { color: var(--cyan); }
+    .hero p {
+      color: var(--grey);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .hero .badge {
+      display: inline-block;
+      margin-top: 1.2rem;
+      background: rgba(0,245,255,0.08);
+      border: 1px solid rgba(0,245,255,0.2);
+      border-radius: 20px;
+      padding: 0.3rem 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      color: var(--cyan);
+    }
+
+    /* Sections */
+    section { padding: 3rem 0; border-bottom: 1px solid var(--card-border); }
+    section:last-child { border-bottom: none; }
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+    }
+    h2 .num {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--gold);
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-right: 0.5rem;
+    }
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 1.5rem 0 0.8rem;
+      color: var(--cyan);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+    .card.highlight {
+      border-color: rgba(0,245,255,0.2);
+      background: rgba(0,245,255,0.03);
+    }
+    .card.warning {
+      border-color: rgba(255,184,0,0.2);
+      background: rgba(255,184,0,0.03);
+    }
+
+    /* Two modes comparison */
+    .modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin: 1.5rem 0;
+    }
+    .mode-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .mode-card.bad { border-color: rgba(255,0,110,0.3); }
+    .mode-card.good { border-color: rgba(57,255,20,0.3); }
+    .mode-card .ratio {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin: 0.5rem 0;
+    }
+    .mode-card.bad .ratio { color: var(--magenta); }
+    .mode-card.good .ratio { color: var(--lime); }
+    .mode-card .label {
+      font-size: 0.85rem;
+      color: var(--grey);
+    }
+    .mode-card .result {
+      margin-top: 0.8rem;
+      font-size: 0.9rem;
+      font-style: italic;
+      color: var(--grey2);
+    }
+
+    /* Flow */
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin: 1.5rem 0;
+      justify-content: center;
+    }
+    .flow-step {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      text-align: center;
+      min-width: 100px;
+    }
+    .flow-step .name { font-weight: 700; font-size: 0.85rem; }
+    .flow-step .pct {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--cyan);
+      margin-top: 0.2rem;
+    }
+    .flow-arrow {
+      color: var(--cyan);
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    /* Module cards */
+    .module {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    .module .mod-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--gold);
+      text-align: center;
+    }
+    .module .mod-title {
+      font-weight: 800;
+      font-size: 1.1rem;
+      margin-bottom: 0.3rem;
+    }
+    .module .mod-desc {
+      color: var(--grey);
+      font-size: 0.9rem;
+    }
+    .module .mod-output {
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--lime);
+    }
+
+    /* Principles */
+    .principles {
+      list-style: none;
+      counter-reset: principle;
+    }
+    .principles li {
+      counter-increment: principle;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      gap: 1rem;
+      align-items: baseline;
+    }
+    .principles li:last-child { border-bottom: none; }
+    .principles li::before {
+      content: counter(principle, decimal-leading-zero);
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 1rem;
+      min-width: 28px;
+    }
+
+    /* Quote */
+    blockquote {
+      border-left: 3px solid var(--cyan);
+      padding-left: 1.2rem;
+      margin: 1.5rem 0;
+      color: var(--grey);
+      font-style: italic;
+      font-size: 1.05rem;
+    }
+
+    /* CTA */
+    .cta {
+      text-align: center;
+      padding: 3rem 0;
+    }
+    .cta-btn {
+      display: inline-block;
+      background: var(--cyan);
+      box-shadow: 0 0 20px rgba(0,245,255,0.4);
+      color: var(--bg);
+      padding: 0.65rem 1.4rem;
+      border-radius: 6px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cta-btn:hover {
+      box-shadow: 0 0 30px rgba(0,245,255,0.6);
+      transform: translateY(-2px);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--grey2);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--card-border);
+    }
+
+    @media (max-width: 600px) {
+      .modes { grid-template-columns: 1fr; }
+      .module { grid-template-columns: 40px 1fr; }
+      .hero h1 { font-size: 1.8rem; }
+      .flow { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="container">
+      <h1><span>ORIGINAI</span> — O Método</h1>
+      <p>Clareza antes de execução. O método que transforma 20 interacções medianas em 5 excepcionais.</p>
+      <div class="badge">IMERSÃO 11-12 ABRIL 2026</div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- SECTION: O Problema -->
+    <section>
+      <h2><span class="num">00</span> O Problema</h2>
+      <p>A maioria das pessoas usa IA com 10% de clareza e 90% de delegação cega. O resultado: frustração, recomeços, e a sensação de que "a IA não funciona".</p>
+      <p style="margin-top:0.8rem;">O problema não é a IA. <strong>É a falta de clareza do humano.</strong></p>
+
+      <div class="modes">
+        <div class="mode-card bad">
+          <div class="label">MODO INEFICIENTE</div>
+          <div class="ratio">10% / 90%</div>
+          <div class="label">clareza / delegação cega</div>
+          <div class="result">~20 interacções para mediano</div>
+          <div class="result">"Vai assim mesmo..."</div>
+        </div>
+        <div class="mode-card good">
+          <div class="label">MODO EFICIENTE</div>
+          <div class="ratio">90% / 10%</div>
+          <div class="label">clareza / delegação informada</div>
+          <div class="result">~5 interacções para excepcional</div>
+          <div class="result">"Melhor do que imaginava!"</div>
+        </div>
+      </div>
+
+      <blockquote>"Pessoas boas conseguem generalizar. Entender as entrelinhas. A IA não. A IA precisa de clareza explícita."</blockquote>
+    </section>
+
+    <!-- SECTION: O Fluxo -->
+    <section>
+      <h2><span class="num">01</span> O Fluxo da Clareza</h2>
+      <p>O ratio humano/IA inverte-se progressivamente. Tu começas a liderar — e gradualmente delegas à medida que a clareza aumenta.</p>
+
+      <div class="flow">
+        <div class="flow-step"><div class="name">Expressão</div><div class="pct">90% TU</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="name">Brief</div><div class="pct">70% TU</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="name">Detalhe</div><div class="pct">30% TU</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="name">PRD</div><div class="pct">30% TU</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="name">Etapas</div><div class="pct">10% TU</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="name">Tarefas</div><div class="pct">10% TU</div></div>
+      </div>
+
+      <div class="card highlight">
+        <strong>Premissa fundamental:</strong> Clareza total no Input e Output. O processo entre in e out pode ser desconhecido.
+      </div>
+    </section>
+
+    <!-- SECTION: Os Módulos -->
+    <section>
+      <h2><span class="num">02</span> Os 7 Módulos</h2>
+      <p>Cada módulo é auto-contido — conceito, analogia visual, exercício prático. Sais de cada um com um resultado concreto.</p>
+
+      <div class="module">
+        <div class="mod-num">M0</div>
+        <div>
+          <div class="mod-title">O Problema</div>
+          <div class="mod-desc">Por que 90% falha com IA. Os dois modos. O ciclo de frustração.</div>
+          <div class="mod-output">Sais com: consciência do modo ineficiente</div>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="mod-num">M1</div>
+        <div>
+          <div class="mod-title">Expressão</div>
+          <div class="mod-desc">15 minutos. Papel e caneta. Zero IA. Esgota o teu cérebro.</div>
+          <div class="mod-output">Sais com: rascunho bruto do teu projecto</div>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="mod-num">M2</div>
+        <div>
+          <div class="mod-title">Brief</div>
+          <div class="mod-desc">QA1 → Pesquisas → Os TEUS insights → Brief → QA2. A IA assiste — tu decides.</div>
+          <div class="mod-output">Sais com: Brief aprovado e validado</div>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="mod-num">M3</div>
+        <div>
+          <div class="mod-title">Detalhamento</div>
+          <div class="mod-desc">Identificar → Agrupar → Sequenciar. A casa: fundação, paredes, telhado.</div>
+          <div class="mod-output">Sais com: funcionalidades agrupadas e sequenciadas</div>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="mod-num">M4</div>
+        <div>
+          <div class="mod-title">PRD e Etapas</div>
+          <div class="mod-desc">Regras de quebra. Uma etapa: objectivo verificável. Uma tarefa: verbo + resultado.</div>
+          <div class="mod-output">Sais com: etapas com tarefas e critérios</div>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="mod-num">M5</div>
+        <div>
+          <div class="mod-title">Tarefas</div>
+          <div class="mod-desc">1 acção, 1 agente, 1 resultado. LEGO: blocos simples, sistemas complexos.</div>
+          <div class="mod-output">Sais com: 3 tarefas executadas com IA</div>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="mod-num">M6</div>
+        <div>
+          <div class="mod-title">Pipeline Técnico</div>
+          <div class="mod-desc">Brief → PRD → Stitch → AI Studio → Design System → A tua ferramenta.</div>
+          <div class="mod-output">Sais com: solução real construída</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: Os 10 Princípios -->
+    <section>
+      <h2><span class="num">03</span> Os 10 Princípios</h2>
+
+      <ol class="principles">
+        <li>O problema não é a IA — é a falta de clareza do humano</li>
+        <li>Clareza é um processo estruturado — não é talento, é método</li>
+        <li>O humano lidera no início e delega progressivamente</li>
+        <li>Cada nível de clareza tem QA — validação antes de avançar</li>
+        <li>O pipeline começa pelo design — nunca pelo código</li>
+        <li>A IA é um executor — o humano é o arquitecto da intenção</li>
+        <li>Esgota o cérebro — antes de pedir à IA, esgota as tuas ideias</li>
+        <li>Os insights são teus — a IA pesquisa, tu interpretas</li>
+        <li>Pragmatismo — cada QA valida pragmatismo, não perfeição</li>
+        <li>Anti-alucinação — trabalha só com o que existe, nunca inventes</li>
+      </ol>
+    </section>
+
+    <!-- SECTION: Agenda -->
+    <section>
+      <h2><span class="num">04</span> Agenda da Imersão</h2>
+      <p style="color:var(--grey); margin-bottom:0.5rem;">Exemplos já construídos: sistema de reservas para restaurante, portfólio profissional, loja online, dashboard de gestão, landing page com formulário, sistema de marcações.</p>
+
+      <h3>Fase 3 — Mão na Massa (15:00 - 19:00)</h3>
+      <p style="color:var(--grey); margin-bottom:1rem;">O teu projecto real. Começas pela dor, geras um briefing, pesquisas o tema, crias um PRD técnico e entregas a ferramentas profissionais que constroem o projecto por ti.</p>
+
+      <div class="card">
+        <strong>15:00</strong> — Briefing individual — "qual é a tua dor?" (1:1 com Eurico) — 15 min<br>
+        <strong>15:15</strong> — Briefing Generator + pesquisa com ferramentas de pesquisa — 30 min<br>
+        <strong>15:45</strong> — Criar PRD técnico — "isto é o que queres?" — 15 min<br>
+        <strong>16:00</strong> — Construção — entregar PRD ao Claude Code, Gemini CLI ou Antigravity — 120 min<br>
+        <strong>18:00</strong> — Primeiro deploy — URL pública — 30 min<br>
+        <strong>18:30</strong> — Iteração — ajustar, corrigir, melhorar — 30 min
+      </div>
+
+      <div class="card" style="border-color: rgba(57,255,20,0.3); background: rgba(57,255,20,0.03);">
+        <strong style="color: var(--lime);">Resultado:</strong> o teu projecto real deployed e funcional
+      </div>
+
+      <div class="card warning">
+        <strong>O que trazes:</strong> Um projecto real — uma dor, um desejo, uma ideia. Não precisa ser perfeito. Precisa ser teu.<br><br>
+        <strong>Regra:</strong> o participante é o herói. O Eurico é o guia. As ferramentas (Claude Code, Gemini CLI, Antigravity) trabalham para ti. Tu CONSTRÓIS — nunca é o Eurico a fazer por ti.
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <div class="cta">
+      <p style="margin-bottom:1rem; color: var(--grey);">A IA muda todos os meses. O método não.</p>
+      <a href="#" class="cta-btn">Entrar na Comunidade</a>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="container">
+      [IA]AVANÇADA PT — Método ORIGINAI<br>
+      Clareza antes de execução. Sempre.
+    </div>
+  </footer>
+
+</body>
+</html>
