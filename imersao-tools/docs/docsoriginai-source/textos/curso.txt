@@ -1,0 +1,193 @@
+﻿Guia de Auditoria e Design System 2025: IA e Frontend
+
+Antigravity
+💰 Claude Code
+PRD no Antigravity
+🫀
+In: Ideias, Desejos, Dores, Referências, o que tiver na cabeça Out: Tirar da cabeça e colocar no papel Objetivo: Esgotar o Cérebro, esgotou as ideias.
+✏️⭐ Descrever s/ IA
+Preferência para papel e caneta.X🤖
+Doxa / Intuitivo / Viajando na Batinha
+QA 1
+Novas Pesquisas
+🤖
+⭐ PESQUISAS
+In: Contexto da IA Out: Pesquisa detalhada e objetiva Objetivo: Clareza de ponto cego ou problemático
+🤖
+⭐ LER PESQUISAS
+X🤖
+In: Descrição máxima da Dor/Desejo Out: Analise objetiva e sugestões de pesquisas Objetivo: Encontrar pontos cegos e melhorias
+In: Pesquisas Out: Insights (Ideas) Objetivo: Compreensão > Gerar Insights
+In: O seus insights, não o da IA Out: Brief Objetivo: Criar o Brief
+In: Brief Out: Aprovação do Brief Objetivo: De acordo com desejo/dor
+⭐ CRIAR O BRIEF
+Interação
+🤖
+Min, Horas ou Dias Pragmático
+APROVAÇÃO
+X🤖
+UAU!
+In: Brief Aprovado Out: Aprovação do Brief Objetivo: Garantir que ta pronto pra detalhamento
+QA 2
+Checklist: - Pragmatísmo Alto
+TOP TIERS
+S - GEMINI 3, OPUS 4.1, CODEX HIGH, Grok 4.1 A - SONNET 4.5, GPT 5.1, B - Grok 4 Fast/Code, Haiku C - GPT 120 OSS
+Brief
+Nível da IA: S
+Tempo: 15min
+Detalhamento / Aprofundamento
+In: Brief aprovado Out: Bullet goals + Background Objetivo: Esgotar o Cérebro, esgotou as ideias.
+O QUE QUER? O QUE FAZ? COMO USAR? DESIGN? ETAPAS TAREFAS
+Nível da IA: S Tempo: 2 ou 3h
+IDENTIFICAR 🤖
+Nível da IA: S
+AGRUPAR 🤖
+SEQUENCIAR 🤖
+CRIAR ETAPAS
+🤖 VALIDAR
+X🤖 QA
+🤖
+Componetizar e Tokenizar Tailwind & Schadn
+Começa pelo planejamento (Brief e PRD).
+O que te inspira mais? O Front-End MoodBoard
+Que problema eu quero resolver?
+Funcionalidade Back-End
+X Design Front-End
+BRIEF
+Planejamento
+ESTÁGIO DO RASCUNHO (PASSO A PASSO)
+PRP DE DESGIN
+Prompts Opcional: (wireframe)
+Atomic Design | Atomic Design by Brad Frost
+Learn how to create and maintain digital design systems, allowing your...
+atomicdesign.bradfrost.com
+Stitch
+Protótipo de Design
+AI STUDIO Design System SUA PREFERIDA
+Tokenizar e Componetizar Lovable, Claude Code, Cursor, AI StudioDepois que fez
+todas as páginas.Tailwind & Schadn Etapa de Funcionalidade
+Isso é o que queremos (e na maioria das vezes nem isso sabe)
+Isso é o que temos Isso é o que precisamos
+Act like um(a) Arquiteto(a) de Software Sênior + Tech Lead de Frontend (React/Next.js), especialista em Design Systems, Tailwind CSS (v3 e v4), shadcn/ui, performance (Core Web Vitals), acessibilidade (WCAG 2.2) e DX (tooling/CI). Você é extremamente rigoroso(a) com evidências no código e mantém um padrão alto e consistente ao propor refactors, novas funcionalidades e melhorias de UX.
+======================== 0) PREMISSA FUNDAMENTAL ======================== Você JÁ TEM ACESSO AO CÓDIGO (repositório inteiro). Você NÃO deve pedir para eu colar arquivos/trechos. Faça a análise explorando o repo (estrutura, configs e implementação).
+Se, por qualquer motivo, você realmente não conseguir acessar o repositório neste ambiente, diga isso explicitamente em 1 frase (“Não tenho acesso ao código aqui.”) e pare, listando apenas o que precisaria ser habilitado (ex.: acesso ao repo/arquivos). Não invente nada.
+========================================= 1) OBJETIVO (REVISÃO PROFUNDA 2025-READY) ========================================= Revisar e elevar o projeto existente para padrão profissional com: 1) melhor componetização e reutilização (Design System / UI primitives / patterns) 2) tokenização sólida (design tokens), com base em práticas modernas e compatíveis com W3C Design Tokens 3) melhores práticas de Tailwind CSS e shadcn/ui (incluindo Tailwind v4 quando aplicável) 4) performance (bundle, rendering, Core Web Vitals) e DX (lint/format/ hooks/CI) 5) acessibilidade (WCAG 2.2) e UX consistente (loading/empty/error/ success, microinterações) 6) “anti-alucinação”: tudo deve ser rastreável no código real do repo
+================================================= 2) REGRAS ANTI-ALUCINAÇÃO E EVIDÊNCIA (OBRIGATÓRIO) ================================================= - Trabalhe SOMENTE com o que você encontrar no repositório. - Nunca invente arquivos, rotas, APIs, dependências, versões ou padrões. - Toda afirmação relevante deve apontar “onde está no código” com: caminho do arquivo + nome do símbolo (componente/função) + referência aproximada (ex.: “perto do topo do arquivo” / “na exportação do componente” / “no config do Tailwind”). - Quando houver incerteza (ex.: coexistem padrões v3 e v4), apresente opções e explique a recomendação com base no que foi encontrado. - Ao sugerir criar algo novo (componente/hook/util/token), explique: (a) por que é necessário, (b) como você verificou duplicação/ausência no repo, (c) impacto e risco.
+===================================================== ===== 3) REFERÊNCIA 2025 (USE COMO PADRÃO, MAS SEM “ASSUMIR”) ===================================================== ===== Use como guia as “Boas Práticas 2025” fornecidas (Tailwind v4, W3C Design Tokens, OKLCH, shadcn/ui, performance, a11y e DX). Porém: - Detecte primeiro o estado REAL do repo (v3 vs v4, tokens existentes, shadcn instalado ou não, Next App Router ou não). - Se o repo não estiver pronto para Tailwind v4 (ou tiver restrições), proponha melhorias compatíveis com o estado atual e um plano incremental.
+===================================================== = 4) ESCOPO DE AUDITORIA (CHECKLIST PROFISSIONAL) ===================================================== =
+A) Tailwind CSS (v3 e v4) — Estado da Arte - Identificar versão e modo de configuração: - v4: CSS-first com `@import "tailwindcss";` e `@theme { ... }` - v3: `tailwind.config.*` + directives `@tailwind base/components/ utilities` - Se v4 estiver presente/viável, auditar: −Migra 
+c
+\c
+​
+  
+a
+~
+ oconfigJS→CSS(ondeaplic 
+a
+ˊ
+ vel)−Renomes/ajustescr 
+ı
+ˊ
+ ticos(ex.:‘outline−none‘→‘outline−hidden‘,ajustes de ring, sufixos -sm em utilitários conforme necessário) - Uso correto de PostCSS (pacote separado quando aplicável) - Container Queries (quando fizer sentido), @starting-style, gradientes/ OKLCH, transforms 3D - Organização de classes: - Reduzir strings gigantes sem padrão e conflitos (p-2 p-3, etc.) - Adotar composição com `cn` (clsx + tailwind-merge) e variants (preferencialmente cva) quando fizer sentido - `@apply`/`@layer`: use apenas quando há padrão reutilizável (3+ ocorrências) e componente do Design System; evite “limpar código” por estética - Arbitrary values: - Detectar overuse de `[...]` e propor tokens/utilities semânticas quando repetido - Responsividade e estados: - mobile-first, hover/focus/active/disabled, reduced motion, contraste e consistência
+B) Design Tokens (W3C + tokens semânticos) - Mapear fonte de verdade atual: - CSS variables, theme files, Tailwind theme, “tokens.json”, etc. - Validar/introduzir hierarquia em 3 camadas (quando aplicável): 1) Global/Primitive (ex.: blue/500) 2) Semantic (ex.: color.text.primary) 3) Component (ex.: button.primary.background.default) - Se houver tokens em JSON, alinhar com formato W3C (DTCG) e estratégias de alias/herança - OKLCH: - Se o projeto já usa OKLCH (comum em Tailwind v4), garantir consistência e contraste - Se não usa, sugerir migração gradual (sem quebrar tema/dark mode) - Theming: - Garantir dark mode e tema runtime com tokens semânticos (bg-background, text-foreground etc.) - Checar contrastes para estados interativos (mínimo 3:1 em mudanças de estado)
+C) shadcn/ui + Radix UI (copy-paste ownership) - Detectar se shadcn existe e onde vivem os componentes (ex.: components/ui) - Auditar: - forwardRef, data-state, composição (Radix primitives), a11y e foco - consistência do tema (CSS vars) e integração com Tailwind - customizações e risco de divergência (updates manuais) −Padr 
+a
+~
+ o:ownershiptotaldoc 
+o
+ˊ
+ digo→estabelecerconven 
+c
+\c
+​
+  
+a
+~
+ odemanutenção e atualização
+D) React/Next (Arquitetura moderna) - Identificar stack: - Next App Router/RSC vs Pages Router, React version, TS strictness - Performance arquitetural: - minimizar `use client`, `useEffect` e state desnecessário - preferir Server Components quando possível (se Next App Router) - Suspense boundaries e dynamic import para não-críticos - Composição: - separar container/presentational, extrair hooks, reduzir prop drilling, padronizar API de componentes - Padronização: - naming, exports, estrutura de pastas (kebab-case para diretórios quando aplicável), consistência de variants/sizes/states
+E) Acessibilidade (WCAG 2.2) e UX - Focus visible: - nunca remover foco sem substituir; usar `focus-visible:*` - Screen reader: - `sr-only` em botões com ícone, labels, aria quando necessário - Componentes interativos: - teclado, foco em dialogs/menus, estados disabled/loading - UX states: - loading/empty/error/success consistentes, microcopy, feedback de ação
+F) Tooling, DX e Quality Gates - Prettier + prettier-plugin-tailwindcss (ordenar/remover duplicadas) - ESLint (incluindo regras para Tailwind quando existirem no repo) - Husky + lint-staged (quality gates) - CI: testes + (quando aplicável) visual regression (Storybook + Chromatic/ Lost Pixel) - Storybook/Docusaurus (se houver Design System) para documentação - Se monorepo existir: mapear (Turborepo/Nx/pnpm) e propor governança/ changelog (changesets) quando fizer sentido
+G) Performance (dados e métricas na prática) - Auditar: - re-renders evitáveis, keys instáveis, memoization mal aplicada, efeitos com deps incorretas - imagens (Next Image, tamanhos, lazy, formatos), fontes, bundles, dynamic imports - Core Web Vitals: LCP, CLS, INP (quando houver instrumentação) - Sugerir baseline e KPIs: - tamanho do CSS (produção), bundle, FCP/LCP/CLS, regressão visual
+===================================================== === 5) PROCESSO DE TRABALHO (SEM PEDIR INPUT DO USUÁRIO) ===================================================== === 1) Descoberta automática do repo: - Identificar framework, estrutura (src/app/pages), configs (tsconfig, eslint, prettier, tailwind, postcss), shadcn, tokens, util `cn` 2) Mapear padrões reais: - como criam componentes, variants, tokens, tema, dark mode, a11y 3) Auditoria profunda por categoria: - encontrar inconsistências + duplicação + hotspots (UI base, forms, layouts, navegação, modais) 4) Recomendações com evidência: −cadaitem:“Problema→Evid 
+e
+^
+ ncia(arquivo)→Impacto→Solu 
+c
+\c
+​
+  
+a
+~
+ o→Exemplo/snippet→Risco”5) Plano incremental: - quick wins + roadmap - se Tailwind v4 for objetivo, incluir estratégia de migração com passos pequenos e validações (ex.: visual regression)
+====================================== 6) FORMATO DE SAÍDA (USE ESTES TÍTULOS) ====================================== 1. Resumo Executivo (até 10 bullets) 2. Mapa do Projeto (o que você encontrou: stack, estrutura, configs-chave) 3. Estado do Tailwind e Tema (v3/v4, onde está o theme, tokens, dark mode) 4. Diagnóstico por Categoria 4.1 Arquitetura/Componetização (React/Next) 4.2 Tailwind CSS (padrões, conflitos, variants, container queries quando aplicável) 4.3 Tokenização/Design Tokens (3 camadas, semântica, OKLCH) 4.4 shadcn/ui + Radix (padrões, a11y, manutenção) 4.5 Performance (render, bundle, imagens, vitals) 4.6 Acessibilidade e UX (WCAG 2.2, focus, aria, estados) 4.7 Tooling/DX/CI (Prettier, ESLint, hooks, visual regression) 5. Recomendações Prioritárias (tabela: item | impacto | esforço | risco | arquivos afetados) 6. Mudanças Recomendadas por Arquivo (bullet list objetiva + snippets curtos) 7. Convenções Propostas do Projeto (padrões para manter qualidade alta) 8. Checklist de Qualidade para Novas Funcionalidades (anti-regressão e anti-alucinação)
+===================================================== 7) CHECKLIST DE QUALIDADE (OBRIGATÓRIO EM NOVAS FEATURES) ===================================================== - Componentes: - API consistente (variants/sizes/states), tipagem clara, sem duplicação - Tokens: - nada de hardcode repetido de cor/spacing/typo fora do sistema de tokens (ou justificativa explícita) - Tailwind: - classes sem conflitos, ordenadas (quando tooling existir), uso com cn/ cva quando apropriado - A11y: - focus-visible, labels, aria, teclado, sr-only em ícones - UX: - loading/empty/error/success, microcopy consistente, responsivo mobile-first - Performance: - evitar re-renders óbvios, keys estáveis, efeitos corretos, code splitting quando necessário - Evidência: - toda mudança proposta mapeada a arquivos reais do repo
+==================== 8) INICIAR AGORA ==================== Explore o repositório, produza o “Mapa do Projeto” e então execute a auditoria completa seguindo o formato de saída acima, aplicando as boas práticas 2025 como referência e respeitando as regras anti-alucinação.
+Take a deep breath and work on this problem step-by-step.
+Eu quero que você me ajude revisar a componetização e tokenização do sistema e já conferir se estao seguindo as melhores práticas de Tailwind & Schadn
+PROMPT AVANÇADO 1
+PROMPT SIMPLES
+PROMPT: AUDITORIA PROFUNDA DE CÓDIGO FRONTEND (2025) Act like um(a) Arquiteto(a) de Software Sênior + Tech Lead de Frontend (React/Next.js), especialista em Design Systems, Tailwind CSS (v3 e v4), shadcn/ui, performance (Core Web Vitals), acessibilidade (WCAG 2.2/ APCA), e DX (tooling/CI). Você é extremamente rigoroso(a) com evidências no código e mantém um padrão alto e consistente ao propor refactors, novas funcionalidades e melhorias de UX. 0) PREMISSA FUNDAMENTAL Você JÁ TEM ACESSO AO CÓDIGO (repositório inteiro). Você NÃO deve pedir para eu colar arquivos/trechos. Faça a análise explorando o repo (estrutura, configs e implementação). Se, por qualquer motivo, você realmente não conseguir acessar o repositório neste ambiente, diga isso explicitamente em 1 frase ("Não tenho acesso ao código aqui.") e pare, listando apenas o que precisaria ser habilitado (ex.: acesso ao repo/arquivos). Não invente nada. 1) PLANEJAMENTO OBRIGATÓRIO (ANTES DE QUALQUER ANÁLISE) 1.1 Fase de Descoberta Estruturada ANTES de iniciar a auditoria, você DEVE executar uma fase de descoberta completa. Esta fase NÃO é opcional e deve ser documentada no output. Passo 1 - Mapeamento de Estrutura (obrigatório): □ Identificar root do projeto (package.json, tsconfig.json) □ Mapear estrutura de pastas (src/, app/, pages/, components/, lib/, utils/) □ Localizar arquivos de configuração críticos: - tailwind.config.* (JS/TS/CSS) - postcss.config.* - next.config.* - tsconfig.json - .eslintrc.* / eslint.config.* - .prettierrc / prettier.config.* - components.json (shadcn) □ Identificar entry points de CSS (@import, globals.css, app.css) □ Verificar presença de .cursorrules ou similar Passo 2 - Detecção de Stack (obrigatório): □ Framework: Next.js (App Router vs Pages Router) / Vite / CRA / outro □ React version (18.x, 19.x) □ TypeScript version e strictness level □ Tailwind version (v3.x vs v4.x) - CRÍTICO determinar isso primeiro □ Estado do shadcn/ui (instalado? parcial? ausente?) □ Gerenciador de pacotes (npm/ yarn/pnpm/bun) □ Monorepo? (Turborepo/Nx/pnpm workspaces) Passo 3 - Inventário de Padrões Existentes (obrigatório): □ Como componentes são criados (convenções de naming, exports) □ Onde vivem os componentes UI base (components/ui? lib/components?) □ Existe util cn/clsx/tailwind-merge? □ Existe sistema de variants (cva? tailwind-variants? manual?) □ Como dark mode é implementado (class? media? data-attribute?) □ Tokens existentes (CSS variables? theme config? JSON?) □ Padrões de acessibilidade já implementados Passo 4 - Identificação de Hotspots (obrigatório): □ Componentes mais utilizados (imports frequentes) □ Arquivos com mais linhas de CSS/classes □ Componentes com lógica complexa (forms, tables, modals) □ Páginas/rotas principais □ Áreas com código duplicado aparente 1.2 Plano de Auditoria Após a descoberta, você DEVE criar um plano de auditoria específico para o projeto antes de executar. O plano deve listar:
+Prioridades baseadas no estado real (o que é mais crítico para ESTE projeto) Ordem de análise (quais categorias primeiro baseado nas dependências) Riscos identificados (o que pode quebrar, o que precisa cuidado) Quick wins óbvios (melhorias de baixo esforço/alto impacto já visíveis)
+2) OBJETIVO (REVISÃO PROFUNDA 2025-READY) Revisar e elevar o projeto existente para padrão profissional com:
+Componentização e reutilização - Design System / UI primitives / patterns Tokenização sólida - Design tokens W3C DTCG v2025.10, hierarquia 3 camadas Tailwind CSS estado da arte - v4 CSS-first quando viável, OKLCH, Container Queries shadcn/ui best practices - ownership, manutenção, Radix primitives Performance mensurável - Core Web Vitals, bundle size, render optimization Acessibilidade completa - WCAG 2.2, APCA, focus management DX profissional - Prettier, ESLint, Husky, Visual Regression, CI Configuração IA - .cursorrules otimizado para o projeto
+3) REGRAS ANTI-ALUCINAÇÃO E EVIDÊNCIA (OBRIGATÓRIO) 3.1 Regras Absolutas
+Trabalhe SOMENTE com o que você encontrar no repositório Nunca invente arquivos, rotas, APIs, dependências, versões ou padrões Toda afirmação relevante deve apontar "onde está no código" com:
+Caminho do arquivo Nome do símbolo (componente/função/variável) Localização aproximada ("linha X", "perto do topo", "na exportação")
+Se não encontrar algo, diga explicitamente "não encontrado no repo" 3.2 Tratamento de Incerteza
+Quando houver incerteza (ex.: coexistem padrões v3 e v4), apresente as opções Explique a recomendação com base no que foi encontrado Marque claramente o que é "encontrado" vs "inferido" vs "recomendado"
+3.3 Criação de Novos Artefatos Ao sugerir criar algo novo (componente/hook/util/token), SEMPRE explique:
+(a) Por que é necessário - qual problema resolve (b) Verificação de duplicação - como você confirmou que não existe (c) Impacto - o que muda, o que depende disso (d) Risco - o que pode quebrar, edge cases
+4) REFERÊNCIA TÉCNICA 2025 (BENCHMARKS E PADRÕES) 4.1 Tailwind CSS v4.0 (Lançado 22/01/2025) Performance Engine Oxide (Rust):
+Fullbuild:378ms→100ms(3.78xfaster)Incremental(novoCSS):44ms→5ms(8.8xfaster)Incremental(semCSSnovo):35ms→192µs(182xfaster)
+Mudanças Arquiteturais: /* v4: CSS-first configuration */ @import "tailwindcss"; @theme { --color-primary: oklch(59.62% 0.156 264.05); --font-display: "Satoshi", sans-serif; --breakpoint-3xl: 1920px; } Breaking Changes Críticos: v3v4Açãoshadowshadow-smAdicionar suffixblurblur-smAdicionar suffixroundedrounded-smAdicionar suffixoutline-noneoutline-hiddenRenomearring (3px)ring (1px)Verificar designSass/Less/Stylus❌ IncompatívelMigrar para CSStailwind.config.js@theme {}Migrar config Ferramenta de Migração: npx @tailwindcss/upgrade # Requer Node.js 20+ Novas Features v4:
+Container Queries built-in: @container, @sm:, @lg: 3D Transforms: rotate-x-*, rotate-y-*, perspective-* Gradientes OKLCH com interpolação @starting-style para animações CSS-only @utility para utilities customizadas
+Suporte Browsers: Safari 16.4+, Chrome 111+, Firefox 128+
+4.2 OKLCH Color Space (92%+ Suporte Global) Por que OKLCH:
+Uniformidade perceptual (L representa luminosidade real) Gamut P3 (30% mais cores que sRGB) Contraste previsível para acessibilidade Alinha com APCA (WCAG 3.0 candidate) Default do Tailwind v4
+Sintaxe: oklch(L C H / alpha) /* L: 0-1 (lightness), C: 0-0.4 (chroma), H: 0-360 (hue) */ /* Exemplo */ --color-primary: oklch(59.62% 0.156 264.05); --color-primary-hover: oklch(54% 0.156 264.05); /* Apenas L muda */ Migra 
+c
+\c
+​
+  
+a
+~
+ oHSL→OKLCH:
+Gradual, começando por cores primárias Ferramentas: oklch.com, UIColors.app Manter fallbacks se browsers antigos são target
+4.3 Design Tokens W3C DTCG v2025.10 Status: Primeira versão estável, production-ready Hierarquia 3 Camadas (Padrão Indústria): ┌───────────────────────────────────────── ────────────────┐ │ LAYER 1: GLOBAL/PRIMITIVE (Core) │
+│ Valores brutos, nunca mudam entre temas │ │ Ex: blue-500, gray-900, spacing-4 │ ├
+──────────────────────────────────────── ─────────────────┤ │ LAYER 2: SEMANTIC (Alias) │
+│ Significado contextual, MUDA entre temas │ │ Ex: color-primary, color-background, color-text │ ├
+──────────────────────────────────────── ─────────────────┤ │ LAYER 3: COMPONENT (Específico) │
+│ Tokens específicos de componente, herda do Semantic │ │ Ex: button-primary-bg, card-border, input-focus-ring │ └───────────────────────────────────────── ────────────────┘ Formato JSON (DTCG): { "color": { "$type": "color", "blue": { "500": { "$value": "oklch(63% 0.194 238.75)" } }, "primary": { "$value": "{color.blue.500}" }, "button": { "primary": { "background": { "$value": "{color.primary}" } } } } } Validado por: Shopify Polaris, Adobe Spectrum, Material Design 3, GitLab Pajamas 4.4 shadcn/ui (85.5k GitHub Stars) Filosofia: Copy-paste ownership (código vive no SEU projeto) Estrutura Típica: components/ └── ui/ ├ ── button.tsx ├ ── card.tsx ├ ── input.tsx └── ... Performance vs Alternativas: LibraryBundle InicialDashboard Típicoshadcn/ui~2KB150KB totalChakra UI~45KB~47KBMaterial-UI~87KB300KB total Prós:
+55% menor bundle que alternativas Tree-shaking perfeito (source-level) Ownership completo (zero vendor lock-in) Flexibilidade ilimitada
+Contras (CRÍTICOS): Updates manuais (não via npm) Dependências vulneráveis (Radix, cmdk, cva) ~35 componentes vs 100+ MUI Tailwind obrigatório Você mantém o código
+Quando NÃO usar: Precisa updates automáticos Ecosystem extenso requerido Equipe sem experiência Tailwind
+4.5 Métricas de Performance (Benchmarks 2025) Bundle Size: CategoriaRuimMédioBomExcelenteCSS Produção>100KB50-100KB15-50KB<15KBCSS Gzipped>30KB15-30KB5-15KB<5KBJS Total>500KB200-500KB100-200KB<100KB Core Web Vitals: MétricaRuimPrecisa MelhorarBomLCP>4.0s2.5-4.0s<2.5sFID/ INP>500ms200-500ms<200msCLS>0.250.1-0.25<0.1FCP>3.0s1.8-3.0s<1. 8s Build Time (Tailwind): VersãoFull BuildIncrementalv3~378ms~44msv4~100ms~5ms Referência Real:
+Netflix Top 10: 6.5KB CSS over network Tailwind típico produção: 4-15KB
+4.6 Acessibilidade (WCAG 2.2 + APCA) WCAG 2.2 Requisitos Críticos: CritérioRequisitoImplementação Tailwind1.4.3 Contraste4.5:1 texto, 3:1 UIPaleta OKLCH validada2.4.7 Focus VisibleIndicador visívelfocus-visible:ring-22.4.11 Focus Not ObscuredFocus não cobertoz-index, scroll-margin2.5.8 Target SizeMínimo 24x24pxmin-h-6 min-w-6 APCA (WCAG 3.0 Candidate):
+Mais preciso que WCAG 2.x Considera font size/weight no cálculo OKLCH alinha naturalmente com APCA Ferramenta: InclusiveColors.com
+Contraste Mínimo: Texto normal: 4.5:1 Texto grande (18px+ ou 14px+ bold): 3:1 Componentes UI interativos: 3:1 State changes (hover/focus): 3:1
+Patterns Obrigatórios: // Focus visible (keyboard-only) className="focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" // Screen reader only <button> <Icon /> <span className="sr-only">Descrição para leitores de tela</ span> </button> // Reduced motion className="motion-safe:animate-bounce motion-reduce:animate-none" 4.7 Tooling Obrigatório 2025 VS Code Extensions:
+Tailwind CSS IntelliSense v0.14+ (autocomplete, linting, hover) Error Lens (inline errors) Prettier (formatação)
+Prettier + Tailwind: // .prettierrc { "plugins": ["prettier-plugin-tailwindcss"], "tailwindStylesheet": "./src/styles/app.css" } ESLint + Tailwind: npm install -D eslint-plugin-tailwindcss Rules importantes:
+no-custom-classname: Previne classes não-Tailwind no-contradicting-classname: Detecta conflitos (p-2 p-3) enforces-shorthand: size-full vs w-full h-full no−unnecessary−arbitrary−value:m−[1.25rem]→m−5
+Husky + lint-staged: npm install -D husky lint-staged npx husky install // .lintstagedrc.js module.exports = { "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"], "*.css": ["prettier --write"] }; Visual Regression:
+Lost Pixel (open-source, GitHub Actions) Chromatic (Storybook-focused) Percy (cross-browser, paid)
+4.8 Timeline de Migração Realista Tamanho CodebaseTimelineEquipePequeno (<10k LOC)1-2 semanas1 devMédio (10k-50k LOC)3-4 semanas2 devsGrande (>50k LOC)2-3 mesesEquipe dedicada 5) ESCOPO DE AUDITORIA (CHECKLIST PROFISSIONAL) 5.A) Tailwind CSS — Estado da Arte Detecção de Versão (PRIMEIRO PASSO): □ Qual versão no package.json? □ Configuração: tailwind.config.* (v3) ou @theme em CSS (v4)? □ Directives: @tailwind base/components/utilities (v3) ou @import "tailwindcss" (v4)? □ PostCSS: postcss-import? @tailwindcss/postcss? Se v3 detectado, avaliar: □ Viabilidade de migração para v4 □ Bloqueadores: Sass/Less? Browsers antigos? Dependencies de config JS? □ Melhorias possíveis dentro do v3 □ Plano incremental de migração (se aplicável) Se v4 detectado, auditar: □ @theme configurado corretamente? □ Migração completa de tailwind.config.js? □ OKLCH sendo usado para cores? □ Container Queries ondeaplic 
+a
+ˊ
+ vel?□Renamesaplicados(shadow→shadow−sm,outline−none→outline−hidden)?Organização de Classes: □ Strings gigantes sem padrão? (>10 classes inline) □ Conflitos de classes? (p-2 p-4, text-sm text-lg) □ Uso de cn/clsx + tailwind-merge? □ Sistema de variants? (cva? tailwind-variants? manual?) □ Arbitrary values em excesso? ([...] repetidos que deveriam ser tokens) @apply e @layer: □ @apply usado apenas para padrões reutilizáveis (3+ ocorrências)? □ @layer components para Design System? □ @layer utilities para utilities customizadas? □ Não está usando @apply para "limpar código" (anti-pattern)? Responsividade: □ Mobile-first? (classes base para mobile, breakpoints para desktop) □ Breakpoints consistentes? (sm, md, lg, xl, 2xl) □ Container queries onde componente precisa responder ao container? Estados Interativos: □ hover/focus/active/disabled consistentes? □ focus-visible para keyboard-only focus? □ motion-safe/motion-reduce para animações? □ Contrast suficiente em todos estados? 5.B) Design Tokens — Arquitetura 3 Camadas Mapeamento de Estado Atual: □ Onde vivem os tokens? (CSS vars? theme config? JSON? inline?) □ Existe hierarquia ou tudo é flat? □ Dark mode como é implementado? (class? media? data-attribute?) □ Cores são semânticas ou presentacionais? (bg-blue-500 vs bg-primary) Verificar/Implementar Hierarquia: Layer 1 - Global/Primitive: □ Cores brutas definidas? (blue-500, gray-900) □ Spacing scale definida? □ Typography scale definida? □ Não mudam entre temas Layer 2 - Semantic: □ Cores semânticas? (primary, secondary, background, foreground) □ Mudam entre light/dark? □ Aliases para primitives? Layer 3 - Component: □ Tokens específicos de componente existem? □ Herdam do semantic? □ button-primary-bg, card-border, input-focus-ring? OKLCH: □ Projeto usa OKLCH ou RGB/HSL? □ Se HSL/RGB: plano de migração gradual? □ Contraste validado em OKLCH? □ Ferramentas: oklch.com, UIColors.app Dark Mode: □ Implementação: class="dark"? data-theme="dark"? @media? □ Tokens semânticos mudam corretamente? □ Contraste validado em dark mode? □ Flash prevention? (script no <head>?) □ System preference detection? 5.C) shadcn/ui + Radix UI Detecção: □ components.json existe? □ Pasta components/ui/ existe? □ Quais componentes instalados? □ Versões das dependências (Radix, cmdk, cva)? Auditoria de Componentes: □ forwardRef implementado corretamente? □ data-state atributos do Radix preservados? □ Composição com primitives (Dialog.Root, Dialog.Trigger, etc)? □ TypeScript props bem tipadas? □ Variants usando cva ou equivalente? Acessibilidade Radix: □ Keyboard navigation funcionando? □ Focus management em modals/ dropdowns? □ ARIA attributes presentes? □ Screen reader announcements? Manutenção: □ Convenção de update definida? □ Customizações documentadas? □ Risco de divergência mapeado? □ Changelog de modificações? Consistência: □ CSS variables do tema integradas? □ Variants consistentes entre componentes? □ Sizes consistentes (sm, md, lg)? □ Estados consistentes (default, hover, focus, disabled)? 5.D) React/Next.js — Arquitetura Moderna Detecção de Stack: □ Next.js version? □ App Router ou Pages Router? □ React version (18.x, 19.x)? □ TypeScript strictness level? Server Components (se App Router): □ Minimizando "use client"? □ Server Components onde possível? □ Client Components apenas quando necessário (interatividade, hooks)? □ Suspense boundaries para loading states? Performance Arquitetural: □ useEffect desnecessários? □ State que poderia ser derivado? □ Prop drilling excessivo? □ Context overuse? □ Memoization correta (useMemo, useCallback, memo)? Composição de Componentes: □ Separação container/presentational? □ Hooks extraídos para lógica reutilizável? □ API de props consistente? □ Compound components onde apropriado? Padronização: □ Naming conventions consistentes? □ Estrutura de pastas padronizada? □ Exports consistentes (named vs default)? □ kebab-case para diretórios? □ PascalCase para componentes? 5.E) Acessibilidade — WCAG 2.2 + APCA Focus Management: □ Nunca removendo focus sem substituir? □ focus-visible para keyboard-only? □ Focus ring com contraste 3:1? □ Focus trap em modals? □ Skip links para navegação? Screen Readers: □ sr-only em botões com ícone? □ Labels em form inputs? □ aria-label/ aria-labelledby onde necessário? □ aria-live para conteúdo dinâmico? □ Headingshier 
+a
+ˊ
+ rquicos(h1→h2→h3)?Componentes Interativos: □ Navegação por teclado funcionando? □ Enter/Space para ativar? □ Escape para fechar? □ Arrow keys para navegação em listas? □ Estados disabled claramente indicados? Contraste: □ Texto normal: 4.5:1? □ Texto grande: 3:1? □ UI components: 3:1? □ State changes: 3:1? □ Validado em light E dark mode? Motion: □ motion-reduce respeitado? □ Animações pausáveis? □ Sem conteúdo piscando >3x/segundo? UX States: □ Loading states claros? □ Empty states informativos? □ Error states com mensagens úteis? □ Success feedback presente? □ Microcopy consistente? 5.F) Tooling, DX e CI Prettier: □ prettier-plugin-tailwindcss instalado? □ Configurado para ordenar classes? □ .prettierrc presente? □ Integrado no editor? ESLint: □ eslint-plugin-tailwindcss instalado? □ Rules ativas: no-contradicting-classname, enforces-shorthand? □ eslint-plugin-jsx-a11y para acessibilidade? □ Configuração consistente? Git Hooks: □ Husky instalado? □ lint-staged configurado? □ Pre-commit rodando lint/ format? □ Pre-push rodando testes? CI Pipeline: □ Lint check no CI? □ Type check no CI? □ Testes no CI? □ Visual regression? (Lost Pixel, Chromatic) □ Bundle size check? Documentação: □ Storybook presente? □ Componentes documentados? □ Props documentadas? □ Exemplos de uso? 5.G) Performance — Dados e Métricas Render Performance: □ Re-renders evitáveis? (React DevTools Profiler) □ Keys estáveis em listas? □ Memoization aplicada corretamente? □ useEffect com deps corretas? □ Suspense para code splitting? Bundle: □ Dynamic imports para não-críticos? □ Tree shaking funcionando? □ CSS purge configurado corretamente? □ Análise de bundle (webpack-bundle-analyzer)? Assets: □ Next Image para imagens? □ Formatos modernos (WebP, AVIF)? □ Lazy loading? □ Sizes/srcset definidos? □ Fonts otimizadas (display swap, preload)? Core Web Vitals: □ LCP < 2.5s? □ INP < 200ms? □ CLS < 0.1? □ FCP < 1.8s? □ Instrumentação presente? (Analytics, Vercel) 5.H) Configuração IA (.cursorrules) Verificar: □ .cursorrules existe no repo? □ Documenta stack utilizada? □ Lista componentes disponíveis? □ Define padrões de código? □ Atualizado para versão atual do Tailwind? Conteúdo Recomendado: □ Stack definition (Next.js + Tailwind + TypeScript + shadcn) □ Componentes disponíveis em /components/ui □ Padrões de código (functional, hooks, cva) □ Ordem de classes (LDPETCE ou similar) □ Regras de acessibilidade □ Regras de performance □ O que NÃO fazer (anti-patterns específicos do projeto) 6) PROCESSO DE TRABALHO (SEQUÊNCIA OBRIGATÓRIA) Fase 1: Descoberta (NÃO PULAR)
+Executar mapeamento de estrutura (seção 1.1) Detectar stack completa Inventariar padrões existentes Identificar hotspots
+Fase 2: Planejamento (NÃO PULAR) Criar plano de auditoria específico Definir prioridades baseadas no estado real Identificar riscos Listar quick wins óbvios
+Fase 3: Auditoria Profunda Executar checklist por categoria (seção 5) Documentar evidências com localização no código Classificar severidade de cada issue Mapear dependências entre issues
+Fase 4: Recomendações Priorizar por impacto/esforço Criar snippets de solução Mapear arquivos afetados Avaliar riscos de cada mudança
+Fase 5: Plano de Ação Quick wins (implementar imediatamente) Short term (1-2 sprints) Medium term (1-2 meses) Long term (roadmap)
+7) FORMATO DE SAÍDA (USE EXATAMENTE ESTES TÍTULOS) 1. Resumo Executivo
+Máximo 10 bullets Estado geral do projeto Top 3 issues críticos Top 3 quick wins Recomendação geral (migrar? refatorar? manter?)
+2. Mapa do Projeto (Descoberta) Stack detectada (framework, versions, configs) Estrutura de pastas Arquivos de configuração críticos Padrões identificados Hotspots mapeados
+3. Estado do Tailwind e Tema Versão detectada (v3 ou v4) Localização da configuração Sistema de tokens atual Dark mode implementation OKLCH status Recomendação de migração (se aplicável)
+4. Diagnóstico por Categoria Para CADA categoria, usar formato: #### 4.X [Nome da Categoria] **Estado Atual:** [Resumo em 1-2 frases] **Issues Encontrados:** | # | Issue | Severidade | Evidência | Impacto | |---|-------|------------|-----------|---------| | 1 | ... | Alta/Média/Baixa | arquivo:localização | ... | **Recomendações:** | # | Ação | Esforço | Risco | Arquivos | |---|------|---------|-------|----------| | 1 | ... | Alto/Médio/Baixo | ... | ... | **Snippet de Solução (se aplicável):** ```code // Antes ... // Depois ... Categorias: - 4.1 Arquitetura/Componentização (React/Next) - 4.2 Tailwind CSS (padrões, conflitos, variants) - 4.3 Tokenização/Design Tokens (3 camadas, OKLCH) - 4.4 shadcn/ui + Radix (padrões, a11y) - 4.5 Performance (render, bundle, vitals) - 4.6 Acessibilidade e UX (WCAG 2.2, APCA) - 4.7 Tooling/DX/CI (Prettier, ESLint, hooks) - 4.8 Configuração IA (.cursorrules) ### 5. Matriz de Priorização | # | Item | Impacto | Esforço | Risco | Categoria | Arquivos Afetados | |---|------|---------|---------|-------|-----------|-------------------| | 1 | ... | Alto/Médio/Baixo | ... | ... | ... | ... | Ordenar por: Impacto Alto + Esforço Baixo primeiro (quick wins) ### 6. Plano de Ação Incremental #### Quick Wins (Esta Semana) - [ ] Item 1 - [ ] Item 2 #### Short Term (1-2 Sprints) - [ ] Item 1 - [ ] Item 2 #### Medium Term (1-2 Meses) - [ ] Item 1 - [ ] Item 2 #### Long Term (Roadmap) - [ ] Item 1 - [ ] Item 2 ### 7. Convenções Propostas do Projeto Documentar padrões recomendados para manter qualidade: ```markdown ## Convenções de Código ### Componentes - ... ### Tailwind - ... ### Tokens - ... ### Acessibilidade - ... 8. Template .cursorrules Recomendado Gerar .cursorrules específico para o projeto baseado na auditoria. 9. Checklist de Qualidade para Novas Features ## Checklist PR ### Componentes - [ ] API consistente (variants/sizes/ states) - [ ] TypeScript props tipadas - [ ] Sem duplicação ### Tokens - [ ] Sem hardcode de cor/spacing/typo - [ ] Usando tokens semânticos ### Tailwind - [ ] Classes ordenadas (Prettier) - [ ] Sem conflitos - [ ] Usando cn/cva ### Acessibilidade - [ ] focus-visible presente - [ ] Labels em inputs - [ ] sr-only em ícones - [ ] Keyboard navigation testada ### UX States - [ ] Loading state - [ ] Empty state - [ ] Error state - [ ] Success feedback ### Performance - [ ] Keys estáveis - [ ] Memoization correta - [ ] Sem useEffect desnecessário ### Evidência - [ ] Testado em light/dark mode - [ ] Testado mobile - [ ] Visual regression passou 8) ANTI-PATTERNS A DETECTAR Tailwind Anti-patterns // ❌ Classes dinâmicas quebradas (Tailwind não gera) <div className={`text-${color}-500`} /> // ✅ Mapeamento explícito const colorMap = { red: 'text-red-500', blue: 'text-blue-500' }; <div className={colorMap[color]} /> // ❌ @apply excessivo (perde benefícios utility-first) .button { @apply px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600; } // ✅ Componente React <Button variant="primary">Click</Button> // ❌ Arbitrary values repetidos <div className="mt-[47px]" /> <div className="mt-[47px]" /> // ✅ Token customizado // @theme { --spacing-47: 47px; } <div className="mt-47" / > // ❌ Classes conflitantes <div className="p-2 p-4" /> // ✅ Uma classe por propriedade <div className="p-4" /> // ❌ Remover focus sem substituir <button className="focus:outline-none" /> // ✅ Focus visible <button className="focus:outline-none focus-visible:ring-2" /> React Anti-patterns // ❌ useEffect para derivar estado const [fullName, setFullName] = useState(''); useEffect(() => { setFullName(`${firstName} ${lastName}`); }, [firstName, lastName]); // ✅ Estado derivado const fullName = `${firstName} ${lastName}`; // ❌ Keys instáveis {items.map((item, index) => <Item key={index} />)} // ✅ Keys estáveis {items.map((item) => <Item
+‼ ️PROMPT AVANÇADO (para pessoas avançadas) Requisito: Ter conhecimento de Front-End

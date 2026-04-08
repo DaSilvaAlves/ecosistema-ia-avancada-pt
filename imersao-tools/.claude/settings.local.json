@@ -24,7 +24,25 @@
       "WebFetch(domain:student-profiler-one.vercel.app)",
       "WebFetch(domain:briefing-generator-delta.vercel.app)",
       "WebFetch(domain:starter-builder-euricojsalves-4744s-projects.vercel.app)",
-      "WebFetch(domain:prompt-optimizer-ruddy-omega.vercel.app)"
+      "WebFetch(domain:prompt-optimizer-ruddy-omega.vercel.app)",
+      "Bash(npx vite:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5191/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5192/)",
+      "Bash(pkill -f \"vite.*519\")",
+      "Bash(claude doctor:*)",
+      "Bash(echo \"EXIT_CODE: $?\")",
+      "Bash(claude:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm outdated:*)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(k\\) for k in d.keys\\(\\)]\")",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\(require\\('os'\\).homedir\\(\\)+'/.claude.json','utf8'\\); const o=JSON.parse\\(d\\); console.log\\(Object.keys\\(o\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(node:*)",
+      "Bash(gh release:*)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:vandapinheiro.pt)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)"
     ]
   }
 }

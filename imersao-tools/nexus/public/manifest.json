@@ -1,0 +1,16 @@
+{
+  "name": "Nexus — Command Center",
+  "short_name": "Nexus",
+  "description": "O teu command center pessoal com IA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#04040A",
+  "theme_color": "#04040A",
+  "icons": [
+    {
+      "src": "/nexus.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
