@@ -500,29 +500,25 @@ Regras:
       <div class="card action">
         <div class="card-label">O que fazer</div>
         <ol class="numbered">
-          <li>No mesmo terminal, cola o prompt abaixo</li>
-          <li>Inclui o PRD base (do Passo 1) e o relatorio tecnico (do Passo 4)</li>
-          <li>A IA vai fundir os dois e gerar um PRD informado e fundamentado</li>
+          <li>Confirma que tens <code>docs/briefing-base.json</code> (Passo 1) e <code>docs/relatorio-tecnico.md</code> (Passo 4)</li>
+          <li>No mesmo terminal (na pasta do teu projecto), cola o prompt abaixo</li>
+          <li>A IA vai ler os dois ficheiros e fundir num PRD informado e fundamentado</li>
           <li>Este e o PRD que vais usar para construir — nao o generico do Passo 1</li>
         </ol>
       </div>
 
       <h3>Prompt para copiar</h3>
       <div class="prompt-box">
-        <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>Tenho dois documentos sobre o meu projecto. Preciso que os fundes num PRD final, pronto para construcao.
+        <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>Le o meu PRD base em docs/briefing-base.json e o relatorio tecnico em docs/relatorio-tecnico.md
 
-DOCUMENTO 1 — PRD BASE (gerado pelo Briefing Generator):
-<span class="placeholder">[COLA AQUI O BLUEPRINT DO PASSO 1]</span>
+Funde os dois num PRD FINAL pronto para construcao. Grava o resultado em docs/prd-final.md
 
-DOCUMENTO 2 — RELATORIO TECNICO (baseado em pesquisa real):
-<span class="placeholder">[COLA AQUI O RELATORIO DO PASSO 4]</span>
-
-Gera um PRD FINAL que:
-1. Use as funcionalidades VALIDADAS pela pesquisa (nao as genericas)
-2. Inclua o modelo de negocio recomendado
-3. Use as APIs e servicos concretos identificados
-4. Defina o MVP com base no que o mercado pede
-5. Inclua criterios de sucesso medidos em numeros reais
+O PRD deve:
+1. Usar as funcionalidades VALIDADAS pela pesquisa (nao as genericas)
+2. Incluir o modelo de negocio recomendado
+3. Usar as APIs e servicos concretos identificados
+4. Definir o MVP com base no que o mercado pede
+5. Incluir criterios de sucesso medidos em numeros reais
 
 Formato:
 - Visao do projecto (2-3 frases)
@@ -533,6 +529,18 @@ Formato:
 - Metricas de sucesso
 
 Este PRD vai ser entregue directamente ao Claude Code / Gemini CLI para construcao. Deve ser claro, concreto e sem ambiguidade.</div>
+
+      <div class="card example">
+        <div class="card-label">A tua pasta neste momento</div>
+        <div class="prompt-box">meu-projecto/
+└── docs/
+    ├── briefing-base.json          ← Passo 1
+    ├── pesquisa-perplexity.md      ← Passo 3
+    ├── pesquisa-chatgpt.md         ← Passo 3
+    ├── pesquisa-grok.md            ← Passo 3
+    ├── relatorio-tecnico.md        ← Passo 4
+    └── prd-final.md                ← Passo 5 (acabou de ser gerado)</div>
+      </div>
 
       <div class="card output">
         <div class="card-label">A diferenca</div>
@@ -562,14 +570,18 @@ Este PRD vai ser entregue directamente ao Claude Code / Gemini CLI para construc
       <div class="card action">
         <div class="card-label">O que fazer</div>
         <ol class="numbered">
-          <li>Cria uma pasta para o teu projecto</li>
+          <li>Ja tens a pasta do projecto com tudo em <code>docs/</code> — e aqui que vais construir</li>
           <li>Abre o terminal nessa pasta</li>
-          <li>Cola o PRD enriquecido do Passo 5</li>
-          <li>A IA comeca a construir — ficheiro a ficheiro, componente a componente</li>
+          <li>Cola o prompt abaixo — a IA le o PRD e comeca a construir</li>
+          <li>A IA cria ficheiro a ficheiro, componente a componente</li>
           <li>Deixa-a trabalhar. Intervem so quando ela pedir ou quando vires algo errado</li>
           <li>Quando tiver uma versao funcional, testa no browser: <code>npm run dev</code></li>
         </ol>
       </div>
+
+      <h3>Prompt para copiar</h3>
+      <div class="prompt-box">
+        <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>Le o PRD final em docs/prd-final.md e constroi o projecto completo. Segue exactamente o que esta no PRD — funcionalidades, stack tecnica, modelo de negocio. Comeca pelo MVP.</div>
 
       <div class="card example">
         <div class="card-label">Que ferramenta usar</div>

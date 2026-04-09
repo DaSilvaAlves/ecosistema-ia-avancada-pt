@@ -596,6 +596,91 @@
       .step-flow .sf-arrow { transform: rotate(90deg); }
     }
 
+    /* ===== FASE 3 MANUAL ===== */
+    .step-block {
+      margin: 2.5rem 0; padding-bottom: 2.5rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .step-block:last-of-type { border-bottom: none; }
+    .step-header {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem;
+    }
+    .step-num-big {
+      font-family: 'JetBrains Mono', monospace; font-size: 2rem;
+      font-weight: 800; color: var(--gold); min-width: 50px;
+    }
+    .step-title { font-size: 1.4rem; font-weight: 900; }
+    .step-subtitle { color: var(--grey); font-size: 0.9rem; margin-top: 0.2rem; }
+    .step-meta {
+      display: flex; gap: 1rem; margin-bottom: 1.2rem; flex-wrap: wrap;
+    }
+    .meta-tag {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      padding: 0.25rem 0.7rem; border-radius: 20px; letter-spacing: 0.05em;
+    }
+    .meta-tool { background: rgba(0,245,255,0.08); border: 1px solid rgba(0,245,255,0.2); color: var(--cyan); }
+    .meta-time { background: rgba(255,184,0,0.08); border: 1px solid rgba(255,184,0,0.2); color: var(--gold); }
+    .meta-output { background: rgba(57,255,20,0.08); border: 1px solid rgba(57,255,20,0.2); color: var(--lime); }
+    .card.action { border-color: rgba(0,245,255,0.2); background: rgba(0,245,255,0.03); }
+    .card.example { border-color: rgba(255,184,0,0.2); background: rgba(255,184,0,0.02); }
+    .card.output { border-color: rgba(57,255,20,0.2); background: rgba(57,255,20,0.02); }
+    .card-label {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 0.5rem; font-weight: 700;
+    }
+    .card.action .card-label { color: var(--cyan); }
+    .card.example .card-label { color: var(--gold); }
+    .card.output .card-label { color: var(--lime); }
+    .card.warning .card-label { color: var(--magenta); }
+    .numbered { counter-reset: step; list-style: none; }
+    .numbered li {
+      counter-increment: step; padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex; gap: 0.8rem; align-items: baseline;
+    }
+    .numbered li:last-child { border-bottom: none; }
+    .numbered li::before {
+      content: counter(step); font-family: 'JetBrains Mono', monospace;
+      color: var(--cyan); font-weight: 800; font-size: 0.85rem; min-width: 20px;
+    }
+    .placeholder { color: var(--gold); font-weight: 700; }
+    .f3-flow {
+      display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center;
+      justify-content: center; padding: 2rem 0; margin-bottom: 1rem;
+    }
+    .f3-flow-step {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 8px; padding: 0.5rem 0.8rem; text-align: center;
+      min-width: 80px;
+    }
+    .f3-flow-step .fs-num {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+      color: var(--gold); display: block;
+    }
+    .f3-flow-step .fs-label { font-size: 0.72rem; font-weight: 700; }
+    .f3-flow-arrow { color: var(--cyan); font-weight: 700; font-size: 1rem; }
+    /* Modules */
+    .module {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;
+      display: grid; grid-template-columns: 60px 1fr; gap: 1rem; align-items: start;
+    }
+    .module .mod-num {
+      font-family: 'JetBrains Mono', monospace; font-size: 1.8rem;
+      font-weight: 800; color: var(--gold); text-align: center;
+    }
+    .module .mod-title { font-weight: 800; font-size: 1.1rem; margin-bottom: 0.3rem; }
+    .module .mod-desc { color: var(--grey); font-size: 0.9rem; }
+    .module .mod-output { margin-top: 0.5rem; font-size: 0.85rem; color: var(--lime); }
+    @media (max-width: 600px) {
+      .step-header { flex-direction: column; gap: 0.3rem; }
+      .step-num-big { font-size: 1.5rem; }
+      .f3-flow { flex-direction: column; }
+      .f3-flow-arrow { transform: rotate(90deg); }
+      .module { grid-template-columns: 40px 1fr; }
+    }
+
     /* ===== PRINT ===== */
     @media print {
       .nav-tabs, .timer-container, .copy-btn, .timer-buttons, .timer-presets { display: none !important; }
@@ -620,6 +705,7 @@
   <div class="nav-tabs">
     <div class="nav-tab active" data-tab="agenda">Agenda</div>
     <div class="nav-tab" data-tab="metodo">O Metodo</div>
+    <div class="nav-tab" data-tab="fase3">Fase 3</div>
     <div class="nav-tab" data-tab="lego">LEGO</div>
     <div class="nav-tab" data-tab="blueprint">7 Pilares</div>
     <div class="nav-tab" data-tab="templates">Templates</div>
@@ -857,18 +943,78 @@
         <div class="flow-step"><div class="name">Tarefas</div><div class="pct">10% TU</div></div>
       </div>
 
-      <h2 style="margin-top: 2.5rem;"><span class="num">03</span> Tiers de Modelos</h2>
+      <h2 style="margin-top: 2.5rem;"><span class="num">03</span> Os 7 Modulos</h2>
+      <p>Cada modulo e auto-contido -- conceito, analogia visual, exercicio pratico. Sais de cada um com um resultado concreto.</p>
+
+      <div class="module">
+        <div class="mod-num">M0</div>
+        <div>
+          <div class="mod-title">O Problema</div>
+          <div class="mod-desc">Por que 90% falha com IA. Os dois modos. O ciclo de frustracao.</div>
+          <div class="mod-output">Sais com: consciencia do modo ineficiente</div>
+        </div>
+      </div>
+      <div class="module">
+        <div class="mod-num">M1</div>
+        <div>
+          <div class="mod-title">Expressao</div>
+          <div class="mod-desc">15 minutos. Papel e caneta. Zero IA. Esgota o teu cerebro.</div>
+          <div class="mod-output">Sais com: rascunho bruto do teu projecto</div>
+        </div>
+      </div>
+      <div class="module">
+        <div class="mod-num">M2</div>
+        <div>
+          <div class="mod-title">Brief</div>
+          <div class="mod-desc">QA1 → Pesquisas → Os TEUS insights → Brief → QA2. A IA assiste -- tu decides.</div>
+          <div class="mod-output">Sais com: Brief aprovado e validado</div>
+        </div>
+      </div>
+      <div class="module">
+        <div class="mod-num">M3</div>
+        <div>
+          <div class="mod-title">Detalhamento</div>
+          <div class="mod-desc">Identificar → Agrupar → Sequenciar. A casa: fundacao, paredes, telhado.</div>
+          <div class="mod-output">Sais com: funcionalidades agrupadas e sequenciadas</div>
+        </div>
+      </div>
+      <div class="module">
+        <div class="mod-num">M4</div>
+        <div>
+          <div class="mod-title">PRD e Etapas</div>
+          <div class="mod-desc">Regras de quebra. Uma etapa: objectivo verificavel. Uma tarefa: verbo + resultado.</div>
+          <div class="mod-output">Sais com: etapas com tarefas e criterios</div>
+        </div>
+      </div>
+      <div class="module">
+        <div class="mod-num">M5</div>
+        <div>
+          <div class="mod-title">Tarefas</div>
+          <div class="mod-desc">1 accao, 1 agente, 1 resultado. LEGO: blocos simples, sistemas complexos.</div>
+          <div class="mod-output">Sais com: 3 tarefas executadas com IA</div>
+        </div>
+      </div>
+      <div class="module">
+        <div class="mod-num">M6</div>
+        <div>
+          <div class="mod-title">Pipeline Tecnico</div>
+          <div class="mod-desc">Brief → PRD → Stitch → AI Studio → Design System → A tua ferramenta.</div>
+          <div class="mod-output">Sais com: solucao real construida</div>
+        </div>
+      </div>
+
+      <h2 style="margin-top: 2.5rem;"><span class="num">04</span> Tiers de Modelos</h2>
       <table class="tiers-table">
         <thead><tr><th>Tier</th><th>Modelos</th><th>Usar quando</th></tr></thead>
         <tbody>
-          <tr><td>S</td><td>Gemini 3, Opus 4.1, Codex High, Grok 4.1</td><td>Contexto grande, auditoria, analise profunda</td></tr>
-          <tr><td>A</td><td>Sonnet 4.5, GPT 5.1</td><td>Tarefas medias, boa capacidade tactica</td></tr>
-          <tr><td>B</td><td>Grok 4 Fast Code, Haiku</td><td>Tarefas rapidas, bem definidas</td></tr>
-          <tr><td>C</td><td>GPT 120 OSS</td><td>Experimentacao</td></tr>
+          <tr><td>S</td><td>Claude Opus 4.6, Gemini 2.5 Pro, Grok 3</td><td>Contexto grande, auditoria, analise profunda</td></tr>
+          <tr><td>A</td><td>Claude Sonnet 4.6, GPT-4o, Gemini 2.5 Flash</td><td>Tarefas medias, boa capacidade tactica</td></tr>
+          <tr><td>B</td><td>Claude Haiku 4.5, Grok 3 Mini, Gemini 2.0 Flash</td><td>Tarefas rapidas, bem definidas</td></tr>
+          <tr><td>C</td><td>Modelos open-source (Llama, Mistral, Qwen)</td><td>Experimentacao</td></tr>
         </tbody>
       </table>
 
-      <h2 style="margin-top: 2.5rem;"><span class="num">04</span> Os 10 Principios</h2>
+      <h2 style="margin-top: 2.5rem;"><span class="num">05</span> Os 10 Principios</h2>
       <ol class="principles">
         <li>O problema nao e a IA -- e a falta de clareza do humano</li>
         <li>Clareza e um processo estruturado -- nao e talento, e metodo</li>
@@ -881,6 +1027,407 @@
         <li>Pragmatismo -- cada QA valida pragmatismo, nao perfeicao</li>
         <li>Anti-alucinacao -- trabalha so com o que existe, nunca inventes</li>
       </ol>
+
+    </div>
+
+    <!-- ==================== TAB: FASE 3 ==================== -->
+    <div id="tab-fase3" class="tab-panel">
+
+      <h2><span class="num">F3</span> Manual Fase 3 -- Mao na Massa</h2>
+      <p style="color:var(--grey); margin-bottom: 0.5rem;">O percurso passo-a-passo. Da tua dor a uma solucao real deployed. Cada passo tem uma accao, uma ferramenta e um resultado concreto.</p>
+
+      <blockquote>"Clareza antes de execucao. Sempre. Sem pesquisa, estas a pedir a IA para adivinhar. Com pesquisa, estas a dar-lhe o mapa."</blockquote>
+
+      <!-- Flow overview -->
+      <div class="f3-flow">
+        <div class="f3-flow-step"><span class="fs-num">P1</span><span class="fs-label">Briefing</span></div>
+        <span class="f3-flow-arrow">&rarr;</span>
+        <div class="f3-flow-step"><span class="fs-num">P2</span><span class="fs-label">Prompt Pesquisa</span></div>
+        <span class="f3-flow-arrow">&rarr;</span>
+        <div class="f3-flow-step"><span class="fs-num">P3</span><span class="fs-label">Pesquisar</span></div>
+        <span class="f3-flow-arrow">&rarr;</span>
+        <div class="f3-flow-step"><span class="fs-num">P4</span><span class="fs-label">Relatorio</span></div>
+        <span class="f3-flow-arrow">&rarr;</span>
+        <div class="f3-flow-step"><span class="fs-num">P5</span><span class="fs-label">PRD Final</span></div>
+        <span class="f3-flow-arrow">&rarr;</span>
+        <div class="f3-flow-step"><span class="fs-num">P6</span><span class="fs-label">Construir</span></div>
+        <span class="f3-flow-arrow">&rarr;</span>
+        <div class="f3-flow-step"><span class="fs-num">P7</span><span class="fs-label">Deploy</span></div>
+      </div>
+
+      <!-- PASSO 1 -->
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-num-big">P1</div>
+          <div>
+            <div class="step-title">Briefing Generator</div>
+            <div class="step-subtitle">Transforma a tua dor num PRD base em 2 minutos</div>
+          </div>
+        </div>
+        <div class="step-meta">
+          <span class="meta-tag meta-tool">briefing-generator.expressia.pt</span>
+          <span class="meta-tag meta-time">5 min</span>
+          <span class="meta-tag meta-output">PRD base</span>
+        </div>
+        <div class="card action">
+          <div class="card-label">O que fazer</div>
+          <ol class="numbered">
+            <li>Abre <strong>briefing-generator.expressia.pt</strong></li>
+            <li>Escreve o nome do teu projecto</li>
+            <li>Escolhe o teu nivel (Iniciante / Intermediario / Avancado)</li>
+            <li>Descreve a tua dor em 1-2 frases</li>
+            <li>Lista 3 funcionalidades essenciais</li>
+            <li>Descreve para quem e a solucao</li>
+            <li>Clica em <strong>"Exportar Briefing JSON"</strong></li>
+            <li>Cria uma pasta para o teu projecto e dentro dela uma pasta <code>docs/</code></li>
+            <li>Guarda o ficheiro exportado como <code>docs/briefing-base.json</code></li>
+          </ol>
+        </div>
+        <div class="card example">
+          <div class="card-label">Exemplo real -- Telmo (Personal Trainer Virtual)</div>
+          <strong>Nome:</strong> Personal Trainer Virtual<br>
+          <strong>Nivel:</strong> Avancado<br>
+          <strong>Dor:</strong> "Pessoas terem um personal trainer virtual, porque nem todas conseguem pagar 200/300EUR por mes a um personal trainer"<br>
+          <strong>Funcionalidades:</strong> planos de treino, acompanhamento, correccao de exercicios/nutricao<br>
+          <strong>Para quem:</strong> pessoas que nao conseguem pagar 200/300EUR por mes a um personal trainer
+        </div>
+        <div class="card output">
+          <div class="card-label">O que recebes</div>
+          A ferramenta gera dois blocos:<br>
+          <strong>1. Payload de Orquestracao</strong> -- estrutura tecnica do projecto<br>
+          <strong>2. Blueprint Estrategico</strong> -- directrizes de design e execucao<br><br>
+          Ambos ficam guardados no teu <code>docs/briefing-base.json</code>. E o teu PRD base.<br><br>
+          <strong style="color: var(--magenta);">PARA!</strong> Nao copies estes blocos para o terminal. Ainda nao. Falta o passo mais importante: <strong>PESQUISA</strong>.
+        </div>
+        <div class="card warning">
+          <div class="card-label">Porque nao avancamos ja para o codigo</div>
+          O Briefing Generator da-te um PRD generico. Nao sabe nada sobre o mercado de fitness virtual, apps concorrentes, precos praticados, modelos de negocio que funcionam. Se construires com isto, vais ter uma app tecnicamente correcta mas comercialmente cega.
+        </div>
+      </div>
+
+      <!-- PASSO 2 -->
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-num-big">P2</div>
+          <div>
+            <div class="step-title">Gerar Prompt de Pesquisa</div>
+            <div class="step-subtitle">Pede a IA para criar perguntas especificas para o TEU caso</div>
+          </div>
+        </div>
+        <div class="step-meta">
+          <span class="meta-tag meta-tool">Claude Code / Gemini CLI</span>
+          <span class="meta-tag meta-time">5 min</span>
+          <span class="meta-tag meta-output">Perguntas de pesquisa personalizadas</span>
+        </div>
+        <div class="card action">
+          <div class="card-label">O que fazer</div>
+          <ol class="numbered">
+            <li>Abre o terminal (Claude Code ou Gemini CLI)</li>
+            <li>Cola o prompt abaixo, substituindo os campos a <span class="placeholder">dourado</span></li>
+            <li>A IA vai gerar 5-10 perguntas de pesquisa especificas para o teu projecto</li>
+            <li>Guarda essas perguntas -- vais usa-las no Passo 3</li>
+          </ol>
+        </div>
+        <h3>Prompt para copiar</h3>
+        <div class="prompt-block">
+          <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
+          <div class="prompt-code">Tenho uma ideia de projecto e preciso de fazer pesquisa antes de construir.
+
+O meu projecto: <span class="placeholder">[NOME DO PROJECTO]</span>
+A dor que resolve: <span class="placeholder">[A TUA DOR EM 1-2 FRASES]</span>
+Publico-alvo: <span class="placeholder">[PARA QUEM E]</span>
+Funcionalidades principais: <span class="placeholder">[AS 3 FUNCIONALIDADES]</span>
+
+Preciso que geres 5-10 perguntas de pesquisa especificas para eu investigar ANTES de construir. As perguntas devem cobrir:
+
+1. MERCADO -- Que solucoes ja existem? Quais sao os concorrentes directos e indirectos?
+2. PUBLICO -- Quem sao estas pessoas exactamente? O que ja tentaram? Porque falharam?
+3. MODELO DE NEGOCIO -- Como e que projectos semelhantes ganham dinheiro? Precos praticados?
+4. FUNCIONALIDADES -- Que features sao essenciais vs. nice-to-have? O que diferencia os bons dos maus?
+5. TECNOLOGIA -- Que APIs, servicos ou integracoes podem acelerar a construcao?
+
+Regras:
+- Perguntas especificas para o MEU caso (nao genericas)
+- Cada pergunta deve ser pesquisavel numa LLM
+- Ordena por prioridade (mais importante primeiro)</div>
+        </div>
+        <div class="card example">
+          <div class="card-label">Exemplo -- O que o Telmo receberia</div>
+          <strong>Perguntas geradas pela IA:</strong><br>
+          1. Que apps de personal trainer virtual ja existem em Portugal e quanto cobram?<br>
+          2. Qual e o perfil exacto de quem procura PT virtual -- idade, rendimento, objectivos?<br>
+          3. Como e que apps como Freeletics, Nike Training e Fitbod reteem utilizadores?<br>
+          4. Planos de treino com IA precisam de validacao por profissionais de saude?<br>
+          5. Que APIs de exercicios/nutricao existem (ExerciseDB, Nutritionix, Spoonacular)?<br>
+          6. Modelo freemium vs. subscricao: qual converte melhor em fitness?<br>
+          7. Como e que um PT virtual pode diferenciar-se de conteudo gratuito no YouTube?
+        </div>
+      </div>
+
+      <!-- PASSO 3 -->
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-num-big">P3</div>
+          <div>
+            <div class="step-title">Pesquisar em 3 LLMs</div>
+            <div class="step-subtitle">Investiga o teu mercado com 3 perspectivas diferentes</div>
+          </div>
+        </div>
+        <div class="step-meta">
+          <span class="meta-tag meta-tool">Perplexity + GPT + Grok/Gemini</span>
+          <span class="meta-tag meta-time">15-20 min</span>
+          <span class="meta-tag meta-output">3 conjuntos de resultados</span>
+        </div>
+        <div class="card action">
+          <div class="card-label">O que fazer</div>
+          <ol class="numbered">
+            <li>Abre 3 separadores: <strong>Perplexity</strong>, <strong>ChatGPT</strong>, <strong>Grok ou Gemini</strong></li>
+            <li>Em cada um, cola as perguntas do Passo 2 (todas de uma vez)</li>
+            <li>Cada LLM vai dar-te respostas diferentes -- isso e o objectivo</li>
+            <li>Cria uma pasta <code>docs/</code> no teu projecto (se ainda nao existe)</li>
+            <li>Guarda cada resultado num ficheiro separado:
+              <br><code>docs/pesquisa-perplexity.md</code>
+              <br><code>docs/pesquisa-chatgpt.md</code>
+              <br><code>docs/pesquisa-grok.md</code>
+            </li>
+          </ol>
+        </div>
+        <div class="card warning">
+          <div class="card-label">Porque guardar em ficheiros e nao copiar para o terminal</div>
+          Cada pesquisa pode ter milhares de palavras. Se colares 3 pesquisas directamente no terminal, vais estourar o contexto da IA e a qualidade da analise cai. <strong>Ficheiros resolvem isto:</strong> a IA le cada um separadamente, com calma, sem perder informacao.
+        </div>
+        <div class="card example">
+          <div class="card-label">Porque 3 e nao 1</div>
+          <strong>Perplexity</strong> -- pesquisa web real, com fontes. Da-te dados concretos, URLs, numeros.<br>
+          <strong>ChatGPT</strong> -- analise e insights. Bom a sintetizar e a encontrar padroes.<br>
+          <strong>Grok / Gemini</strong> -- perspectiva diferente. Pode apanhar angulos que os outros falharam.<br><br>
+          3 fontes = triangulacao. Se as 3 dizem a mesma coisa, e verdade. Se divergem, encontraste uma oportunidade.
+        </div>
+      </div>
+
+      <!-- PASSO 4 -->
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-num-big">P4</div>
+          <div>
+            <div class="step-title">Gerar Relatorio Tecnico</div>
+            <div class="step-subtitle">Transforma 3 pesquisas num documento unico e estruturado</div>
+          </div>
+        </div>
+        <div class="step-meta">
+          <span class="meta-tag meta-tool">Claude Code / Gemini CLI</span>
+          <span class="meta-tag meta-time">5 min</span>
+          <span class="meta-tag meta-output">Relatorio tecnico</span>
+        </div>
+        <div class="card action">
+          <div class="card-label">O que fazer</div>
+          <ol class="numbered">
+            <li>Confirma que os 3 ficheiros do Passo 3 estao na pasta <code>docs/</code></li>
+            <li>Confirma que o <code>docs/briefing-base.json</code> do Passo 1 tambem esta la</li>
+            <li>Abre o terminal <strong>na pasta do teu projecto</strong> (Claude Code ou Gemini CLI)</li>
+            <li>Cola o prompt abaixo -- e curto, a IA vai ler os ficheiros sozinha</li>
+          </ol>
+        </div>
+        <h3>A tua pasta neste momento</h3>
+        <div class="prompt-block">
+          <div class="prompt-code">meu-projecto/
+└── docs/
+    ├── briefing-base.json          ← Passo 1
+    ├── pesquisa-perplexity.md      ← Passo 3
+    ├── pesquisa-chatgpt.md         ← Passo 3
+    └── pesquisa-grok.md            ← Passo 3</div>
+        </div>
+        <h3>Prompt para copiar</h3>
+        <div class="prompt-block">
+          <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
+          <div class="prompt-code">Le o meu briefing base em docs/briefing-base.json e as 3 pesquisas de mercado em docs/pesquisa-perplexity.md, docs/pesquisa-chatgpt.md e docs/pesquisa-grok.md
+
+Cruza as 3 fontes com o contexto do meu projecto e gera um RELATORIO TECNICO com estas seccoes:
+
+1. RESUMO EXECUTIVO (3-5 bullets)
+2. ANALISE DE MERCADO -- concorrentes, precos, gaps identificados
+3. PERFIL DO PUBLICO -- quem sao, o que querem, o que ja tentaram
+4. FUNCIONALIDADES VALIDADAS -- o que as 3 fontes concordam que e essencial
+5. MODELO DE NEGOCIO RECOMENDADO -- baseado no que funciona no mercado
+6. RISCOS E OPORTUNIDADES -- onde o projecto pode falhar e onde pode brilhar
+7. STACK TECNICA RECOMENDADA -- APIs, servicos, integracoes concretas
+8. MVP RECOMENDADO -- as 3-5 features para a primeira versao
+
+Regras:
+- Cruza as 3 fontes. Se divergem, indica.
+- Sem opiniao -- apenas dados e conclusoes fundamentadas.
+- Grava o resultado em docs/relatorio-tecnico.md</div>
+        </div>
+        <div class="card output">
+          <div class="card-label">O que recebes</div>
+          A IA grava <code>docs/relatorio-tecnico.md</code> na tua pasta. Um relatorio que nao existiria se tivesses saltado directamente para o codigo. Agora sabes:<br>
+          - Quem sao os concorrentes e quanto cobram<br>
+          - Que features sao obrigatorias vs. diferenciadores<br>
+          - Que modelo de negocio funciona no teu mercado<br>
+          - Que APIs e servicos podes usar para acelerar
+        </div>
+      </div>
+
+      <!-- PASSO 5 -->
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-num-big">P5</div>
+          <div>
+            <div class="step-title">PRD Enriquecido</div>
+            <div class="step-subtitle">Combina o PRD base + relatorio tecnico num PRD real</div>
+          </div>
+        </div>
+        <div class="step-meta">
+          <span class="meta-tag meta-tool">Claude Code / Gemini CLI</span>
+          <span class="meta-tag meta-time">5 min</span>
+          <span class="meta-tag meta-output">PRD final pronto para construcao</span>
+        </div>
+        <div class="card action">
+          <div class="card-label">O que fazer</div>
+          <ol class="numbered">
+            <li>Confirma que tens <code>docs/briefing-base.json</code> (Passo 1) e <code>docs/relatorio-tecnico.md</code> (Passo 4)</li>
+            <li>No mesmo terminal (na pasta do teu projecto), cola o prompt abaixo</li>
+            <li>A IA vai ler os dois ficheiros e fundir num PRD informado e fundamentado</li>
+            <li>Este e o PRD que vais usar para construir -- nao o generico do Passo 1</li>
+          </ol>
+        </div>
+        <h3>Prompt para copiar</h3>
+        <div class="prompt-block">
+          <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
+          <div class="prompt-code">Le o meu PRD base em docs/briefing-base.json e o relatorio tecnico em docs/relatorio-tecnico.md
+
+Funde os dois num PRD FINAL pronto para construcao. Grava o resultado em docs/prd-final.md
+
+O PRD deve:
+1. Usar as funcionalidades VALIDADAS pela pesquisa (nao as genericas)
+2. Incluir o modelo de negocio recomendado
+3. Usar as APIs e servicos concretos identificados
+4. Definir o MVP com base no que o mercado pede
+5. Incluir criterios de sucesso medidos em numeros reais
+
+Formato:
+- Visao do projecto (2-3 frases)
+- Problema + publico (com dados da pesquisa)
+- MVP: funcionalidades com criterios de aceitacao
+- Stack tecnica com justificacao
+- Modelo de negocio
+- Metricas de sucesso
+
+Este PRD vai ser entregue directamente ao Claude Code / Gemini CLI para construcao. Deve ser claro, concreto e sem ambiguidade.</div>
+        </div>
+        <div class="card example">
+          <div class="card-label">A tua pasta neste momento</div>
+          <div class="prompt-code">meu-projecto/
+└── docs/
+    ├── briefing-base.json          ← Passo 1
+    ├── pesquisa-perplexity.md      ← Passo 3
+    ├── pesquisa-chatgpt.md         ← Passo 3
+    ├── pesquisa-grok.md            ← Passo 3
+    ├── relatorio-tecnico.md        ← Passo 4
+    └── prd-final.md                ← Passo 5 (acabou de ser gerado)</div>
+        </div>
+        <div class="card output">
+          <div class="card-label">A diferenca</div>
+          <strong>PRD generico (Passo 1):</strong> "Maximizar a percepcao de valor para o utilizador final. Clean Code e padroes DRY."<br><br>
+          <strong>PRD enriquecido (Passo 5):</strong> "App freemium de treino personalizado com IA. Plano gratuito: 3 treinos/semana gerados por IA com base no perfil. Plano Pro (8EUR/mes): treinos ilimitados + nutricao + progresso. API ExerciseDB para base de exercicios. Diferenciador: planos adaptados ao equipamento que o utilizador TEM (casa vs. ginasio)."
+        </div>
+      </div>
+
+      <!-- PASSO 6 -->
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-num-big">P6</div>
+          <div>
+            <div class="step-title">Construir</div>
+            <div class="step-subtitle">Entrega o PRD enriquecido a ferramenta de construcao</div>
+          </div>
+        </div>
+        <div class="step-meta">
+          <span class="meta-tag meta-tool">Claude Code / Gemini CLI / Antigravity</span>
+          <span class="meta-tag meta-time">90-120 min</span>
+          <span class="meta-tag meta-output">App funcional</span>
+        </div>
+        <div class="card action">
+          <div class="card-label">O que fazer</div>
+          <ol class="numbered">
+            <li>Ja tens a pasta do projecto com tudo em <code>docs/</code> -- e aqui que vais construir</li>
+            <li>Abre o terminal nessa pasta</li>
+            <li>Cola o prompt abaixo -- a IA le o PRD e comeca a construir</li>
+            <li>A IA cria ficheiro a ficheiro, componente a componente</li>
+            <li>Deixa-a trabalhar. Intervem so quando ela pedir ou quando vires algo errado</li>
+            <li>Quando tiver uma versao funcional, testa no browser: <code>npm run dev</code></li>
+          </ol>
+        </div>
+        <h3>Prompt para copiar</h3>
+        <div class="prompt-block">
+          <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
+          <div class="prompt-code">Le o PRD final em docs/prd-final.md e constroi o projecto completo. Segue exactamente o que esta no PRD -- funcionalidades, stack tecnica, modelo de negocio. Comeca pelo MVP.</div>
+        </div>
+        <div class="card example">
+          <div class="card-label">Que ferramenta usar</div>
+          <strong>Claude Code (CLI)</strong> -- no terminal, escreve directamente ficheiros. O mais potente.<br>
+          <strong>Gemini CLI</strong> -- alternativa ao Claude Code, mesmo conceito.<br>
+          <strong>Antigravity (IDE)</strong> -- interface visual, bom para quem prefere ver o codigo enquanto e gerado.<br><br>
+          Todas fazem o mesmo: recebem o PRD e constroem. Escolhe a que te sentires mais confortavel.
+        </div>
+        <div class="card warning">
+          <div class="card-label">Se algo nao funcionar</div>
+          Nao entres em panico. Copia o erro, cola no terminal e diz: "Este erro apareceu. Corrige." A IA resolve a maioria dos erros sozinha. Se ficar bloqueado, chama o Eurico.
+        </div>
+      </div>
+
+      <!-- PASSO 7 -->
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-num-big">P7</div>
+          <div>
+            <div class="step-title">Deploy</div>
+            <div class="step-subtitle">Publica a tua app. URL real. O mundo pode ver.</div>
+          </div>
+        </div>
+        <div class="step-meta">
+          <span class="meta-tag meta-tool">GitHub + Vercel</span>
+          <span class="meta-tag meta-time">15-30 min</span>
+          <span class="meta-tag meta-output">URL publica</span>
+        </div>
+        <div class="card action">
+          <div class="card-label">O que fazer</div>
+          <ol class="numbered">
+            <li>No terminal: <code>git init</code> e <code>git add .</code> e <code>git commit -m "primeiro deploy"</code></li>
+            <li>Cria um repositorio no GitHub (pode ser privado)</li>
+            <li>Faz push: <code>git remote add origin [URL]</code> e <code>git push -u origin main</code></li>
+            <li>Vai a <strong>vercel.com</strong> e importa o repositorio</li>
+            <li>Clica em Deploy</li>
+            <li>Em 1-2 minutos, tens uma URL publica</li>
+          </ol>
+        </div>
+        <div class="card output">
+          <div class="card-label">Resultado final</div>
+          <strong>Ha 3 horas:</strong> "Quero fazer um personal trainer virtual."<br>
+          <strong>Agora:</strong> Uma app real, com funcionalidades validadas por pesquisa, modelo de negocio definido, deployed numa URL publica que podes partilhar com qualquer pessoa.<br><br>
+          <strong style="color: var(--cyan);">Isto e o metodo ORIGINAI.</strong> Clareza antes de execucao. Pesquisa antes de codigo. 90% clareza, 10% delegacao informada.
+        </div>
+      </div>
+
+      <!-- Resumo -->
+      <div class="card" style="border-color: rgba(0,245,255,0.2); text-align: center;">
+        <h3 style="margin-top: 0;">Resumo do percurso</h3>
+        <table class="summary-table">
+          <thead>
+            <tr><th>Passo</th><th>Ferramenta</th><th>Tempo</th><th>Output</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>P1</td><td>Briefing Generator</td><td>5 min</td><td>PRD base</td></tr>
+            <tr><td>P2</td><td>Claude / Gemini</td><td>5 min</td><td>Perguntas de pesquisa</td></tr>
+            <tr><td>P3</td><td>Perplexity + GPT + Grok</td><td>15-20 min</td><td>3 pesquisas</td></tr>
+            <tr><td>P4</td><td>Claude / Gemini</td><td>5 min</td><td>Relatorio tecnico</td></tr>
+            <tr><td>P5</td><td>Claude / Gemini</td><td>5 min</td><td>PRD final</td></tr>
+            <tr><td>P6</td><td>Claude Code / Gemini CLI / Antigravity</td><td>90-120 min</td><td>App funcional</td></tr>
+            <tr><td>P7</td><td>GitHub + Vercel</td><td>15-30 min</td><td>URL publica</td></tr>
+            <tr style="font-weight:800; color:var(--cyan);"><td></td><td><strong>Total</strong></td><td><strong>~3 horas</strong></td><td><strong>Projecto deployed</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
 
     </div>
 
@@ -1486,12 +2033,12 @@ Comeca agora explorando o repositorio.</div>
           <table class="summary-table">
             <thead><tr><th>Bloco</th><th>Exercicio</th><th>Timer</th></tr></thead>
             <tbody>
-              <tr><td>B2 -- Expressao</td><td>Escrever sobre o projecto</td><td>15 min</td></tr>
-              <tr><td>B3 -- Brief</td><td>QA1 + Brief</td><td>15 min</td></tr>
-              <tr><td>B4 -- Detalhamento</td><td>Detalhar Brief</td><td>20 min</td></tr>
-              <tr><td>B5 -- PRD + Etapas</td><td>Criar etapas e tarefas</td><td>20 min</td></tr>
-              <tr><td>B6 -- Tarefas</td><td>Executar 3 tarefas com IA</td><td>10 min</td></tr>
-              <tr><td>B7 -- Pipeline</td><td>Avancar projecto pelo pipeline</td><td>30 min</td></tr>
+              <tr><td>F3.1 -- Expressao</td><td>Escrever sobre o projecto</td><td>15 min</td></tr>
+              <tr><td>F3.2 -- Brief</td><td>QA1 + Brief</td><td>15 min</td></tr>
+              <tr><td>F3.3 -- Detalhamento</td><td>Detalhar Brief</td><td>20 min</td></tr>
+              <tr><td>F3.4 -- PRD + Etapas</td><td>Criar etapas e tarefas</td><td>20 min</td></tr>
+              <tr><td>F3.5 -- Tarefas</td><td>Executar 3 tarefas com IA</td><td>10 min</td></tr>
+              <tr><td>F3.6 -- Pipeline</td><td>Avancar projecto pelo pipeline</td><td>30 min</td></tr>
             </tbody>
           </table>
         </div>
