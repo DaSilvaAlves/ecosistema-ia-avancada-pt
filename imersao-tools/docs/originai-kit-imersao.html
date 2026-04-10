@@ -1046,13 +1046,11 @@
         <span class="f3-flow-arrow">&rarr;</span>
         <div class="f3-flow-step"><span class="fs-num">P3</span><span class="fs-label">Pesquisar</span></div>
         <span class="f3-flow-arrow">&rarr;</span>
-        <div class="f3-flow-step"><span class="fs-num">P4</span><span class="fs-label">Relatorio</span></div>
+        <div class="f3-flow-step"><span class="fs-num">P4</span><span class="fs-label">PRD Tecnico</span></div>
         <span class="f3-flow-arrow">&rarr;</span>
-        <div class="f3-flow-step"><span class="fs-num">P5</span><span class="fs-label">PRD Final</span></div>
+        <div class="f3-flow-step"><span class="fs-num">P5</span><span class="fs-label">Construir</span></div>
         <span class="f3-flow-arrow">&rarr;</span>
-        <div class="f3-flow-step"><span class="fs-num">P6</span><span class="fs-label">Construir</span></div>
-        <span class="f3-flow-arrow">&rarr;</span>
-        <div class="f3-flow-step"><span class="fs-num">P7</span><span class="fs-label">Deploy</span></div>
+        <div class="f3-flow-step"><span class="fs-num">P6</span><span class="fs-label">Deploy</span></div>
       </div>
 
       <!-- PASSO 1 -->
@@ -1061,26 +1059,29 @@
           <div class="step-num-big">P1</div>
           <div>
             <div class="step-title">Briefing Generator</div>
-            <div class="step-subtitle">Transforma a tua dor num PRD base em 2 minutos</div>
+            <div class="step-subtitle">Transforma a tua dor num briefing estruturado em 2 minutos</div>
           </div>
         </div>
         <div class="step-meta">
           <span class="meta-tag meta-tool">briefing-generator.expressia.pt</span>
           <span class="meta-tag meta-time">5 min</span>
-          <span class="meta-tag meta-output">PRD base</span>
+          <span class="meta-tag meta-output">2 ficheiros na pasta</span>
         </div>
         <div class="card action">
           <div class="card-label">O que fazer</div>
           <ol class="numbered">
-            <li>Abre <strong>briefing-generator.expressia.pt</strong></li>
-            <li>Escreve o nome do teu projecto</li>
-            <li>Escolhe o teu nivel (Iniciante / Intermediario / Avancado)</li>
-            <li>Descreve a tua dor em 1-2 frases</li>
-            <li>Lista 3 funcionalidades essenciais</li>
-            <li>Descreve para quem e a solucao</li>
-            <li>Clica em <strong>"Exportar Briefing JSON"</strong></li>
             <li>Cria uma pasta para o teu projecto e dentro dela uma pasta <code>docs/</code></li>
-            <li>Guarda o ficheiro exportado como <code>docs/briefing-base.json</code></li>
+            <li>Abre <strong>briefing-generator.expressia.pt</strong></li>
+            <li>Preenche os 4 passos:
+              <br>— <strong>Passo 1:</strong> Nome do projecto + nivel de experiencia
+              <br>— <strong>Passo 2:</strong> A tua dor (o problema que queres resolver)
+              <br>— <strong>Passo 3:</strong> 3 funcionalidades principais (uma por linha)
+              <br>— <strong>Passo 4:</strong> Para quem e a solucao + o que NAO queres (opcional)
+            </li>
+            <li>No final, a ferramenta gera dois blocos. Guarda <strong>cada um separadamente</strong>:
+              <br>— Clica em <strong>"Copiar Payload de Orquestracao"</strong> → abre o Bloco de Notas → cola → guarda como <code>docs/payload.md</code>
+              <br>— Clica em <strong>"Copiar Blueprint para Claude Code"</strong> → abre o Bloco de Notas → cola → guarda como <code>docs/blueprint.md</code>
+            </li>
           </ol>
         </div>
         <div class="card example">
@@ -1093,15 +1094,15 @@
         </div>
         <div class="card output">
           <div class="card-label">O que recebes</div>
-          A ferramenta gera dois blocos:<br>
-          <strong>1. Payload de Orquestracao</strong> -- estrutura tecnica do projecto<br>
-          <strong>2. Blueprint Estrategico</strong> -- directrizes de design e execucao<br><br>
-          Ambos ficam guardados no teu <code>docs/briefing-base.json</code>. E o teu PRD base.<br><br>
+          Dois ficheiros na tua pasta:<br><br>
+          <strong>1. <code>docs/payload.md</code></strong> — Payload de Orquestracao: estrutura tecnica do projecto (scaffolding, stack, accoes)<br>
+          <strong>2. <code>docs/blueprint.md</code></strong> — Blueprint Estrategico: visao, posicionamento, directrizes de design e execucao<br><br>
+          Juntos, sao o teu briefing base. Mas ainda e <strong>generico</strong> — a ferramenta nao sabe nada sobre o teu mercado.<br><br>
           <strong style="color: var(--magenta);">PARA!</strong> Nao copies estes blocos para o terminal. Ainda nao. Falta o passo mais importante: <strong>PESQUISA</strong>.
         </div>
         <div class="card warning">
           <div class="card-label">Porque nao avancamos ja para o codigo</div>
-          O Briefing Generator da-te um PRD generico. Nao sabe nada sobre o mercado de fitness virtual, apps concorrentes, precos praticados, modelos de negocio que funcionam. Se construires com isto, vais ter uma app tecnicamente correcta mas comercialmente cega.
+          O Briefing Generator da-te um briefing generico. Nao sabe nada sobre o mercado de fitness virtual, apps concorrentes, precos praticados, modelos de negocio que funcionam. Se construires com isto, vais ter uma app tecnicamente correcta mas comercialmente cega.
         </div>
       </div>
 
@@ -1110,57 +1111,51 @@
         <div class="step-header">
           <div class="step-num-big">P2</div>
           <div>
-            <div class="step-title">Gerar Prompt de Pesquisa</div>
-            <div class="step-subtitle">Pede a IA para criar perguntas especificas para o TEU caso</div>
+            <div class="step-title">Prompt de Pesquisa</div>
+            <div class="step-subtitle">Pede a IA para criar um prompt de pesquisa optimizado para o TEU caso</div>
           </div>
         </div>
         <div class="step-meta">
           <span class="meta-tag meta-tool">Claude Code / Gemini CLI</span>
           <span class="meta-tag meta-time">5 min</span>
-          <span class="meta-tag meta-output">Perguntas de pesquisa personalizadas</span>
+          <span class="meta-tag meta-output">Prompt de pesquisa optimizado</span>
         </div>
         <div class="card action">
           <div class="card-label">O que fazer</div>
           <ol class="numbered">
-            <li>Abre o terminal (Claude Code ou Gemini CLI)</li>
-            <li>Cola o prompt abaixo, substituindo os campos a <span class="placeholder">dourado</span></li>
-            <li>A IA vai gerar 5-10 perguntas de pesquisa especificas para o teu projecto</li>
-            <li>Guarda essas perguntas -- vais usa-las no Passo 3</li>
+            <li>Abre o terminal <strong>na pasta do teu projecto</strong> (Claude Code ou Gemini CLI)</li>
+            <li>Diz a IA que tens o teu briefing em <code>docs/payload.md</code> e <code>docs/blueprint.md</code></li>
+            <li>Pede-lhe para gerar um prompt de pesquisa de mercado optimizado para o teu caso</li>
+            <li>O objectivo: criar um prompt que vais colar em 3 LLMs diferentes (Perplexity, Gemini, GPT)</li>
+            <li>A IA le os teus ficheiros e gera um prompt personalizado -- muito melhor do que generico</li>
           </ol>
         </div>
         <h3>Prompt para copiar</h3>
         <div class="prompt-block">
           <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
-          <div class="prompt-code">Tenho uma ideia de projecto e preciso de fazer pesquisa antes de construir.
+          <div class="prompt-code">Le o meu briefing em docs/payload.md e docs/blueprint.md
 
-O meu projecto: <span class="placeholder">[NOME DO PROJECTO]</span>
-A dor que resolve: <span class="placeholder">[A TUA DOR EM 1-2 FRASES]</span>
-Publico-alvo: <span class="placeholder">[PARA QUEM E]</span>
-Funcionalidades principais: <span class="placeholder">[AS 3 FUNCIONALIDADES]</span>
+Com base no meu projecto, gera um PROMPT DE PESQUISA DE MERCADO optimizado que eu vou colar em 3 LLMs diferentes (Perplexity, Google Gemini e ChatGPT).
 
-Preciso que geres 5-10 perguntas de pesquisa especificas para eu investigar ANTES de construir. As perguntas devem cobrir:
-
-1. MERCADO -- Que solucoes ja existem? Quais sao os concorrentes directos e indirectos?
-2. PUBLICO -- Quem sao estas pessoas exactamente? O que ja tentaram? Porque falharam?
-3. MODELO DE NEGOCIO -- Como e que projectos semelhantes ganham dinheiro? Precos praticados?
-4. FUNCIONALIDADES -- Que features sao essenciais vs. nice-to-have? O que diferencia os bons dos maus?
-5. TECNOLOGIA -- Que APIs, servicos ou integracoes podem acelerar a construcao?
+O prompt deve pedir:
+1. MERCADO -- Que solucoes ja existem? Concorrentes directos e indirectos? Precos praticados?
+2. PUBLICO -- Quem sao estas pessoas? O que ja tentaram? Porque falharam?
+3. MODELO DE NEGOCIO -- Como e que projectos semelhantes ganham dinheiro?
+4. FUNCIONALIDADES -- Que features sao essenciais? O que diferencia os bons dos maus?
+5. TECNOLOGIA -- Que APIs, servicos ou integracoes podem acelerar?
 
 Regras:
-- Perguntas especificas para o MEU caso (nao genericas)
-- Cada pergunta deve ser pesquisavel numa LLM
-- Ordena por prioridade (mais importante primeiro)</div>
+- Perguntas especificas para o MEU projecto (nao genericas)
+- O prompt deve funcionar em qualquer LLM
+- No final do prompt, inclui esta instruccao: "Com base nesta pesquisa, cria um PRD tecnico para uma equipa de desenvolvimento de software. O PRD deve incluir: funcionalidades validadas, stack tecnica recomendada, modelo de negocio, e MVP com criterios de aceitacao."</div>
         </div>
         <div class="card example">
-          <div class="card-label">Exemplo -- O que o Telmo receberia</div>
-          <strong>Perguntas geradas pela IA:</strong><br>
-          1. Que apps de personal trainer virtual ja existem em Portugal e quanto cobram?<br>
-          2. Qual e o perfil exacto de quem procura PT virtual -- idade, rendimento, objectivos?<br>
-          3. Como e que apps como Freeletics, Nike Training e Fitbod reteem utilizadores?<br>
-          4. Planos de treino com IA precisam de validacao por profissionais de saude?<br>
-          5. Que APIs de exercicios/nutricao existem (ExerciseDB, Nutritionix, Spoonacular)?<br>
-          6. Modelo freemium vs. subscricao: qual converte melhor em fitness?<br>
-          7. Como e que um PT virtual pode diferenciar-se de conteudo gratuito no YouTube?
+          <div class="card-label">Porque pedir a IA para gerar o prompt</div>
+          A IA ja leu o teu briefing. Sabe o nome do projecto, a dor, as funcionalidades, o publico. O prompt que ela gera e <strong>personalizado</strong> -- em vez de "que apps existem?", gera "que apps de personal trainer virtual existem em Portugal e quanto cobram?". Muito mais eficaz.
+        </div>
+        <div class="card warning">
+          <div class="card-label">O detalhe importante</div>
+          Repara na ultima instruccao do prompt: pedes a cada LLM para <strong>criar um PRD tecnico</strong> alem de pesquisar. Isto e intencional -- a LLM que fez a pesquisa tem o contexto completo para transformar os dados num documento pronto para construcao.
         </div>
       </div>
 
@@ -1169,39 +1164,46 @@ Regras:
         <div class="step-header">
           <div class="step-num-big">P3</div>
           <div>
-            <div class="step-title">Pesquisar em 3 LLMs</div>
-            <div class="step-subtitle">Investiga o teu mercado com 3 perspectivas diferentes</div>
+            <div class="step-title">Pesquisar + PRD Tecnico</div>
+            <div class="step-subtitle">3 LLMs pesquisam o teu mercado e entregam-te um PRD pronto</div>
           </div>
         </div>
         <div class="step-meta">
-          <span class="meta-tag meta-tool">Perplexity + GPT + Grok/Gemini</span>
-          <span class="meta-tag meta-time">15-20 min</span>
-          <span class="meta-tag meta-output">3 conjuntos de resultados</span>
+          <span class="meta-tag meta-tool">3 LLMs a tua escolha</span>
+          <span class="meta-tag meta-time">20-30 min</span>
+          <span class="meta-tag meta-output">3 pesquisas + 3 PRDs tecnicos</span>
         </div>
         <div class="card action">
           <div class="card-label">O que fazer</div>
           <ol class="numbered">
-            <li>Abre 3 separadores: <strong>Perplexity</strong>, <strong>ChatGPT</strong>, <strong>Grok ou Gemini</strong></li>
-            <li>Em cada um, cola as perguntas do Passo 2 (todas de uma vez)</li>
-            <li>Cada LLM vai dar-te respostas diferentes -- isso e o objectivo</li>
-            <li>Cria uma pasta <code>docs/</code> no teu projecto (se ainda nao existe)</li>
-            <li>Guarda cada resultado num ficheiro separado:
-              <br><code>docs/pesquisa-perplexity.md</code>
-              <br><code>docs/pesquisa-chatgpt.md</code>
-              <br><code>docs/pesquisa-grok.md</code>
+            <li>Abre 3 separadores com as <strong>3 LLMs que mais usas</strong> (ex: Perplexity, ChatGPT, Grok, Google Gemini, Claude — escolhe as tuas)</li>
+            <li>Em cada um, cola o prompt do Passo 2 (inteiro, de uma vez)</li>
+            <li>Cada LLM vai fazer duas coisas: <strong>pesquisar o mercado</strong> e <strong>criar um PRD tecnico</strong></li>
+            <li>Para cada LLM, o processo e sempre o mesmo:
+              <br>— Copia o resultado completo
+              <br>— Abre o <strong>Bloco de Notas</strong>
+              <br>— Cola
+              <br>— <strong>Guardar como</strong> na pasta <code>docs/</code> do teu projecto
+            </li>
+            <li>Nomes dos ficheiros (adapta ao nome da LLM que usaste):
+              <br><code>docs/pesquisa-1.md</code>
+              <br><code>docs/pesquisa-2.md</code>
+              <br><code>docs/pesquisa-3.md</code>
             </li>
           </ol>
         </div>
         <div class="card warning">
           <div class="card-label">Porque guardar em ficheiros e nao copiar para o terminal</div>
-          Cada pesquisa pode ter milhares de palavras. Se colares 3 pesquisas directamente no terminal, vais estourar o contexto da IA e a qualidade da analise cai. <strong>Ficheiros resolvem isto:</strong> a IA le cada um separadamente, com calma, sem perder informacao.
+          Cada pesquisa pode ter milhares de palavras. Se colares 3 pesquisas directamente no terminal, vais estourar o contexto da IA e a qualidade cai. <strong>Ficheiros resolvem isto:</strong> a IA le cada um separadamente, com calma, sem perder informacao.
         </div>
         <div class="card example">
           <div class="card-label">Porque 3 e nao 1</div>
-          <strong>Perplexity</strong> -- pesquisa web real, com fontes. Da-te dados concretos, URLs, numeros.<br>
-          <strong>ChatGPT</strong> -- analise e insights. Bom a sintetizar e a encontrar padroes.<br>
-          <strong>Grok / Gemini</strong> -- perspectiva diferente. Pode apanhar angulos que os outros falharam.<br><br>
+          Cada LLM tem personalidade, dados e angulos diferentes. Usa as 3 que ja conheces e com quem ja trabalhas — elas ja tem contexto sobre ti.<br><br>
           3 fontes = triangulacao. Se as 3 dizem a mesma coisa, e verdade. Se divergem, encontraste uma oportunidade.
+        </div>
+        <div class="card output">
+          <div class="card-label">Porque as LLMs criam o PRD e nao o Claude Code</div>
+          A LLM que fez a pesquisa tem o contexto completo -- sabe exactamente o que encontrou. Se passasses os dados crus para o Claude Code, ele estaria a interpretar em segunda mao. Assim, o PRD tecnico chega ja pronto e fundamentado nos dados reais.
         </div>
       </div>
 
@@ -1210,71 +1212,8 @@ Regras:
         <div class="step-header">
           <div class="step-num-big">P4</div>
           <div>
-            <div class="step-title">Gerar Relatorio Tecnico</div>
-            <div class="step-subtitle">Transforma 3 pesquisas num documento unico e estruturado</div>
-          </div>
-        </div>
-        <div class="step-meta">
-          <span class="meta-tag meta-tool">Claude Code / Gemini CLI</span>
-          <span class="meta-tag meta-time">5 min</span>
-          <span class="meta-tag meta-output">Relatorio tecnico</span>
-        </div>
-        <div class="card action">
-          <div class="card-label">O que fazer</div>
-          <ol class="numbered">
-            <li>Confirma que os 3 ficheiros do Passo 3 estao na pasta <code>docs/</code></li>
-            <li>Confirma que o <code>docs/briefing-base.json</code> do Passo 1 tambem esta la</li>
-            <li>Abre o terminal <strong>na pasta do teu projecto</strong> (Claude Code ou Gemini CLI)</li>
-            <li>Cola o prompt abaixo -- e curto, a IA vai ler os ficheiros sozinha</li>
-          </ol>
-        </div>
-        <h3>A tua pasta neste momento</h3>
-        <div class="prompt-block">
-          <div class="prompt-code">meu-projecto/
-└── docs/
-    ├── briefing-base.json          ← Passo 1
-    ├── pesquisa-perplexity.md      ← Passo 3
-    ├── pesquisa-chatgpt.md         ← Passo 3
-    └── pesquisa-grok.md            ← Passo 3</div>
-        </div>
-        <h3>Prompt para copiar</h3>
-        <div class="prompt-block">
-          <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
-          <div class="prompt-code">Le o meu briefing base em docs/briefing-base.json e as 3 pesquisas de mercado em docs/pesquisa-perplexity.md, docs/pesquisa-chatgpt.md e docs/pesquisa-grok.md
-
-Cruza as 3 fontes com o contexto do meu projecto e gera um RELATORIO TECNICO com estas seccoes:
-
-1. RESUMO EXECUTIVO (3-5 bullets)
-2. ANALISE DE MERCADO -- concorrentes, precos, gaps identificados
-3. PERFIL DO PUBLICO -- quem sao, o que querem, o que ja tentaram
-4. FUNCIONALIDADES VALIDADAS -- o que as 3 fontes concordam que e essencial
-5. MODELO DE NEGOCIO RECOMENDADO -- baseado no que funciona no mercado
-6. RISCOS E OPORTUNIDADES -- onde o projecto pode falhar e onde pode brilhar
-7. STACK TECNICA RECOMENDADA -- APIs, servicos, integracoes concretas
-8. MVP RECOMENDADO -- as 3-5 features para a primeira versao
-
-Regras:
-- Cruza as 3 fontes. Se divergem, indica.
-- Sem opiniao -- apenas dados e conclusoes fundamentadas.
-- Grava o resultado em docs/relatorio-tecnico.md</div>
-        </div>
-        <div class="card output">
-          <div class="card-label">O que recebes</div>
-          A IA grava <code>docs/relatorio-tecnico.md</code> na tua pasta. Um relatorio que nao existiria se tivesses saltado directamente para o codigo. Agora sabes:<br>
-          - Quem sao os concorrentes e quanto cobram<br>
-          - Que features sao obrigatorias vs. diferenciadores<br>
-          - Que modelo de negocio funciona no teu mercado<br>
-          - Que APIs e servicos podes usar para acelerar
-        </div>
-      </div>
-
-      <!-- PASSO 5 -->
-      <div class="step-block">
-        <div class="step-header">
-          <div class="step-num-big">P5</div>
-          <div>
-            <div class="step-title">PRD Enriquecido</div>
-            <div class="step-subtitle">Combina o PRD base + relatorio tecnico num PRD real</div>
+            <div class="step-title">PRD Tecnico Final</div>
+            <div class="step-subtitle">Funde as 3 pesquisas num PRD unico pronto para construcao</div>
           </div>
         </div>
         <div class="step-meta">
@@ -1285,61 +1224,65 @@ Regras:
         <div class="card action">
           <div class="card-label">O que fazer</div>
           <ol class="numbered">
-            <li>Confirma que tens <code>docs/briefing-base.json</code> (Passo 1) e <code>docs/relatorio-tecnico.md</code> (Passo 4)</li>
-            <li>No mesmo terminal (na pasta do teu projecto), cola o prompt abaixo</li>
-            <li>A IA vai ler os dois ficheiros e fundir num PRD informado e fundamentado</li>
-            <li>Este e o PRD que vais usar para construir -- nao o generico do Passo 1</li>
+            <li>Confirma que a tua pasta <code>docs/</code> tem tudo:
+              <br>— <code>payload.md</code> + <code>blueprint.md</code> (Passo 1)
+              <br>— <code>pesquisa-perplexity.md</code> + <code>pesquisa-chatgpt.md</code> + <code>pesquisa-gemini.md</code> (Passo 3)
+            </li>
+            <li>Abre o terminal <strong>na pasta do teu projecto</strong> (Claude Code ou Gemini CLI)</li>
+            <li>Cola o prompt abaixo -- a IA le tudo e funde num PRD unico</li>
           </ol>
+        </div>
+        <h3>A tua pasta neste momento</h3>
+        <div class="prompt-block">
+          <div class="prompt-code">meu-projecto/
+└── docs/
+    ├── payload.md                  ← Passo 1
+    ├── blueprint.md                ← Passo 1
+    ├── pesquisa-1.md               ← Passo 3 (LLM 1)
+    ├── pesquisa-2.md               ← Passo 3 (LLM 2)
+    └── pesquisa-3.md               ← Passo 3 (LLM 3)</div>
         </div>
         <h3>Prompt para copiar</h3>
         <div class="prompt-block">
           <button class="copy-btn" onclick="copyPrompt(this)">Copiar</button>
-          <div class="prompt-code">Le o meu PRD base em docs/briefing-base.json e o relatorio tecnico em docs/relatorio-tecnico.md
+          <div class="prompt-code">Le o meu briefing base em docs/payload.md e docs/blueprint.md e as 3 pesquisas de mercado em docs/pesquisa-1.md, docs/pesquisa-2.md e docs/pesquisa-3.md
 
-Funde os dois num PRD FINAL pronto para construcao. Grava o resultado em docs/prd-final.md
+Cada pesquisa ja inclui um PRD tecnico gerado pela LLM que pesquisou. Cruza os 3 PRDs com o briefing base e funde tudo num PRD FINAL unico.
 
-O PRD deve:
-1. Usar as funcionalidades VALIDADAS pela pesquisa (nao as genericas)
-2. Incluir o modelo de negocio recomendado
+O PRD final deve:
+1. Usar as funcionalidades VALIDADAS pelas pesquisas (nao as genericas do briefing)
+2. Incluir o modelo de negocio recomendado (o que aparece em pelo menos 2 das 3 fontes)
 3. Usar as APIs e servicos concretos identificados
-4. Definir o MVP com base no que o mercado pede
-5. Incluir criterios de sucesso medidos em numeros reais
+4. Definir o MVP com criterios de aceitacao concretos
+5. Se as fontes divergem, indicar e escolher a opcao mais fundamentada
 
 Formato:
 - Visao do projecto (2-3 frases)
-- Problema + publico (com dados da pesquisa)
+- Problema + publico (com dados das pesquisas)
 - MVP: funcionalidades com criterios de aceitacao
 - Stack tecnica com justificacao
 - Modelo de negocio
 - Metricas de sucesso
 
-Este PRD vai ser entregue directamente ao Claude Code / Gemini CLI para construcao. Deve ser claro, concreto e sem ambiguidade.</div>
-        </div>
-        <div class="card example">
-          <div class="card-label">A tua pasta neste momento</div>
-          <div class="prompt-code">meu-projecto/
-└── docs/
-    ├── briefing-base.json          ← Passo 1
-    ├── pesquisa-perplexity.md      ← Passo 3
-    ├── pesquisa-chatgpt.md         ← Passo 3
-    ├── pesquisa-grok.md            ← Passo 3
-    ├── relatorio-tecnico.md        ← Passo 4
-    └── prd-final.md                ← Passo 5 (acabou de ser gerado)</div>
+Grava o resultado em docs/prd-final.md
+
+Este PRD vai ser entregue directamente para construcao. Deve ser claro, concreto e sem ambiguidade.</div>
         </div>
         <div class="card output">
           <div class="card-label">A diferenca</div>
-          <strong>PRD generico (Passo 1):</strong> "Maximizar a percepcao de valor para o utilizador final. Clean Code e padroes DRY."<br><br>
-          <strong>PRD enriquecido (Passo 5):</strong> "App freemium de treino personalizado com IA. Plano gratuito: 3 treinos/semana gerados por IA com base no perfil. Plano Pro (8EUR/mes): treinos ilimitados + nutricao + progresso. API ExerciseDB para base de exercicios. Diferenciador: planos adaptados ao equipamento que o utilizador TEM (casa vs. ginasio)."
+          <strong>Briefing generico (Passo 1):</strong> "Maximizar a percepcao de valor para o utilizador final. Clean Code e padroes DRY."<br><br>
+          <strong>PRD final (Passo 4):</strong> "App freemium de treino personalizado com IA. Plano gratuito: 3 treinos/semana gerados por IA com base no perfil. Plano Pro (8EUR/mes): treinos ilimitados + nutricao + progresso. API ExerciseDB para base de exercicios. Diferenciador: planos adaptados ao equipamento que o utilizador TEM (casa vs. ginasio)."<br><br>
+          A diferenca? <strong>Pesquisa.</strong> O primeiro e generico. O segundo e fundamentado em dados reais de 3 fontes diferentes.
         </div>
       </div>
 
-      <!-- PASSO 6 -->
+      <!-- PASSO 5 -->
       <div class="step-block">
         <div class="step-header">
-          <div class="step-num-big">P6</div>
+          <div class="step-num-big">P5</div>
           <div>
             <div class="step-title">Construir</div>
-            <div class="step-subtitle">Entrega o PRD enriquecido a ferramenta de construcao</div>
+            <div class="step-subtitle">Entrega o PRD tecnico a ferramenta de construcao</div>
           </div>
         </div>
         <div class="step-meta">
@@ -1351,7 +1294,7 @@ Este PRD vai ser entregue directamente ao Claude Code / Gemini CLI para construc
           <div class="card-label">O que fazer</div>
           <ol class="numbered">
             <li>Ja tens a pasta do projecto com tudo em <code>docs/</code> -- e aqui que vais construir</li>
-            <li>Abre o terminal nessa pasta</li>
+            <li>Abre o terminal nessa pasta (Claude Code ou Gemini CLI)</li>
             <li>Cola o prompt abaixo -- a IA le o PRD e comeca a construir</li>
             <li>A IA cria ficheiro a ficheiro, componente a componente</li>
             <li>Deixa-a trabalhar. Intervem so quando ela pedir ou quando vires algo errado</li>
@@ -1366,7 +1309,7 @@ Este PRD vai ser entregue directamente ao Claude Code / Gemini CLI para construc
         <div class="card example">
           <div class="card-label">Que ferramenta usar</div>
           <strong>Claude Code (CLI)</strong> -- no terminal, escreve directamente ficheiros. O mais potente.<br>
-          <strong>Gemini CLI</strong> -- alternativa ao Claude Code, mesmo conceito.<br>
+          <strong>Gemini CLI</strong> -- alternativa gratuita ao Claude Code, mesmo conceito.<br>
           <strong>Antigravity (IDE)</strong> -- interface visual, bom para quem prefere ver o codigo enquanto e gerado.<br><br>
           Todas fazem o mesmo: recebem o PRD e constroem. Escolhe a que te sentires mais confortavel.
         </div>
@@ -1376,10 +1319,10 @@ Este PRD vai ser entregue directamente ao Claude Code / Gemini CLI para construc
         </div>
       </div>
 
-      <!-- PASSO 7 -->
+      <!-- PASSO 6 -->
       <div class="step-block">
         <div class="step-header">
-          <div class="step-num-big">P7</div>
+          <div class="step-num-big">P6</div>
           <div>
             <div class="step-title">Deploy</div>
             <div class="step-subtitle">Publica a tua app. URL real. O mundo pode ver.</div>
@@ -1417,13 +1360,12 @@ Este PRD vai ser entregue directamente ao Claude Code / Gemini CLI para construc
             <tr><th>Passo</th><th>Ferramenta</th><th>Tempo</th><th>Output</th></tr>
           </thead>
           <tbody>
-            <tr><td>P1</td><td>Briefing Generator</td><td>5 min</td><td>PRD base</td></tr>
-            <tr><td>P2</td><td>Claude / Gemini</td><td>5 min</td><td>Perguntas de pesquisa</td></tr>
-            <tr><td>P3</td><td>Perplexity + GPT + Grok</td><td>15-20 min</td><td>3 pesquisas</td></tr>
-            <tr><td>P4</td><td>Claude / Gemini</td><td>5 min</td><td>Relatorio tecnico</td></tr>
-            <tr><td>P5</td><td>Claude / Gemini</td><td>5 min</td><td>PRD final</td></tr>
-            <tr><td>P6</td><td>Claude Code / Gemini CLI / Antigravity</td><td>90-120 min</td><td>App funcional</td></tr>
-            <tr><td>P7</td><td>GitHub + Vercel</td><td>15-30 min</td><td>URL publica</td></tr>
+            <tr><td>P1</td><td>Briefing Generator</td><td>5 min</td><td>docs/payload.md + docs/blueprint.md</td></tr>
+            <tr><td>P2</td><td>Claude Code / Gemini CLI</td><td>5 min</td><td>Prompt de pesquisa optimizado</td></tr>
+            <tr><td>P3</td><td>3 LLMs a tua escolha</td><td>20-30 min</td><td>3 pesquisas + PRDs tecnicos</td></tr>
+            <tr><td>P4</td><td>Claude Code / Gemini CLI</td><td>5 min</td><td>docs/prd-final.md</td></tr>
+            <tr><td>P5</td><td>Claude Code / Gemini CLI / Antigravity</td><td>90-120 min</td><td>App funcional</td></tr>
+            <tr><td>P6</td><td>GitHub + Vercel</td><td>15-30 min</td><td>URL publica</td></tr>
             <tr style="font-weight:800; color:var(--cyan);"><td></td><td><strong>Total</strong></td><td><strong>~3 horas</strong></td><td><strong>Projecto deployed</strong></td></tr>
           </tbody>
         </table>

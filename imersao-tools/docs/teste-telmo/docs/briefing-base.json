@@ -1,0 +1,38 @@
+{
+  "payload": {
+    "projectName": "FitCoach AI — Personal Trainer Virtual",
+    "problem": "A maioria das pessoas não consegue pagar 200-300 EUR/mês por um personal trainer. Precisam de orientação personalizada mas acessível.",
+    "targetAudience": "Adultos 25-45 anos, nível de fitness iniciante a intermédio, que querem treinar com orientação mas não têm orçamento para PT presencial.",
+    "coreFunctionalities": [
+      "Planos de treino personalizados por IA (com base no perfil, objectivos e equipamento disponível)",
+      "Acompanhamento de progresso (peso, medidas, evolução)",
+      "Chat com IA para dúvidas de treino e nutrição"
+    ],
+    "techStack": "React + Vite, Supabase (auth + DB), API de exercícios (ExerciseDB), IA para geração de planos",
+    "businessModel": "Freemium — plano gratuito limitado + plano Pro mensal",
+    "author": "Telmo Cerveira",
+    "area": "Saúde e Fitness",
+    "date": "2026-04-09"
+  },
+  "blueprint": {
+    "vision": "Democratizar o acesso a treino personalizado através de IA, tornando o que antes custava 200-300 EUR/mês acessível a qualquer pessoa.",
+    "mvp": [
+      "Questionário de perfil (idade, objectivos, equipamento, limitações)",
+      "Geração de plano semanal de treino por IA",
+      "Base de dados de exercícios com demonstrações",
+      "Dashboard de progresso"
+    ],
+    "differentiator": "Planos adaptados ao equipamento que o utilizador TEM (casa vs. ginásio) — não genéricos.",
+    "monetization": "Freemium: 3 treinos/semana grátis. Pro (8 EUR/mês): ilimitados + nutrição + progresso detalhado.",
+    "risks": [
+      "Responsabilidade legal sobre conselhos de saúde",
+      "Qualidade dos planos gerados por IA sem validação profissional",
+      "Concorrência de apps gratuitas (Nike Training, FitOn)"
+    ]
+  },
+  "_meta": {
+    "source": "Manual — dados reais do Telmo via WhatsApp 08/04/2026",
+    "generator": "Manual (Briefing Generator não testado neste run)",
+    "testRun": true
+  }
+}
