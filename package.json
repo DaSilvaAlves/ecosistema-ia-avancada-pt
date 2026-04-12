@@ -83,10 +83,12 @@
     "sync:ide:cursor": "node .aiox-core/infrastructure/scripts/ide-sync/index.js sync --ide cursor",
     "validate:publish": "node bin/utils/validate-publish.js",
     "prepublishOnly": "node bin/utils/validate-publish.js && npm run generate:manifest && npm run validate:manifest",
-    "sync:core": "node scripts/sync-aiox-core.js",
+    "sync:core": "node scripts/sync-aiox-core.js && node scripts/aiox-capabilities-guardian.js restore",
     "sync:core:check": "node scripts/sync-aiox-core.js --check",
-    "sync:core:force": "node scripts/sync-aiox-core.js --force",
-    "postinstall": "node scripts/sync-aiox-core.js --quiet",
+    "sync:core:force": "node scripts/sync-aiox-core.js --force && node scripts/aiox-capabilities-guardian.js restore && npm run sync:ide",
+    "guardian:check": "node scripts/aiox-capabilities-guardian.js check",
+    "guardian:restore": "node scripts/aiox-capabilities-guardian.js restore",
+    "postinstall": "node scripts/sync-aiox-core.js --quiet && node scripts/aiox-capabilities-guardian.js restore",
     "prepare": "husky"
   },
   "dependencies": {
