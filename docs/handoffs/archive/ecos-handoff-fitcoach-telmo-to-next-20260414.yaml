@@ -1,0 +1,87 @@
+from_agent: ux-design-expert
+to_agent: ux-design-expert
+created: 2026-04-14T20:45:00Z
+consumed: true
+consumed_at: 2026-04-15T05:30:00Z
+consumed_by: ux-design-expert
+status: consumed
+consumption_notes: |
+  CONSUMIDO em 15/04/2026 ~05:30 PT pela sessao @ux-design-expert (Uma):
+  - Validados Passos 10-16 do plano de teste end-to-end (todos OK)
+  - Descobertos e fixados 7 bugs adicionais (B7, B2, B12, B1, B5, B8, B9)
+  - Templates Supabase editados em PT-PT (B5)
+  - 3 itens cosmeticos deferidos para v2 (B3, B11, foto perfil)
+  - Criados MENSAGEM-TELMO.md + RETOMA-COMPLETO-FINAL.md
+  Estado entregavel: app pronta para enviar ao cliente Telmo Cerveira.
+  Continuacao em: ecos-handoff-fitcoach-v1-ready-20260415.yaml
+project: fitcoach-ai (cliente Telmo Cerveira)
+project_repo: github.com/DaSilvaAlves/fitcoach-ai
+summary: |
+  Sessao 14/04/2026 com @ux-design-expert (Uma) a desenvolver o FitCoach AI
+  (Personal Trainer virtual PT-PT) para o cliente Telmo Cerveira. 5 commits
+  feitos, deploy em fitcoach-ai-lake.vercel.app funcional mas necessita
+  validacao end-to-end do fluxo completo (login magic link -> onboarding
+  -> gerar plano). Migracao para terminal novo porque contexto da sessao
+  actual esta a atingir limite.
+
+summary_full_handoff_path: imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO.md
+
+context:
+  cliente: Telmo Cerveira (+351 918 700 778, trcerveira@gmail.com)
+  operador_actual: Eurico (contas pessoais, stripe saltado nesta fase)
+  deploy_url: https://fitcoach-ai-lake.vercel.app
+  repo: github.com/DaSilvaAlves/fitcoach-ai (privado)
+  ultimo_commit: ee78810 (fix routing onboarding)
+  estado_git: working tree limpo no repo fitcoach-ai
+
+env_vars_configuradas_vercel:
+  - VITE_SUPABASE_URL
+  - VITE_SUPABASE_ANON_KEY
+  - SUPABASE_SERVICE_ROLE_KEY
+  - ANTHROPIC_API_KEY
+
+env_vars_em_falta:
+  - STRIPE_SECRET_KEY (skipped nesta fase por decisao do Eurico)
+  - STRIPE_PRICE_ID (skipped)
+  - STRIPE_WEBHOOK_SECRET (skipped)
+  - VITE_APP_URL (opcional, fallback window.location.origin)
+
+decisions:
+  - Telmo virou cliente comercial (nao mais teste pedagogico) em 14/04/2026
+  - Google OAuth substituido por magic link email (Eurico atingiu limite Google Cloud)
+  - ExerciseDB API offline substituida por catalogo local de 48 exercicios (wger.de GIFs)
+  - Porta 5200 para evitar conflitos com iamenu (5173)
+  - Stripe saltado nesta fase ("precisa nada disto nesta fase")
+
+files_modified_key:
+  - api/generate-plan.ts (persiste em workout_plans + enforcement planos)
+  - api/stripe-webhook.ts (novo, inactivo)
+  - api/verify-checkout.ts (novo, inactivo)
+  - src/App.tsx (helper hasCompletedOnboarding)
+  - src/hooks/useAuth.tsx (signInWithEmail magic link)
+  - src/pages/LoginPage.tsx (form email)
+  - src/pages/OnboardingPage.tsx (try/catch + banner erro)
+  - src/pages/TermsPage.tsx (novo, 10 seccoes legais)
+  - src/pages/PrivacyPage.tsx (novo, 8 seccoes RGPD)
+  - src/lib/exercises-data.ts (novo, 48 exercicios)
+  - src/lib/exercisedb.ts (le catalogo local)
+  - src/components/onboarding/OnboardingWizard.tsx (step 6 health_consent obrigatorio)
+  - supabase-schema.sql (colunas stripe + health_consent)
+  - vite.config.ts (porta 5200)
+  - README.md (5 passos setup zero)
+
+blockers: []
+
+next_action: |
+  1. Ler imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO.md
+  2. Validar fluxo end-to-end em fitcoach-ai-lake.vercel.app:
+     login magic link -> onboarding -> gerar plano -> ver exercicios
+  3. Se algum passo falhar, F12 Console + screenshot para Uma debugar
+  4. Se tudo OK, decidir com Eurico: reactivar Stripe test mode? Mostrar ao Telmo?
+
+notes: |
+  - Ficheiro .env local tem chaves reais (Supabase URL/anon/service_role + Anthropic)
+  - Nunca commitar .env (gitignored)
+  - Supabase Free pausa apos 7 dias sem actividade — abrir pelo menos 1x/semana
+  - Creditos Anthropic: 5EUR iniciais, gasto ~0.01EUR por plano gerado
+  - O repo fitcoach-ai esta em DaSilvaAlves/fitcoach-ai (privado)
