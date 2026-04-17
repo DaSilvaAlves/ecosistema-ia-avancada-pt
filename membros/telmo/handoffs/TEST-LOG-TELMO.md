@@ -4,7 +4,7 @@
 > Testador: Eurico + Uma (@ux-design-expert)
 > Objectivo: validar TODO o pipeline da imersao com um participante real
 > Kit em teste: `imersao-tools/docs/originai-kit-imersao.html` (8 tabs)
-> Manual Fase 3: `imersao-tools/docs/manual-fase3.html` (7 passos, commit `b3def83`)
+> Manual Fase 3: `imersao-tools/docs/manual-fase3.html` (6 passos, reescrito 10/04 commit `b62445d`)
 > PRD de referencia: `imersao-tools/docs/PRD-IMERSAO-ORIGINAI.md`
 
 ---
@@ -216,7 +216,7 @@ O Eurico faz o percurso completo como se fosse o Telmo:
 | F3-13 | VERIFICAR | Rodape do passo-05 diz "Passo 2 de 6" — ferramenta tem 6 passos internos mas so ha 5 prints. Falta print entre passo 4 e resultado? | Baixo | Eurico confirmar se ha passo intermedio |
 | F3-14 | DECISAO | Kit reescrito de 7 para 6 passos. Antigos P4 (Relatorio) + P5 (PRD) fundidos. LLMs que pesquisam ja criam PRD tecnico. Claude Code recebe PRD pronto. | Alto | Kit actualizado em originai-kit-imersao.html |
 
-### Veredicto Fase 3: EM PREPARACAO (P1-P4 corrigidos, P5-P6 com bugs criticos por corrigir)
+### Veredicto Fase 3: EM CURSO (P1-P4 feitos, kit reescrito 7→6 passos, proximo P5 Construcao)
 
 ---
 
@@ -287,9 +287,10 @@ O Eurico faz o percurso completo como se fosse o Telmo:
 | Fase | Achado | Tipo | PRD actualizado? | Kit actualizado? |
 |------|--------|------|------------------|------------------|
 | F1 | Briefing de 10 perguntas como pre-trabalho (antes do quiz) | OBSERVACAO | NAO | NAO |
-| F3 | Decisao ficheiros > terminal (P1-P4 corrigidos) | DECISAO | NAO | manual-fase3 SIM |
-| F3 | P5-P6 ainda pedem colar no terminal | BUG | NAO | NAO |
+| F3 | Decisao ficheiros > terminal (P1-P4 corrigidos) | DECISAO | NAO | manual-fase3 SIM, kit SIM |
+| F3 | ~~P5-P6 ainda pedem colar no terminal~~ | ~~BUG~~ CORRIGIDO | NAO | SIM (reescrita 10/04) |
 | F3 | Payload BG referencia agentes AIOX | AVISO | NAO | NAO |
+| F3 | Kit reescrito 7→6 passos, LLMs criam PRD | DECISAO | NAO | SIM (reescrita 10/04) |
 
 ---
 
@@ -297,7 +298,7 @@ O Eurico faz o percurso completo como se fosse o Telmo:
 
 | Tab afectada | Achado | Alteracao necessaria | Feito? |
 |--------------|--------|----------------------|--------|
-| Fase 3 | Kit deve reflectir fluxo de ficheiros (nao terminal) | Alinhar com manual-fase3.html | NAO |
+| Fase 3 | ~~Kit deve reflectir fluxo de ficheiros (nao terminal)~~ | ~~Alinhar com manual-fase3.html~~ | SIM (reescrita 10/04) |
 | Templates | Briefing de 10 perguntas (3 blocos) nao esta no kit | Adicionar como template pre-trabalho? | NAO |
 
 ---

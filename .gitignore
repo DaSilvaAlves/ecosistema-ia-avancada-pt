@@ -377,3 +377,7 @@ node_modules/@aiox/
 outputs/minds/
 .aiox-installation-config.yaml
 # End AIOX-FullStack auto-managed section
+
+# Member projects with own git repos — preserved physically, not tracked here
+# (see workspace-governance.md). DevOps decides if any should become submodules.
+membros/telmo/03-codigo/
