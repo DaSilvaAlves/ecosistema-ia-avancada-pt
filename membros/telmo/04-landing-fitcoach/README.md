@@ -57,7 +57,7 @@ Todos os CTAs apontam para `https://fitcoach-ai-lake.vercel.app/login?ref=telmo`
 ### Opção A — Vercel (recomendado)
 
 ```bash
-cd imersao-tools/fitcoach-landing
+cd membros/telmo/04-landing-fitcoach
 npx vercel --prod
 ```
 

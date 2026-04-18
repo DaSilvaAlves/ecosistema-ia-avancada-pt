@@ -145,7 +145,7 @@ No `ProfilePage` mostrar o preço bloqueado real (ler de `price_locked_cents`) e
 **Commits locais por pushar:**
 
 ```bash
-cd imersao-tools/docs/teste-telmo/fitcoach-ai
+cd membros/telmo/03-codigo
 git log --oneline -3
 # 58823c1 refactor(landing): remove pricing section + neutralize trial promises  ← PENDENTE
 # 2116aaa docs: close FASE3 — full test log + Telmo handoff message + final RETOMA
@@ -161,12 +161,12 @@ O commit `58823c1` desta sessão ainda não foi pushed. Não faz sentido pushar 
 | Item | Valor |
 |------|-------|
 | URL pública | https://fitcoach-landing.vercel.app |
-| Localização repo | `imersao-tools/fitcoach-landing/` |
+| Localização repo | `membros/telmo/04-landing-fitcoach/` |
 | Deploy | Vercel, projecto standalone (Eurico owner) |
 | Estrutura | AIDA · 10 secções · single-file HTML + Tailwind CDN |
 | CTAs apontam para | `fitcoach-ai-lake.vercel.app/login?ref=telmo` |
 | Placeholders por preencher | Foto Telmo, video Loom, testemunhos reais, OG image |
-| Documentação | `imersao-tools/fitcoach-landing/README.md` |
+| Documentação | `membros/telmo/04-landing-fitcoach/README.md` |
 
 ---
 
@@ -195,8 +195,8 @@ O commit `58823c1` desta sessão ainda não foi pushed. Não faz sentido pushar 
 
 ### Se Telmo declina ou pede mudança de preço
 
-1. Editar `imersao-tools/fitcoach-landing/index.html` — procurar `4,99€` e `30 dias`, substituir
-2. Redeploy: `cd imersao-tools/fitcoach-landing && npx vercel --prod --yes`
+1. Editar `membros/telmo/04-landing-fitcoach/index.html` — procurar `4,99€` e `30 dias`, substituir
+2. Redeploy: `cd membros/telmo/04-landing-fitcoach && npx vercel --prod --yes`
 3. Ajustar passo 2 (trigger SQL) se número de dias/preço mudar
 
 ---
@@ -205,14 +205,14 @@ O commit `58823c1` desta sessão ainda não foi pushed. Não faz sentido pushar 
 
 | Ficheiro | Status | Commit |
 |----------|--------|--------|
-| `imersao-tools/fitcoach-landing/index.html` | novo | não commited (fora do repo fitcoach-ai) |
-| `imersao-tools/fitcoach-landing/README.md` | novo | não commited (fora do repo fitcoach-ai) |
-| `imersao-tools/docs/teste-telmo/fitcoach-ai/src/pages/LandingPage.tsx` | modificado | `58823c1` (local, não pushed) |
-| `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-OFERTA-TELMO.md` | novo (este ficheiro) | não commited |
+| `membros/telmo/04-landing-fitcoach/index.html` | novo | não commited (fora do repo fitcoach-ai) |
+| `membros/telmo/04-landing-fitcoach/README.md` | novo | não commited (fora do repo fitcoach-ai) |
+| `membros/telmo/03-codigo/src/pages/LandingPage.tsx` | modificado | `58823c1` (local, não pushed) |
+| `membros/telmo/handoffs/RETOMA-OFERTA-TELMO.md` | novo (este ficheiro) | não commited |
 
 ---
 
-**LEMBRETE — REGRA HANDOFF-LOCATION:** ESTE FICHEIRO ESTÁ EM `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-OFERTA-TELMO.md`. O PROJECTO A QUE SE REFERE É O FITCOACH AI (E A SUA LANDING DE VENDA PARA TELMO). LOCALIZAÇÃO CORRECTA. CONSULTAR `.claude/rules/handoff-location.md`.
+**LEMBRETE — REGRA HANDOFF-LOCATION:** ESTE FICHEIRO ESTÁ EM `membros/telmo/handoffs/RETOMA-OFERTA-TELMO.md`. O PROJECTO A QUE SE REFERE É O FITCOACH AI (E A SUA LANDING DE VENDA PARA TELMO). LOCALIZAÇÃO CORRECTA. CONSULTAR `.claude/rules/handoff-location.md`.
 
 ---
 
@@ -221,8 +221,8 @@ O commit `58823c1` desta sessão ainda não foi pushed. Não faz sentido pushar 
 ESTE HANDOFF FOI CRIADO SEGUINDO A REGRA OBRIGATÓRIA `.claude/rules/handoff-location.md`.
 
 - **PROJECTO A QUE SE REFERE:** FitCoach AI (cliente Telmo) — arquitectura de referral `?ref=telmo` + landing de venda
-- **LOCALIZAÇÃO CORRECTA:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-OFERTA-TELMO.md`
-- **LOCALIZAÇÃO ACTUAL:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-OFERTA-TELMO.md`
+- **LOCALIZAÇÃO CORRECTA:** `membros/telmo/handoffs/RETOMA-OFERTA-TELMO.md`
+- **LOCALIZAÇÃO ACTUAL:** `membros/telmo/handoffs/RETOMA-OFERTA-TELMO.md`
 - **COINCIDEM?** `SIM`
 
 **AGENTE RESPONSÁVEL:** @ux-design-expert (Uma)

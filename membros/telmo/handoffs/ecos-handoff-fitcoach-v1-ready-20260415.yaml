@@ -15,9 +15,9 @@ summary: |
   (template em MENSAGEM-TELMO.md, versao WhatsApp recomendada),
   aguardar feedback, e iniciar v2 (Stripe + OAuth Google + foto perfil).
 
-summary_full_handoff_path: imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO-FINAL.md
-test_log_path: imersao-tools/docs/teste-telmo/fitcoach-ai/docs/TESTE-LOG-20260415.md
-delivery_message_path: imersao-tools/docs/teste-telmo/fitcoach-ai/docs/MENSAGEM-TELMO.md
+summary_full_handoff_path: membros/telmo/handoffs/RETOMA-COMPLETO-FINAL.md
+test_log_path: membros/telmo/handoffs/TESTE-LOG-20260415.md
+delivery_message_path: membros/telmo/00-briefing/MENSAGEM-TELMO.md
 
 context:
   cliente: Telmo Cerveira (+351 918 700 778, trcerveira@gmail.com)
@@ -82,7 +82,7 @@ blockers: []
 
 next_action: |
   CENARIO A — Entregar ao Telmo:
-  1. Ler imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO-FINAL.md
+  1. Ler membros/telmo/handoffs/RETOMA-COMPLETO-FINAL.md
   2. Abrir MENSAGEM-TELMO.md, escolher versao WhatsApp (recomendada)
   3. Enviar ao Telmo (+351 918 700 778)
   4. Aguardar feedback

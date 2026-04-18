@@ -118,10 +118,10 @@ O kit `originai-kit-imersao.html` e o manual que os membros seguem na imersao. C
 
 | Ficheiro | Papel |
 |----------|-------|
-| `imersao-tools/docs/RETOMA-TESTE-TELMO.md` | Ponto de entrada — ler PRIMEIRO em qualquer sessao |
-| `imersao-tools/docs/TEST-LOG-TELMO.md` | Diario completo do teste com todos os achados |
+| `membros/telmo/handoffs/RETOMA-TESTE-TELMO.md` | Ponto de entrada — ler PRIMEIRO em qualquer sessao |
+| `membros/telmo/handoffs/TEST-LOG-TELMO.md` | Diario completo do teste com todos os achados |
 | `imersao-tools/docs/originai-kit-imersao.html` | Kit principal — o manual que os membros seguem |
-| `imersao-tools/docs/teste-telmo/docs/` | Pasta do projecto com ficheiros + prints |
+| `membros/telmo/` | Pasta canónica do projecto (subpastas + handoffs + artefactos) |
 | Memoria: `project_telmo_real_client.md` | Telmo e real, projecto e real, Eurico tem de entregar |
 | Memoria: `feedback_prints_never_trust_session.md` | Prints em pasta fisica, NUNCA confiar na sessao |
 | Memoria: `feedback_never_restart_context.md` | NUNCA recomecar do zero, ler RETOMA primeiro |

@@ -26,8 +26,8 @@ Telmo é cliente pago do Eurico. Pediu um **Personal Trainer Virtual** (app web)
 
 O projecto nasceu como teste real do pipeline pedagógico ORIGINAI:
 - P1 Briefing → P2 Prompt Pesquisa → P3 Pesquisa x3 → P4 PRD Final → P5 Construção → P6 Deploy
-- PRD final em `imersao-tools/docs/teste-telmo/docs/prd-final.md`
-- Briefing em `imersao-tools/docs/teste-telmo/docs/briefing-base.json`
+- PRD final em `membros/telmo/02-prd/prd-final.md`
+- Briefing em `membros/telmo/00-briefing/briefing-base.json`
 
 Mas 14/04/2026 mudou de scope: **Telmo virou CLIENTE** (não só teste pedagógico).
 Eurico disse *"ESQUECE TUDO O QUE FALAMOS. É ASSIM O TELMO É UM CLIENTE E VAMOS DESENVOLVER O PROJETO PARA ELE JÁ. TEMOS QUE ENTREGAR O MAIS RÁPIDO POSSIVEL"*.
@@ -46,7 +46,7 @@ Para MOSTRAR ao Telmo funcionando — **não produção plena**:
 ### 2.1 Localização
 
 ```
-C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\fitcoach-ai\
+C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\membros\telmo\03-codigo\
 ```
 
 ### 2.2 Stack existente
@@ -89,7 +89,7 @@ C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\
 
 ---
 
-**LEMBRETE — REGRA HANDOFF-LOCATION:** ESTE FICHEIRO ESTÁ EM `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO.md`. ESTÁ NO SÍTIO CORRECTO (pasta do projecto FitCoach AI). CONSULTAR `.claude/rules/handoff-location.md` antes de o mover.
+**LEMBRETE — REGRA HANDOFF-LOCATION:** ESTE FICHEIRO ESTÁ EM `membros/telmo/handoffs/RETOMA-COMPLETO.md`. ESTÁ NO SÍTIO CORRECTO (pasta canónica do membro Telmo). CONSULTAR `.claude/rules/handoff-location.md` antes de o mover.
 
 ---
 
@@ -362,7 +362,7 @@ fitcoach-ai/
 ### Local dev
 
 ```bash
-cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\fitcoach-ai"
+cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\membros\telmo\03-codigo"
 npm install
 npm run dev            # Porta 5200 (http://localhost:5200)
 npx tsc -b             # Type check
@@ -450,7 +450,7 @@ vercel logs https://fitcoach-ai-lake.vercel.app --follow
 - Acesso: Eurico (owner)
 
 ### `.env` local
-- Localização: `imersao-tools/docs/teste-telmo/fitcoach-ai/.env`
+- Localização: `membros/telmo/03-codigo/.env`
 - **GITIGNORED** — contém chaves reais Supabase URL/anon/service_role + Anthropic
 - **NUNCA commitar**
 
@@ -476,7 +476,7 @@ ou
 
 ### Passo 3 — A sessão nova deve
 
-1. Ler `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO.md` (este ficheiro)
+1. Ler `membros/telmo/handoffs/RETOMA-COMPLETO.md` (este ficheiro)
 2. Verificar `git log --oneline | head -5` para confirmar commit actual
 3. Perguntar ao Eurico: "Qual o próximo passo? Validar fluxo end-to-end? Reactivar Stripe? Outra coisa?"
 
@@ -494,8 +494,8 @@ ou
 ESTE HANDOFF FOI CRIADO SEGUINDO A REGRA OBRIGATÓRIA `.claude/rules/handoff-location.md`.
 
 - **PROJECTO A QUE SE REFERE:** FitCoach AI (cliente Telmo)
-- **LOCALIZAÇÃO CORRECTA:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO.md`
-- **LOCALIZAÇÃO ACTUAL:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO.md`
+- **LOCALIZAÇÃO CORRECTA:** `membros/telmo/handoffs/RETOMA-COMPLETO.md`
+- **LOCALIZAÇÃO ACTUAL:** `membros/telmo/handoffs/RETOMA-COMPLETO.md`
 - **COINCIDEM?** `SIM` ✅
 
 **AGENTE RESPONSÁVEL:** @ux-design-expert (Uma)

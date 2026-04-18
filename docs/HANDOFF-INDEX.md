@@ -53,4 +53,4 @@
 
 ---
 
-*Última actualização: 17/04/2026 — Auditoria 10 bugs Guia/Kit resolvida em produção (commit `93665c8`). 2 anomalias pending: CodeRabbit CLI hang + bump em feature branch. Ver RETOMA-AUDITORIA-10-BUGS-GUIA-KIT-17042026.md.*
+*Última actualização: 18/04/2026 — Auditoria 10 bugs Guia/Kit resolvida em produção (commit `93665c8`). 2 anomalias pending: CodeRabbit CLI hang + bump em feature branch. Ver RETOMA-AUDITORIA-10-BUGS-GUIA-KIT-17042026.md.*

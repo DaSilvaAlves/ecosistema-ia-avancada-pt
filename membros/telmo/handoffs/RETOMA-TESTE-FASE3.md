@@ -7,8 +7,8 @@
 **Data:** 15/04/2026 ~03:20 PT
 **Sessão anterior:** @ux-design-expert (Uma) — resolveu cascata de 3 bugs, contexto no limite
 **Próxima sessão:** continuar com `/aiox-ux-design-expert` OU `/aiox-devops`
-**Log de teste:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/TESTE-LOG-20260415.md`
-**Handoffs anteriores:** `docs/RETOMA-COMPLETO.md` (14/04) + `docs/RETOMA-TESTE-FASE2.md` (15/04 ~02:30)
+**Log de teste:** `membros/telmo/handoffs/TESTE-LOG-20260415.md`
+**Handoffs anteriores:** `membros/telmo/handoffs/RETOMA-COMPLETO.md` (14/04) + `membros/telmo/handoffs/RETOMA-TESTE-FASE2.md` (15/04 ~02:30)
 
 ---
 
@@ -40,7 +40,7 @@ Também ficam 4 bugs cosméticos pendentes para o lote final (B1, B2, B3, B5) �
 ```
 Repo:    github.com/DaSilvaAlves/fitcoach-ai (privado)
 Branch:  main
-Local:   C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\fitcoach-ai
+Local:   C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\membros\telmo\03-codigo
 Working tree: limpo
 ```
 
@@ -78,7 +78,7 @@ Working tree: limpo
 
 ---
 
-**LEMBRETE — REGRA HANDOFF-LOCATION:** ESTE FICHEIRO ESTÁ EM `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-TESTE-FASE3.md`. ESTÁ NO SÍTIO CORRECTO (pasta do projecto FitCoach AI). CONSULTAR `.claude/rules/handoff-location.md` antes de o mover.
+**LEMBRETE — REGRA HANDOFF-LOCATION:** ESTE FICHEIRO ESTÁ EM `membros/telmo/handoffs/RETOMA-TESTE-FASE3.md`. ESTÁ NO SÍTIO CORRECTO (pasta canónica do membro Telmo). CONSULTAR `.claude/rules/handoff-location.md` antes de o mover.
 
 ---
 
@@ -306,15 +306,15 @@ Nota: Uma teve autorização nesta sessão para aplicar código directamente (Eu
 ### 10.2 Ler por ordem (obrigatório)
 
 1. `.claude/rules/handoff-location.md` (regra de localização de handoffs)
-2. `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-TESTE-FASE3.md` (este ficheiro)
-3. `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/TESTE-LOG-20260415.md` (log detalhado — fonte de verdade)
-4. `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-TESTE-FASE2.md` (contexto anterior, apenas se precisar)
-5. `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO.md` (contexto original, apenas se precisar)
+2. `membros/telmo/handoffs/RETOMA-TESTE-FASE3.md` (este ficheiro)
+3. `membros/telmo/handoffs/TESTE-LOG-20260415.md` (log detalhado — fonte de verdade)
+4. `membros/telmo/handoffs/RETOMA-TESTE-FASE2.md` (contexto anterior, apenas se precisar)
+5. `membros/telmo/handoffs/RETOMA-COMPLETO.md` (contexto original, apenas se precisar)
 
 ### 10.3 Primeiros comandos (verificações de integridade)
 
 ```bash
-cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\fitcoach-ai"
+cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\membros\telmo\03-codigo"
 git log --oneline -5
 git status --short
 git rev-parse --abbrev-ref HEAD
@@ -350,7 +350,7 @@ Se Eurico disser sim a todas → avançar para **Passo 10**. Screenshot obrigat�
 ### Ver logs Vercel em tempo real
 
 ```bash
-cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\fitcoach-ai"
+cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\membros\telmo\03-codigo"
 npx vercel logs https://fitcoach-ai-lake.vercel.app --follow
 ```
 
@@ -361,7 +361,7 @@ Dashboard Vercel → Deployments → ⋮ (3 pontos do deployment) → Redeploy �
 ### Rollback rápido (apenas se algo regredir inesperadamente)
 
 ```bash
-cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\fitcoach-ai"
+cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\membros\telmo\03-codigo"
 # CONFIRMAR COM EURICO ANTES:
 git revert d6ec516
 # OU revert em cadeia:
@@ -444,8 +444,8 @@ curl -X POST https://fitcoach-ai-lake.vercel.app/api/generate-plan \
 ESTE HANDOFF FOI CRIADO SEGUINDO A REGRA OBRIGATÓRIA `.claude/rules/handoff-location.md`.
 
 - **PROJECTO A QUE SE REFERE:** FitCoach AI (cliente Telmo) — teste end-to-end fase 3, continuar do Passo 10
-- **LOCALIZAÇÃO CORRECTA:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-TESTE-FASE3.md`
-- **LOCALIZAÇÃO ACTUAL:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-TESTE-FASE3.md`
+- **LOCALIZAÇÃO CORRECTA:** `membros/telmo/handoffs/RETOMA-TESTE-FASE3.md`
+- **LOCALIZAÇÃO ACTUAL:** `membros/telmo/handoffs/RETOMA-TESTE-FASE3.md`
 - **COINCIDEM?** `SIM` ✅
 
 **AGENTE RESPONSÁVEL:** @ux-design-expert (Uma)

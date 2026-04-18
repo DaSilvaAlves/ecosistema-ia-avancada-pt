@@ -7,7 +7,7 @@
 **Data:** 15/04/2026 ~05:30 PT
 **Sessão:** @ux-design-expert (Uma) — fechou Passos 10-16 + lote pré-Telmo
 **Próxima sessão:** entrega ao Telmo OU início de v2 (Stripe / OAuth / foto perfil)
-**Localização:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO-FINAL.md`
+**Localização:** `membros/telmo/handoffs/RETOMA-COMPLETO-FINAL.md`
 
 ---
 
@@ -186,15 +186,15 @@ A app está pronta para ser entregue ao Telmo Cerveira.
 ### 2. Ler por ordem (obrigatório)
 
 1. `.claude/rules/handoff-location.md`
-2. `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO-FINAL.md` (este ficheiro)
-3. `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/TESTE-LOG-20260415.md` (log per-step)
-4. `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/MENSAGEM-TELMO.md` (entrega)
+2. `membros/telmo/handoffs/RETOMA-COMPLETO-FINAL.md` (este ficheiro)
+3. `membros/telmo/handoffs/TESTE-LOG-20260415.md` (log per-step)
+4. `membros/telmo/00-briefing/MENSAGEM-TELMO.md` (entrega)
 5. Handoffs anteriores apenas se necessário
 
 ### 3. Verificações de integridade
 
 ```bash
-cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\fitcoach-ai"
+cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\membros\telmo\03-codigo"
 git log --oneline -5
 git status --short
 ```
@@ -292,8 +292,8 @@ git status --short
 ESTE HANDOFF FOI CRIADO SEGUINDO A REGRA OBRIGATÓRIA `.claude/rules/handoff-location.md`.
 
 - **PROJECTO A QUE SE REFERE:** FitCoach AI (cliente Telmo) — entrega final v1
-- **LOCALIZAÇÃO CORRECTA:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO-FINAL.md`
-- **LOCALIZAÇÃO ACTUAL:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO-FINAL.md`
+- **LOCALIZAÇÃO CORRECTA:** `membros/telmo/handoffs/RETOMA-COMPLETO-FINAL.md`
+- **LOCALIZAÇÃO ACTUAL:** `membros/telmo/handoffs/RETOMA-COMPLETO-FINAL.md`
 - **COINCIDEM?** `SIM` ✅
 
 **AGENTE RESPONSÁVEL:** @ux-design-expert (Uma)

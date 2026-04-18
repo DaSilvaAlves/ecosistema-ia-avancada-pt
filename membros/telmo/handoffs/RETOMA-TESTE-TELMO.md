@@ -11,16 +11,16 @@ Tira prints de cada passo. A Uma analisa e anota.
 - Nome: FitCoach AI — Personal Trainer Virtual
 - Dor: PT presencial custa 200-300 EUR/mes
 - Modelo: free trial 7 dias → 7,99 EUR/mes
-- Pasta: `imersao-tools/docs/teste-telmo/`
+- Pasta: `membros/telmo/`
 
 ## Onde estamos (actualizar a cada sessao)
 
 | Passo | Estado | Ficheiro |
 |-------|--------|----------|
-| P1 Briefing | FEITO (prints reais) | teste-telmo/docs/passo-01..05.png |
-| P2 Prompt Pesquisa | FEITO (simulado) | teste-telmo/docs/perguntas-pesquisa.md |
-| P3 Pesquisa x3 | FEITO (simulado) | teste-telmo/docs/pesquisa-*.md |
-| P4 PRD Final | FEITO (simulado) | teste-telmo/docs/prd-final.md |
+| P1 Briefing | FEITO (prints reais) | membros/telmo/assets/passo-01..05.png |
+| P2 Prompt Pesquisa | FEITO (simulado) | membros/telmo/01-pesquisa/perguntas-pesquisa.md |
+| P3 Pesquisa x3 | FEITO (simulado) | membros/telmo/01-pesquisa/pesquisa-*.md |
+| P4 PRD Final | FEITO (simulado) | membros/telmo/02-prd/prd-final.md |
 | P5 Construcao | PROXIMO | Eurico vai fazer hands-on, print a print |
 | P6 Deploy | PENDENTE | |
 
@@ -50,11 +50,11 @@ Decisao-chave: LLMs que pesquisam ja criam o PRD tecnico (contexto completo). Cl
 
 ## Ficheiros-chave (ler se precisares de contexto)
 
-1. `imersao-tools/docs/TEST-LOG-TELMO.md` — diario completo do teste
+1. `membros/telmo/handoffs/TEST-LOG-TELMO.md` — diario completo do teste
 2. `imersao-tools/docs/manual-fase3.html` — manual que o aluno segue
 3. `imersao-tools/docs/originai-kit-imersao.html` — kit com 8 tabs
 4. `imersao-tools/docs/PRD-IMERSAO-ORIGINAI.md` — PRD da imersao
-5. `imersao-tools/docs/teste-telmo/docs/prd-final.md` — PRD do projecto
+5. `membros/telmo/02-prd/prd-final.md` — PRD do projecto
 
 ## O que fazer ao abrir sessao nova
 

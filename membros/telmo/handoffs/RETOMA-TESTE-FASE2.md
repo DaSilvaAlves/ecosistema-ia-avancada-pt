@@ -31,7 +31,7 @@ Ponto actual: **retomar teste após redeploy confirmar fix**. Se funcionar, cont
 ```
 Repo:    github.com/DaSilvaAlves/fitcoach-ai (privado)
 Branch:  main
-Local:   C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\fitcoach-ai
+Local:   C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\membros\telmo\03-codigo
 ```
 
 **Últimos commits (mais recente em cima):**
@@ -69,7 +69,7 @@ Working tree: limpo. `origin/main..HEAD` = 0 (sincronizado).
 
 ---
 
-**LEMBRETE — REGRA HANDOFF-LOCATION:** ESTE FICHEIRO ESTÁ EM `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-TESTE-FASE2.md`. ESTÁ NO SÍTIO CORRECTO (pasta do projecto FitCoach AI). CONSULTAR `.claude/rules/handoff-location.md` antes de o mover.
+**LEMBRETE — REGRA HANDOFF-LOCATION:** ESTE FICHEIRO ESTÁ EM `membros/telmo/handoffs/RETOMA-TESTE-FASE2.md`. ESTÁ NO SÍTIO CORRECTO (pasta canónica do membro Telmo). CONSULTAR `.claude/rules/handoff-location.md` antes de o mover.
 
 ---
 
@@ -179,14 +179,14 @@ Alternativa: `/aiox-ux-design-expert` se for mais trabalho de UX/validação (se
 ### 8.2 Ler nesta ordem (obrigatório)
 
 1. `.claude/rules/handoff-location.md` (localização de handoffs)
-2. `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-TESTE-FASE2.md` (este ficheiro)
-3. `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/TESTE-LOG-20260415.md` (log detalhado — fonte de verdade do teste)
-4. `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO.md` (contexto original, se precisar)
+2. `membros/telmo/handoffs/RETOMA-TESTE-FASE2.md` (este ficheiro)
+3. `membros/telmo/handoffs/TESTE-LOG-20260415.md` (log detalhado — fonte de verdade do teste)
+4. `membros/telmo/handoffs/RETOMA-COMPLETO.md` (contexto original, se precisar)
 
 ### 8.3 Primeiro comando a executar
 
 ```bash
-cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\fitcoach-ai"
+cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\membros\telmo\03-codigo"
 git log --oneline -3
 git status --short
 ```
@@ -217,7 +217,7 @@ git status --short
 ### Ver logs Vercel em tempo real
 
 ```bash
-cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\fitcoach-ai"
+cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\membros\telmo\03-codigo"
 npx vercel logs https://fitcoach-ai-lake.vercel.app --follow
 ```
 
@@ -228,7 +228,7 @@ Dashboard Vercel → Deployments → ⋮ → Redeploy → UNCHECK "Use existing 
 ### Rollback rápido (se `e163213` causar regressão inesperada)
 
 ```bash
-cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\imersao-tools\docs\teste-telmo\fitcoach-ai"
+cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt\membros\telmo\03-codigo"
 # CONFIRMAR COM EURICO ANTES:
 git revert e163213
 git push origin main
@@ -279,8 +279,8 @@ Antes de entregar:
 ESTE HANDOFF FOI CRIADO SEGUINDO A REGRA OBRIGATÓRIA `.claude/rules/handoff-location.md`.
 
 - **PROJECTO A QUE SE REFERE:** FitCoach AI (cliente Telmo) — teste end-to-end fase 2
-- **LOCALIZAÇÃO CORRECTA:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-TESTE-FASE2.md`
-- **LOCALIZAÇÃO ACTUAL:** `imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-TESTE-FASE2.md`
+- **LOCALIZAÇÃO CORRECTA:** `membros/telmo/handoffs/RETOMA-TESTE-FASE2.md`
+- **LOCALIZAÇÃO ACTUAL:** `membros/telmo/handoffs/RETOMA-TESTE-FASE2.md`
 - **COINCIDEM?** `SIM` ✅
 
 **AGENTE RESPONSÁVEL:** @devops (Gage), com trabalho herdado de @ux-design-expert (Uma)
