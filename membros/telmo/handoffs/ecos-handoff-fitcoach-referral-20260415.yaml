@@ -9,8 +9,8 @@ consumed: false
 project:
   name: FitCoach AI
   context: cliente Telmo Cerveira — landing de venda + arquitectura de referral
-  repo_primary: imersao-tools/docs/teste-telmo/fitcoach-ai
-  repo_secondary: imersao-tools/fitcoach-landing  # standalone sales landing
+  repo_primary: membros/telmo/03-codigo
+  repo_secondary: membros/telmo/04-landing-fitcoach  # standalone sales landing
 
 summary: |
   Landing de venda persuasiva (AIDA) criada e deployada em fitcoach-landing.vercel.app
@@ -22,7 +22,7 @@ summary: |
 
 context:
   what_was_done_this_session:
-    - Criada landing standalone em imersao-tools/fitcoach-landing/ (HTML+Tailwind CDN, single-file)
+    - Criada landing standalone em membros/telmo/04-landing-fitcoach/ (HTML+Tailwind CDN, single-file)
     - Deploy Vercel: https://fitcoach-landing.vercel.app (200 OK)
     - Estrutura AIDA 10 secções com design system IA AVANÇADA (dark + cyan + glassmorphism)
     - Todos os CTAs apontam para fitcoach-ai-lake.vercel.app/login?ref=telmo
@@ -38,19 +38,19 @@ context:
     - Cap dos 100 via trigger SQL (atómico, sem race condition)
 
 files_modified:
-  - path: imersao-tools/fitcoach-landing/index.html
+  - path: membros/telmo/04-landing-fitcoach/index.html
     status: new (standalone, no git)
-  - path: imersao-tools/fitcoach-landing/README.md
+  - path: membros/telmo/04-landing-fitcoach/README.md
     status: new (standalone, no git)
-  - path: imersao-tools/docs/teste-telmo/fitcoach-ai/src/pages/LandingPage.tsx
+  - path: membros/telmo/03-codigo/src/pages/LandingPage.tsx
     status: modified (commit local 58823c1)
-  - path: imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-OFERTA-TELMO.md
+  - path: membros/telmo/handoffs/RETOMA-OFERTA-TELMO.md
     status: new (this handoff detailed)
 
 pending_commits:
   - sha: 58823c1
     message: "refactor(landing): remove pricing section + neutralize trial promises"
-    repo: imersao-tools/docs/teste-telmo/fitcoach-ai
+    repo: membros/telmo/03-codigo
     pushed: false
 
 next_action_for_dev:
@@ -98,7 +98,7 @@ resume_instructions:
   read_first:
     - .claude/rules/handoff-location.md
     - .claude/rules/handoff-central.md
-    - imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-OFERTA-TELMO.md
+    - membros/telmo/handoffs/RETOMA-OFERTA-TELMO.md
   then:
     - "Verificar se Telmo já aceitou v1 (handoff v1-ready)"
     - "Se sim: `@dev` activa-se e executa passo 2 deste handoff"
