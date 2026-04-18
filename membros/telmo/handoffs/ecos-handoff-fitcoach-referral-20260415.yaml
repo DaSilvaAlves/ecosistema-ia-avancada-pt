@@ -1,0 +1,108 @@
+---
+handoff_id: ecos-fitcoach-referral-telmo-20260415
+created: 2026-04-15T06:00:00+01:00
+from_agent: ux-design-expert
+to_agent: dev  # primary, then devops for push + Stripe
+status: pending
+consumed: false
+
+project:
+  name: FitCoach AI
+  context: cliente Telmo Cerveira — landing de venda + arquitectura de referral
+  repo_primary: membros/telmo/03-codigo
+  repo_secondary: membros/telmo/04-landing-fitcoach  # standalone sales landing
+
+summary: |
+  Landing de venda persuasiva (AIDA) criada e deployada em fitcoach-landing.vercel.app
+  para o Telmo promover em tráfego frio. Promete 30 dias grátis + 4,99€/mês vitalício
+  para os primeiros 100 via ?ref=telmo. App home (LandingPage.tsx) minimalizada:
+  removida secção de preços e neutralizadas promessas de trial para não contradizer
+  a oferta Telmo. Falta @dev implementar tracking ?ref=telmo no signup flow e
+  @devops pushar + activar Stripe quando oferta for confirmada.
+
+context:
+  what_was_done_this_session:
+    - Criada landing standalone em membros/telmo/04-landing-fitcoach/ (HTML+Tailwind CDN, single-file)
+    - Deploy Vercel: https://fitcoach-landing.vercel.app (200 OK)
+    - Estrutura AIDA 10 secções com design system IA AVANÇADA (dark + cyan + glassmorphism)
+    - Todos os CTAs apontam para fitcoach-ai-lake.vercel.app/login?ref=telmo
+    - Minimizada LandingPage.tsx do produto (commit local 58823c1, não pushed)
+    - Removida secção Pricing da app home (era 7,99€ / 7 dias — contradizia oferta Telmo)
+    - Typecheck limpo (npx tsc -b --noEmit)
+
+  decisions_taken:
+    - Landing de venda separada do produto — permite per-referral offers
+    - App home sem preço — evita contradição 7,99€ vs 4,99€
+    - Oferta "4,99€ vitalício primeiros 100" em vez de prazo temporário (urgência real)
+    - Tracking via sessionStorage + coluna referral_source em user_profiles
+    - Cap dos 100 via trigger SQL (atómico, sem race condition)
+
+files_modified:
+  - path: membros/telmo/04-landing-fitcoach/index.html
+    status: new (standalone, no git)
+  - path: membros/telmo/04-landing-fitcoach/README.md
+    status: new (standalone, no git)
+  - path: membros/telmo/03-codigo/src/pages/LandingPage.tsx
+    status: modified (commit local 58823c1)
+  - path: membros/telmo/handoffs/RETOMA-OFERTA-TELMO.md
+    status: new (this handoff detailed)
+
+pending_commits:
+  - sha: 58823c1
+    message: "refactor(landing): remove pricing section + neutralize trial promises"
+    repo: membros/telmo/03-codigo
+    pushed: false
+
+next_action_for_dev:
+  task: Implementar tracking ?ref=telmo + trial 30 dias + preço 4,99€ bloqueado
+  subtasks:
+    - Criar src/lib/referral.ts (captureReferral, getReferral, clearReferral via sessionStorage)
+    - Chamar captureReferral() no main.tsx
+    - Passar referral ao insert de user_profiles no OnboardingPage
+    - Migration Supabase: add referral_source, trial_ends_at, price_locked_cents columns
+    - Trigger SQL apply_referral_offer (cap 100 Telmo referrals)
+    - UI ProfilePage mostrar price_locked_cents em vez de hardcoded 7,99€
+  estimated_time: 1-2 horas
+  acceptance_criteria:
+    - Conta via /login?ref=telmo tem referral_source='telmo' em DB
+    - Primeiros 100 têm trial 30 dias + price_locked_cents=499
+    - 101º cai no regime normal (7 dias + 7,99€)
+    - Sem ref continua padrão (7 dias + 7,99€)
+
+next_action_for_devops:
+  task_a: Push commit 58823c1 quando @dev adicionar commits do passo 2
+  task_b: Activar Stripe (quando Eurico decidir)
+  stripe_setup:
+    - Criar product FitCoach Pro com 2 prices (standard 7,99€ + telmo 4,99€)
+    - Checkout session lê user_profiles.price_locked_cents para escolher price
+    - Nunca aplicar price_update a contas com price_locked_cents=499
+
+placeholders_landing_venda:
+  needed_before_paid_traffic:
+    - Foto real do Telmo (secção 5, substituir placeholder "TC")
+    - Video Loom do Telmo a usar com cliente (secção 4)
+    - Testemunho real do Telmo aprovado (blockquote principal secção 5)
+    - 3 testemunhos de clientes reais (substituir Marco/Rita/João fictícios)
+    - OG image 1200x630 (og-telmo.png)
+    - Links legais reais (Termos, Privacidade)
+
+dependencies:
+  blocked_by:
+    - confirmação final de preços pelo Eurico (4,99€ vitalício ou outro valor)
+    - Telmo aceitar FitCoach v1 (handoff paralelo ecos-handoff-fitcoach-v1-ready-20260415)
+    - Telmo dar OK para dar foto + video + testemunho
+  blocks:
+    - tráfego pago na landing de venda (só faz sentido depois de tracking funcionar)
+
+resume_instructions:
+  read_first:
+    - .claude/rules/handoff-location.md
+    - .claude/rules/handoff-central.md
+    - membros/telmo/handoffs/RETOMA-OFERTA-TELMO.md
+  then:
+    - "Verificar se Telmo já aceitou v1 (handoff v1-ready)"
+    - "Se sim: `@dev` activa-se e executa passo 2 deste handoff"
+    - "Se não: aguardar — landing venda fica no ar mas sem tráfego pago"
+
+consumed_at: null
+consumed_by: null

@@ -17,29 +17,36 @@ Tira prints de cada passo. A Uma analisa e anota.
 
 | Passo | Estado | Ficheiro |
 |-------|--------|----------|
-| P1 Briefing | FEITO | teste-telmo/docs/briefing-base.json |
-| P2 Perguntas | FEITO | teste-telmo/docs/perguntas-pesquisa.md |
-| P3 Pesquisa x3 | FEITO | teste-telmo/docs/pesquisa-*.md |
-| P4 Relatorio | FEITO | teste-telmo/docs/relatorio-tecnico.md |
-| P5 PRD final | FEITO | teste-telmo/docs/prd-final.md |
+| P1 Briefing | FEITO (prints reais) | teste-telmo/docs/passo-01..05.png |
+| P2 Prompt Pesquisa | FEITO (simulado) | teste-telmo/docs/perguntas-pesquisa.md |
+| P3 Pesquisa x3 | FEITO (simulado) | teste-telmo/docs/pesquisa-*.md |
+| P4 PRD Final | FEITO (simulado) | teste-telmo/docs/prd-final.md |
 | P5 Construcao | PROXIMO | Eurico vai fazer hands-on, print a print |
 | P6 Deploy | PENDENTE | |
 
-## Ultima sessao (10/04/2026)
+## Ultima sessao (10/04/2026 — sessao 2, limpeza)
 
-Kit reescrito: 7 passos → 6 passos.
+Sessao anterior (10/04, sessao 1): Kit reescrito 7→6 passos + 5 prints BG analisados + 5 achados (F3-10 a F3-14).
+Sessao 2: Revisao cruzada handoff vs RETOMA vs TEST-LOG. Corrigidas 6 inconsistencias:
+1. Tabela RETOMA alinhada com 6 passos (tinha P5 duplicado)
+2. RETOMA: "4 achados" → "5 achados" (F3-10 a F3-14)
+3. TEST-LOG cabecalho: "7 passos" → "6 passos"
+4. TEST-LOG veredicto Fase 3: actualizado para "EM CURSO"
+5. TEST-LOG resumo: "P5-P6 colar no terminal" marcado CORRIGIDO
+6. TEST-LOG tab Kit HTML: marcado como feito
+
+Proximo: testar P5 (Construcao) — Eurico abre Claude Code, cola prompt do kit, IA le prd-final.md e constroi.
+
+## Pipeline actual (6 passos — reescrito 10/04)
+
 - P1: BG gera 2 blocos → copiar para Bloco de Notas → guardar como payload.md + blueprint.md
 - P2: Claude Code gera prompt de pesquisa optimizado (le os ficheiros do P1)
-- P3: Colar prompt em 3 LLMs (Perplexity, ChatGPT, Gemini) → cada uma pesquisa E cria PRD tecnico → guardar em docs/
+- P3: Colar prompt em 3 LLMs a escolha → cada LLM pesquisa E cria PRD tecnico → guardar em docs/
 - P4: Claude Code funde os 3 PRDs num PRD final (docs/prd-final.md)
 - P5: Construir (Claude Code le PRD e constroi)
 - P6: Deploy (GitHub + Vercel)
 
 Decisao-chave: LLMs que pesquisam ja criam o PRD tecnico (contexto completo). Claude Code recebe PRD pronto.
-
-5 prints do BG analisados (passo-01..05.png). 4 achados: F3-10 a F3-13.
-
-Proximo: testar P5 (construcao) com Claude Code.
 
 ## Ficheiros-chave (ler se precisares de contexto)
 

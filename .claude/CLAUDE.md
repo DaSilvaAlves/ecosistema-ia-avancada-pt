@@ -388,6 +388,43 @@ Prefer native Claude Code tools over MCP for common operations. The tool-registr
 
 ---
 
+<!-- PROJECT-CUSTOMIZED: Workspace Governance Phase A -->
+## Before Editing
+
+- ALWAYS Read files before Edit operations (Edit tool fails without prior Read)
+- ALWAYS read existing documentation (PRDs, handoffs, CLAUDE.md) BEFORE proposing solutions
+- NEVER invent data (sector labels, file paths, API endpoints, product positioning) — verify against canonical sources first
+- If uncertain which PRD is canonical, list candidates and ask before proceeding
+
+---
+
+## Handoff Protocol
+
+- When ending session or switching context, ALWAYS produce handoff doc in the canonical location defined by `.claude/rules/handoff-location.md`
+- Handoffs must be portable across terminals (no absolute paths, no terminal-specific state)
+- Reference `docs/HANDOFF-INDEX.md` when creating new handoffs
+- Never leave handoffs on repo root — always inside the project folder they refer to
+- Member project handoffs go in `membros/{nome}/handoffs/` (see `workspace-governance.md`)
+
+---
+
+## Execution Mode
+
+- When user says 'executa' or 'avança' or is delivering to a client, skip philosophical framing and confirmation-seeking — just do the work
+- Do NOT suggest hiding completed features as 'coming soon' or invent alternatives the user didn't ask for
+- Do NOT propose scope expansions during execution phase — execute the defined scope first
+
+---
+
+## Workspace Governance
+
+- All workspace structure decisions follow `.claude/rules/workspace-governance.md`
+- Member projects (Telmo, Moreira, future members) NEVER mixed with our own projects — they live in `membros/{nome}/`
+- Our own projects (`comunidade`, `guia-ai-act`, `kit-conformidade`, `cartao-visita`) live in `imersao-tools/`
+- Top-level categories are fixed (6 official) — creating new top-level folder requires `@pm` or `@aiox-master` approval
+
+---
+
 <!-- PROJECT-CUSTOMIZED: Safe to modify for your project -->
 ## Debug
 

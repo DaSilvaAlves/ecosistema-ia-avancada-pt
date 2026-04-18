@@ -1,0 +1,112 @@
+from_agent: ux-design-expert
+to_agent: any
+created: 2026-04-15T05:30:00Z
+status: pending
+project: fitcoach-ai (cliente Telmo Cerveira)
+project_repo: github.com/DaSilvaAlves/fitcoach-ai
+
+summary: |
+  FitCoach AI v1 PRONTO PARA ENTREGAR ao cliente Telmo Cerveira.
+  Sessao de ~7h em 15/04/2026 fechou Passos 10-16 do teste end-to-end
+  (todos validados ✅) + lote de fixes pre-Telmo (8 bugs descobertos,
+  7 fixados em codigo + B5 nos templates Supabase em PT-PT).
+  3 itens cosmeticos (B3, B11, foto perfil) deferidos para v2 com
+  decisao consciente. Acao seguinte: enviar mensagem ao Telmo
+  (template em MENSAGEM-TELMO.md, versao WhatsApp recomendada),
+  aguardar feedback, e iniciar v2 (Stripe + OAuth Google + foto perfil).
+
+summary_full_handoff_path: imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO-FINAL.md
+test_log_path: imersao-tools/docs/teste-telmo/fitcoach-ai/docs/TESTE-LOG-20260415.md
+delivery_message_path: imersao-tools/docs/teste-telmo/fitcoach-ai/docs/MENSAGEM-TELMO.md
+
+context:
+  cliente: Telmo Cerveira (+351 918 700 778, trcerveira@gmail.com)
+  operador_actual: Eurico (contas pessoais, stripe ainda saltado v1)
+  deploy_url: https://fitcoach-ai-lake.vercel.app
+  repo: github.com/DaSilvaAlves/fitcoach-ai (privado)
+  ultimo_commit_codigo: 9d68b5b (fix b1 lone hash)
+  ultimo_commit_docs: 2116aaa (close FASE3 + handoff message)
+  estado_git: working tree limpo no repo fitcoach-ai
+
+bugs_fixados_nesta_sessao:
+  - id: B8
+    severidade: critico
+    descricao: Navbar links em ingles (/exercises, /plan, /progress) vs rotas em PT
+    commit: 054eba1
+  - id: B9
+    severidade: critico
+    descricao: Navbar sem link para /perfil (avatar nao era clicavel)
+    commit: 054eba1
+  - id: B7
+    severidade: media
+    descricao: Nomes de exercicios em ingles nos planos gerados
+    commit: e073e50
+    fix_strategy: dicionario client-side i18n + reforco do prompt PT-PT
+  - id: B2
+    severidade: alta
+    descricao: ~95% dos GIFs wger.de partidos (politica hotlink mudou 2026-04)
+    commit: e073e50
+    fix_strategy: ExerciseImage component com onError fallback dumbbell gradient
+  - id: B12
+    severidade: media
+    descricao: PESO ACTUAL Dashboard mostrava 70 vs Progresso 70.1
+    commit: e073e50
+    fix_strategy: order by date DESC, created_at DESC em useProgress
+  - id: B1
+    severidade: media
+    descricao: URL com hash residual apos magic link (#error= ou # solitario)
+    commits: [e073e50, 9d68b5b]
+    fix_strategy: history.replaceState com check em href.indexOf('#') porque hash retorna "" para # solitario
+  - id: B5
+    severidade: media
+    descricao: Email Supabase em ingles (Magic Link + Confirm Signup)
+    fix_strategy: nao-codigo, templates editados em Supabase Dashboard em PT-PT
+
+bugs_deferidos_v2:
+  - id: B3
+    razao: cosmetico, cards landing com cursor-pointer sem onClick
+  - id: B11
+    razao: cor variacao peso (+0.1 magenta para "ganhar massa") — refactor v2
+  - foto_perfil:
+    razao: sem upload implementado, icone generico aceitavel MVP
+  - login_google_oauth:
+    razao: magic link funciona, OAuth e optimizacao v2
+
+decisions:
+  - Aplicar lote unico de fixes em vez de commits granulares (1 deploy vs 4)
+  - Trocar fonte morta wger por fallback elegante em vez de tentar salvar
+  - Dicionario i18n client-side para apanhar planos antigos + novos (vs apenas reforcar prompt)
+  - 3 itens cosmeticos para v2 com aprovacao explicita do Eurico ("ok avanca")
+
+blockers: []
+
+next_action: |
+  CENARIO A — Entregar ao Telmo:
+  1. Ler imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-COMPLETO-FINAL.md
+  2. Abrir MENSAGEM-TELMO.md, escolher versao WhatsApp (recomendada)
+  3. Enviar ao Telmo (+351 918 700 778)
+  4. Aguardar feedback
+  5. Se houver problemas — abrir nova sessao, este handoff tem todo o contexto
+
+  CENARIO B — Telmo aprovou v1, iniciar v2:
+  1. Activar Stripe (gateway 7,99EUR/mes)
+  2. Implementar Login com Google OAuth (~1-2h)
+  3. Implementar foto perfil (campo URL ou upload Supabase Storage)
+  4. Resolver B3 + B11 cosmeticos
+  5. Decidir ownership (Telmo fica com repo/contas Vercel ou so user?)
+
+  CENARIO C — Telmo encontrou bugs:
+  1. Reproduzir o bug com o Telmo (screenshot + URL exacta)
+  2. Investigar root cause antes de fix-rapido (licao desta sessao)
+  3. Aplicar fix scoped + push consolidado se houver mais que 1 bug
+  4. Validar em prod com hard refresh antes de confirmar ao Telmo
+
+notes: |
+  - Ficheiro .env local tem chaves reais (gitignored — NUNCA commitar)
+  - Supabase Free pausa apos 7 dias sem actividade — abrir 1x/semana
+  - Creditos Anthropic: ~5EUR iniciais, ~0.01EUR/plano gerado
+  - Templates Supabase em PT-PT estao no Dashboard (nao em codigo)
+  - LICAO desta sessao: window.location.hash retorna "" para # solitario,
+    usar href.indexOf('#') !== -1 para apanhar todos os casos
+  - LICAO desta sessao: validar navbar antes de assumir paginas acessiveis
+    (B8 bloqueava 4 passos)

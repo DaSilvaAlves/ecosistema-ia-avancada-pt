@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitCoach AI — Personal Trainer Virtual por 7,99€/mês · Recomendado por Telmo Cerveira</title>
+  <meta name="description" content="Plano de treino semanal gerado por IA, 200+ exercícios, progresso medido. 30 dias grátis sem cartão. Oferta exclusiva via Telmo Cerveira: 4,99€/mês vitalício para os primeiros 100." />
+  <meta name="author" content="FitCoach AI" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="FitCoach AI — Personal Trainer Virtual · Oferta Telmo Cerveira" />
+  <meta property="og:description" content="Plano de treino semanal gerado por IA. 30 dias grátis. 4,99€/mês vitalício para os primeiros 100 via Telmo." />
+  <meta property="og:image" content="https://fitcoach-ai-lake.vercel.app/og-telmo.png" />
+  <meta property="og:url" content="https://fitcoach-ai-lake.vercel.app" />
+
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: '#04040A',
+            white2: '#F0F4FF',
+            cyan: '#00F5FF',
+            gold: '#FFB800',
+            purple: '#9D00FF',
+            magenta: '#FF006E',
+            lime: '#39FF14',
+            grey1: '#8892A4',
+            grey2: '#4A5568',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        },
+      },
+    }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body {
+      background: #04040A;
+      color: #F0F4FF;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-feature-settings: 'ss01', 'cv11';
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .glass-strong {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .btn-primary {
+      background: #00F5FF;
+      color: #04040A;
+      box-shadow: 0 0 32px rgba(0, 245, 255, 0.35);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: 700;
+    }
+    .btn-primary:hover {
+      box-shadow: 0 0 48px rgba(0, 245, 255, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #F0F4FF;
+      transition: all 0.25s ease;
+    }
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(0, 245, 255, 0.4);
+    }
+
+    .badge {
+      background: rgba(0, 245, 255, 0.08);
+      border: 1px solid rgba(0, 245, 255, 0.25);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-gold {
+      background: rgba(255, 184, 0, 0.08);
+      border: 1px solid rgba(255, 184, 0, 0.3);
+      color: #FFB800;
+    }
+
+    .badge-lime {
+      background: rgba(57, 255, 20, 0.08);
+      border: 1px solid rgba(57, 255, 20, 0.3);
+      color: #39FF14;
+    }
+
+    .hero-gradient {
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 245, 255, 0.18), transparent),
+        radial-gradient(ellipse 60% 50% at 80% 10%, rgba(157, 0, 255, 0.12), transparent);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #00F5FF 0%, #9D00FF 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .gradient-text-gold {
+      background: linear-gradient(135deg, #FFB800 0%, #FF006E 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .mono-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .display-1 {
+      font-family: 'Inter', sans-serif;
+      font-weight: 900;
+      letter-spacing: -0.035em;
+      line-height: 1.02;
+    }
+
+    .section-eyebrow {
+      color: #00F5FF;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    details[open] summary .chevron { transform: rotate(180deg); }
+    summary::-webkit-details-marker { display: none; }
+    summary { list-style: none; }
+
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(0, 245, 255, 0.5); }
+      100% { box-shadow: 0 0 0 20px rgba(0, 245, 255, 0); }
+    }
+    .pulse-ring { animation: pulse-ring 2.4s infinite; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .float-slow { animation: float 5s ease-in-out infinite; }
+
+    /* Scroll-in animation (progressive enhancement) */
+    .reveal { opacity: 0; transform: translateY(12px); transition: all 0.6s ease-out; }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+
+<body class="antialiased">
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       NAVBAR
+       ═══════════════════════════════════════════════════════════════ -->
+  <nav class="fixed top-0 left-0 right-0 z-50 glass-strong">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">💪</span>
+        <span class="font-black text-lg tracking-tight">FitCoach <span class="text-cyan">AI</span></span>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="#precos" class="hidden md:inline text-sm text-grey1 hover:text-white2 transition">Preços</a>
+        <a href="#faq" class="hidden md:inline text-sm text-grey1 hover:text-white2 transition">FAQ</a>
+        <a href="https://fitcoach-ai-lake.vercel.app/login" class="btn-ghost px-4 py-2 rounded-md text-sm font-semibold">Entrar</a>
+        <a href="https://fitcoach-ai-lake.vercel.app/login?ref=telmo" class="btn-primary px-4 py-2 rounded-md text-sm">Começar grátis</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       1. HERO — ATTENTION
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="hero-gradient pt-32 pb-20 px-6 relative overflow-hidden">
+    <div class="max-w-5xl mx-auto text-center relative z-10">
+
+      <div class="inline-flex items-center gap-2 badge-gold badge rounded-full px-4 py-1.5 mb-8">
+        <span>⭐</span>
+        <span>Recomendado por Telmo Cerveira · Personal Trainer</span>
+      </div>
+
+      <h1 class="display-1 text-5xl md:text-7xl lg:text-8xl mb-6">
+        Treinas sozinho.<br>
+        Mas não tens<br>
+        de <span class="gradient-text">pensar sozinho</span>.
+      </h1>
+
+      <p class="text-lg md:text-xl text-grey1 max-w-2xl mx-auto mb-10 leading-relaxed">
+        Plano de treino semanal gerado por IA, adaptado ao teu objectivo, nível e equipamento.
+        <span class="text-white2">200+ exercícios, progresso medido, 30 dias grátis.</span>
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+        <a href="https://fitcoach-ai-lake.vercel.app/login?ref=telmo" class="btn-primary pulse-ring px-8 py-4 rounded-lg text-base inline-flex items-center gap-2">
+          Começar os 30 dias grátis
+          <span>→</span>
+        </a>
+        <a href="#demo" class="btn-ghost px-8 py-4 rounded-lg text-base">
+          Ver como funciona
+        </a>
+      </div>
+
+      <p class="text-xs text-grey2 mono-label">
+        Sem cartão · Cancela quando quiseres · 4,99€/mês vitalício oferta Telmo
+      </p>
+
+      <!-- Stats bar -->
+      <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+        <div class="glass rounded-xl p-5">
+          <div class="font-mono font-bold text-2xl text-cyan">200+</div>
+          <div class="mono-label text-grey1 mt-1">Exercícios</div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <div class="font-mono font-bold text-2xl text-cyan">IA</div>
+          <div class="mono-label text-grey1 mt-1">Plano semanal</div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <div class="font-mono font-bold text-2xl text-gold">30</div>
+          <div class="mono-label text-grey1 mt-1">Dias grátis</div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <div class="font-mono font-bold text-2xl text-lime">24/7</div>
+          <div class="mono-label text-grey1 mt-1">Disponível</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       2. PROBLEMA — INTEREST
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="py-24 px-6">
+    <div class="max-w-6xl mx-auto">
+
+      <div class="text-center mb-16 reveal">
+        <div class="section-eyebrow mb-4">O problema</div>
+        <h2 class="display-1 text-4xl md:text-5xl">
+          Três razões porque o teu treino<br>
+          <span class="text-magenta">não está a resultar</span>
+        </h2>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+
+        <div class="glass rounded-2xl p-8 reveal">
+          <div class="text-4xl mb-4">🌀</div>
+          <div class="mono-label text-magenta mb-3">Problema 1</div>
+          <h3 class="font-bold text-xl mb-3">Planos genéricos da Internet</h3>
+          <p class="text-grey1 leading-relaxed">
+            Feitos para a média. A média não és tu. Idades, objectivos, equipamento, nível — tudo ignorado.
+            Segues, não vês resultado, desistes.
+          </p>
+        </div>
+
+        <div class="glass rounded-2xl p-8 reveal">
+          <div class="text-4xl mb-4">💸</div>
+          <div class="mono-label text-magenta mb-3">Problema 2</div>
+          <h3 class="font-bold text-xl mb-3">Personal Trainer a 45€/sessão</h3>
+          <p class="text-grey1 leading-relaxed">
+            Três vezes por semana são <span class="text-white2 font-semibold">540€/mês</span>.
+            Orçamento que a maioria não tem. E quando faltas uma sessão, pagas na mesma.
+          </p>
+        </div>
+
+        <div class="glass rounded-2xl p-8 reveal">
+          <div class="text-4xl mb-4">📉</div>
+          <div class="mono-label text-magenta mb-3">Problema 3</div>
+          <h3 class="font-bold text-xl mb-3">Treinas, mas não sabes se evoluis</h3>
+          <p class="text-grey1 leading-relaxed">
+            Sem registo de peso, sem histórico de treinos, sem dados. Só a sensação de que talvez.
+            Motivação cai quando não vês a curva a subir.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       3. SOLUÇÃO — INTEREST → DESIRE
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="py-24 px-6 relative">
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(0,245,255,0.02)] to-transparent"></div>
+
+    <div class="max-w-6xl mx-auto relative">
+
+      <div class="text-center mb-16 reveal">
+        <div class="section-eyebrow mb-4">A solução</div>
+        <h2 class="display-1 text-4xl md:text-5xl mb-4">
+          A IA dá-te o que um PT dá —<br>
+          por <span class="gradient-text">1,5% do preço</span>
+        </h2>
+        <p class="text-grey1 text-lg max-w-2xl mx-auto">
+          Três passos. Dois minutos. Um plano que é <em>teu</em>.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+
+        <div class="glass rounded-2xl p-8 relative reveal">
+          <div class="absolute -top-4 left-8 glass-strong w-10 h-10 rounded-full flex items-center justify-center font-mono font-bold text-cyan">1</div>
+          <h3 class="font-bold text-xl mb-3 mt-2">Conta-nos sobre ti</h3>
+          <p class="text-grey1 leading-relaxed mb-4">
+            Idade, altura, peso, objectivo (perder gordura, ganhar massa, manter), equipamento disponível, dias por semana.
+          </p>
+          <div class="mono-label text-cyan">⏱ 2 minutos</div>
+        </div>
+
+        <div class="glass rounded-2xl p-8 relative reveal">
+          <div class="absolute -top-4 left-8 glass-strong w-10 h-10 rounded-full flex items-center justify-center font-mono font-bold text-cyan">2</div>
+          <h3 class="font-bold text-xl mb-3 mt-2">A IA cria o teu plano</h3>
+          <p class="text-grey1 leading-relaxed mb-4">
+            Claude Sonnet 4.5 gera programa semanal completo: dias, exercícios, séries, reps, tempo de descanso. Tudo em PT.
+          </p>
+          <div class="mono-label text-cyan">⏱ 30 segundos</div>
+        </div>
+
+        <div class="glass rounded-2xl p-8 relative reveal">
+          <div class="absolute -top-4 left-8 glass-strong w-10 h-10 rounded-full flex items-center justify-center font-mono font-bold text-cyan">3</div>
+          <h3 class="font-bold text-xl mb-3 mt-2">Treinas e evolui</h3>
+          <p class="text-grey1 leading-relaxed mb-4">
+            Regista peso, vê gráficos de progresso, recebe plano novo quando precisares. A IA adapta-se à tua evolução.
+          </p>
+          <div class="mono-label text-cyan">⏱ Contínuo</div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       4. DEMO — DESIRE (visual)
+       ═══════════════════════════════════════════════════════════════ -->
+  <section id="demo" class="py-24 px-6">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="text-center mb-12 reveal">
+        <div class="section-eyebrow mb-4">Vê em acção</div>
+        <h2 class="display-1 text-4xl md:text-5xl mb-4">
+          90 segundos a ver <span class="gradient-text">o que recebes</span>
+        </h2>
+        <p class="text-grey1 text-lg">
+          O Telmo Cerveira a usar a plataforma com clientes reais.
+        </p>
+      </div>
+
+      <!-- Video placeholder — substituir por <iframe> Loom/YouTube depois -->
+      <div class="glass-strong rounded-3xl p-3 reveal">
+        <div class="aspect-video rounded-2xl bg-gradient-to-br from-[rgba(0,245,255,0.08)] to-[rgba(157,0,255,0.08)] flex items-center justify-center relative overflow-hidden">
+          <div class="text-center">
+            <div class="w-20 h-20 rounded-full bg-cyan flex items-center justify-center mx-auto mb-4 cursor-pointer hover:scale-110 transition float-slow" style="box-shadow: 0 0 48px rgba(0,245,255,0.5);">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="#04040A"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <div class="mono-label text-grey1">🎬 Video demo · 1m 30s</div>
+            <p class="text-xs text-grey2 mt-2 font-mono">(substituir por Loom do Telmo)</p>
+          </div>
+
+          <!-- Grid decoration -->
+          <div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 32px 32px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       5. PROVA — DESIRE
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="py-24 px-6">
+    <div class="max-w-6xl mx-auto">
+
+      <div class="text-center mb-16 reveal">
+        <div class="section-eyebrow mb-4">Prova</div>
+        <h2 class="display-1 text-4xl md:text-5xl">
+          Porque é que o <span class="gradient-text-gold">Telmo Cerveira</span><br>
+          recomenda o FitCoach
+        </h2>
+      </div>
+
+      <!-- Main testimonial -->
+      <div class="glass-strong rounded-3xl p-10 md:p-12 mb-8 reveal relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[rgba(0,245,255,0.08)] to-transparent rounded-full blur-3xl"></div>
+
+        <div class="relative grid md:grid-cols-[auto_1fr] gap-8 items-start">
+          <!-- Avatar placeholder -->
+          <div class="w-24 h-24 rounded-full bg-gradient-to-br from-cyan to-purple flex items-center justify-center flex-shrink-0">
+            <span class="font-black text-3xl text-bg">TC</span>
+          </div>
+
+          <div>
+            <div class="text-5xl text-cyan font-black mb-4 leading-none">"</div>
+            <blockquote class="text-xl md:text-2xl text-white2 font-medium leading-relaxed mb-6">
+              Uso o FitCoach com os meus clientes que não conseguem treinar 3x/semana comigo presencialmente.
+              Dá-lhes plano sério nos dias que treinam sozinhos — e eu vejo o progresso quando vêm ter comigo.
+              É a ferramenta que a Internet não tinha.
+            </blockquote>
+            <div class="flex items-center gap-3">
+              <div>
+                <div class="font-bold text-white2">Telmo Cerveira</div>
+                <div class="mono-label text-grey1">Personal Trainer Certificado · Portugal</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini testimonials -->
+      <div class="grid md:grid-cols-3 gap-6">
+
+        <div class="glass rounded-2xl p-6 reveal">
+          <div class="flex gap-1 mb-3 text-gold">★★★★★</div>
+          <p class="text-grey1 text-sm leading-relaxed mb-4">
+            "Nunca consegui seguir um plano. Este adapta-se ao que tenho em casa. Em 6 semanas perdi 4 kg."
+          </p>
+          <div class="mono-label text-grey2">— Marco S., 42</div>
+        </div>
+
+        <div class="glass rounded-2xl p-6 reveal">
+          <div class="flex gap-1 mb-3 text-gold">★★★★★</div>
+          <p class="text-grey1 text-sm leading-relaxed mb-4">
+            "Gastava 180€/mês em PT que eu faltava metade das vezes. 7,99€ e treino quando posso, onde posso."
+          </p>
+          <div class="mono-label text-grey2">— Rita M., 35</div>
+        </div>
+
+        <div class="glass rounded-2xl p-6 reveal">
+          <div class="flex gap-1 mb-3 text-gold">★★★★★</div>
+          <p class="text-grey1 text-sm leading-relaxed mb-4">
+            "Os gráficos de progresso foram o que mudou tudo. Ver a curva a subir é outra motivação."
+          </p>
+          <div class="mono-label text-grey2">— João F., 28</div>
+        </div>
+
+      </div>
+
+      <p class="text-center mt-8 text-xs text-grey2 mono-label">
+        ⚠ Testemunhos placeholder — substituir por clientes reais antes de tráfego pago
+      </p>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       6. ANCORAGEM DE VALOR — DESIRE
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="py-24 px-6 relative">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="text-center mb-16 reveal">
+        <div class="section-eyebrow mb-4">Compara</div>
+        <h2 class="display-1 text-4xl md:text-5xl mb-4">
+          O que pagas <span class="text-magenta">vs</span> o que recebes
+        </h2>
+      </div>
+
+      <div class="glass-strong rounded-3xl overflow-hidden reveal">
+        <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/10">
+
+          <!-- Opção 1 -->
+          <div class="p-8">
+            <div class="mono-label text-grey1 mb-2">Opção 1</div>
+            <h3 class="font-bold text-lg mb-4">PT tradicional 3x/semana</h3>
+            <div class="text-3xl font-black mb-1 text-magenta">540€</div>
+            <div class="mono-label text-grey2 mb-6">/mês</div>
+            <ul class="space-y-2 text-sm text-grey1">
+              <li class="flex items-start gap-2"><span class="text-magenta">✕</span> Horários fixos</li>
+              <li class="flex items-start gap-2"><span class="text-magenta">✕</span> Pagas se faltas</li>
+              <li class="flex items-start gap-2"><span class="text-magenta">✕</span> Só no ginásio dele</li>
+              <li class="flex items-start gap-2"><span class="text-lime">✓</span> Motivação humana</li>
+            </ul>
+          </div>
+
+          <!-- Opção 2 -->
+          <div class="p-8">
+            <div class="mono-label text-grey1 mb-2">Opção 2</div>
+            <h3 class="font-bold text-lg mb-4">Ginásio + app genérica</h3>
+            <div class="text-3xl font-black mb-1 text-gold">80€</div>
+            <div class="mono-label text-grey2 mb-6">/mês</div>
+            <ul class="space-y-2 text-sm text-grey1">
+              <li class="flex items-start gap-2"><span class="text-magenta">✕</span> Plano igual para todos</li>
+              <li class="flex items-start gap-2"><span class="text-magenta">✕</span> Em inglês, genérico</li>
+              <li class="flex items-start gap-2"><span class="text-magenta">✕</span> Sem adaptação</li>
+              <li class="flex items-start gap-2"><span class="text-lime">✓</span> Barato</li>
+            </ul>
+          </div>
+
+          <!-- Opção 3 (FitCoach) - highlighted -->
+          <div class="p-8 bg-gradient-to-b from-[rgba(0,245,255,0.05)] to-transparent relative">
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 badge rounded-full px-3 py-1 text-cyan">Recomendado</div>
+            <div class="mono-label text-cyan mb-2">Opção 3</div>
+            <h3 class="font-bold text-lg mb-4">FitCoach AI Pro</h3>
+            <div class="text-3xl font-black mb-1 text-cyan">7,99€</div>
+            <div class="mono-label text-grey2 mb-6">/mês</div>
+            <ul class="space-y-2 text-sm text-grey1">
+              <li class="flex items-start gap-2"><span class="text-lime">✓</span> Plano personalizado IA</li>
+              <li class="flex items-start gap-2"><span class="text-lime">✓</span> 100% em PT-PT</li>
+              <li class="flex items-start gap-2"><span class="text-lime">✓</span> Adapta à tua evolução</li>
+              <li class="flex items-start gap-2"><span class="text-lime">✓</span> Treina onde quiseres</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <!-- Summary bar -->
+        <div class="bg-gradient-to-r from-[rgba(0,245,255,0.06)] via-[rgba(157,0,255,0.06)] to-[rgba(0,245,255,0.06)] p-6 text-center border-t border-white/10">
+          <div class="mono-label text-grey1 mb-2">Poupança anual face a PT tradicional</div>
+          <div class="text-4xl md:text-5xl font-black gradient-text">6.384€/ano</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       7. PREÇO + OFERTA TELMO — ACTION
+       ═══════════════════════════════════════════════════════════════ -->
+  <section id="precos" class="py-24 px-6 relative">
+    <!-- Accent ring -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gradient-radial from-[rgba(0,245,255,0.08)] to-transparent rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-5xl mx-auto relative">
+
+      <!-- Offer banner -->
+      <div class="glass-strong rounded-2xl p-5 mb-12 text-center reveal" style="background: linear-gradient(135deg, rgba(255,184,0,0.08), rgba(0,245,255,0.05)); border-color: rgba(255,184,0,0.25);">
+        <div class="mono-label text-gold mb-2">🏋️ Oferta exclusiva Telmo Cerveira</div>
+        <p class="text-white2 font-medium">
+          <span class="text-gold font-bold">30 dias grátis</span> em vez de 7 ·
+          <span class="text-gold font-bold">4,99€/mês vitalício</span> em vez de 7,99€ ·
+          <span class="text-white2">Limitado aos primeiros 100</span>
+        </p>
+      </div>
+
+      <div class="text-center mb-12 reveal">
+        <div class="section-eyebrow mb-4">Preços</div>
+        <h2 class="display-1 text-4xl md:text-5xl mb-4">
+          Preço simples. <span class="gradient-text">Zero letras pequenas.</span>
+        </h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 reveal">
+
+        <!-- Trial -->
+        <div class="glass rounded-2xl p-8">
+          <div class="mono-label text-lime mb-2">TRIAL</div>
+          <div class="flex items-baseline gap-2 mb-1">
+            <span class="text-5xl font-black">Grátis</span>
+            <span class="text-grey1">/ 30 dias</span>
+          </div>
+          <div class="mono-label text-grey2 mb-6">via Telmo (normal: 7 dias)</div>
+
+          <ul class="space-y-3 text-sm mb-8">
+            <li class="flex items-start gap-2"><span class="text-lime">✓</span> Plano semanal completo</li>
+            <li class="flex items-start gap-2"><span class="text-lime">✓</span> 200+ exercícios</li>
+            <li class="flex items-start gap-2"><span class="text-lime">✓</span> Registo de progresso</li>
+            <li class="flex items-start gap-2"><span class="text-lime">✓</span> Sem cartão de crédito</li>
+            <li class="flex items-start gap-2"><span class="text-lime">✓</span> Cancela quando quiseres</li>
+          </ul>
+
+          <a href="https://fitcoach-ai-lake.vercel.app/login?ref=telmo" class="btn-ghost block text-center py-3 rounded-lg">
+            Começar grátis
+          </a>
+        </div>
+
+        <!-- Pro -->
+        <div class="glass-strong rounded-2xl p-8 relative" style="border-color: rgba(0,245,255,0.3);">
+          <div class="absolute -top-3 right-8 badge badge rounded-full px-3 py-1">Popular</div>
+
+          <div class="mono-label text-cyan mb-2">PRO · OFERTA TELMO</div>
+          <div class="flex items-baseline gap-2 mb-1">
+            <span class="text-5xl font-black text-cyan">4,99€</span>
+            <span class="text-grey1">/ mês</span>
+          </div>
+          <div class="mono-label text-grey2 mb-6">
+            <span class="line-through text-grey2">7,99€</span> vitalício para primeiros 100
+          </div>
+
+          <ul class="space-y-3 text-sm mb-8">
+            <li class="flex items-start gap-2"><span class="text-lime">✓</span> Tudo do trial</li>
+            <li class="flex items-start gap-2"><span class="text-lime">✓</span> Planos ilimitados</li>
+            <li class="flex items-start gap-2"><span class="text-lime">✓</span> Histórico completo</li>
+            <li class="flex items-start gap-2"><span class="text-lime">✓</span> Actualizações do modelo IA</li>
+            <li class="flex items-start gap-2"><span class="text-lime">✓</span> Preço fixo para sempre</li>
+          </ul>
+
+          <a href="https://fitcoach-ai-lake.vercel.app/login?ref=telmo" class="btn-primary block text-center py-3 rounded-lg">
+            Activar oferta Telmo →
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       8. FAQ — OBJECÇÕES
+       ═══════════════════════════════════════════════════════════════ -->
+  <section id="faq" class="py-24 px-6">
+    <div class="max-w-3xl mx-auto">
+
+      <div class="text-center mb-16 reveal">
+        <div class="section-eyebrow mb-4">Perguntas frequentes</div>
+        <h2 class="display-1 text-4xl md:text-5xl">
+          Ainda tens <span class="gradient-text">dúvidas?</span>
+        </h2>
+      </div>
+
+      <div class="space-y-3">
+
+        <details class="glass rounded-xl p-5 reveal group" open>
+          <summary class="cursor-pointer flex items-center justify-between font-semibold">
+            Posso cancelar quando quiser?
+            <span class="chevron transition text-cyan">▼</span>
+          </summary>
+          <p class="text-grey1 mt-3 leading-relaxed">
+            Sim. A qualquer momento, num clique. Sem burocracia, sem perguntas, sem penalizações.
+            Continuas com acesso até ao fim do período já pago.
+          </p>
+        </details>
+
+        <details class="glass rounded-xl p-5 reveal group">
+          <summary class="cursor-pointer flex items-center justify-between font-semibold">
+            Preciso de equipamento de ginásio?
+            <span class="chevron transition text-cyan">▼</span>
+          </summary>
+          <p class="text-grey1 mt-3 leading-relaxed">
+            Não. A IA adapta-se ao que tens: casa sem equipamento, casa com halteres, ginásio completo, ar livre.
+            Dizes-lhe o que tens — ela faz o plano com isso.
+          </p>
+        </details>
+
+        <details class="glass rounded-xl p-5 reveal group">
+          <summary class="cursor-pointer flex items-center justify-between font-semibold">
+            Funciona no telemóvel?
+            <span class="chevron transition text-cyan">▼</span>
+          </summary>
+          <p class="text-grey1 mt-3 leading-relaxed">
+            Sim. É uma web app responsive, funciona em iOS, Android e desktop. Podes instalá-la no ecrã inicial
+            como se fosse uma app nativa.
+          </p>
+        </details>
+
+        <details class="glass rounded-xl p-5 reveal group">
+          <summary class="cursor-pointer flex items-center justify-between font-semibold">
+            E se eu não gostar?
+            <span class="chevron transition text-cyan">▼</span>
+          </summary>
+          <p class="text-grey1 mt-3 leading-relaxed">
+            30 dias grátis sem cartão. Testas tudo, se não gostas, não fazes nada e desaparece.
+            Zero risco, zero fricção.
+          </p>
+        </details>
+
+        <details class="glass rounded-xl p-5 reveal group">
+          <summary class="cursor-pointer flex items-center justify-between font-semibold">
+            Posso mudar de plano a meio?
+            <span class="chevron transition text-cyan">▼</span>
+          </summary>
+          <p class="text-grey1 mt-3 leading-relaxed">
+            Sim, sempre que precisares. Mudaste de objectivo? Regeneras. Comprou-se novo equipamento?
+            Regeneras. A IA faz plano novo em 30 segundos.
+          </p>
+        </details>
+
+        <details class="glass rounded-xl p-5 reveal group">
+          <summary class="cursor-pointer flex items-center justify-between font-semibold">
+            Substitui um Personal Trainer real?
+            <span class="chevron transition text-cyan">▼</span>
+          </summary>
+          <p class="text-grey1 mt-3 leading-relaxed">
+            Para planos, exercícios e execução, sim. Para motivação humana, correcção postural presencial e
+            relação pessoal, não. É complemento, não substituto — e é exactamente por isso que o Telmo
+            recomenda como ferramenta entre sessões.
+          </p>
+        </details>
+
+        <details class="glass rounded-xl p-5 reveal group">
+          <summary class="cursor-pointer flex items-center justify-between font-semibold">
+            Os meus dados são seguros?
+            <span class="chevron transition text-cyan">▼</span>
+          </summary>
+          <p class="text-grey1 mt-3 leading-relaxed">
+            Armazenados encriptados em Supabase (infraestrutura europeia). Apenas tu vês o teu perfil.
+            Nunca vendemos dados, nunca partilhamos com terceiros.
+          </p>
+        </details>
+
+        <details class="glass rounded-xl p-5 reveal group">
+          <summary class="cursor-pointer flex items-center justify-between font-semibold">
+            Como funciona a oferta vitalícia do Telmo?
+            <span class="chevron transition text-cyan">▼</span>
+          </summary>
+          <p class="text-grey1 mt-3 leading-relaxed">
+            Os primeiros 100 utilizadores a entrarem via link do Telmo ficam com
+            <span class="text-gold font-semibold">4,99€/mês para sempre</span> em vez de 7,99€.
+            O preço fica fixo — não sobe. Depois dos 100, o preço normal entra.
+          </p>
+        </details>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       9. GARANTIA — REDUZ RISCO
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="py-16 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="glass-strong rounded-3xl p-10 reveal">
+        <div class="grid md:grid-cols-3 gap-8 text-center">
+
+          <div>
+            <div class="text-4xl mb-3">🎯</div>
+            <h3 class="font-bold mb-2">30 dias grátis</h3>
+            <p class="text-sm text-grey1">Sem cartão, sem compromisso. Testas tudo, decides depois.</p>
+          </div>
+
+          <div>
+            <div class="text-4xl mb-3">🚪</div>
+            <h3 class="font-bold mb-2">Cancela num clique</h3>
+            <p class="text-sm text-grey1">Zero burocracia, zero perguntas. Botão. Sai. Fim.</p>
+          </div>
+
+          <div>
+            <div class="text-4xl mb-3">🔒</div>
+            <h3 class="font-bold mb-2">Preço fixo para sempre</h3>
+            <p class="text-sm text-grey1">Oferta Telmo bloqueia 4,99€/mês. Nunca sobe enquanto fores Pro.</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       10. CTA FINAL — ACTION
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="py-24 px-6 relative overflow-hidden">
+    <div class="hero-gradient absolute inset-0"></div>
+
+    <div class="max-w-3xl mx-auto text-center relative">
+
+      <div class="reveal">
+        <div class="section-eyebrow mb-6">Última chamada</div>
+
+        <h2 class="display-1 text-4xl md:text-6xl mb-6">
+          Pára de pagar <span class="text-magenta">540€/mês</span><br>
+          em PT que não tens tempo de seguir.
+        </h2>
+
+        <p class="text-xl text-grey1 mb-10 leading-relaxed">
+          Começa agora. <span class="text-white2 font-semibold">Por 0€ durante 30 dias.</span><br>
+          Se não for para ti, não pagas. Se for, ficas com 4,99€/mês vitalício.
+        </p>
+
+        <a href="https://fitcoach-ai-lake.vercel.app/login?ref=telmo" class="btn-primary inline-flex items-center gap-3 px-10 py-5 rounded-xl text-lg">
+          Activar oferta Telmo agora
+          <span>→</span>
+        </a>
+
+        <p class="text-xs text-grey2 mono-label mt-6">
+          Sem cartão · Cancela quando quiseres · Oferta válida até preencher 100 lugares
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════════════════ -->
+  <footer class="border-t border-white/5 py-10 px-6">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">💪</span>
+        <span class="font-bold">FitCoach <span class="text-cyan">AI</span></span>
+        <span class="mono-label text-grey2 ml-3">em colaboração com Telmo Cerveira</span>
+      </div>
+      <div class="flex items-center gap-6 text-sm text-grey1">
+        <a href="#" class="hover:text-white2 transition">Termos</a>
+        <a href="#" class="hover:text-white2 transition">Privacidade</a>
+        <a href="mailto:euricojsalves@gmail.com" class="hover:text-white2 transition">Contacto</a>
+      </div>
+      <div class="mono-label text-grey2">© 2026 FitCoach AI</div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       PROGRESSIVE ENHANCEMENT — scroll-in reveal
+       ═══════════════════════════════════════════════════════════════ -->
+  <script>
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  </script>
+
+</body>
+</html>
