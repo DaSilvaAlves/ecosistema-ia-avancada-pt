@@ -100,9 +100,9 @@ resume_instructions:
     - .claude/rules/handoff-central.md
     - imersao-tools/docs/teste-telmo/fitcoach-ai/docs/RETOMA-OFERTA-TELMO.md
   then:
-    - Verificar se Telmo já aceitou v1 (handoff v1-ready)
-    - Se sim: @dev activa-se e executa passo 2 deste handoff
-    - Se não: aguardar — landing venda fica no ar mas sem tráfego pago
+    - "Verificar se Telmo já aceitou v1 (handoff v1-ready)"
+    - "Se sim: `@dev` activa-se e executa passo 2 deste handoff"
+    - "Se não: aguardar — landing venda fica no ar mas sem tráfego pago"
 
 consumed_at: null
 consumed_by: null
