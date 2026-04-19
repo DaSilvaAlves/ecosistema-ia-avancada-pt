@@ -1,7 +1,7 @@
 metadata:
   version: 1.0.0
-  lastUpdated: '2026-04-07T02:19:05.882Z'
-  entityCount: 747
+  lastUpdated: '2026-04-19T03:10:27.536Z'
+  entityCount: 745
   checksumAlgorithm: sha256
   resolutionRate: 100
 entities:
@@ -1068,8 +1068,7 @@ entities:
         - (follow-up
       usedBy:
         - aiox-master
-      dependencies:
-        - component-generator.js
+      dependencies: []
       externalDeps: []
       plannedDeps:
         - Node.js
@@ -1079,8 +1078,8 @@ entities:
         score: 0.8
         constraints: []
         extensionPoints: []
-      checksum: sha256:64abe2114fc3ab6b0494375c6401aa6a8213c63b1dc18ffac729d2acf1161a2c
-      lastVerified: '2026-04-07T02:19:05.877Z'
+      checksum: sha256:76f47a9fa54b9690a10ddf4544c96f8d732c658550fd8487f9defd2339b8e222
+      lastVerified: '2026-04-19T03:10:27.531Z'
     create-worktree:
       path: .aiox-core/development/tasks/create-worktree.md
       layer: L2
@@ -5326,8 +5325,8 @@ entities:
         score: 0.8
         constraints: []
         extensionPoints: []
-      checksum: sha256:97d591c9ce8a932e7fa21206b58448c85c5340e254460d221e6b3bd0b5278565
-      lastVerified: '2026-04-07T02:19:05.878Z'
+      checksum: sha256:e01147feb106d803a298447e5a4988d5310e65cd5b5e291f771923d457056008
+      lastVerified: '2026-04-19T03:10:27.532Z'
     verify-subtask:
       path: .aiox-core/development/tasks/verify-subtask.md
       layer: L2
@@ -7905,7 +7904,7 @@ entities:
       path: .aiox-core/development/scripts/workflow-validator.js
       layer: L2
       type: script
-      purpose: Entity at .aiox-core/development/scripts/workflow-validator.js
+      purpose: data.description,
       keywords:
         - workflow
         - validator
@@ -7923,8 +7922,8 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:55bd8375e570cf0c738c10ebc52637462b89cb9cde16c3b53b48e60c3cac49f4
-      lastVerified: '2026-04-07T02:19:05.877Z'
+      checksum: sha256:abb16e5cd34ec06bbca0a31af3fc500c3a5c98f66d0a72546e4a2827653abcd3
+      lastVerified: '2026-04-19T03:10:27.531Z'
     yaml-validator:
       path: .aiox-core/development/scripts/yaml-validator.js
       layer: L2
@@ -8299,8 +8298,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:c1422bda2983600f1e175fbe4a6e2b0d87c73122b06b17c31fe09edd0135199a
-      lastVerified: '2026-04-07T02:19:05.876Z'
+      checksum: sha256:c8a31f8cfcc760de06c65abd3c5d23d9ffd8490f7f0ae4a674efaba73e10dd44
+      lastVerified: '2026-04-19T03:10:27.529Z'
     registry-syncer:
       path: .aiox-core/core/code-intel/registry-syncer.js
       layer: L1
@@ -8327,7 +8326,7 @@ entities:
       path: .aiox-core/core/config/config-cache.js
       layer: L1
       type: module
-      purpose: Entity at .aiox-core/core/config/config-cache.js
+      purpose: Entity at .aiox-core\core\config\config-cache.js
       keywords:
         - config
         - cache
@@ -8340,13 +8339,13 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:527a788cbe650aa6b13d1101ebc16419489bfef20b2ee93042f6eb6a51e898e9
-      lastVerified: '2026-04-07T02:19:05.872Z'
+      checksum: sha256:b659dfae25865c732555d71abcb1939db908684586d0a06b699d3176077e486e
+      lastVerified: '2026-04-19T03:10:27.523Z'
     config-loader:
       path: .aiox-core/core/config/config-loader.js
       layer: L1
       type: module
-      purpose: Entity at .aiox-core/core/config/config-loader.js
+      purpose: Entity at .aiox-core\core\config\config-loader.js
       keywords:
         - config
         - loader
@@ -8361,8 +8360,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:e19fee885b060c85ee75df71a016259b8e4c21e6c7045a58514afded3a2386a8
-      lastVerified: '2026-04-07T02:19:05.872Z'
+      checksum: sha256:bbc6a9e57e9db7a74ae63c901b199f8b8a79eb093f23a280b6420d1aa5f7f813
+      lastVerified: '2026-04-19T03:10:27.525Z'
     config-resolver:
       path: .aiox-core/core/config/config-resolver.js
       layer: L1
@@ -8697,7 +8696,7 @@ entities:
       path: .aiox-core/core/execution/build-state-manager.js
       layer: L1
       type: module
-      purpose: Entity at .aiox-core/core/execution/build-state-manager.js
+      purpose: Entity at .aiox-core\core\execution\build-state-manager.js
       keywords:
         - build
         - state
@@ -8716,8 +8715,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:595523caf6db26624e7a483489345b9498ae15d99c2568073a2c0c45d5b46a54
-      lastVerified: '2026-04-07T02:19:05.873Z'
+      checksum: sha256:415fca3ad3d750db1f41f14f33971cf661ee9d6073a570175d695bb3c1be655c
+      lastVerified: '2026-04-19T03:10:27.526Z'
     context-injector:
       path: .aiox-core/core/execution/context-injector.js
       layer: L1
@@ -8779,22 +8778,6 @@ entities:
         extensionPoints: []
       checksum: sha256:58ecd92f5de9c688f28cf952ae6cc5ee07ddf14dc89fb0ea13b2f0a527e29fae
       lastVerified: '2026-03-25T22:45:50.477Z'
-    predictive-pipeline:
-      path: .aiox-core/core/execution/predictive-pipeline.js
-      layer: L1
-      type: module
-      purpose: '`Only ${sampleSize} historical outcomes for task type "${features.taskType}"`,'
-      keywords:
-        - predictive
-        - pipeline
-      usedBy: []
-      dependencies: []
-      adaptability:
-        score: 0.4
-        constraints: []
-        extensionPoints: []
-      checksum: sha256:c1f4d03e70a6d073fad99a453e3a2a381d13a1383b1ac4cfd17f594e8ff8992a
-      lastVerified: '2026-04-07T02:19:05.875Z'
     rate-limit-manager:
       path: .aiox-core/core/execution/rate-limit-manager.js
       layer: L1
@@ -9337,23 +9320,6 @@ entities:
         extensionPoints: []
       checksum: sha256:b2c68e5664f7f8595b81cbfba69be16d7f37f8d21608c99ddd066808aa2653c1
       lastVerified: '2026-03-25T22:45:50.481Z'
-    decision-memory:
-      path: .aiox-core/core/memory/decision-memory.js
-      layer: L1
-      type: module
-      purpose: '`Recurring ${newDecision.category} decision: "${newDecision.description}"`,'
-      keywords:
-        - decision
-        - memory
-      usedBy: []
-      dependencies:
-        - atomic-write
-      adaptability:
-        score: 0.4
-        constraints: []
-        extensionPoints: []
-      checksum: sha256:f5c89489dd01ccd7c91754754f4f331632e9ecc7fa6d788ed95cf2cce6ceab89
-      lastVerified: '2026-04-07T02:19:05.875Z'
     gotchas-memory:
       path: .aiox-core/core/memory/gotchas-memory.js
       layer: L1
@@ -10437,7 +10403,7 @@ entities:
       path: .aiox-core/core/utils/yaml-validator.js
       layer: L1
       type: module
-      purpose: Entity at .aiox-core/core/utils/yaml-validator.js
+      purpose: Entity at .aiox-core\core\utils\yaml-validator.js
       keywords:
         - yaml
         - validator
@@ -10450,8 +10416,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:41e3715845262c2e49f58745a773e81f4feaaa2325e54bcb0226e4bf08f709dd
-      lastVerified: '2026-04-07T02:19:05.876Z'
+      checksum: sha256:05084596198634dd2a670a752d5c451edfe268e16e3bae511db52184f895366f
+      lastVerified: '2026-04-19T03:10:27.530Z'
     creation-helper:
       path: .aiox-core/core/code-intel/helpers/creation-helper.js
       layer: L1
@@ -11876,7 +11842,6 @@ entities:
         - write
       usedBy:
         - unified-activation-pipeline
-        - decision-memory
         - context-detector
       dependencies: []
       externalDeps: []
@@ -14283,8 +14248,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:e882daca473a95807e5c480c9b1c3d7b428277b075232cb907f9a253468a17c1
-      lastVerified: '2026-04-07T02:19:05.878Z'
+      checksum: sha256:c22f2700d6c3dcd227efec711ab206b4fa9e268768a15be86eea0405e2c82c4d
+      lastVerified: '2026-04-19T03:10:27.532Z'
     epic-orchestration:
       path: .aiox-core/development/workflows/epic-orchestration.yaml
       layer: L2
@@ -14867,7 +14832,6 @@ entities:
         - create-next-story
         - create-suite
         - create-task
-        - create-workflow
         - generate-ai-frontend-prompt
         - generate-documentation
         - generate-migration-strategy
@@ -14939,7 +14903,7 @@ entities:
       path: .aiox-core/infrastructure/scripts/config-cache.js
       layer: L2
       type: script
-      purpose: Entity at .aiox-core/infrastructure/scripts/config-cache.js
+      purpose: Entity at .aiox-core\infrastructure\scripts\config-cache.js
       keywords:
         - config
         - cache
@@ -14956,8 +14920,8 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:4f55401fee7010d01545808ed6f6c40a91ce43180d405f93d5073480512d30d5
-      lastVerified: '2026-04-07T02:19:05.879Z'
+      checksum: sha256:6264ae77eef1e98de62d9f6478becadf6a6692ca88027666dbf5a1e2399c844a
+      lastVerified: '2026-04-19T03:10:27.533Z'
     config-loader:
       path: .aiox-core/infrastructure/scripts/config-loader.js
       layer: L2
