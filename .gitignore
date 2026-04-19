@@ -28,6 +28,13 @@ web-bundles/
 .env.*.local
 .env.production
 .env.development
+.env.backup*
+.env.*.backup*
+
+# Workspace cleanup (2026-04-20)
+.aiox-core-backup*/
+.aiox-core-SAFETY*/
+AGENTS.md.backup*
 .env.test
 
 # System files
