@@ -11,7 +11,7 @@ Pasta dedicada aos projectos de **membros da comunidade** que assumimos compromi
 | # | Membro | Projecto | Estado | Pasta | Acolhimento |
 |---|--------|----------|--------|-------|-------------|
 | 1 | Telmo | FitCoach AI | V1 deployed | `telmo/` | 10/04/2026 |
-| 2 | _(vago)_ | _(vago)_ | _(vago)_ | _(vago)_ | _(vago)_ |
+| 2 | José Moreira | _(a definir)_ | Briefing | `jose-moreira/` | 19/04/2026 |
 
 ---
 

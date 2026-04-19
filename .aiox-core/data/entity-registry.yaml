@@ -1,7 +1,7 @@
 metadata:
   version: 1.0.0
-  lastUpdated: '2026-04-19T03:10:27.536Z'
-  entityCount: 745
+  lastUpdated: '2026-04-19T23:12:52.117Z'
+  entityCount: 746
   checksumAlgorithm: sha256
   resolutionRate: 100
 entities:
@@ -13618,6 +13618,21 @@ entities:
         extensionPoints: []
       checksum: sha256:b8b52820ba1929ba12403fc437868dd9e8a9c2532abe99296ad05864618693b0
       lastVerified: '2026-03-25T22:45:50.518Z'
+    monster:
+      path: .aiox-core/development/agents/monster.md
+      layer: L2
+      type: agent
+      purpose: '''Estado completo do projeto ativo: % conclusão + workflow activo + story em curso + próxima ação obrigatória'''
+      keywords:
+        - monster
+      usedBy: []
+      dependencies: []
+      adaptability:
+        score: 0.3
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:97132fa9a5717fc32fba276caa94dfd9906a08d3b674b4109ee15816d37c6b74
+      lastVerified: '2026-04-19T23:12:52.114Z'
   checklists:
     agent-quality-gate:
       path: .aiox-core/development/checklists/agent-quality-gate.md

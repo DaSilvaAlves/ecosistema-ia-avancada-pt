@@ -5,3 +5,5 @@
 # Non-blocking: failures are logged but do not block the merge.
 
 node scripts/sync-aiox-core.js --quiet 2>/dev/null || echo "[AIOX] Warning: .aiox-core sync failed. Run 'npm run sync:core' manually."
+
+npm run sync:ide --silent 2>/dev/null || echo "[AIOX] Warning: IDE sync failed. Run 'npm run sync:ide' manually."

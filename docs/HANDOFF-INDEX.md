@@ -7,6 +7,7 @@
 
 | Data | De → Para | Projecto | Ficheiro | Resumo |
 |------|-----------|----------|----------|--------|
+| 2026-04-18 | ux-design-expert → devops + dev | Governance Phase A fecho total | [handoffs/RETOMA-GOVERNANCE-FECHO-TOTAL-20260418.md](handoffs/RETOMA-GOVERNANCE-FECHO-TOTAL-20260418.md) | **5 débitos pós-merge PR #1.** 1) Fix guardian CI (desbloqueia Coverage + Quality Metrics em todos PRs). 2) Vercel desligar/silenciar. 3) Redact PII Telmo (2 ficheiros). 4) Validar schema user_profiles vs profiles. 5) Fase B cleanup 62 HANDOFF_* da raiz. 90-120 min distribuídos por 1-2 sessões. |
 | 2026-04-17 | ux-design-expert + devops → any | Guia AI Act + Kit Conformidade | [../../imersao-tools/comunidade/guia-ai-act/docs/handoffs/RETOMA-AUDITORIA-10-BUGS-GUIA-KIT-17042026.md](../../imersao-tools/comunidade/guia-ai-act/docs/handoffs/RETOMA-AUDITORIA-10-BUGS-GUIA-KIT-17042026.md) | **10 bugs críticos resolvidos em produção** (commit submódulo `93665c8`, deploy Vercel 9s, 6/6 smoke tests PASS). 2 anomalias: CodeRabbit CLI trava em WSL → usar PR cloud review; bump foi para feature branch pai não main. Próximos passos: fusão Guia↔Kit, disclaimer v1.0 validação, untracked commits. |
 | 2026-04-16 | ux-design-expert → any | Kit Conformidade AI Act | [../../imersao-tools/comunidade/guia-ai-act/docs/handoffs/RETOMA-REUNIAO-EMPRESARIOS-16042026.md](../../imersao-tools/comunidade/guia-ai-act/docs/handoffs/RETOMA-REUNIAO-EMPRESARIOS-16042026.md) | **Preparação reunião empresários + advogados.** 3 peças Live (Landing, Guia, Kit). Form checkout commitado local (40b92b9) mas não deployed. Precisa push submódulo `comunidade` + cleanUrls já resolvido (f7e5291). [SUPERSEDED por handoff 17/04] |
 | 2026-04-15 | ux-design-expert → dev | FitCoach AI (landing Telmo) | [../../membros/telmo/handoffs/ecos-handoff-fitcoach-referral-20260415.yaml](../../membros/telmo/handoffs/ecos-handoff-fitcoach-referral-20260415.yaml) | **Arquitectura de referral `?ref=telmo`.** Landing venda AIDA deployada. Falta @dev captura + DB migration + trigger cap 100. Detalhes em `membros/telmo/handoffs/RETOMA-OFERTA-TELMO.md` |
@@ -53,4 +54,4 @@
 
 ---
 
-*Última actualização: 18/04/2026 — Auditoria 10 bugs Guia/Kit resolvida em produção (commit `93665c8`). 2 anomalias pending: CodeRabbit CLI hang + bump em feature branch. Ver RETOMA-AUDITORIA-10-BUGS-GUIA-KIT-17042026.md.*
+*Última actualização: 19/04/2026 — Projecto membro José Moreira resetado (PRD/handoffs/pesquisas apagados pelo Eurico). Pasta `membros/jose-moreira/` contém apenas briefing original e ficheiros enviados pelo cliente. Próximo passo: arranque em branco.*
