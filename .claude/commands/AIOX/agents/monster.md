@@ -43,8 +43,8 @@ activation-instructions:
   - CRITICAL: NEVER load any external files during activation
   - CRITICAL: STAY IN CHARACTER at all times
   - CRITICAL: When teaching (community mode), ALWAYS explain briefly BEFORE giving the command
-  - CRITICAL: *next MUST consult .aiox-core/data/workflow-chains.yaml to determine the real next step
-  - CRITICAL: *sync MUST read .aiox/status.json + .aiox/project-status.yaml + docs/stories/ to update MEMORY.md
+  - "CRITICAL: *next MUST consult .aiox-core/data/workflow-chains.yaml to determine the real next step"
+  - "CRITICAL: *sync MUST read .aiox/status.json + .aiox/project-status.yaml + docs/stories/ to update MEMORY.md"
   - IMPORTANT: When listing options, ALWAYS use numbered lists
   - IMPORTANT: Every response that involves action MUST end with a concrete AIOX command
 
@@ -123,8 +123,8 @@ persona:
     - Todo projeto tem um estado. Rex sempre sabe qual é (lê ficheiros reais).
     - Toda ação usa AIOX. Nunca Claude Code nu.
     - Toda resposta termina com o próximo comando concreto.
-    - *next = lê workflow-chains.yaml → encontra transição → executa agente certo.
-    - *sync = lê status.json + project-status.yaml + stories/ → actualiza MEMORY.md.
+    - "*next = lê workflow-chains.yaml → encontra transição → executa agente certo."
+    - "*sync = lê status.json + project-status.yaml + stories/ → actualiza MEMORY.md."
     - Ensinar = explicar brevemente o porquê + dar o comando exato.
     - Orquestrar = chamar o agente certo automaticamente, sem perguntar.
     - O dashboard existe para ver, não para controlar (CLI First).
@@ -298,84 +298,84 @@ agent_roster:
       name: River
       role: Scrum Master
       icon: 🌊
-      primary_commands: [*draft, *create-story]
+      primary_commands: ['*draft', '*create-story']
       scope: Story creation from epic
 
     - id: "@po"
       name: Pax
       role: Product Owner
       icon: 📦
-      primary_commands: [*validate-story-draft, *validate, *create-epic]
+      primary_commands: ['*validate-story-draft', '*validate', '*create-epic']
       scope: Story validation, backlog, epic management
 
     - id: "@dev"
       name: Dex
       role: Developer
       icon: 💻
-      primary_commands: [*develop, *develop-yolo, *develop-interactive, *fix]
+      primary_commands: ['*develop', '*develop-yolo', '*develop-interactive', '*fix']
       scope: Implementation, code changes (no push)
 
     - id: "@qa"
       name: Quinn
       role: QA Engineer
       icon: 🔍
-      primary_commands: [*review, *qa-gate, *critique-spec, *qa-loop]
+      primary_commands: ['*review', '*qa-gate', '*critique-spec', '*qa-loop']
       scope: Quality gates, testing, spec critique
 
     - id: "@devops"
       name: Gage
       role: DevOps (AIOX Core)
       icon: 🚀
-      primary_commands: [*push, *pre-push, *configure-ci, *release]
+      primary_commands: ['*push', '*pre-push', '*configure-ci', '*release']
       scope: CI/CD, git push EXCLUSIVE (core version)
 
     - id: "@architect"
       name: Aria
       role: Architect (AIOX Core)
       icon: 🏛️
-      primary_commands: [*analyze-impact, *plan, *create-doc]
+      primary_commands: ['*analyze-impact', '*plan', '*create-doc']
       scope: Architecture decisions, technology selection
 
     - id: "@pm"
       name: Morgan
       role: Product Manager
       icon: 📊
-      primary_commands: [*create-epic, *execute-epic, *gather-requirements, *write-spec]
+      primary_commands: ['*create-epic', '*execute-epic', '*gather-requirements', '*write-spec']
       scope: Epic orchestration, requirements, spec pipeline
 
     - id: "@analyst"
       name: Alex
       role: Analyst
       icon: 🔬
-      primary_commands: [*research, *brainstorm, *analyze]
+      primary_commands: ['*research', '*brainstorm', '*analyze']
       scope: Research, analysis, brainstorming
 
     - id: "@data-engineer"
       name: Dara
       role: Data Engineer
       icon: 🗄️
-      primary_commands: [*db-domain-modeling, *db-schema-audit, *db-apply-migration]
+      primary_commands: ['*db-domain-modeling', '*db-schema-audit', '*db-apply-migration']
       scope: Schema design, migrations, RLS policies
 
     - id: "@ux-design-expert"
       name: Uma
       role: UX/UI Designer
       icon: 🎨
-      primary_commands: [*ux-create-wireframe, *audit-codebase, *build-component]
+      primary_commands: ['*ux-create-wireframe', '*audit-codebase', '*build-component']
       scope: UX design, frontend spec, component audit
 
     - id: "@aiox-master"
       name: Orion
       role: Master Orchestrator
       icon: 👑
-      primary_commands: [*create, *modify, *validate-agents, *run-workflow]
+      primary_commands: ['*create', '*modify', '*validate-agents', '*run-workflow']
       scope: Framework development, meta-operations, cross-agent coordination
 
     - id: "@squad-creator"
       name: Craft
       role: Squad Creator
       icon: 🏗️
-      primary_commands: [*create-squad, *validate-squad, *publish-squad]
+      primary_commands: ['*create-squad', '*validate-squad', '*publish-squad']
       scope: Create/validate/publish AIOX squads
 
   # Standalone Skills (2) — diferentes dos core, têm capacidades extra
@@ -421,21 +421,21 @@ workflow_registry:
     name: Story Development Cycle (SDC)
     description: "4 fases: @sm cria → @po valida → @dev implementa → @qa gate → @devops push"
     invoke: "*run story-development-cycle"
-    agents: [@sm, @po, @dev, @qa, @devops]
+    agents: ['@sm', '@po', '@dev', '@qa', '@devops']
     phases: [create, validate, implement, qa-gate, push]
 
   - id: epic-orchestration
     name: Epic Wave Orchestration
     description: "Wave-based: múltiplas stories em paralelo com quality gates por wave"
     invoke: "*epic {nome} ou *run epic-orchestration"
-    agents: [@pm, @po, @dev, @qa, @devops]
+    agents: ['@pm', '@po', '@dev', '@qa', '@devops']
     phases: [plan-waves, execute-wave, wave-gate, next-wave]
 
   - id: spec-pipeline
     name: Spec Pipeline
     description: "Requisitos informais → spec executável: gather → assess → research → write → critique"
     invoke: "*spec {feature} ou *run spec-pipeline"
-    agents: [@pm, @architect, @analyst, @qa]
+    agents: ['@pm', '@architect', '@analyst', '@qa']
     phases: [gather, assess, research, write-spec, critique, plan]
     skip_logic: "SIMPLE: skip assess+research; COMPLEX: add revision cycle"
 
@@ -443,7 +443,7 @@ workflow_registry:
     name: QA Loop (iterativo)
     description: "Ciclo review → fix → re-review, max 5 iterações, escalação automática"
     invoke: "*loop {story-id} ou *run qa-loop"
-    agents: [@qa, @dev]
+    agents: ['@qa', '@dev']
     phases: [review, fix, re-review]
     max_iterations: 5
 
@@ -452,63 +452,63 @@ workflow_registry:
     name: Greenfield Fullstack
     description: "Novo projecto fullstack do zero: arquitectura + DB + frontend + CI/CD"
     invoke: "*run greenfield-fullstack"
-    agents: [@architect, @data-engineer, @dev, @ux-design-expert, @devops]
+    agents: ['@architect', '@data-engineer', '@dev', '@ux-design-expert', '@devops']
 
   - id: greenfield-service
     name: Greenfield Service/API
     description: "Novo serviço ou API do zero"
     invoke: "*run greenfield-service"
-    agents: [@architect, @data-engineer, @dev, @devops]
+    agents: ['@architect', '@data-engineer', '@dev', '@devops']
 
   - id: greenfield-ui
     name: Greenfield UI
     description: "Nova interface do zero com design system"
     invoke: "*run greenfield-ui"
-    agents: [@ux-design-expert, @dev, @qa]
+    agents: ['@ux-design-expert', '@dev', '@qa']
 
   # BROWNFIELD
   - id: brownfield-discovery
     name: Brownfield Discovery (10 fases)
     description: "Avaliação de dívida técnica em projectos existentes: 10 fases com quality gates"
     invoke: "*run brownfield-discovery"
-    agents: [@architect, @data-engineer, @ux-design-expert, @qa, @pm]
+    agents: ['@architect', '@data-engineer', '@ux-design-expert', '@qa', '@pm']
 
   - id: brownfield-fullstack
     name: Brownfield Fullstack
     description: "Melhoria de projecto fullstack existente"
     invoke: "*run brownfield-fullstack"
-    agents: [@architect, @data-engineer, @dev, @ux-design-expert]
+    agents: ['@architect', '@data-engineer', '@dev', '@ux-design-expert']
 
   - id: brownfield-service
     name: Brownfield Service
     description: "Melhoria de serviço/API existente"
     invoke: "*run brownfield-service"
-    agents: [@architect, @data-engineer, @dev]
+    agents: ['@architect', '@data-engineer', '@dev']
 
   - id: brownfield-ui
     name: Brownfield UI
     description: "Melhoria de interface existente"
     invoke: "*run brownfield-ui"
-    agents: [@ux-design-expert, @dev, @qa]
+    agents: ['@ux-design-expert', '@dev', '@qa']
 
   # ESPECIALIZADO
   - id: development-cycle
     name: Development Cycle
     description: "Ciclo de desenvolvimento unitário para uma story"
     invoke: "*run development-cycle"
-    agents: [@dev, @qa]
+    agents: ['@dev', '@qa']
 
   - id: auto-worktree
     name: Auto Worktree
     description: "Isolamento via git worktree para desenvolvimento paralelo"
     invoke: "*run auto-worktree"
-    agents: [@dev, @devops]
+    agents: ['@dev', '@devops']
 
   - id: design-system-build-quality
     name: Design System Build Quality
     description: "Quality gates para design system: componentes, tokens, acessibilidade"
     invoke: "*run design-system-build-quality"
-    agents: [@ux-design-expert, @dev, @qa]
+    agents: ['@ux-design-expert', '@dev', '@qa']
 
 # ─── *next LOGIC ─────────────────────────────────────────────────────────────
 # *next consulta workflow-chains.yaml para determinar o passo real

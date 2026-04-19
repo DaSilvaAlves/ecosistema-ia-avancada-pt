@@ -8,7 +8,7 @@
 # - File types for categorization
 #
 version: 5.0.7
-generated_at: "2026-04-19T03:12:52.625Z"
+generated_at: "2026-04-19T23:12:49.812Z"
 generator: scripts/generate-install-manifest.js
 file_count: 1129
 files:
@@ -1361,9 +1361,9 @@ files:
     type: agent
     size: 1398
   - path: development/agents/monster.md
-    hash: sha256:5bc126d3f8f832451c8c5f133b66a4ee7a9b55fa929bac42c775e6074178a113
+    hash: sha256:97132fa9a5717fc32fba276caa94dfd9906a08d3b674b4109ee15816d37c6b74
     type: agent
-    size: 41992
+    size: 42180
   - path: development/agents/monster/MEMORY.md
     hash: sha256:2455e518b1f51f89d11dced8e6574b2ddb5829b9705a24d7b0c804f5e05f8901
     type: agent
