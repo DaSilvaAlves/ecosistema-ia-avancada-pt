@@ -1,54 +1,75 @@
 # Example Workflow Definition
 # Replace placeholders with your workflow's details
 
-name: example-workflow
-version: 1.0.0
-description: Multi-step workflow that orchestrates tasks
+workflow:
+  id: example-workflow
+  name: Example Workflow
+  version: "1.0.0"
+  description: Multi-step workflow that orchestrates tasks
+  type: example
 
-trigger:
-  command: "*example-command"
-  agent: example-agent
+  triggers:
+    - type: manual
+      command: "*example-command"
 
-elicitation:
-  enabled: true
-  questions:
-    - id: action_type
-      prompt: "What would you like to do?"
-      type: choice
-      options:
-        - Create new item
-        - Update existing item
-        - Delete item
+  elicitation:
+    enabled: true
+    questions:
+      - id: action_type
+        prompt: "What would you like to do?"
+        type: choice
+        options:
+          - Create new item
+          - Update existing item
+          - Delete item
+      - id: item_name
+        prompt: "What is the name of the item?"
+        type: text
+        required: true
 
-    - id: item_name
-      prompt: "What is the name of the item?"
-      type: text
-      required: true
+  phases:
+    - phase_1: Execute task
+    - phase_2: Log result
 
-steps:
-  - id: step-1
-    task: example-task
-    inputs:
-      input1: "{{elicitation.item_name}}"
-      options:
-        action: "{{elicitation.action_type}}"
-    on_success: step-2
-    on_error: error-handler
+  sequence:
+    - step: execute_task
+      id: run_task
+      phase: 1
+      phase_name: "Execute Task"
+      agent: example-agent
+      task: example-task
+      inputs:
+        input1: "{{elicitation.item_name}}"
+        options:
+          action: "{{elicitation.action_type}}"
+      outputs:
+        - task_result
+      next: log_result
+      on_failure: notify_error
 
-  - id: step-2
-    action: log-result
-    description: Log the successful result
-    inputs:
-      message: "Operation completed successfully"
+    - step: log_result
+      id: log_result
+      phase: 2
+      phase_name: "Log Result"
+      agent: example-agent
+      action: log-result
+      inputs:
+        message: "Operation completed successfully"
+      on_complete:
+        status: success
 
-error_handling:
-  - id: error-handler
-    action: notify
-    message: "Workflow failed: {{error.message}}"
-    severity: error
+    - workflow_end: true
+      id: complete
+      action: workflow_complete
 
-completion:
-  message: "Workflow completed successfully!"
-  next_steps:
-    - Review the output
-    - Verify the changes
+  error_handling:
+    - id: notify_error
+      action: notify
+      message: "Workflow failed: {{error.message}}"
+      severity: error
+
+  completion:
+    message: "Workflow completed successfully!"
+    next_steps:
+      - Review the output
+      - Verify the changes

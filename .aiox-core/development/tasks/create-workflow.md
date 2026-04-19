@@ -273,23 +273,23 @@ ELICIT: Workflow Basic Information
 4. What is the expected outcome?
 ```
 
-### Step 2: Workflow Stages
-```
-ELICIT: Workflow Stages and Flow
-1. What are the main stages/phases? (e.g., "planning", "implementation", "testing")
-2. What is the sequence of these stages?
+### Step 2: Workflow Sequence Design
+```text
+ELICIT: Workflow Sequence and Flow
+1. What are the main execution steps/phases? (e.g., "planning", "implementation", "testing")
+2. What is the exact step order (`workflow.sequence`)?
 3. Are there any parallel activities?
 4. Are there decision points or conditional flows?
-5. What are the exit criteria for each stage?
+5. What are the exit criteria for each step?
 ```
 
 ### Step 3: Agent Orchestration
-```
+```text
 ELICIT: Agent Participation
-For each stage:
+For each workflow step:
 1. Which agent(s) are involved?
 2. What are their specific responsibilities?
-3. How do agents hand off work between stages?
+3. How do agents hand off work between steps?
 4. Are there any approval requirements?
 ```
 
@@ -316,39 +316,41 @@ ELICIT: Resources and Dependencies
    workflow:
      id: {workflow-name}
      name: {Workflow Display Name}
+     version: {semver}
      description: {Purpose and overview}
      type: {greenfield|brownfield}
      scope: {ui|service|fullstack}
-     
-   stages:
-     - id: stage-1
-       name: {Stage Name}
-       agent: {agent-id}
-       tasks:
-         - {task-name}
-       outputs:
-         - {output-description}
-       next: stage-2
-       
-   transitions:
-     - from: stage-1
-       to: stage-2
-       condition: {optional condition}
-       
-   resources:
-     templates:
-       - {template-name}
-     data:
-       - {data-file}
-       
-   validation:
-     checkpoints:
-       - stage: {stage-id}
-         criteria: {validation-criteria}
+ 
+     # Optional compatibility metadata (non-executable)
+     phases:
+       - phase_1: {phase label}
+       - phase_2: {phase label}
+ 
+     # Canonical executable contract
+     sequence:
+       - step: {step-slug}
+         id: {step-id}
+         phase: {1..N}
+         phase_name: {Phase Display Name}
+         agent: {agent-id}
+         task: {task-name}
+         action: {what happens}
+         requires: {previous-step-id}
+         outputs:
+           - {artifact-name}
+         next: {next-step-id}
+         on_failure: {fallback-step-id}
+
+       - workflow_end:
+           id: complete
+           action: workflow_complete
+
+     handoff_prompts:
+       {from}_to_{to}: {handoff guidance}
    ```
 
 3. **Add Security Controls**
-   - Stage authorization requirements
+   - Step authorization requirements
    - Data access restrictions
    - Audit logging points
    - Approval workflows
@@ -378,7 +380,7 @@ ELICIT: Resources and Dependencies
      timestamp: new Date().toISOString(),
      metadata: {
        type: workflowType,
-       stages: stageList,
+       sequence_steps: stepList,
        agents: involvedAgents
      }
    });
@@ -386,13 +388,13 @@ ELICIT: Resources and Dependencies
 
 6. **Generate Documentation**
    - Create workflow diagram (text-based)
-   - Document each stage's purpose
+   - Document each step's purpose
    - List all handoff points
    - Include troubleshooting guide
 
 ## Validation Checklist
 - [ ] Workflow name is unique and valid
-- [ ] All stages have clear purposes
+- [ ] All sequence steps have clear purposes
 - [ ] Agent assignments are valid
 - [ ] No circular dependencies
 - [ ] All resources exist
@@ -415,7 +417,7 @@ ELICIT: Resources and Dependencies
    (hybrid → squads/{squad_name}/workflows/{workflow-name}.yaml)
 📊 Workflow Summary:
    - Context: {target_context} {squad_name if applicable}
-   - Stages: {stage-count}
+   - Steps: {step-count}
    - Agents: {agent-list}
    - Type: {workflow-type}
 🚀 To use: Select workflow when starting new project
@@ -423,6 +425,6 @@ ELICIT: Resources and Dependencies
 
 ## Workflow Execution Notes
 - Workflows are selected during project initialization
-- Each stage execution is logged in memory
+- Each step execution is logged in memory
 - Progress tracking available through memory queries
-- Agents automatically receive stage-specific context 
+- Agents automatically receive step-specific context

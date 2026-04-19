@@ -319,6 +319,96 @@ workflow:
       on_abort: workflow_aborted
 
   # ============================================
+  # Canonical Execution Contract
+  # ============================================
+  sequence:
+    - step: validate_story
+      id: validation
+      phase: 1
+      phase_name: "Story Validation"
+      agent: "@po"
+      task: "validate-story-draft"
+      action: "Validate story and assignments"
+      outputs:
+        - validation_result
+      next: development
+      on_failure: reject_with_feedback
+
+    - step: develop_story
+      id: development
+      phase: 2
+      phase_name: "Development"
+      agent: "${story.executor}"
+      task: "develop"
+      action: "Implement approved story"
+      requires: validation
+      outputs:
+        - implementation
+        - test_results
+      next: self_healing
+      on_failure: return_to_po
+
+    - step: run_self_healing
+      id: self_healing
+      phase: 3
+      phase_name: "Self-Healing"
+      agent: "@dev"
+      task: "self-heal"
+      action: "Apply automated fixes when enabled"
+      requires: development
+      condition: "${config.coderabbit_integration.enabled} == true"
+      outputs:
+        - healed_code
+      next: quality_gate
+      on_failure: quality_gate
+
+    - step: quality_review
+      id: quality_gate
+      phase: 4
+      phase_name: "Quality Gate"
+      agent: "${story.quality_gate}"
+      task: "quality-review"
+      action: "Review code quality and acceptance"
+      requires:
+        - development
+        - self_healing
+      outputs:
+        - review_result
+      next: push
+      on_failure: return_to_development
+
+    - step: push_and_pr
+      id: push
+      phase: 5
+      phase_name: "Push & PR"
+      agent: "@devops"
+      task: "push-and-pr"
+      action: "Run checks and publish PR"
+      requires: quality_gate
+      outputs:
+        - push_result
+        - pr_url
+      next: checkpoint
+      on_failure: return_to_quality_gate
+
+    - step: story_checkpoint
+      id: checkpoint
+      phase: 6
+      phase_name: "Story Checkpoint"
+      agent: "@po"
+      task: "story-checkpoint"
+      action: "Collect human decision (GO/PAUSE/REVIEW/ABORT)"
+      requires: push
+      outputs:
+        - decision
+        - next_story
+      on_complete:
+        GO: validation
+        PAUSE: workflow_paused
+        REVIEW: show_summary_then_checkpoint
+        ABORT: workflow_aborted
+
+  # ============================================
   # Error Handlers
   # ============================================
   error_handlers:

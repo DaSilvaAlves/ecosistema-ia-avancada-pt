@@ -397,7 +397,7 @@ class BuildStateManager {
    * @returns {Object|null} Last checkpoint or null
    */
   getLastCheckpoint() {
-    if (!this._state || this._state.checkpoints.length === 0) {
+    if (!this._state || !this._state.checkpoints || this._state.checkpoints.length === 0) {
       return null;
     }
     return this._state.checkpoints[this._state.checkpoints.length - 1];

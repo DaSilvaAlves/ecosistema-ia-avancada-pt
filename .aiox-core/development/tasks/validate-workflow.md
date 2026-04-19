@@ -190,8 +190,8 @@ acceptance-criteria:
    - **Recovery:** Show line/column of syntax error
 
 3. **Error:** Missing Required Fields
-   - **Cause:** Workflow missing workflow.id, workflow.name, or sequence
-   - **Resolution:** Add missing fields to workflow YAML
+   - **Cause:** Workflow missing workflow.id, workflow.name, or execution array
+   - **Resolution:** Add `workflow.sequence` (official). `workflow.phases` is accepted for compatibility only.
    - **Recovery:** Show which fields are missing with examples
 
 ---

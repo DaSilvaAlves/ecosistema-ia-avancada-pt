@@ -5,104 +5,119 @@
 # Created: {{CREATEDAT}}
 # Story: {{STORYID}}
 
-name: {{COMPONENTNAME}}
-version: 1.0.0
-description: {{DESCRIPTION}}
-squad: {{SQUADNAME}}
+workflow:
+  id: "{{COMPONENTNAME}}"
+  name: "{{COMPONENTNAME}}"
+  version: "1.0.0"
+  description: "{{DESCRIPTION}}"
+  type: development
+  scope: "{{SQUADNAME}}"
 
-# Metadata
-metadata:
-  created: {{CREATEDAT}}
-  author: squad-creator
-  tags:
-    - workflow
-    - {{SQUADNAME}}
+  metadata:
+    created: "{{CREATEDAT}}"
+    author: squad-creator
+    story: "{{STORYID}}"
+    tags:
+      - workflow
+      - "{{SQUADNAME}}"
 
-# Trigger conditions
-triggers:
-  - type: manual
-    command: "*{{COMPONENTNAME}}"
-  # - type: event
-  #   event: some-event-name
-  # - type: schedule
-  #   cron: "0 0 * * *"
+  triggers:
+    - type: manual
+      command: "*{{COMPONENTNAME}}"
+    # - type: event
+    #   event: some-event-name
+    # - type: schedule
+    #   cron: "0 0 * * *"
 
-# Input parameters
-inputs:
-  - name: param1
-    type: string
-    required: true
-    description: "Description of parameter 1"
-  - name: param2
-    type: string
-    required: false
-    default: "default-value"
-    description: "Description of parameter 2"
+  inputs:
+    - name: param1
+      type: string
+      required: true
+      description: "Description of parameter 1"
+    - name: param2
+      type: string
+      required: false
+      default: "default-value"
+      description: "Description of parameter 2"
 
-# Workflow steps
-steps:
-  - id: step-1
-    name: "Step 1: Initialize"
-    description: "Initialize the workflow"
-    action: task
-    task: task-name-1
-    inputs:
-      param: "{{inputs.param1}}"
-    on_error: abort
+  # Optional compatibility metadata for non-executable phase grouping.
+  phases:
+    - phase_1: Initialize
+    - phase_2: Process
+    - phase_3: Finalize
 
-  - id: step-2
-    name: "Step 2: Process"
-    description: "Main processing step"
-    action: task
-    task: task-name-2
-    depends_on:
-      - step-1
-    inputs:
-      data: "{{steps.step-1.output}}"
-    on_error: retry
-    retry:
-      max_attempts: 3
-      delay: 1000
+  # Canonical executable contract (official): workflow.sequence[]
+  sequence:
+    - step: initialize
+      id: init
+      phase: 1
+      phase_name: "Initialize"
+      agent: "{{SQUADNAME}}-chief"
+      action: "Initialize the workflow"
+      task: "task-name-1"
+      inputs:
+        param: "{{inputs.param1}}"
+      outputs:
+        - init_output
+      next: process
+      on_failure: abort
 
-  - id: step-3
-    name: "Step 3: Finalize"
-    description: "Finalize the workflow"
-    action: task
-    task: task-name-3
-    depends_on:
-      - step-2
-    condition: "{{steps.step-2.success}}"
+    - step: process
+      id: process
+      phase: 2
+      phase_name: "Process"
+      agent: "{{SQUADNAME}}-chief"
+      action: "Execute main processing step"
+      task: "task-name-2"
+      requires: init
+      inputs:
+        data: "{{init_output}}"
+      outputs:
+        - process_output
+      next: finalize
+      on_failure: retry
 
-# Conditional branches (optional)
-# branches:
-#   - condition: "{{steps.step-2.output.type == 'a'}}"
-#     steps:
-#       - id: branch-a-step
-#         name: "Branch A Step"
-#         action: task
-#         task: branch-a-task
+    - step: finalize
+      id: finalize
+      phase: 3
+      phase_name: "Finalize"
+      agent: "{{SQUADNAME}}-chief"
+      action: "Finalize workflow execution"
+      task: "task-name-3"
+      requires: process
+      inputs:
+        data: "{{process_output}}"
+      outputs:
+        - workflow_result
+      on_complete:
+        status: success
 
-# Output definition
-outputs:
-  - name: result
-    from: "{{steps.step-3.output}}"
-    description: "Final workflow result"
+    - workflow_end: true
+      id: complete
+      action: "workflow_complete"
 
-# Completion handlers
-completion:
-  on_success:
-    message: "Workflow '{{COMPONENTNAME}}' completed successfully"
-    notify: false
-  on_failure:
-    message: "Workflow '{{COMPONENTNAME}}' failed"
-    notify: true
-    rollback: true
+  outputs:
+    - name: result
+      from: "{{workflow_result}}"
+      description: "Final workflow result"
 
-# Validation
-validation:
-  pre_run:
-    - "Check all required inputs are provided"
-    - "Validate input formats"
-  post_run:
-    - "Verify output is valid"
-    - "Log completion metrics"
+  handoff_prompts:
+    init_to_process: "Initialization complete. Proceeding to processing."
+    process_to_finalize: "Processing complete. Proceeding to finalization."
+
+  completion:
+    on_success:
+      message: "Workflow '{{COMPONENTNAME}}' completed successfully"
+      notify: false
+    on_failure:
+      message: "Workflow '{{COMPONENTNAME}}' failed"
+      notify: true
+      rollback: true
+
+  validation:
+    pre_run:
+      - "Check all required inputs are provided"
+      - "Validate input formats"
+    post_run:
+      - "Verify output is valid"
+      - "Log completion metrics"

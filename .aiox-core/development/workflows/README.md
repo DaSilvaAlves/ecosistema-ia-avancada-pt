@@ -67,10 +67,17 @@ workflow:
   metadata:
     elicit: true  # If user interaction required
     confirmation_required: true
-  steps:
-    - id: step-1
-      name: Step name
-      description: What this step does
+  sequence:
+    - step: step_slug
+      id: step-1
+      agent: responsible-agent
+      action: What this step does
+      next: next-step-id
+
+  # Optional compatibility metadata (non-executable)
+  phases:
+    - phase_1: Discovery
+    - phase_2: Execution
 ```
 
 ## Best Practices
