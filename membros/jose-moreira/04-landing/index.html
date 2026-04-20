@@ -1,0 +1,1627 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Se a sua PME em Viana perde clientes depois das 18h, ao sábado ou à hora de almoço, este sistema atende-os — com o seu nome, a sua informação, as suas regras. Uma conversa, sem pacotes."
+    />
+    <meta name="author" content="José Moreira" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0a0a0a" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="A sua PME está a perder clientes nas horas em que ninguém responde." />
+    <meta
+      property="og:description"
+      content="Dois números — e em 30 segundos vê quanto lhe custa por ano. Depois experimente o sistema."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_PT" />
+
+    <title>José Moreira — Consultor local, Viana do Castelo. Atendimento que não dorme.</title>
+
+    <!-- Favicon inline SVG (JM monograma dourado sobre preto) -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230a0a0a'/%3E%3Ctext x='32' y='42' font-family='Georgia,serif' font-size='28' font-weight='700' text-anchor='middle' fill='%23c9a66b'%3EJM%3C/text%3E%3C/svg%3E"
+    />
+
+    <!-- Fontes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Alpine.js para reactividade (10KB gzip) -->
+    <script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
+
+    <style>
+      /* ========================================================================
+         DESIGN TOKENS — premium sóbrio, zero relação com design system da comunidade.
+         Esta é a marca do José Moreira, não do [IA]AVANÇADA PT.
+         ======================================================================== */
+      :root {
+        --bg: #0a0a0a;
+        --bg-elevated: #141414;
+        --bg-raised: #1c1c1c;
+        --text: #f5f0e8;
+        --text-muted: #8a8a8a;
+        --text-dim: #5a5a5a;
+        --accent: #c9a66b;
+        --accent-strong: #d9b87f;
+        --accent-dim: rgba(201, 166, 107, 0.12);
+        --warning: #c44d36;
+        --warning-dim: rgba(196, 77, 54, 0.1);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-strong: rgba(255, 255, 255, 0.14);
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+        --font-editorial: 'Fraunces', Georgia, serif;
+        --max-width: 1080px;
+        --content-width: 720px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-ui);
+        font-size: 16px;
+        line-height: 1.65;
+        font-weight: 400;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
+      ::selection {
+        background: var(--accent);
+        color: var(--bg);
+      }
+
+      /* ========================================================================
+         TIPOGRAFIA
+         ======================================================================== */
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-editorial);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        color: var(--text);
+      }
+
+      h1 {
+        font-size: clamp(2rem, 5vw + 1rem, 3.75rem);
+        font-weight: 700;
+      }
+
+      h2 {
+        font-size: clamp(1.6rem, 3vw + 0.8rem, 2.5rem);
+      }
+
+      h3 {
+        font-size: clamp(1.15rem, 1.5vw + 0.7rem, 1.5rem);
+      }
+
+      p {
+        max-width: 60ch;
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.2s ease;
+      }
+
+      a:hover {
+        border-bottom-color: var(--accent);
+      }
+
+      .eyebrow {
+        font-family: var(--font-ui);
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        color: var(--accent);
+        margin-bottom: 1rem;
+      }
+
+      /* ========================================================================
+         LAYOUT PRIMITIVES
+         ======================================================================== */
+      .container {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      .content {
+        max-width: var(--content-width);
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      section {
+        padding: clamp(3.5rem, 8vw, 7rem) 0;
+        border-top: 1px solid var(--border);
+      }
+
+      section:first-of-type {
+        border-top: none;
+      }
+
+      /* ========================================================================
+         HEADER
+         ======================================================================== */
+      header.site {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(10, 10, 10, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .site-inner {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .brand-name {
+        font-family: var(--font-editorial);
+        font-size: 1.15rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--text);
+      }
+
+      .brand-location {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--text-muted);
+      }
+
+      .header-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 1rem;
+        background: transparent;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        color: var(--text);
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition:
+          border-color 0.2s ease,
+          background 0.2s ease;
+      }
+
+      .header-cta:hover {
+        border-color: var(--accent);
+        background: var(--accent-dim);
+        border-bottom-color: var(--accent);
+      }
+
+      .header-cta svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* ========================================================================
+         HERO
+         ======================================================================== */
+      .hero {
+        padding: clamp(4rem, 10vw, 8rem) 0 clamp(3rem, 6vw, 5rem);
+      }
+
+      .hero-inner {
+        max-width: var(--content-width);
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      .hero .agora {
+        font-family: var(--font-ui);
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .hero .agora::before {
+        content: '';
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 10px var(--accent);
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.6;
+          transform: scale(0.8);
+        }
+      }
+
+      .hero h1 {
+        margin-bottom: 1.25rem;
+      }
+
+      .hero h1 em {
+        font-style: italic;
+        color: var(--accent);
+        font-weight: 400;
+      }
+
+      .hero .contexto {
+        font-size: clamp(1.05rem, 1vw + 0.8rem, 1.3rem);
+        color: var(--text-muted);
+        max-width: 52ch;
+        margin-bottom: 2.5rem;
+        line-height: 1.55;
+      }
+
+      .hero .hint {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        color: var(--text-dim);
+        font-size: 0.85rem;
+      }
+
+      .hero .hint svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* ========================================================================
+         SECTOR SELECTOR
+         ======================================================================== */
+      .sector {
+        background: var(--bg-elevated);
+      }
+
+      .sector .content {
+        text-align: center;
+      }
+
+      .sector h2 {
+        margin-bottom: 0.75rem;
+      }
+
+      .sector .subtitle {
+        color: var(--text-muted);
+        margin: 0 auto 2.5rem;
+        max-width: 48ch;
+      }
+
+      .sector-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        max-width: 640px;
+        margin: 0 auto;
+      }
+
+      .sector-btn {
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 1.5rem 1rem;
+        color: var(--text);
+        font-family: var(--font-ui);
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+      }
+
+      .sector-btn:hover {
+        border-color: var(--border-strong);
+        background: #222;
+        transform: translateY(-2px);
+      }
+
+      .sector-btn.active {
+        border-color: var(--accent);
+        background: var(--accent-dim);
+      }
+
+      .sector-btn .label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      .sector-btn .example {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-weight: 400;
+      }
+
+      /* ========================================================================
+         CALCULADORA DE SANGRIA
+         ======================================================================== */
+      .calc {
+        position: relative;
+      }
+
+      .calc-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+        max-width: var(--content-width);
+        margin: 0 auto;
+      }
+
+      @media (min-width: 860px) {
+        .calc-grid {
+          grid-template-columns: 1fr 1fr;
+          gap: 3.5rem;
+          max-width: var(--max-width);
+          align-items: center;
+        }
+      }
+
+      .calc h2 {
+        margin-bottom: 1rem;
+      }
+
+      .calc .intro {
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+      }
+
+      .calc-field {
+        margin-bottom: 1.75rem;
+      }
+
+      .calc-field label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text);
+        margin-bottom: 0.5rem;
+      }
+
+      .calc-field .help {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+        max-width: 52ch;
+      }
+
+      .calc-input {
+        width: 100%;
+        max-width: 280px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        padding: 0.85rem 1rem;
+        color: var(--text);
+        font-family: var(--font-ui);
+        font-size: 1.15rem;
+        font-weight: 500;
+        transition: border-color 0.2s ease;
+      }
+
+      .calc-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .calc-input::placeholder {
+        color: var(--text-dim);
+        font-weight: 400;
+      }
+
+      /* Resultado */
+      .calc-result {
+        background: linear-gradient(180deg, var(--bg-elevated), var(--bg-raised));
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .calc-result.active {
+        border-color: rgba(196, 77, 54, 0.3);
+      }
+
+      .calc-result::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, var(--warning), transparent);
+        opacity: 0.4;
+      }
+
+      .calc-result .titulo {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--warning);
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+      }
+
+      .calc-result .valor-grande {
+        font-family: var(--font-editorial);
+        font-size: clamp(2.5rem, 6vw, 4rem);
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1;
+        margin-bottom: 0.3rem;
+        letter-spacing: -0.02em;
+      }
+
+      .calc-result .periodo {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 1.75rem;
+      }
+
+      .calc-result .extras {
+        border-top: 1px solid var(--border);
+        padding-top: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+
+      .calc-result .extra-linha {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: 0.95rem;
+      }
+
+      .calc-result .extra-linha .lbl {
+        color: var(--text-muted);
+      }
+
+      .calc-result .extra-linha .val {
+        font-weight: 600;
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .calc-result .idle {
+        color: var(--text-dim);
+        font-style: italic;
+        padding: 2rem 0;
+        text-align: center;
+      }
+
+      /* ========================================================================
+         BOT DEMO
+         ======================================================================== */
+      .bot-demo {
+        background: var(--bg-elevated);
+      }
+
+      .bot-demo .intro {
+        max-width: var(--content-width);
+        margin: 0 auto 2.5rem;
+        padding: 0 1.5rem;
+        text-align: center;
+      }
+
+      .bot-demo h2 {
+        margin-bottom: 0.75rem;
+      }
+
+      .bot-demo .intro p {
+        margin: 0 auto;
+        color: var(--text-muted);
+      }
+
+      .bot-frame-wrapper {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      .bot-frame {
+        width: 100%;
+        height: 620px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-lg);
+        background: var(--bg-raised);
+        overflow: hidden;
+      }
+
+      .bot-frame iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+      }
+
+      .bot-hint {
+        max-width: 720px;
+        margin: 1.25rem auto 0;
+        padding: 0 1.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-align: center;
+      }
+
+      /* ========================================================================
+         QUEM É MOREIRA
+         ======================================================================== */
+      .quem .content {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+        max-width: var(--max-width);
+        padding: 0 1.5rem;
+      }
+
+      @media (min-width: 820px) {
+        .quem .content {
+          grid-template-columns: 280px 1fr;
+          gap: 3.5rem;
+          align-items: center;
+        }
+      }
+
+      .foto {
+        aspect-ratio: 3/4;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-dim);
+        font-size: 0.8rem;
+        text-align: center;
+        padding: 1rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .foto::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 30% 30%, var(--accent-dim), transparent 60%);
+      }
+
+      .foto-placeholder {
+        position: relative;
+        z-index: 1;
+        font-family: var(--font-ui);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--text-muted);
+        max-width: 20ch;
+        line-height: 1.5;
+      }
+
+      .quem-texto h2 {
+        margin-bottom: 1.25rem;
+      }
+
+      .quem-texto p {
+        color: var(--text);
+        margin-bottom: 1rem;
+        font-size: 1.05rem;
+        line-height: 1.7;
+      }
+
+      .quem-texto p + p {
+        color: var(--text-muted);
+      }
+
+      .quem-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+      }
+
+      .quem-links a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 0.95rem;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        color: var(--text);
+      }
+
+      .quem-links a:hover {
+        border-color: var(--accent);
+        border-bottom-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .quem-links a svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* ========================================================================
+         ENTREGA — 3 PASSOS
+         ======================================================================== */
+      .entrega {
+        background: var(--bg-elevated);
+      }
+
+      .entrega .eyebrow,
+      .entrega h2 {
+        text-align: center;
+      }
+
+      .entrega h2 {
+        margin: 0 auto 3rem;
+      }
+
+      .entrega-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      @media (min-width: 720px) {
+        .entrega-grid {
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1.25rem;
+        }
+      }
+
+      .passo {
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem 1.75rem;
+        position: relative;
+      }
+
+      .passo .num {
+        font-family: var(--font-editorial);
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--accent);
+        line-height: 1;
+        margin-bottom: 1rem;
+        opacity: 0.7;
+      }
+
+      .passo h3 {
+        margin-bottom: 0.75rem;
+        font-family: var(--font-ui);
+        font-size: 1.05rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .passo p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        line-height: 1.65;
+      }
+
+      .entrega-footer {
+        text-align: center;
+        margin-top: 2.5rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* ========================================================================
+         FAQ
+         ======================================================================== */
+      .faq h2 {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      .faq-list {
+        max-width: var(--content-width);
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      .faq-item {
+        border-top: 1px solid var(--border);
+      }
+
+      .faq-item:last-child {
+        border-bottom: 1px solid var(--border);
+      }
+
+      .faq-item summary {
+        padding: 1.5rem 0;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        font-size: 1.05rem;
+        font-weight: 500;
+        list-style: none;
+        color: var(--text);
+        transition: color 0.2s ease;
+      }
+
+      .faq-item summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .faq-item summary::after {
+        content: '+';
+        font-family: var(--font-editorial);
+        font-size: 1.5rem;
+        color: var(--accent);
+        font-weight: 400;
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+      }
+
+      .faq-item[open] summary::after {
+        transform: rotate(45deg);
+      }
+
+      .faq-item summary:hover {
+        color: var(--accent);
+      }
+
+      .faq-answer {
+        padding: 0 0 1.5rem;
+        color: var(--text-muted);
+        max-width: 62ch;
+        line-height: 1.7;
+      }
+
+      /* ========================================================================
+         CTA FINAL
+         ======================================================================== */
+      .cta-final {
+        background:
+          radial-gradient(ellipse at top, rgba(201, 166, 107, 0.06), transparent 60%),
+          var(--bg-elevated);
+      }
+
+      .cta-final .content {
+        text-align: center;
+      }
+
+      .cta-final h2 {
+        margin-bottom: 1rem;
+      }
+
+      .cta-final .intro {
+        color: var(--text-muted);
+        margin: 0 auto 3rem;
+        max-width: 52ch;
+      }
+
+      .cta-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        max-width: 720px;
+        margin: 0 auto;
+      }
+
+      @media (min-width: 760px) {
+        .cta-grid {
+          grid-template-columns: 1fr 1fr;
+          gap: 2rem;
+        }
+      }
+
+      .cta-card {
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        text-align: left;
+      }
+
+      .cta-card h3 {
+        font-family: var(--font-ui);
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 1rem;
+      }
+
+      .cta-card p {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+      }
+
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.9rem 1.25rem;
+        background: var(--accent);
+        color: var(--bg);
+        font-family: var(--font-ui);
+        font-size: 0.95rem;
+        font-weight: 600;
+        border: none;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: background 0.2s ease;
+        border-bottom: none;
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-strong);
+        border-bottom: none;
+      }
+
+      .btn-primary svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .form-field {
+        margin-bottom: 1rem;
+      }
+
+      .form-field label {
+        display: block;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-bottom: 0.35rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .form-field input,
+      .form-field select {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        padding: 0.75rem 0.9rem;
+        color: var(--text);
+        font-family: var(--font-ui);
+        font-size: 0.95rem;
+      }
+
+      .form-field input:focus,
+      .form-field select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .form-rgpd {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-top: 1rem;
+        line-height: 1.5;
+      }
+
+      /* ========================================================================
+         FOOTER
+         ======================================================================== */
+      footer.site {
+        padding: 2.5rem 0 3rem;
+        border-top: 1px solid var(--border);
+        background: var(--bg);
+      }
+
+      .footer-inner {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+
+      .footer-inner .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+      }
+
+      .footer-inner .links a {
+        color: var(--text-muted);
+        border-bottom-color: transparent;
+      }
+
+      .footer-inner .links a:hover {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      .footer-inner .member {
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+      }
+
+      /* ========================================================================
+         ANIMAÇÕES & UTILIDADES
+         ======================================================================== */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      [x-cloak] {
+        display: none !important;
+      }
+    </style>
+  </head>
+
+  <body x-data="landing()" x-init="init()" x-cloak>
+    <!-- ==========================================================================
+         HEADER
+         ========================================================================== -->
+    <header class="site">
+      <div class="site-inner">
+        <div class="brand">
+          <span class="brand-name">José Moreira</span>
+          <span class="brand-location">Viana do Castelo · Consultor local</span>
+        </div>
+        <a class="header-cta" href="#falar" aria-label="Falar com José Moreira">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+            />
+          </svg>
+          <span>Falar com José</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- ==========================================================================
+         HERO — hora viva + contexto dinâmico
+         ========================================================================== -->
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="agora" aria-live="polite">
+          <span x-text="'Agora são ' + agora"></span>
+        </div>
+        <h1>
+          A sua PME está a perder clientes em cada hora que
+          <em>ninguém em Viana atende.</em>
+        </h1>
+        <p class="contexto" x-text="heroContexto"></p>
+        <div class="hint">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+          <span>Dois números seus. Trinta segundos. O valor exacto que está a sair pela porta.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         SELECTOR DE SECTOR
+         ========================================================================== -->
+    <section class="sector">
+      <div class="content">
+        <p class="eyebrow">Comece aqui</p>
+        <h2>Em que trabalha o senhor?</h2>
+        <p class="subtitle">
+          Porque o pedido de orçamento de uma serralharia não é igual ao de uma clínica. E os números também não.
+        </p>
+        <div class="sector-grid" role="group" aria-label="Escolha do sector">
+          <button
+            class="sector-btn"
+            :class="{ active: sector === 'industria' }"
+            @click="escolherSector('industria')"
+            type="button"
+          >
+            <span class="label">Indústria</span>
+            <span class="example">Metalomecânica, madeiras, caixilharia, têxtil — quem exporta ou vende B2B</span>
+          </button>
+          <button
+            class="sector-btn"
+            :class="{ active: sector === 'comercio' }"
+            @click="escolherSector('comercio')"
+            type="button"
+          >
+            <span class="label">Comércio</span>
+            <span class="example">Loja, padaria, restaurante, oficina — quem atende cliente final</span>
+          </button>
+          <button
+            class="sector-btn"
+            :class="{ active: sector === 'servicos' }"
+            @click="escolherSector('servicos')"
+            type="button"
+          >
+            <span class="label">Serviços</span>
+            <span class="example">Clínica, escritório, manutenção, construção — quem vende marcações e orçamentos</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         CALCULADORA DE SANGRIA
+         ========================================================================== -->
+    <section class="calc">
+      <div class="container">
+        <div class="calc-grid">
+          <!-- Inputs -->
+          <div>
+            <p class="eyebrow">Conta da perda</p>
+            <h2 x-text="tituloCalc"></h2>
+            <p class="intro" x-text="introCalc"></p>
+
+            <div class="calc-field">
+              <label for="clientes-semana">Clientes por semana que sente que perdeu</label>
+              <span class="help">
+                Estimativa sua. Pense nos contactos que chegam depois das 18h, ao sábado de manhã ou à hora
+                de almoço e que nunca mais regressam. Não precisa de ser exacto.
+              </span>
+              <input
+                id="clientes-semana"
+                class="calc-input"
+                type="number"
+                min="0"
+                max="500"
+                step="1"
+                placeholder="ex.: 3"
+                x-model.number="clientesSemana"
+                inputmode="numeric"
+              />
+            </div>
+
+            <div class="calc-field">
+              <label for="ticket-medio">O que vale um cliente típico (€)</label>
+              <span class="help">
+                Quanto factura, em média, num cliente médio. Um orçamento, um serviço, um pedido. Arredonde.
+              </span>
+              <input
+                id="ticket-medio"
+                class="calc-input"
+                type="number"
+                min="0"
+                max="1000000"
+                step="10"
+                placeholder="ex.: 250"
+                x-model.number="ticketMedio"
+                inputmode="decimal"
+              />
+            </div>
+          </div>
+
+          <!-- Resultado -->
+          <div class="calc-result" :class="{ active: temSangria }">
+            <template x-if="!temSangria">
+              <p class="idle">
+                Escreva os dois números. O valor aparece aqui.
+              </p>
+            </template>
+            <template x-if="temSangria">
+              <div>
+                <p class="titulo">Está a sair pela porta</p>
+                <p class="valor-grande" x-text="formatarEuros(sangriaAno)"></p>
+                <p class="periodo">por ano. Em clientes que nunca chegaram a ouvir-lhe a voz.</p>
+                <div class="extras">
+                  <div class="extra-linha">
+                    <span class="lbl">Cada mês</span>
+                    <span class="val" x-text="formatarEuros(sangriaMes)"></span>
+                  </div>
+                  <div class="extra-linha">
+                    <span class="lbl">Em três anos</span>
+                    <span class="val" x-text="formatarEuros(sangria3Anos)"></span>
+                  </div>
+                  <div class="extra-linha">
+                    <span class="lbl">Pessoas que não voltaram</span>
+                    <span class="val" x-text="clientesAno + ' pessoas'"></span>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         BOT DEMO
+         ========================================================================== -->
+    <section class="bot-demo">
+      <div class="intro">
+        <p class="eyebrow">Experimente</p>
+        <h2>Abra o ecrã abaixo. Escreva como se fosse um cliente seu.</h2>
+        <p>
+          Pergunte horários. Peça um orçamento. Teste o que quiser. Este sistema está a responder —
+          em português, em inglês — a qualquer hora. Na sua empresa, responderia com a informação do
+          seu negócio, não desta demonstração.
+        </p>
+      </div>
+
+      <div class="bot-frame-wrapper">
+        <div class="bot-frame">
+          <iframe
+            src="https://cdn.botpress.cloud/webchat/v3.6/shareable.html?configUrl=https://files.bpcontent.cloud/2026/03/23/11/20260323112227-A7N2XPSU.json"
+            title="Assistente de demonstração — José Moreira"
+            loading="lazy"
+            allow="microphone"
+          ></iframe>
+        </div>
+      </div>
+
+      <p class="bot-hint">
+        Se não voltar, volte. Experimente outra vez, com outra pergunta. É assim que os seus clientes
+        vão conhecê-lo.
+      </p>
+    </section>
+
+    <!-- ==========================================================================
+         QUEM É MOREIRA
+         ========================================================================== -->
+    <section class="quem">
+      <div class="content">
+        <div class="foto">
+          <!-- TODO: substituir por foto real do José Moreira em Viana do Castelo -->
+          <span class="foto-placeholder">
+            Fotografia<br />José Moreira<br /><br />[pendente]
+          </span>
+        </div>
+        <div class="quem-texto">
+          <p class="eyebrow">Quem liga de volta</p>
+          <h2>José Moreira</h2>
+          <p>
+            Sou o José Moreira. Vivo em Viana do Castelo. Ajudo pequenas e médias empresas aqui do
+            concelho a pôr um sistema a atender clientes nas horas em que ninguém está — depois das
+            18h, ao sábado, à hora de almoço. Trabalho com empresários que sabem o que têm, sabem o
+            que vendem, e cansaram-se de propostas de agência que podiam ter sido enviadas a qualquer
+            pessoa.
+          </p>
+          <p>
+            Não sou uma agência. Não trago pacotes fechados. Começo por ouvir. Depois, se fizer sentido
+            para os dois, implemento o sistema com a informação da sua empresa e fico por perto
+            enquanto ele está a aprender a forma como fala com os seus clientes. Uma conversa, em
+            Viana, cara a cara se preferir.
+          </p>
+          <div class="quem-links">
+            <a href="https://www.linkedin.com/in/jammoreira1" target="_blank" rel="noopener noreferrer">
+              <svg fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8.34 17.34V9.9H5.9v7.44zM7.12 8.9a1.42 1.42 0 1 0 0-2.83 1.42 1.42 0 0 0 0 2.83zm11 8.44v-4.08c0-2.18-1.17-3.19-2.73-3.19a2.36 2.36 0 0 0-2.14 1.17V9.9h-2.37c.03.69 0 7.44 0 7.44h2.37v-4.15a1.62 1.62 0 0 1 .08-.58 1.3 1.3 0 0 1 1.22-.87c.86 0 1.2.65 1.2 1.62v3.98z"
+                />
+              </svg>
+              <span>Ver perfil LinkedIn</span>
+            </a>
+            <a href="#falar">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3 8l7.89 5.26a2 2 0 0 0 2.22 0L21 8M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z"
+                />
+              </svg>
+              <span>Marcar uma conversa</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         ENTREGA — 3 PASSOS
+         ========================================================================== -->
+    <section class="entrega">
+      <div class="content">
+        <p class="eyebrow">Como isto se faz</p>
+        <h2>Do telefonema à primeira resposta automática — três andamentos</h2>
+      </div>
+
+      <div class="entrega-grid">
+        <div class="passo">
+          <div class="num">1</div>
+          <h3>Escuta</h3>
+          <p>
+            Trinta minutos ao café ou por telefone. Falamos da sua empresa: o que os clientes
+            perguntam, as horas em que lhe ligam, o que já perdeu. Não lhe vendo nada neste momento
+            — só ouço. Se não fizer sentido, não avançamos.
+          </p>
+        </div>
+        <div class="passo">
+          <div class="num">2</div>
+          <h3>Construção</h3>
+          <p>
+            Monto o sistema com a informação que é sua: horários, serviços, morada, perguntas mais
+            frequentes, a forma como fala com os clientes. Ligamos à base onde já guarda os contactos.
+            Testamos juntos até responder como o senhor responderia. Duas semanas, em regra.
+          </p>
+        </div>
+        <div class="passo">
+          <div class="num">3</div>
+          <h3>Afinação</h3>
+          <p>
+            Nas primeiras semanas aparecem perguntas novas, formas de falar que não antecipámos,
+            pedidos que exigem ajuste. Estou lá para isso. Ajustamos em dias, não em meses. Os
+            primeiros trinta dias ficam incluídos.
+          </p>
+        </div>
+      </div>
+
+      <p class="entrega-footer">
+        Não há pacotes fixos, nem tabela pendurada na parede. Cada empresa é um caso. O valor é uma
+        das primeiras coisas de que falamos — não a última.
+      </p>
+    </section>
+
+    <!-- ==========================================================================
+         FAQ
+         ========================================================================== -->
+    <section class="faq">
+      <h2>O que os empresários já me perguntaram</h2>
+      <div class="faq-list">
+        <details class="faq-item" open>
+          <summary>E como sei que funciona antes de pagar alguma coisa?</summary>
+          <div class="faq-answer">
+            A página que o senhor está a ler tem um sistema a funcionar em cima, no bloco
+            "Experimente". É o mesmo motor que instalo numa PME — só que configurado de forma
+            genérica. Experimente. Faça perguntas. Tente partir. Depois falamos com conhecimento de
+            causa, os dois.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>E se o meu cliente quiser falar com uma pessoa?</summary>
+          <div class="faq-answer">
+            O sistema reconhece quando o cliente quer pessoa. Quando acontece, regista o pedido e
+            avisa-o a si, à sua equipa, ou a mim — por email ou WhatsApp, como preferir. A resposta
+            humana chega depois, em horário útil. O que o cliente nunca recebe é silêncio.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>De quem são os dados dos meus clientes depois?</summary>
+          <div class="faq-answer">
+            São seus. Os contactos, as conversas, os pedidos — tudo fica guardado numa base que está
+            em nome da sua empresa (Airtable, Google Sheets, ou outra que prefira). Cumpre RGPD. Pode
+            exportar, mudar de sistema, ou apagar tudo quando quiser. Não fica refém.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>E o meu site actual, onde fica?</summary>
+          <div class="faq-answer">
+            Fica. O sistema é uma peça que se encaixa em qualquer site — WordPress, Wix, Shopify, ou
+            site feito à medida. Para o instalar basta colar um pequeno bocado de código numa página.
+            Se a sua empresa ainda não tem site, também funciona: fica num link que pode partilhar em
+            redes sociais, WhatsApp, ou em resposta a um cartão de visita.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>Se eu mudar preços ou horários, tenho de lhe ligar sempre?</summary>
+          <div class="faq-answer">
+            Diz-me e faço-o por si, em minutos. Estou no mesmo concelho. Para alterações frequentes
+            posso entregar-lhe também uma folha simples onde muda directamente, mas na maior parte
+            dos casos um recado chega.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>Isto exige que eu saiba de tecnologia?</summary>
+          <div class="faq-answer">
+            Não. A parte técnica é minha. A sua parte é a única que ninguém mais sabe fazer: conhecer
+            o seu negócio, os seus clientes, as perguntas de sempre, e o que o senhor responderia a
+            cada uma. O sistema aprende isso consigo, não comigo.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>Em quanto tempo está a atender os meus clientes?</summary>
+          <div class="faq-answer">
+            Duas semanas, em regra, desde a primeira conversa ao sistema a atender clientes reais.
+            Negócios mais simples ficam prontos em cinco a sete dias. O que pesa mais é o tempo que
+            me dá para perceber a sua empresa — não a tecnologia.
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         CTA FINAL
+         ========================================================================== -->
+    <section class="cta-final" id="falar">
+      <div class="content">
+        <p class="eyebrow">Falar com José</p>
+        <h2>Diga-me que horas lhe dão jeito</h2>
+        <p class="intro">
+          O que quer que me mande — WhatsApp, um telefone, três linhas de briefing — chega-me a mim.
+          Não passa por ninguém. Respondo quando vir.
+        </p>
+      </div>
+
+      <div class="cta-grid">
+        <!-- WhatsApp -->
+        <div class="cta-card">
+          <h3>WhatsApp · resposta rápida</h3>
+          <p>
+            Uma mensagem, uma pergunta, uma dúvida concreta. Respondo em poucas horas durante o dia
+            — é onde estou mais vezes.
+          </p>
+          <a
+            class="btn-primary"
+            href="https://wa.me/351968336088?text=Boa%20tarde%2C%20Sr.%20Moreira.%20Vi%20a%20sua%20p%C3%A1gina%20%E2%80%94%20gostava%20de%20falar%20sobre%20a%20minha%20empresa."
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-1 1.1-.2.2-.4.2-.6.1-.8-.4-1.6-.9-2.3-1.5-.6-.6-1.1-1.3-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.7-1-2.3-.1-.4-.3-.4-.5-.4h-.6c-.2 0-.5.2-.6.4-.7.7-1 1.6-1 2.5.1 1 .5 2 1 2.8 1.2 1.7 2.6 3.1 4.3 4 .5.3 1 .5 1.6.7.4.2.9.2 1.4.1.6-.1 1.7-.7 2-1.3.2-.4.2-.8.1-1.2l-.3-.2m2.6-7.7a10 10 0 0 0-14.2 14l-1.3 4.8 4.9-1.3a10 10 0 0 0 4.8 1.2A10 10 0 0 0 20.1 6.7m-8.8 15.3a8.3 8.3 0 0 1-4.2-1.2l-.3-.2-3.1.8.9-3-.2-.3a8.3 8.3 0 0 1 13-10 8.3 8.3 0 0 1 2.6 5.9c0 4.6-3.8 8.3-8.7 8.3v-.3z"
+              />
+            </svg>
+            <span>Abrir conversa no WhatsApp</span>
+          </a>
+          <p class="form-rgpd">
+            O seu número só chega a mim quando enviar a mensagem. Não fica em lado nenhum antes disso.
+          </p>
+        </div>
+
+        <!-- Formulário -->
+        <div class="cta-card">
+          <h3>Prefere que eu lhe ligue?</h3>
+          <p>
+            Deixe-me o nome, o nome da empresa e um número. Ligo-lhe em 24 horas úteis. Uma pergunta
+            breve para saber se faz sentido falarmos mais tempo depois.
+          </p>
+          <form id="form-lead" @submit.prevent="enviarLead" data-pendente="ligar-a-airtable">
+            <div class="form-field">
+              <label for="nome">O seu nome</label>
+              <input id="nome" name="nome" type="text" required autocomplete="name" />
+            </div>
+            <div class="form-field">
+              <label for="empresa">A sua empresa</label>
+              <input id="empresa" name="empresa" type="text" required autocomplete="organization" />
+            </div>
+            <div class="form-field">
+              <label for="telefone">Número de telefone</label>
+              <input
+                id="telefone"
+                name="telefone"
+                type="tel"
+                required
+                autocomplete="tel"
+                placeholder="+351 ..."
+              />
+            </div>
+            <button class="btn-primary" type="submit">
+              <span x-text="estadoForm"></span>
+            </button>
+            <p class="form-rgpd">
+              Os dados só servem para este contacto. Não partilho com ninguém. Se quiser apagados, um
+              recado é o suficiente.
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         FOOTER
+         ========================================================================== -->
+    <footer class="site">
+      <div class="footer-inner">
+        <div class="member">
+          Viana do Castelo · Membro da comunidade [IA]AVANÇADA PT
+        </div>
+        <div class="links">
+          <a href="https://www.linkedin.com/in/jammoreira1" target="_blank" rel="noopener noreferrer">
+            LinkedIn
+          </a>
+          <a href="#falar">Contacto</a>
+          <a href="#privacidade">Tratamento de dados</a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ==========================================================================
+         COMPORTAMENTO — Alpine.js
+         ========================================================================== -->
+    <script>
+      function landing() {
+        return {
+          // Estado
+          sector: null,
+          agora: '',
+          heroContexto: '',
+          clientesSemana: null,
+          ticketMedio: null,
+          estadoForm: 'Pedir chamada do José',
+
+          // Getters computados
+          get temSangria() {
+            return (
+              Number(this.clientesSemana) > 0 && Number(this.ticketMedio) > 0
+            );
+          },
+          get sangriaSemana() {
+            return Number(this.clientesSemana || 0) * Number(this.ticketMedio || 0);
+          },
+          get sangriaMes() {
+            // 4.33 semanas/mês em média
+            return this.sangriaSemana * 4.33;
+          },
+          get sangriaAno() {
+            return Number(this.clientesSemana || 0) * 52 * Number(this.ticketMedio || 0);
+          },
+          get sangria3Anos() {
+            return this.sangriaAno * 3;
+          },
+          get clientesAno() {
+            return Math.round(Number(this.clientesSemana || 0) * 52);
+          },
+          get tituloCalc() {
+            if (!this.sector) return 'Quanto lhe está a sair pela porta';
+            const mapa = {
+              industria: 'Indústria em Viana: a conta da perda anual',
+              comercio: 'Comércio em Viana: a conta da perda anual',
+              servicos: 'Serviços em Viana: a conta da perda anual',
+            };
+            return mapa[this.sector];
+          },
+          get introCalc() {
+            if (!this.sector)
+              return 'Dois números que só o senhor sabe. Escreva-os. A conta faz-se sozinha.';
+            const mapa = {
+              industria:
+                'Pedidos de orçamento que entram ao sábado de manhã, distribuidores estrangeiros em fuso diferente, clientes a confirmar prazos — quantos é que ficam sem resposta por semana?',
+              comercio:
+                'Clientes a perguntar se tem em stock, a querer reservar, a pedir morada depois das 20h — os que não ouvem resposta vão ao concorrente que atendeu. Quantos por semana?',
+              servicos:
+                'Marcações pedidas ao fim-de-semana, primeiro contacto de cliente novo, orçamento urgente que não pode esperar segunda — quantos caem no vazio por semana?',
+            };
+            return mapa[this.sector];
+          },
+
+          // Acções
+          init() {
+            this.atualizarHora();
+            setInterval(() => this.atualizarHora(), 30000); // actualiza cada 30s
+          },
+
+          atualizarHora() {
+            const d = new Date();
+            const diasSemana = [
+              'domingo',
+              'segunda-feira',
+              'terça-feira',
+              'quarta-feira',
+              'quinta-feira',
+              'sexta-feira',
+              'sábado',
+            ];
+            const dia = diasSemana[d.getDay()];
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            this.agora = `${hh}:${mm} de ${dia}`;
+
+            const ehFimDeSemana = d.getDay() === 0 || d.getDay() === 6;
+            const horaDoDia = d.getHours();
+
+            if (ehFimDeSemana) {
+              this.heroContexto =
+                'A sua empresa está fechada. Os seus clientes não estão. Alguém em Viana está a responder-lhes agora — não é o senhor.';
+            } else if (horaDoDia < 9 || horaDoDia >= 18) {
+              this.heroContexto =
+                'Passa das 18h. Quem precisa de um orçamento agora vai ligar outra vez amanhã — se ainda se lembrar de si.';
+            } else if (horaDoDia >= 13 && horaDoDia < 14) {
+              this.heroContexto =
+                'Hora de almoço. O telefone toca no vazio. Um pedido de orçamento que entra agora perde-se nos próximos quarenta minutos — ou fica para o concorrente que atendeu.';
+            } else {
+              this.heroContexto =
+                'A sua empresa está a atender agora. Mas em 16 das 24 horas do dia não está — e é quando o concorrente não dorme ganha contratos que eram seus.';
+            }
+          },
+
+          escolherSector(s) {
+            this.sector = s;
+            // Scroll suave para a calculadora
+            setTimeout(() => {
+              document
+                .querySelector('.calc')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 150);
+          },
+
+          formatarEuros(valor) {
+            const n = Number(valor || 0);
+            return new Intl.NumberFormat('pt-PT', {
+              style: 'currency',
+              currency: 'EUR',
+              maximumFractionDigits: 0,
+            }).format(n);
+          },
+
+          enviarLead(event) {
+            // PENDENTE: ligar a Airtable via webhook. Por agora, fallback sem rede.
+            this.estadoForm = 'Email ainda em ajuste — use o WhatsApp ao lado';
+            setTimeout(() => {
+              this.estadoForm = 'Pedir chamada do José';
+            }, 4500);
+          },
+        };
+      }
+    </script>
+  </body>
+</html>
