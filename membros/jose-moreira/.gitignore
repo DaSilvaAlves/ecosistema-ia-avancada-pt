@@ -1,0 +1,37 @@
+# DADOS DO MEMBRO — NUNCA COMMITAR
+# Razão: o membro José Moreira partilhou material pessoal e o `.bpz` contém o
+# AIRTABLE_PAT em texto claro (ver auditoria handoffs/RETOMA-20260420-auditoria-profunda-v2.md).
+# Nenhum destes ficheiros pode ir para git público.
+
+# Bot export (TEM SEGREDOS — AIRTABLE_PAT, BASE_ID, TABLE_ID em texto claro)
+Clientes_Chatbot*.bpz/
+*.bpz
+
+# Materiais pessoais entregues pelo Moreira
+KnowlegeBase*.docx
+Cronograma*.pdf
+*.docx
+*.pdf
+
+# Working files da auditoria — contêm CV, foto, screenshots, KB com placeholders sensíveis
+02-prd/auditoria-profunda-v2/working/
+
+# Screenshots e assets pessoais
+assets/
+
+# Email original (contém email pessoal, telefone, LinkedIn do Moreira)
+00-briefing/
+
+# Settings locais Claude Code — variam por máquina/utilizador
+.claude/settings.local.json
+**/.claude/settings.local.json
+
+# Manter estrutura de pastas mesmo que vazias
+!.gitkeep
+!*/.gitkeep
+
+# Permitir handoffs (output nosso) e README
+!handoffs/
+!handoffs/*.md
+!README.md
+!.gitignore
