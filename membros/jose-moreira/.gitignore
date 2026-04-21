@@ -17,7 +17,10 @@ Cronograma*.pdf
 02-prd/auditoria-profunda-v2/working/
 
 # Screenshots e assets pessoais
-assets/
+assets/**
+# Excepção: foto pública da landing (conteúdo intencional, não material sensível)
+!04-landing/assets/
+!04-landing/assets/moreira.jpg
 
 # Email original (contém email pessoal, telefone, LinkedIn do Moreira)
 00-briefing/
