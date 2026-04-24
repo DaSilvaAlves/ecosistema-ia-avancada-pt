@@ -10,28 +10,23 @@
 
 jest.setTimeout(10000);
 
-// ---------------------------------------------------------------------------
-// Mocks
-// ---------------------------------------------------------------------------
+let mockQueryMemories;
+let SynapseMemoryProvider;
+let AGENT_SECTOR_PREFERENCES;
+let BRACKET_CONFIG;
+let DEFAULT_SECTORS;
 
-const mockQueryMemories = jest.fn(() => Promise.resolve([]));
+function loadProviderModule() {
+  jest.resetModules();
+  mockQueryMemories = jest.fn(() => Promise.resolve([]));
 
-jest.mock('../../pro/memory/memory-loader', () => ({
-  MemoryLoader: jest.fn().mockImplementation(() => ({
-    queryMemories: mockQueryMemories,
-  })),
-}), { virtual: true });
+  let loadedModule;
+  jest.isolateModules(() => {
+    loadedModule = require('../../.aiox-core/core/synapse/memory/synapse-memory-provider');
+  });
 
-// ---------------------------------------------------------------------------
-// Import (after mocks)
-// ---------------------------------------------------------------------------
-
-const {
-  SynapseMemoryProvider,
-  AGENT_SECTOR_PREFERENCES,
-  BRACKET_CONFIG,
-  DEFAULT_SECTORS,
-} = require('../../.aiox-core/core/synapse/memory/synapse-memory-provider');
+  return loadedModule;
+}
 
 // =============================================================================
 // SynapseMemoryProvider
@@ -41,9 +36,17 @@ describe('SynapseMemoryProvider', () => {
   let provider;
 
   beforeEach(() => {
-    mockQueryMemories.mockReset();
-    mockQueryMemories.mockResolvedValue([]);
+    ({
+      SynapseMemoryProvider,
+      AGENT_SECTOR_PREFERENCES,
+      BRACKET_CONFIG,
+      DEFAULT_SECTORS,
+    } = loadProviderModule());
     provider = new SynapseMemoryProvider();
+    // Inject a per-test loader stub instead of relying on cross-file module mocks.
+    provider._loader = {
+      queryMemories: mockQueryMemories,
+    };
   });
 
   // -------------------------------------------------------------------------
