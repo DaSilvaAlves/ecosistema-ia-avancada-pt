@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:3000/pt/project)",
+      "Bash(curl -s http://localhost:3000/en/project)",
+      "Bash(curl -s http://localhost:3000/es/project)",
+      "Bash(curl -s http://localhost:3000/fr/project)",
+      "Bash(curl -s http://localhost:3000/pt)",
+      "Bash(echo \"/projecto-trienal: $\\(curl -s http://localhost:3000/pt)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/)",
+      "Bash(echo \"/ → $\\(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/\\)\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/__TRACKED_VAR____TRACKED_VAR__)",
+      "Bash(curl -s http://localhost:3001/pt/project)",
+      "Bash(npm view *)",
+      "Bash(npm list *)",
+      "Bash(npm audit *)",
+      "Bash(npx vercel *)",
+      "Bash(pandoc --version)",
+      "Bash(xelatex --version)",
+      "Bash(wkhtmltopdf --version)",
+      "Bash(node scripts/generate-pdfs.mjs)"
+    ]
+  }
+}

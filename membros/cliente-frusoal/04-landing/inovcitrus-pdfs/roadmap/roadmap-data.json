@@ -1,0 +1,197 @@
+{
+  "title": "Roadmap visual — Projecto Trienal Frusoal InovCitrus 2026-2028",
+  "subtitle": "Determinação da fenologia e ciclo de vida dos tripes (Scirtothrips aurantii) em pomares de citrinos do Algarve",
+  "version": "1.0 (preliminar — pré-publicação)",
+  "date": "25/04/2026",
+  "lang": "pt",
+  "format": "A4 paisagem",
+  "sources": ["F01", "F02"],
+  "disclaimer": "Calendário representativo do desenho trienal. Datas exactas e marcos científicos serão confirmados pela equipa científica do projecto (Frusoal + InovPlantProtect + CCDR Algarve).",
+  "timeline": {
+    "start": "2026-Q1",
+    "end": "2028-Q4",
+    "total_months": 36
+  },
+  "tracks": [
+    {
+      "id": "scientific",
+      "name": "Marcos científicos",
+      "color": "verde-frusoal"
+    },
+    {
+      "id": "communication",
+      "name": "Actos comunicativos",
+      "color": "laranja-frusoal"
+    },
+    {
+      "id": "operational",
+      "name": "Operações de campo",
+      "color": "cinzento"
+    }
+  ],
+  "milestones": [
+    {
+      "id": "M01",
+      "quarter": "2026-Q1",
+      "month": 1,
+      "track": "scientific",
+      "title": "Lançamento do polo InovCitrus",
+      "description": "Anúncio público do polo I&D · Definição metodológica do projecto trienal · Acordo formal Frusoal-InPP-CCDR",
+      "communication_acts": [
+        { "type": "press_release", "lang": ["pt"], "status": "executado" },
+        { "type": "artigo_postal_algarve", "lang": ["pt"], "status": "executado", "ref": "F01" }
+      ]
+    },
+    {
+      "id": "M02",
+      "quarter": "2026-Q1",
+      "month": 3,
+      "track": "operational",
+      "title": "Instalação de armadilhas e monitorização",
+      "description": "Implantação de armadilhas cromotrópicas em pomares Frusoal + associados + Centro Experimentação Agrária Tavira · Início protocolos de campo",
+      "communication_acts": [
+        { "type": "ficha_metodologica_produtores", "lang": ["pt"], "status": "previsto" }
+      ]
+    },
+    {
+      "id": "M03",
+      "quarter": "2026-Q2",
+      "month": 6,
+      "track": "scientific",
+      "title": "Primeira campanha de campo (início)",
+      "description": "Primeiras observações de florescência e fruto em desenvolvimento · Recolha sistemática de dados",
+      "communication_acts": [
+        { "type": "post_linkedin_pedro_madeira", "lang": ["pt", "en"], "status": "previsto" }
+      ]
+    },
+    {
+      "id": "M04",
+      "quarter": "2026-Q3",
+      "month": 9,
+      "track": "scientific",
+      "title": "Primeira campanha — pico de actividade",
+      "description": "Período crítico de monitorização · Recolha intensiva · Identificação de fases do ciclo",
+      "communication_acts": [
+        { "type": "comunicacao_blog_frusoal", "lang": ["pt"], "status": "previsto" },
+        { "type": "infografico_associados", "lang": ["pt"], "status": "previsto" }
+      ]
+    },
+    {
+      "id": "M05",
+      "quarter": "2026-Q4",
+      "month": 12,
+      "track": "scientific",
+      "title": "Síntese da primeira campanha",
+      "description": "Análise interim dos dados de 2026 · Primeiras hipóteses sobre fenologia local",
+      "communication_acts": [
+        { "type": "primeira_ficha_tecnica_produtores", "lang": ["pt"], "status": "previsto" },
+        { "type": "comunicacao_multilingue_publica", "lang": ["pt", "en", "es", "fr"], "status": "previsto" }
+      ]
+    },
+    {
+      "id": "M06",
+      "quarter": "2027-Q1",
+      "month": 15,
+      "track": "scientific",
+      "title": "Plano de afinação metodológica para 2027",
+      "description": "Revisão metodológica baseada em achados de 2026 · Ajustes ao protocolo de monitorização",
+      "communication_acts": [
+        { "type": "post_linkedin_pedro_madeira", "lang": ["pt", "en"], "status": "previsto" }
+      ]
+    },
+    {
+      "id": "M07",
+      "quarter": "2027-Q2",
+      "month": 18,
+      "track": "scientific",
+      "title": "Segunda campanha de campo (início)",
+      "description": "Aplicação do protocolo afinado · Comparação com dados de 2026",
+      "communication_acts": [
+        { "type": "comunicacao_blog_frusoal", "lang": ["pt"], "status": "previsto" }
+      ]
+    },
+    {
+      "id": "M08",
+      "quarter": "2027-Q3",
+      "month": 21,
+      "track": "scientific",
+      "title": "Segunda campanha — pico de actividade",
+      "description": "Segunda recolha intensiva · Validação ou refinamento de hipóteses sobre o ciclo",
+      "communication_acts": [
+        { "type": "infografico_produtores", "lang": ["pt"], "status": "previsto" }
+      ]
+    },
+    {
+      "id": "M09",
+      "quarter": "2027-Q4",
+      "month": 24,
+      "track": "scientific",
+      "title": "Síntese da segunda campanha + ficha técnica afinada",
+      "description": "Análise comparativa 2026-2027 · Atualização das recomendações para produtores",
+      "communication_acts": [
+        { "type": "segunda_ficha_tecnica_produtores", "lang": ["pt"], "status": "previsto" },
+        { "type": "comunicacao_multilingue_publica", "lang": ["pt", "en", "es", "fr"], "status": "previsto" },
+        { "type": "publicacao_cientifica_interim", "lang": ["en"], "status": "previsto" }
+      ]
+    },
+    {
+      "id": "M10",
+      "quarter": "2028-Q1",
+      "month": 27,
+      "track": "scientific",
+      "title": "Plano da campanha final",
+      "description": "Última campanha de campo desenhada para confirmar / refinar conclusões dos dois anos anteriores",
+      "communication_acts": [
+        { "type": "post_linkedin_pedro_madeira", "lang": ["pt", "en"], "status": "previsto" }
+      ]
+    },
+    {
+      "id": "M11",
+      "quarter": "2028-Q2",
+      "month": 30,
+      "track": "scientific",
+      "title": "Terceira campanha de campo",
+      "description": "Última recolha · Confirmação de padrões trienais",
+      "communication_acts": [
+        { "type": "comunicacao_blog_frusoal", "lang": ["pt"], "status": "previsto" }
+      ]
+    },
+    {
+      "id": "M12",
+      "quarter": "2028-Q4",
+      "month": 36,
+      "track": "scientific",
+      "title": "Conclusão científica do trienal",
+      "description": "Relatório final · Recomendações operacionais consolidadas para produtores · Comunicação dos resultados a comunidade científica e sectorial",
+      "communication_acts": [
+        { "type": "relatorio_final_publico", "lang": ["pt", "en"], "status": "previsto" },
+        { "type": "ficha_tecnica_consolidada_produtores", "lang": ["pt"], "status": "previsto" },
+        { "type": "comunicacao_multilingue_publica", "lang": ["pt", "en", "es", "fr"], "status": "previsto" },
+        { "type": "publicacao_cientifica_final", "lang": ["en"], "status": "previsto" },
+        { "type": "evento_sectorial_apresentacao", "lang": ["pt"], "status": "previsto" },
+        { "type": "press_release_conclusao", "lang": ["pt", "en", "es", "fr"], "status": "previsto" }
+      ]
+    }
+  ],
+  "communication_inventory": {
+    "press_releases": 2,
+    "fichas_tecnicas_produtores": 3,
+    "publicacoes_cientificas": 2,
+    "comunicacoes_multilingue_publicas": 3,
+    "posts_linkedin_pedro_madeira": 4,
+    "comunicacoes_blog_frusoal": 4,
+    "infograficos": 2,
+    "relatorio_final": 1,
+    "evento_sectorial": 1,
+    "ficha_metodologica": 1,
+    "total_actos_comunicativos": 23
+  },
+  "languages_distribution": {
+    "pt": 19,
+    "en": 9,
+    "es": 5,
+    "fr": 5,
+    "note": "Totais por língua sobrepostos — actos multilingues contados em cada língua"
+  },
+  "legenda": "Marcos científicos = decisões e produções da equipa científica (Frusoal + InPP + CCDR). Actos comunicativos = outputs públicos amplificados pela infraestrutura editorial do InovCitrus. Operações de campo = trabalho operacional contínuo nos pomares e campos de ensaio."
+}

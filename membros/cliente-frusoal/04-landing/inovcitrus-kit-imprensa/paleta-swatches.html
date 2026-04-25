@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <title>Paleta Frusoal InovCitrus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { background: #FAF8F4; font-family: 'Inter', sans-serif; color: #1A1A1A; }
+      body { padding: 32px; min-height: 100vh; }
+      .header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid #E8A53C; }
+      .wordmark { font-size: 22px; }
+      .wordmark .frusoal { font-weight: 400; }
+      .wordmark .inovcitrus { font-weight: 800; color: #C68420; }
+      .meta { font-size: 11px; color: #6B6B6B; letter-spacing: 0.06em; text-transform: uppercase; }
+      h1 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+      .subtitle { font-size: 13px; color: #3A3A3A; margin-bottom: 24px; }
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+      .swatch { background: #ffffff; border: 1px solid #E5E2DA; border-radius: 6px; overflow: hidden; }
+      .swatch-color { height: 96px; }
+      .swatch-info { padding: 12px 14px; }
+      .swatch-name { font-weight: 700; font-size: 13px; color: #1A1A1A; margin-bottom: 4px; }
+      .swatch-hex { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #C68420; letter-spacing: 0.04em; }
+      .swatch-use { font-size: 11px; color: #6B6B6B; margin-top: 4px; line-height: 1.4; }
+      .footer { margin-top: 24px; font-size: 10px; color: #6B6B6B; display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #E5E2DA; letter-spacing: 0.04em; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="wordmark"><span class="frusoal">Frusoal </span><span class="inovcitrus">InovCitrus</span></div>
+      <div class="meta">Paleta institucional · v1.0 preliminar</div>
+    </div>
+
+    <h1>Cores institucionais</h1>
+    <p class="subtitle">Paleta sóbria alinhada com a identidade da Frusoal — Frutas Sotavento Algarve. Para uso em comunicação institucional e materiais derivados.</p>
+
+    <div class="grid">
+      <div class="swatch">
+        <div class="swatch-color" style="background:#E8A53C;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Citrus</div>
+          <div class="swatch-hex">#E8A53C</div>
+          <div class="swatch-use">Cor primária · laranja citrino maduro · acção principal</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#C68420;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Citrus dark</div>
+          <div class="swatch-hex">#C68420</div>
+          <div class="swatch-use">Hover · links · destaque editorial</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#5A8C45;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Algarve</div>
+          <div class="swatch-hex">#5A8C45</div>
+          <div class="swatch-use">Cor secundária · verde algarvio sóbrio</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#3F6A2E;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Algarve dark</div>
+          <div class="swatch-hex">#3F6A2E</div>
+          <div class="swatch-use">Variante escura do verde · tipografia em fundo claro</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#1A1A1A;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Ink</div>
+          <div class="swatch-hex">#1A1A1A</div>
+          <div class="swatch-use">Texto principal · preto suave</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#FAF8F4; border-bottom: 1px solid #E5E2DA;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Surface warm</div>
+          <div class="swatch-hex">#FAF8F4</div>
+          <div class="swatch-use">Fundo institucional · off-white quente</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>Frusoal InovCitrus · Tavira · Algarve · Portugal</span>
+      <span>frusoal.pt · inovcitrus.vercel.app</span>
+    </div>
+  </body>
+</html>

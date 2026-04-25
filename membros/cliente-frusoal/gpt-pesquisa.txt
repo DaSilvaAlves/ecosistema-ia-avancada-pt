@@ -1,0 +1,133 @@
+FASE A — PERFIL EMPRESARIAL E MAPA DE DECISORES
+📊 Tabela — Indicadores Financeiros (3 anos)
+Indicador	2023	2022	2021
+Volume de negócios	[GAP]	[GAP]	[GAP]
+Resultado líquido	[GAP]	[GAP]	[GAP]
+Capitais próprios	[GAP]	[GAP]	[GAP]
+Dívida	[GAP]	[GAP]	[GAP]
+Rating financeiro	[GAP]	[GAP]	[GAP]
+
+Facto verificado:
+
+Capital social: €1.045.139,68 [2
+ – s/data]
+Actividade: comércio por grosso de fruta e hortícolas [5
+ – s/data]
+👥 Tabela — Decisores e Stakeholders
+Nome	Cargo	LinkedIn	Influência Tech (1-5)
+Pedro Madeira	Sócio-gerente	[GAP]	4 (inferência: centralização típica PME agrícola)
+Outros gerentes	[GAP]	[GAP]	[GAP]
+Director Produção	[GAP]	[GAP]	3 (inferência)
+Director Comercial/Exportação	[GAP]	[GAP]	4 (inferência)
+Responsável Qualidade	[GAP]	[GAP]	3 (inferência)
+IT / Digital	[GAP]	[GAP]	2 (inferência: ausência pública indica baixa maturidade)
+🏢 Estrutura Societária & Governance
+Elemento	Estado
+65 produtores associados	Lista pública: [GAP]
+Empresas do grupo	Frusoal Agroquímicos Lda: [GAP confirmação]
+Conselho administração OP	[GAP]
+📅 Cronologia — Momentum (últimos 24 meses)
+Data	Evento	Fonte
+2024-2026	Nenhuma notícia relevante encontrada	[GAP]
+2024-2026	Nenhum investimento público identificado	[GAP]
+2024-2026	Impacto seca Algarve	[GAP específico Frusoal]
+🥊 Tabela — Concorrência Directa
+OP	Dimensão	Maturidade Digital	Diferenciador
+Citrigarbe	[GAP]	Média (inferência)	Exportação
+Cooperfrutas	[GAP]	Baixa (inferência)	Cooperativa tradicional
+Algafruta	[GAP]	Média (inferência)	Produção diversificada
+Anecoop (ES)	Muito grande	Alta	Plataforma digital + IA
+Apofruit (IT)	Muito grande	Alta	Data-driven agriculture
+FASE B — STACK TECNOLÓGICO
+🧠 Tabela — Stack Tecnológico
+Camada	Sistema actual	Confiança	Fonte
+Website	WordPress	Alta	https://www.frusoal.pt/
+ (observação directa, 2026)
+E-commerce	Não existe	Alta	site (2026)
+Portal B2B	Não visível	Média	site (2026)
+ERP	[GAP]	—	—
+CRM	[GAP]	—	—
+EDI retalho	[GAP] (provável sim)	Baixa (inferência)	—
+Rastreabilidade	Produção integrada	Média	[3
+ – s/data]
+📱 Tabela — Presença Digital
+Canal	Métrica	Qualidade	Última actividade
+Facebook	[GAP]	[GAP]	[GAP]
+Instagram	[GAP]	[GAP]	[GAP]
+LinkedIn	[GAP]	[GAP]	[GAP]
+YouTube	[GAP]	[GAP]	[GAP]
+Blog	Pouco activo (inferência)	Baixa	[GAP]
+⚠️ Sinais de Dor (priorizado)
+Ausência de portal B2B → fricção com retalho/exportação
+Website básico sem conversão → perda de leads
+Falta de presença digital visível → marca subaproveitada
+[GAP] vagas emprego → não encontrado
+[GAP] reviews/reclamações → não encontrado
+📊 Gap vs Concorrência ES/IT
+Capacidade	Frusoal	Best-in-class	Gap
+Portal B2B	Não	Sim (Anecoop)	Alto
+Data analytics produção	[GAP]	Avançado	Alto
+IA previsão colheita	Não visível	Sim	Alto
+CRM B2B	[GAP]	Avançado	Alto
+⚖️ Exposição Regulatória
+Norma	Aplica?	Prazo	Risco
+AI Act	Sim (baixo risco)	2026	Médio
+GDPR	Sim	Já	Médio
+NIS2	Não (inferência PME)	2024	Baixo
+CSRD	Não (dimensão)	2026+	Baixo
+FASE C — OPORTUNIDADES IA
+🤖 Tabela — Casos de Uso IA
+Caso	Descrição	ROI típico	Vendor	Case	Barreira
+Detecção pragas	Visão computacional	+10-20% yield	EOSDA	Espanha	Média
+Previsão colheita	Satélite + ML	-15% desperdício	Agroop	PT	Baixa
+Classificação óptica	IA calibragem fruta	+5-10% preço médio	Maf Roda	ES	Alta
+Previsão procura	ML vendas	-20% stock	NTT Data	EU	Média
+Chatbot B2B	Multilingue clientes	-30% tempo comercial	Custom GPT	Global	Baixa
+🏢 Concorrência IA
+Empresa	Caso	Investimento	Resultado	Fonte
+Anecoop	Data-driven supply	[GAP]	+eficiência	[GAP]
+Apofruit	Agricultura precisão	[GAP]	+yield	[GAP]
+💰 Fundos Disponíveis
+Programa	Deadline	%	Foco
+PRR Vale IA	[GAP]	~50%	Digitalização
+PT2030	Aberto contínuo	40-60%	Inovação
+PEPAC	2027	50-70%	Agricultura
+Horizonte Europa	Variável	70%	R&D
+🧠 Vendors Ibéricos
+Vendor	Foco	Pricing	TTV	Casos PT
+Agroop	Agricultura digital	SaaS	1-3 meses	Sim
+Hispatec	ERP agro	Licença	3-6 meses	Sim
+EOSDA	Satélite	Subscrição	1 mês	Não PT
+NTT Data	Analytics	Projecto	3-9 meses	Sim
+⚡ Top 5 Quick Wins (≤90 dias)
+Chatbot B2B multilíngue
+Invest: 3k–8k€
+ROI: redução 30% tempo comercial
+Previsão procura simples (Excel + ML)
+Invest: 5k–15k€
+ROI: -10% desperdício
+Automação marketing conteúdo
+Invest: 1k–3k€
+ROI: +visibilidade/export
+Dashboard produção (Power BI + IA)
+Invest: 5k–10k€
+ROI: decisões mais rápidas
+SEO + conteúdo receitas IA
+Invest: 2k–5k€
+ROI: tráfego orgânico
+🚨 [GAPS]
+Dados financeiros detalhados (3 anos)
+Perfis LinkedIn de decisores
+Estrutura interna detalhada
+Investimentos recentes / PRR
+Presença digital quantitativa
+Reviews / reclamações
+Stack ERP / CRM / EDI
+Casos IA concretos em concorrentes com números
+🌐 Sources
+frusoal.pt - Frusoal, Citrinos do Algarve
+racius.com - Frusoal Frutas Sotavento Algarve Lda
+frusoal.pt - A união que dá frutos
+einforma.pt - FRUSOAL contribuinte
+iberinform.pt - FRUSOAL empresa
+diariodarepublica.pt - ato societário

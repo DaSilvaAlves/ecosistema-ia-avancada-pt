@@ -1,0 +1,518 @@
+Vou estruturar a resposta pelas fases que pediste, usando tabelas e marcando explicitamente FACTO vs INFERÊNCIA. Onde não há dados públicos acessíveis sem comprar relatórios ou aceder a informação restrita, marco [GAP].
+
+FASE A — PERFIL EMPRESARIAL E MAPA DE DECISORES
+1. Indicadores financeiros públicos (3 anos)
+Os detalhes de volume de negócios, resultado líquido, capitais próprios e dívida estão protegidos nos relatórios pagos (Racius, eInforma, etc.), pelo que só consigo confirmar a existência de contas e anos disponíveis, não os valores concretos. [GAP]
+
+Factos verificados:
+
+A Frusoal tem balanços disponíveis em Racius para 2024, 2023, 2022 e anos anteriores, o que confirma prestação de contas regular.
+(FACTO, sem valores numéricos)
+Fonte: Racius – “Balanço disponível 2024, 2023, 2022, (...), 2006” (consultado em 22‑04‑2026, https://www.racius.com/frusoal-frutas-sotavento-algarve-lda/)
+
+Capital social: 1.045.139,68 €.
+(FACTO)
+Fonte: Racius – “Capital Social € 1.045.139,68” (22‑04‑2026, https://www.racius.com/frusoal-frutas-sotavento-algarve-lda/)
+
+Forma jurídica: Sociedade por Quotas.
+(FACTO)
+Fonte: Racius – “Forma Jurídica: Sociedade por Quotas” (22‑04‑2026, https://www.racius.com/frusoal-frutas-sotavento-algarve-lda/)
+
+CAE principal: 46311 – Comércio por grosso de fruta e de produtos hortícolas, excepto batata.
+(FACTO)
+Fonte: Racius – “CAE 46311 – Fruta e produtos hortícolas, excepto batata” (22‑04‑2026, https://www.racius.com/frusoal-frutas-sotavento-algarve-lda/)
+
+A empresa já foi conhecida como “VILA REAL DE SANTO ANTÓNIO FRUSOAL - SOCIEDADE AGRÍCOLA FRUTAS SOTAVENTO ALGARVE, S. A.”, sugerindo reestruturação societária anterior.
+(FACTO quanto à menção histórica, INFERÊNCIA quanto a “reestruturação”)
+Fonte: Racius – secção “Acerca da Empresa” (22‑04‑2026, https://www.racius.com/frusoal-frutas-sotavento-algarve-lda/)
+
+Tabela — Indicadores Financeiros (3 anos)
+
+Sem comprar relatórios não consigo os valores de vendas/resultado; marco [GAP] onde não há dados públicos abertos.
+
+Ano	Volume de negócios	Resultado líquido	Capitais próprios	Dívida financeira	Notas
+2024	[GAP]	[GAP]	[GAP]	[GAP]	Contas disponíveis em Racius (FACTO) 
+2023	[GAP]	[GAP]	[GAP]	[GAP]	Contas disponíveis em Racius (FACTO) 
+2022	[GAP]	[GAP]	[GAP]	[GAP]	Contas disponíveis em Racius (FACTO) 
+Rating financeiro / scoring
+
+Racius anuncia “Saúde Financeira (Indicadores)” e “Rating Racius” apenas em relatórios pagos; não é visível publicamente.
+(FACTO quanto à existência; [GAP] quanto ao valor)
+Fonte: Racius – descrição de “Relatório Financeiro Resumido” e “Relatório Concorrência” (22‑04‑2026, https://www.racius.com/frusoal-frutas-sotavento-algarve-lda/)
+
+Subsídios / fundos UE (PDR2020, Algarve 2020, etc.)
+
+Existe um projeto “FRUSOAL – Conservação” aprovado no programa ALGARVE 2020, com código ALG‑01‑0247‑FEDER‑016123, beneficiário “Frusoal - Frutas Sotavento Algarve, Lda”, ligado a conservação (provavelmente investimento em infraestruturas de frio/armazenagem).
+(FACTO, sem valores financeiros exactos)
+Fonte: Ficheiro “Projetos Aprovados Algarve 2020” – referência “FRUSOAL- Conservação, ALG-01-0247-FEDER-016123” (consultado 22‑04‑2026, https://algarve2020.pt/wp-content/uploads/2022/06/20220614_QUADRO-II-_Operacoes_Aprovadas_31-05-2022.xlsx)
+
+No site da Frusoal é publicado um documento “Ficha de Projeto” com dados de um apoio: data de aprovação 03‑01‑2024, início 01‑09‑2023, conclusão 31‑12‑2023, custo total elegível 28.931,42 €.
+(FACTO)
+Fonte: Ficha de Projeto Frusoal (PDF) – “Custo total elegível 28.931,42 €” (consultado 22‑04‑2026, https://www.frusoal.pt/wp-content/uploads/2025/05/Ficha-de-Projeto_Frusoal.pdf)
+
+Não consigo de forma aberta, nesta sessão, a lista consolidada de todos os apoios PDR2020/PEPAC/IFAP atribuídos à Frusoal. [GAP]
+
+2. Organigrama e decisores
+Factos verificados:
+
+O site frusoal.pt lista uma secção “Equipa Técnica” em Serviços, mas o conteúdo visível não inclui nomes individuais de responsáveis (apenas referência genérica à equipa técnica).
+(FACTO)
+Fonte: Frusoal, menu “Serviços” > “Equipa Técnica” (22‑04‑2026, https://www.frusoal.pt/servicos/)
+
+A entrevista no Agroportal confirma Pedro Madeira como sócio‑gerente da Frusoal.
+(FACTO)
+Fonte: Agroportal — “Entrevista a Pedro Madeira, sócio-gerente da Frusoal” (18‑05‑2025, consultado 22‑04‑2026, https://www.agroportal.pt/entrevista-a-pedro-madeira-socio-gerente-da-frusoal-35-anos-a-dar-sabor-ao-algarve-e-ao-mundo/)
+
+A notícia da Vida Rural refere Pedro Madeira como sócio‑gerente e porta‑voz da estratégia de valorização dos citrinos do Algarve.
+(FACTO)
+Fonte: Vida Rural – “Frusoal apostada em ‘valorizar citrinos do Algarve’” (05‑02‑2019, consultado 22‑04‑2026, https://www.vidarural.pt/agroindustria/frusoal-apostada-em-valorizar-citrinos-do-algarve/) [DESACTUALIZADO]
+
+No Diário da República existe registo de atos societários da FRUSOAL – FRUTAS SOTAVENTO ALGARVE, LDA, mas o detalhe de nomes dos atuais gerentes/administradores está encapsulado em atos específicos que não estão integralmente expostos nesta visualização.
+(FACTO, [GAP] quanto à lista atual de todos os gerentes)
+Fonte: Diário da República eletrônico – referência “FRUSOAL - FRUTAS SOTAVENTO ALGARVE, LDA. Matrícula n.º 310/821020” (consultado 22‑04‑2026, https://diariodarepublica.pt/dr/detalhe/ato-societario/7987360)
+
+Em plataformas como eInforma são referidos balanços 2024–2022 e dados estruturais, mas a identificação detalhada de órgãos sociais exige acesso pago.
+(FACTO)
+Fonte: eInforma – ficha do NIF 501186425 com “Balanço disponível 2024, 2023, 2022” (consultado 22‑04‑2026, https://www.einforma.pt/servlet/app/portal/ENTP/prod/ETIQUETA_EMPRESA_CONTRIBUINTE/nif/501186425/contribuinte/501186425/)
+
+LinkedIn / funções específicas
+
+Não consigo identificar com segurança, só nesta pesquisa genérica, o perfil LinkedIn exato de Pedro Madeira da Frusoal entre centenas de perfis com o mesmo nome. Qualquer associação a um perfil específico seria altamente especulativa. [GAP]
+(INFERÊNCIA: risco elevado de homónimos)
+Fonte: Pesquisa LinkedIn pública genérica “Pedro Madeira” (consultado 22‑04‑2026, https://www.linkedin.com/pub/dir/Pedro/Madeira)
+
+Não encontro listagem pública de diretor de TI, CTO ou responsável digital; o site não referencia nenhum cargo tecnológico específico. [GAP]
+(FACTO: ausência de menção; INFERÊNCIA: decisão digital provavelmente concentrada no sócio‑gerente / direção geral)
+
+Tabela — Decisores e Stakeholders
+
+Onde não há dados abertos sobre formação/LinkedIn, marco [GAP].
+
+Nome	Cargo (facto)	LinkedIn público confirmado	Influência tech (1–5, inferida)	Notas
+Pedro Madeira	Sócio‑gerente da Frusoal (FACTO) 
+[GAP]	4 (INFERÊNCIA: concentração de decisões estratégicas)	Principal rosto mediático em entrevistas e comunicação setorial 
+[GAP outros gerentes]	[GAP]	[GAP]	[GAP]	Exige consulta a atos societários detalhados / bases pagas 
+Equipa Técnica (anónima no site)	Equipa Técnica – Produção/Assistência a produtores (FACTO quanto à existência, não aos nomes) 
+[GAP]	3 (INFERÊNCIA: influência operacional em tecnologias de campo/embalamento)	Listada apenas como “Equipa Técnica” sem nomes 
+3. Estrutura societária e governance
+Factos verificados:
+
+Capital social: 1.045.139,68 € (ver acima).
+
+Atividades declaradas incluem concentração da oferta, exploração agro‑frutícola, prestação de serviços agrícolas, comércio e exportação, arrendamento/compra de propriedades, comércio de fertilizantes/fitofármacos, etc.
+(FACTO)
+Fonte: Racius – descrição de atividade (22‑04‑2026, https://www.racius.com/frusoal-frutas-sotavento-algarve-lda/)
+
+CAE adicionais referidos: 1230 (Citrinos), 1610 (Serviços para agricultura), 1630 (Preparação de produtos agrícolas para venda).
+(FACTO)
+Fonte: Racius – lista de CAE associados (22‑04‑2026, https://www.racius.com/frusoal-frutas-sotavento-algarve-lda/)
+
+“Frusoal Agroquímicos, Unipessoal, Limitada” é uma empresa distinta, sede em Vila Real de Santo António, capital social 625.000 €, com atividade principal ligada a agroquímicos.
+(FACTO)
+Fonte: Racius – “Frusoal Agroquímicos, Unipessoal, Limitada” (consultado 22‑04‑2026, https://www.racius.com/frusoal-agroquimicos-unipessoal-limitada/)
+
+Inferências / GAPS:
+
+A relação societária específica entre Frusoal – Frutas Sotavento Algarve, Lda e Frusoal Agroquímicos, Unipessoal, Lda (participação direta, sócio comum, empresa do “grupo”) não é explicitada na versão aberta de Racius. [GAP]
+(INFERÊNCIA: probabilidade de ligação via associados/sócios mas não confirmada)
+
+Lista nominal dos 65 / 100 produtores associados não está publicada no site nem em documentos públicos facilmente acessíveis. [GAP]
+
+Conselho de administração ou estrutura formal de governança não está exibida no site nem em documentos gratuitos; está apenas indiretamente referida em atos societários pagos. [GAP]
+
+4. Momentum recente (24 meses)
+Factos verificados:
+
+O site Frusoal atualiza “Ficha de Projeto” com projeto de inovação (custo elegível 28.931,42 €, aprovação 03‑01‑2024), sugerindo investimento recente em modernização / comunicação / internacionalização.
+(FACTO quanto às datas e montante, INFERÊNCIA quanto ao tipo de investimento)
+Fonte: Ficha de Projeto Frusoal (consultado 22‑04‑2026, https://www.frusoal.pt/wp-content/uploads/2025/05/Ficha-de-Projeto_Frusoal.pdf)
+
+Entrevista em 18‑05‑2025 no Agroportal/Postal do Algarve marca um momento mediático para os “35 anos” da Frusoal e crescimento de 28 para 60 produtores (nota: divergência com os 100 associados mencionados no site atual — a entrevista refere 60, o site atual fala em 100).
+(FACTO: entrevista e números citados; [DESACTUALIZADO] enquanto fotografia de 2025)
+Fonte: Agroportal – entrevista (18‑05‑2025, consultado 22‑04‑2026, https://www.agroportal.pt/entrevista-a-pedro-madeira-socio-gerente-da-frusoal-35-anos-a-dar-sabor-ao-algarve-e-ao-mundo/)
+
+Fonte: Site Frusoal – “A Frusoal em números: 100 associados, 1500 hectares, 35.000 toneladas, 25% exportação” (consultado 22‑04‑2026, https://www.frusoal.pt/)
+
+Em 2022, a Câmara Municipal de VRSA publica conteúdo sobre a Frusoal como maior OP de citrinos, evidenciando visibilidade institucional, mas sem detalhes financeiros.
+(FACTO)
+Fonte: Facebook CMVRSA – vídeo “Frusoal em destaque no programa Praça da Alegria” (05‑04‑2022, consultado 22‑04‑2026, https://www.facebook.com/cmvrsa/videos/frusoal-em-destaque-no-programa-pra%C3%A7a-da-alegria/527616775410220/) [DESACTUALIZADO]
+
+O PDF de projetos Algarve 2020 mostra operação “FRUSOAL – Conservação”, aprovada antes de 2022, indicando investimento em conservação/frio financiado por FEDER.
+(FACTO)
+Fonte: Algarve 2020 – “Operações Aprovadas 31‑05‑2022” (consultado 22‑04‑2026, https://algarve2020.pt/wp-content/uploads/2022/06/20220614_QUADRO-II-_Operacoes_Aprovadas_31-05-2022.xlsx) [DESACTUALIZADO]
+
+Não encontro, em pesquisa rápida, notícias específicas 2024–2026 sobre novos mercados ou grandes investimentos para além da “Ficha de Projeto” no site. [GAP parcial: pode existir em imprensa local/fechada]
+
+Crise climática / seca Algarve:
+
+Estudos recentes sobre agricultura algarvia indicam pressão significativa da escassez de água, com impacto em culturas permanentes como citrinos, mas não individualizam a Frusoal.
+(FACTO geral, INFERÊNCIA para Frusoal)
+Fonte: CCDR Algarve – estudo “Avaliação Económica da Agricultura Algarvia” (20‑10‑2025, consultado 22‑04‑2026, https://www.ccdr-alg.pt/site/sites/default/files/publicacoes/20251021_Estudo-O-Valor-Economico-AgriculturaAlgarve.pdf)
+
+Cronologia — Momentum 24 meses
+
+Data	Evento	Facto vs inferência	Fonte
+03‑01‑2024	Aprovação de projeto (custo elegível 28.931,42 €) associado à Frusoal	FACTO	Ficha de Projeto Frusoal (PDF, 22‑04‑2026, https://www.frusoal.pt/wp-content/uploads/2025/05/Ficha-de-Projeto_Frusoal.pdf) 
+01‑09‑2023–31‑12‑2023	Execução do projeto cofinanciado (provavelmente marketing/inovação)	FACTO datas, INFERÊNCIA sobre natureza	Ficha de Projeto (22‑04‑2026, https://www.frusoal.pt/wp-content/uploads/2025/05/Ficha-de-Projeto_Frusoal.pdf) 
+18‑05‑2025	Entrevista de Pedro Madeira (35 anos Frusoal, crescimento nº produtores)	FACTO	Agroportal/Postal do Algarve (18‑05‑2025, https://www.agroportal.pt/entrevista-a-pedro-madeira-socio-gerente-da-frusoal-35-anos-a-dar-sabor-ao-algarve-e-ao-mundo/) 
+2022 (abril)	Destaque em programa Praça da Alegria como maior OP de citrinos	FACTO	CMVRSA / Facebook (05‑04‑2022, https://www.facebook.com/cmvrsa/videos/frusoal-em-destaque-no-programa-pra%C3%A7a-da-alegria/527616775410220/) 
+[DESACTUALIZADO]
+06‑02‑2019	Lançamento marcas próprias Gomo/Biogomo e aposta em valor acrescentado	FACTO	Vida Rural (05‑02‑2019, https://www.vidarural.pt/agroindustria/frusoal-apostada-em-valorizar-citrinos-do-algarve/) 
+[DESACTUALIZADO]
+5. Concorrentes directos em Portugal
+Factos verificados:
+
+Cacial – Cooperativa Agrícola de Citricultores do Algarve CRL aparece como empresa comparável no setor em Racius (mesmo cluster de empresas sugeridas).
+(FACTO)
+Fonte: Racius – secção “Outras empresas que lhe podem interessar” na ficha Frusoal (22‑04‑2026, https://www.racius.com/frusoal-frutas-sotavento-algarve-lda/)
+
+A lista IFAP/CCDR Algarve de Organizações de Produtores mostra várias OPs de frutas e produtos hortícolas na região, sem distinguir apenas citrinos, mas inclui várias estruturas concorrentes.
+(FACTO geral)
+Fonte: IFAP – “CCDR Algarve – Organizações de Produtores” (22‑09‑2024, consultado 22‑04‑2026, https://www.ifap.pt/portal/ops-ccdr-algarve)
+
+Não encontro, nesta pesquisa rápida, dados comparativos abertos de volume de negócios / tonelagem por OP que permitam dimensionamento rigoroso lado a lado sem recorrer a relatórios pagos. [GAP]
+
+Tabela — Concorrência directa (OPs citrinos/fruit no Algarve)
+
+Dimensão e maturidade digital abaixo são INFERÊNCIAS, porque não há um ranking formal aberto; baseiam‑se em presença web e notoriedade pública. Assinalo claramente.
+
+OP / entidade	Dimensão (inferida)	Maturidade digital (inferida, 1–5)	Diferenciador (facto ou inferência)	Fontes
+Frusoal (Frutas Sotavento Algarve, Lda)	Líder nacional em citrinos (FACTO: maior OP de citrinos) 
+2–3 (INFERÊNCIA: site WordPress básico, sem ecommerce/portal)	Forte foco em citrinos do Algarve, marcas Gomo/Biogomo 
+Site Frusoal; Vida Rural; Racius 
+Cacial – Coop. Agrícola de Citricultores do Algarve CRL	Grande OP regional (INFERÊNCIA: lista IFAP + notoriedade histórica)	3–4 (INFERÊNCIA: costuma ter presença digital mais estruturada, canal B2B)	Cooperativa com rede alargada de produtores (INFERÊNCIA)	Racius linkado como empresa semelhante ; IFAP OP list 
+Outras OPs citrinos/fruit Algarve (Citrigarbe, Cooperfrutas, Algafruta, etc.)	[GAP dimensão]	[GAP maturidade digital]	[GAP]	Requer pesquisa individual em Racius/IFAP com mais tempo 
+Lista [GAPS] Fase A
+Valores concretos de volume de negócios, resultado líquido, capitais próprios e dívida 2022–2024. [GAP]
+
+Rating financeiro (Racius, eInforma, D&B) numérico. [GAP]
+
+Lista completa de gerentes/diretores e respetivas formações, dada a limitação dos atos societários e LinkedIn genérico. [GAP]
+
+Identificação nominal dos responsáveis de produção, comercial, exportação, qualidade. [GAP]
+
+Confirmação formal da relação societária entre Frusoal e Frusoal Agroquímicos (percentagens de participação). [GAP]
+
+Lista nominal dos 65–100 produtores associados. [GAP]
+
+Dimensão financeira exata e maturidade digital quantificada dos concorrentes (Citrigarbe, Cooperfrutas, Algafruta, etc.). [GAP]
+
+FASE B — STACK TECNOLÓGICO E DORES OPERACIONAIS
+1. Stack tecnológico actual
+Site e tecnologia
+
+O site frusoal.pt é em WordPress (evidenciado por estrutura típica de URLs, temas e footers), com versões PT/EN/FR, sem módulo de ecommerce nem área de cliente B2B visível.
+(FACTO quanto a WordPress, línguas, ausência de ecommerce/portal visível; INFERÊNCIA quanto a detecção de WordPress pela estrutura)
+Fonte: Frusoal – homepage e menu (consultado 22‑04‑2026, https://www.frusoal.pt/)
+
+O site inclui formulário de newsletter com caixa de email; não há indicação de integração com CRM específica, mas é uma pista de captação básica de leads.
+(FACTO: formulário visível; INFERÊNCIA: CRM não identificada)
+Fonte: Frusoal – footer “Newsletter” (22‑04‑2026, https://www.frusoal.pt/)
+
+Não é identificável, na página, qualquer plugin de chat, área de login B2B ou módulos de encomenda online.
+(FACTO)
+Fonte: Navegação site Frusoal (22‑04‑2026, https://www.frusoal.pt/)
+
+Não consigo correr PageSpeed / BuiltWith reais a partir deste ambiente; logo, métricas de performance ou lista detalhada de plugins específicos ficam em [GAP].
+
+Sistemas internos (ERP, EDI, rastreabilidade)
+
+Não há referência pública clara a ERP específico (SAP, Primavera, Sage, etc.) em site, entrevistas ou comunicados acessíveis nesta pesquisa. [GAP]
+
+A atividade de exportação para mercados europeus (FR, DE, UK, etc.) e atuação com grande retalho implica, por requisitos típicos de cadeia de abastecimento, uso de EDI e sistemas de rastreabilidade conformes com normas GlobalG.A.P., GRASP e IGP Citrinos do Algarve; contudo, o software concreto (p. ex. módulo de rastreabilidade, WMS, TMS) não é mencionado em lado nenhum. [GAP]
+(FACTO: certificações e exportação; INFERÊNCIA: necessidade de EDI/tracking)
+Fonte: Site Frusoal – certificações e mercados (22‑04‑2026, https://www.frusoal.pt/produtos/ e https://www.frusoal.pt/frusoal/)
+
+Tabela — Stack Tecnológico
+
+Camada	Sistema actual (facto ou inferência)	Confiança	Fonte
+Website / CMS	WordPress (FACTO por estrutura do site) 
+Alta	Site Frusoal (22‑04‑2026, https://www.frusoal.pt/) 
+Idiomas online	PT, EN, FR (FACTO – seletor de idioma) 
+Alta	Site Frusoal (22‑04‑2026, https://www.frusoal.pt/) 
+Ecommerce / B2B online	Não visível (sem carrinho, sem login cliente) (FACTO) 
+Alta	Site Frusoal 
+CRM	[GAP] – não há referência pública	[GAP]	[GAP]
+ERP / contabilidade	[GAP] – não há menção (Primavera/SAP/Sage apenas INFERÊNCIA setorial)	[GAP]	[GAP]
+EDI com retalho	INFERÊNCIA: muito provável ligação EDI com grandes retalhistas, mas sem fornecedor identificado	Média	Requisitos usuais de retalho + exportação 
+Rastreabilidade / qualidade	INFERÊNCIA: uso de sistema compatível com GlobalG.A.P./GRASP, mas software não identificado	Média	Certificações e exigências exportação 
+Automação linhas de embalamento	[GAP] – não são citadas marcas de classificadoras/optical sorters	[GAP]	[GAP]
+2. Presença digital e redes
+Factos verificados:
+
+Existe página oficial de Facebook “Frusoal” com descrição alinhada com a marca.
+(FACTO)
+Fonte: Facebook – “Frusoal | Vila Real de Santo António” (consultado 22‑04‑2026, https://www.facebook.com/frusoal/?locale=pt_PT) 
+
+O site tem ligação direta para Facebook (ícone no topo). Não há links para LinkedIn, Instagram ou YouTube na navegação visível.
+(FACTO)
+Fonte: Frusoal – header com ícone Facebook (22‑04‑2026, https://www.frusoal.pt/)
+
+Não posso, a partir deste ambiente, ler contagem atual de seguidores e últimas publicações no Facebook de forma estruturada (limitação técnica) — portanto não consigo métricas quantitativas exactas de engagement / frequência. [GAP]
+
+Blog / Frutaria / conteúdo
+
+O site tem secção “Blog” e secção “Frutaria/Receitas”. A home page menciona a existência destas secções, mas sem listar posts diretamente; o conteúdo parece existir, mas não consigo extrair número de posts e datas nesta chamada. [GAP]
+(FACTO: secções; [GAP] quantificação)
+Fonte: Frusoal – menu “BLOG” e “FRUTARIA/Receitas” (22‑04‑2026, https://www.frusoal.pt/)
+
+SEO / tráfego
+
+Não há acesso direto a Similarweb ou dados de SEO neste ambiente; logo, não posso quantificar tráfego orgânico, ranking de keywords ou backlinks. [GAP]
+
+Tabela — Presença Digital
+
+Canal	Métrica (facto ou [GAP])	Qualidade (inferida)	Última actividade	Fonte
+Website	Ativo, com conteúdos PT/EN/FR, secções produtos, marcas, blog, receitas (FACTO) 
+3 – Conteúdo institucional sólido mas pouco interativo (INFERÊNCIA)	Ativo em 2026 (site com ficha projeto 2024) 
+Site Frusoal 
+Facebook	Página oficial existente (FACTO) 
+3 – Presença típica de OP agroalimentar (INFERÊNCIA: sem ver dados de engagement)	[GAP] data última publicação	Facebook e link no site 
+LinkedIn	Não há link direto no site, não encontro página corporativa clara nesta pesquisa rápida [GAP]	1 – Maturidade baixa (INFERÊNCIA)	[GAP]	[GAP]
+Instagram	Não referenciado no site [GAP]	[GAP]	[GAP]	[GAP]
+YouTube	Não referenciado no site [GAP]	[GAP]	[GAP]	[GAP]
+Blog	Secção existente, nº de posts e datas não extraídos [GAP]	2 – Subaproveitado (INFERÊNCIA, alinhado com nota que deixaste)	[GAP]	Site Frusoal 
+Frutaria/Receitas	Secção “Receitas” visível (FACTO) 
+2–3 – Potencial para conteúdos de consumo/branding (INFERÊNCIA)	[GAP]	Site Frusoal 
+3. Sinais públicos de dor / fricção
+Vagas de emprego
+
+Não encontro anúncios de emprego recentes diretamente associados à Frusoal em agregadores na pesquisa breve; pode haver, mas não surgem nas primeiras referências. [GAP]
+
+Reviews / reclamações
+
+Não tenho, neste ambiente, acesso estruturado a Google Maps, Portal da Queixa ou Livro de Reclamações Online para extrair reviews específicos da Frusoal. [GAP]
+
+Notícias de problemas (greves, acidentes, perdas)
+
+Não surgem notícias relevantes sobre greves/insolvência/problemas laborais associados à Frusoal nos primeiros resultados; isto sugere, por omissão, ausência de crises reputacionais mediáticas recentes.
+(INFERÊNCIA por ausência de resultados negativos óbvios; não é prova absoluta) [GAP]
+
+Lista — Sinais de dor (priorizada, inferida)
+
+Nesta parte é quase tudo INFERÊNCIA sobre dores potenciais, com [GAP] porque não há prova direta.
+
+Ausência de portal B2B / área de cliente online visível: indica fricção em processos de encomenda/reporting para retalho e exportadores (INFERÊNCIA, baseado na ausência de áreas login/catálogo B2B no site).
+
+Presença digital limitada a website institucional + Facebook, com blog/receitas subaproveitados: sugere dor em marketing digital e comunicação de marca Gomo/Biogomo (INFERÊNCIA).
+
+Falta de visibilidade de equipa de TI/transformação digital: indica possível ausência de ownership interno dedicado a tecnologia (INFERÊNCIA).
+
+Pressão transversal da água/seca no Algarve, que afeta citricultura: implica necessidade de otimização de rega, eficiência e monitorização, o que é uma fonte de dor operacional setorial (FACTO setorial, INFERÊNCIA impacto na Frusoal).
+
+4. Maturidade digital vs sector (ES/IT/ISR)
+Aqui entro mais em benchmarking setorial, não em dados específicos da Frusoal.
+
+Factos (setor internacional):
+
+Propostas espanholas (ex.: Anecoop) têm várias iniciativas digitals, incluindo plataformas de gestão cooperativa, comunicação forte em redes, e uso declarado de tecnologias de visão artificial e data analytics em packing houses, documentado em apresentações públicas e casos de estudo setoriais.
+(FACTO geral; não cito um link específico, dado o limite de pesquisas nesta resposta — isto é um ponto que podes depois aprofundar com pesquisa focalizada) [GAP de URL concreto aqui]
+
+Institutos como o IVIA (Instituto Valenciano de Investigaciones Agrarias) desenvolveram máquinas de inspeção de citrinos por visão artificial desde há mais de uma década, usadas por empresas do setor para classificação automática.
+(FACTO)
+Fonte: Agencia SINC – “Inspeccionan naranjas y mandarinas con visión artificial” (09‑10‑2011, consultado 22‑04‑2026, https://www.agenciasinc.es/Noticias/Inspeccionan-naranjas-y-mandarinas-con-vision-artificial) [DESACTUALIZADO]
+
+Tabela — Gap vs concorrência ES/IT (digital)
+
+Isto é síntese alto nível, assumidamente INFERIDA, mas útil para framing.
+
+Capacidade	Frusoal (facto/inferência)	Best‑in‑class (ES/IT, factos setoriais)	Gap (inferido)
+Portal B2B/EDI self-service	Sem portal público visível; EDI presumido mas não comunicado 
+Grandes cooperativas (ex. ES) oferecem portais B2B com tracking e doc. online (INFERÊNCIA setorial)	Alto
+Analytics de produção e mercado	Não há menção a analytics avançado / IA em comunicação pública 
+Casos ES/IT já usam previsão de colheita, otimização de packing e pricing com IA 
+Alto
+Marketing digital/brand content	Site institucional + Facebook; blog/receitas pouco explorados 
+Best‑in‑class com storytelling forte, vídeos, campanhas 360º, QR com storytelling e origem	Médio/alto
+Transparência ESG / carbono	Não vejo reporting de pegada de carbono ou dashboards ESG no site 
+Players internacionais mostram relatórios de sustentabilidade detalhados	Médio
+5. Exposição regulatória
+AI Act (UE)
+
+A Frusoal, enquanto OP agrícola/comercial, não é, à partida, um provedor de sistemas de IA de alto risco; será utilizador de sistemas de terceiros. Assim, a exposição ao AI Act será indireta (obrigações sobre uso adequado, transparência em sistemas de scoring, etc.).
+(INFERÊNCIA com base no tipo de atividade )
+
+GDPR
+
+O site tem “Política de Privacidade”, “Política do Canal de Denúncias” e “Termos e Condições”, bem como link para “Resolução de Litígios”.
+(FACTO)
+Fonte: Footer do site Frusoal (22‑04‑2026, https://www.frusoal.pt/)
+
+Não é visível, nesta captura, um banner de consentimento de cookies, mas isso pode depender de scripts externos não carregados aqui. [GAP]
+
+NIS2
+
+NIS2 aplica‑se a setores essenciais e importantes; uma OP de citrinos com 50+ colaboradores, sem operar infraestruturas críticas, dificilmente entra diretamente no âmbito, a menos que seja qualificada por dimensão específica ou integração em cadeia crítica.
+(INFERÊNCIA, sem ver classificação oficial)
+
+CSRD
+
+CSRD atinge empresas de maior dimensão / empresas cotadas; uma sociedade por quotas de dimensão média no sector agroalimentar português, como a Frusoal, provavelmente só será abrangida numa fase posterior, dependendo de thresholds de volume de negócios e nº de colaboradores (dados que não tenho).
+(INFERÊNCIA com base nos thresholds CSRD, [GAP] pela falta de dados de faturação e nº exato de colaboradores)
+
+Tabela — Exposição Regulatória
+
+Norma	Aplica? (facto/inferência)	Prazo (geral)	Risco para Frusoal (inferido)
+AI Act	Utilizador de IA, não fornecedor alto risco; obrigações sobretudo de due diligence ao comprar/usar IA (INFERÊNCIA)	Entra em vigor faseadamente até 2026	Médio se adotarem IA em scoring de trabalhadores/fornecedores, baixo noutras áreas
+GDPR	Aplica plenamente; há política de privacidade e canal de denúncias (FACTO) 
+Já em vigor	Médio: risco se não houver gestão adequada de consentimentos/cookies (GAP visível)
+NIS2	Provavelmente fora de escopo direto (INFERÊNCIA)	2024–2025 transposição	Baixo
+CSRD	Provavelmente não abrangida nos primeiros ciclos (INFERÊNCIA)	Relatórios a partir de 2024/2025 p/ grandes empresas	Baixo a médio prazo (poderá surgir via clientes/retalho que exigem dados ESG)
+Lista [GAPS] Fase B
+
+Tecnologias concretas de ERP, WMS, TMS, rastreabilidade, balanças, classificadoras óticas. [GAP]
+
+Métricas exatas de seguidores, engagement e datas de última publicação em redes sociais. [GAP]
+
+Dados de reviews e reclamações em Google, Portal da Queixa, Livro de Reclamações. [GAP]
+
+Evidência explícita de EDI (nomes de soluções, formatos) com cada retalhista. [GAP]
+
+Confirmação da existência/inexistência de perfis oficiais em LinkedIn, Instagram, YouTube. [GAP]
+
+FASE C — OPORTUNIDADES IA E BENCHMARKS DE SECTOR
+Aqui entro muito em contexto setorial (citricultura/agroalimentar); os factos vêm de fontes de I&D e associações, mas a adaptação à Frusoal é inferência.
+
+1. Casos de uso IA por categoria (setor citrinos / agroalimentar)
+Base factual (exemplos):
+
+O IVIA em Espanha desenvolveu e testou máquinas de visão artificial para inspeção e classificação de citrinos, incluindo deteção de podridões, classificação por calibre/cor e assistência à colheita.
+(FACTO)
+Fonte: Agencia SINC – “Inspeccionan naranjas y mandarinas con visión artificial” (09‑10‑2011, consultado 22‑04‑2026, https://www.agenciasinc.es/Noticias/Inspeccionan-naranjas-y-mandarinas-con-vision-artificial) [DESACTUALIZADO]
+
+Existem organizações sectoriais de citrinos que divulgam oportunidades e casos de sucesso de IA na indústria (associações como comite@citricos.org mencionam “Inteligencia Artificial aplicada en la industria: oportunidades y casos de éxito”, embora o detalhe esteja noutros conteúdos).
+(FACTO quanto à existência de tema, não aos detalhes dos casos)
+Fonte: citricos.org – “Inteligencia Artificial aplicada en la industria: oportunidades y casos de éxito” (consultado 22‑04‑2026, https://www.citricos.org/e-inteligencia-artificial-aplicada-en-la-industria-oportunidades-y-casos-de-exito-975-1737-es.html)
+
+A tabela abaixo é uma síntese: descrições, ROI e barreiras são INFERÊNCIAS baseadas em literatura e prática do setor, não em dados específicos da Frusoal.
+
+Tabela — Casos de Uso IA por Categoria
+
+Caso (categoria)	Descrição (setor)	ROI típico (inferido)	Vendor / referência (facto onde possível)	Case study (setor, não Frusoal)	Barreira (inferida)
+Visão computacional para pragas/doenças (Produção)	Drones ou apps mobile detetam sintomas em folhas/frutos, alertam técnicos	Poupança em tratamentos, menos perdas, ROI 1–3 anos	Vários agtech (Agroop, EOSDA, etc. – vendors a confirmar em pesquisa focada) [GAP link concreto]	Projetos piloto em citrinos ES/IT reportados por institutos como IVIA 
+Necessidade de dados/etiquetação, resistência dos produtores, conectividade no campo
+Previsão de colheita por satélite + ML (Produção)	Modelos combinam imagens satélite, dados históricos e meteorologia	Melhor planeamento de colheita e vendas, ROI 1–2 anos	EOS Data Analytics, Bynse (presença ibérica – INFERÊNCIA)	Casos relatados em horticultura e vinhas; extrapolação para citrinos [GAP citrinos específico]	Integração de dados, qualidade dos históricos de produção
+Otimização de rega/fertilização (Produção)	Sistemas de irrigação inteligente baseados em sensores e previsão	Poupança de água/energia, ROI <2 anos em regiões de seca	Agroop (PT), NTT Data Agro (ES), etc. [GAP detalhes]	Projetos em olival, vinha, frutas de regadio no Mediterrâneo (facto setorial)	Investimento em sensores, mudança de práticas
+Robotização da apanha (Produção)	Robôs de colheita (Tevel, FFRobotics) para citrinos	ROI ainda emergente, projetos piloto	Tevel, FFRobotics (vendors globais)	Pilotos em pomares de frutas de caroço e citrinos (reportados em feiras internacionais)	CAPEX muito elevado, complexidade técnica, adaptabilidade ao pomar
+Classificação óptica IA (Pós‑colheita)	Câmaras e IA para classificar frutos por calibre, cor, defeitos	Aumento de produtividade, consistência, menos mão de obra, ROI 2–4 anos	Maf Roda, Greefa, Compac (vendors conhecidos)	Instalações em centrais de citrinos ES/IT com vision systems 
+CAPEX, integração com linhas existentes
+Detecção de defeitos/quality grading (Pós‑colheita)	IA identifica defeitos de pele e interna, separa classes	Redução de devoluções, melhor preço médio	Vendors de classificadoras com módulos de IA	Casos recolhidos em citrinos exportação 
+Qualidade de calibração, aceitação dos clientes
+Predictive maintenance linhas (Pós‑colheita)	Sensores e ML preveem falhas em motores, rolamentos, etc.	Menos downtime, ROI 1–3 anos	Integradores industriais (NTT Data, etc.)	Casos em agroindústria (lácteos, embalamento) extrapoláveis a packing de citrinos	Integração OT/IT, recolha de dados de máquinas
+Blockchain + QR (Rastreabilidade)	Cada lote com QR para rastreio até produtor, eventualmente blockchain	Prémios de preço em retalho premium, confiança do consumidor	Vendors de blockchain food traceability (IBM Food Trust, startups)	Casos em frutas premium, carne, vinho	Complexidade de onboarding de produtores, custo por lote
+IA para shelf‑life (Rastreabilidade)	Modelos preveem vida útil com base em origem, tratamento, frio	Redução de desperdício, melhor planeamento	Centros de I&D + retalho	Casos em saladas embaladas e frutas de IV gama	Necessidade de dados finos de cadeia frio
+Previsão de procura por SKU/cliente (Comercial)	Modelos preveem volumes por cliente/semana	Melhor negociação com retalho, menos rupturas, ROI 1–2 anos	CRMs e plataformas de demand forecasting	Casos no retalho e FMCG	Integração dados vendas/ERP, buy‑in do comercial
+Pricing dinâmico spot vs contrato (Comercial)	Ajuste de preços spot com base em mercado/stock	Margem otimizada, ROI imediato	Ferramentas pricing/agri‑trading	Casos em trading frutas/legumes	Gestão de risco e aceitação dos clientes
+Chatbot B2B multilíngue (Exportação)	Chatbot responde a clientes em PT/EN/ES/FR/DE, envia fichas técnicas	Redução de carga de atendimento, melhor serviço	Serviços IA genéricos (OpenAI, etc.) + integradores	Casos em exportadoras de vinho e hortofrutícolas (INFERÊNCIA)	Curadoria de conteúdo, integração com CRM
+Automação documentação exportação (Exportação)	IA extrai/preenche dados em docs fitossanitários, certificados origem	Menos erros/admin, ROI <1 ano	Vendors de automation/RPA	Casos em trading internacional (facto setorial geral)	Integração com sistemas das autoridades
+Gestão de mão‑de‑obra sazonal (RH)	Plataformas IA optimizam turnos e alojamento de trabalhadores sazonais	Redução de custos e conflitos, ROI 1–2 anos	Vendors de workforce management orientados a agricultura (a identificar) [GAP]	Casos em horticultura intensiva ES/IT	Adoção pelos capatazes e produtores
+IA para pegada de carbono (Sustentabilidade)	Modelos automatizam cálculo de pegada por lote/produto	Necessário para reporting a retalho e ESG, ROI indireto	Vendors ESG/Carbon accounting	Casos em grandes grupos agroalimentares	Necessidade de dados de inputs e consumos
+Geração de conteúdo (Marketing)	IA gera textos para blog, receitas, redes sociais sobre Gomo/Biogomo	ROI rápido em tráfego/awareness, custo baixo	Ferramentas de geração de conteúdo	Casos generalistas em FMCG e agro	Governance de marca, consistência PT‑PT
+2. Concorrentes IA directos no sector
+Associações e empresas de citrinos em Espanha (por exemplo, membros de citricos.org) discutem explicitamente oportunidades e casos de IA, sugerindo que alguns dos principais players (Anecoop, etc.) já têm pilotos ou implementações em classificação automática, previsão de produção e otimização de logística.
+(FACTO quanto à discussão do tema; [GAP] quanto a investimentos e resultados numéricos por empresa)
+Fonte: citricos.org – “Inteligencia Artificial aplicada en la industria: oportunidades y casos de éxito” (consultado 22‑04‑2026, https://www.citricos.org/e-inteligencia-artificial-aplicada-en-la-industria-oportunidades-y-casos-de-exito-975-1737-es.html)
+
+Não tenho, nesta resposta, valores concretos de investimento (€) ou indicadores de resultado (ex.: % redução de defeitos) para empresas específicas como Anecoop, Cítricos La Paz ou Frutas Esther. [GAP]
+
+Tabela — Concorrência IA (setor, não específico à Frusoal)
+
+Empresa (setor)	Caso (IA)	Investimento (GAP)	Resultado reportado (GAP)	Fonte
+Anecoop (ES) [GAP detalhe]	Classificação óptica + analytics (INFERÊNCIA com base no setor)	[GAP]	[GAP]	citricos.org sobre IA na indústria 
+Empresas associadas IVIA (ES)	Visão artificial para classificação e deteção de podridões 
+[GAP]	Aumento da eficiência de classificação, 15–20 frutas/s (FACTO) 
+Agencia SINC/IVIA 
+3. Fundos disponíveis
+Devido ao limite de chamadas e sem aceder a cada aviso, aqui só consigo dar linhas gerais (INFERÊNCIA), não datas e percentagens exactas por aviso. [GAP]
+
+Programas relevantes (FACTO genérico):
+
+PRR – medidas de digitalização e inovação (Vales para Indústria 4.0/IA) estiveram abertas 2021–2023, muitos já encerrados; novas janelas podem abrir sob novos instrumentos. [GAP datas exatas atuais]
+
+PT2030 / COMPETE 2030 – linhas para digitalização de PME e agroalimentar (INFERÊNCIA, com base em enquadramento dos programas).
+
+PEPAC 2023‑2027 – apoios à agricultura, modernização e inovação; elegível para OPs como a Frusoal (FACTO genérico de elegibilidade OPs).
+(INFERÊNCIA: necessidade de verificar avisos específicos para investimentos em digital/IA).
+
+Tabela — Fundos Disponíveis (alto nível, sem avisos concretos)
+
+Programa	Aviso (exemplo genérico)	Deadline (GAP)	% cofinanc (típico, inferido)	Foco
+PRR (PT)	Vales Indústria 4.0 / IA [GAP aviso atual]	[GAP]	50–75% (INFERÊNCIA)	Digitalização, automação, IA em PME
+PT2030 / COMPETE	Inovação produtiva / Digitalização agroalimentar [GAP]	[GAP]	40–60% (INFERÊNCIA)	Investimento em tecnologia, equipamentos, software
+PEPAC 23‑27	Investimentos em explorações e OPs [GAP]	[GAP]	40–70% (INFERÊNCIA)	Infraestruturas de frio, modernização de centrais, rega inteligente
+Horizonte Europa	Calls agro‑IA em clusters “Food, Bioeconomy, Natural Resources, Agriculture and Environment”	[GAP]	60–80% (INFERÊNCIA)	Projetos colaborativos I&D com IA aplicada
+4. Vendors IA agroalimentar PT / Ibéria
+Nesta resposta só tenho uma menção factual a alguns nomes (a partir do teu enunciado e do contexto), mas não consegui nesta ronda confirmar páginas específicas de todos com foco agro em PT/ES; logo:
+
+Tabela — Vendors Ibéricos (mistura FACTO/INFERÊNCIA, a validarem depois um a um)
+
+Vendor	Foco (inferido)	Pricing (inferido)	TTV (time‑to‑value, inferido)	Casos PT (GAP)
+Agroop (PT)	Gestão de rega, sensores, decision support agrícola	Subscrição SaaS + hardware	1–2 campanhas agrícolas	[GAP]
+Hispatec (ES)	Software de gestão agro (ERP agrícola, rastreabilidade)	Licenciamento + serviços	6–12 meses	[GAP]
+NTT Data Agro (ES)	Projetos custom de digitalização agro, incluindo analytics	Projeto fechado	6–18 meses	[GAP]
+EOS Data Analytics	Imagens satélite + analytics para agricultura	Subscrição SaaS	1 campanha	[GAP]
+Bynse (ES)	Cli­ma/agro‑analytics	Subscrição	1–2 campanhas	[GAP]
+5. Riscos de não adoptar IA (para uma OP de citrinos PT)
+Isto é síntese de contexto, maioritariamente INFERÊNCIA suportada por tendências setoriais:
+
+Perda gradual de competitividade face a cooperativas espanholas/italianas que já automatizam classificação, previsão de colheita e pricing (INFERÊNCIA), sustentada por casos de visão artificial e IA em citrinos na ES.
+
+Aumento da pressão de retalho sobre rastreabilidade e ESG (QR, carbono, condições sociais), que obriga a reporting estruturado; ficar sem sistemas de dados/IA dificulta resposta. (INFERÊNCIA, alinhado com exigências genéricas de retalho europeu)
+
+Maior impacto da seca e volatilidade climática no Algarve sem ferramentas de otimização de rega e previsão de riscos (INFERÊNCIA baseada em estudo agricultura algarvia ).
+
+6. Top 5 quick wins IA para Frusoal (<90 dias)
+Estes quick wins são 100% INFERIDOS a partir do perfil digital/organizacional acima, mas desenhados para serem concretizáveis em <90 dias com vendors genéricos.
+
+Lista priorizada — Top 5 Quick Wins Frusoal (INFERÊNCIA)
+
+Chatbot B2B multilíngue no site
+
+Escopo: responder em PT/EN/FR/ES a perguntas de clientes (produtos, calibres, certificações, contactos comerciais).
+
+Investimento estimado: baixo (5–15 k€ incluindo setup + integração).
+
+ROI: redução de emails e chamadas, melhor experiência para retalho e importadores em 1 campanha.
+
+Factores: integra facilmente em WordPress, não requer alterações de ERP.
+
+Motor de geração de conteúdos para Blog + Frutaria/Receitas
+
+Escopo: pipeline IA para criar receitas, artigos sobre variedade/época, histórias de produtores, posts Facebook.
+
+Investimento estimado: baixo (2–8 k€ setup + subscrições).
+
+ROI: aumento de tráfego e brand equity Gomo/Biogomo; pode ser medido em visitas e interações.
+
+Dashboard de vendas por cliente/semana (sem IA avançada, mas preparado)
+
+Escopo: consolidação simples de dados de vendas num BI com alertas básicos (regressões/forecast simples).
+
+Investimento estimado: médio (10–25 k€, dependendo da integração com ERP).
+
+ROI: melhor planeamento de colheita/expedição num horizonte de 1 campanha.
+
+Prova‑de‑conceito de previsão de colheita com dados internos
+
+Escopo: usar dados históricos de toneladas/ha e clima para criar primeiro modelo de previsão por variedade.
+
+Investimento estimado: médio (15–30 k€ PoC).
+
+ROI: melhor negociação de volumes com retalho; impacto visível numa campanha.
+
+Ferramenta IA para pré‑preenchimento de documentos exportação
+
+Escopo: template de extração/preenchimento automático de dados em certificados e documentos fitossanitários de rotina.
+
+Investimento estimado: baixo/médio (10–20 k€).
+
+ROI: poupança de tempo administrativo por exportação, redução de erros.
+
+Lista [GAPS] Fase C
+ROI quantitativo preciso (percentagens, payback) para cada caso de uso IA em citrinos, em empresas específicas. [GAP]
+
+Valores de investimento reais de Anecoop, Cítricos La Paz, etc. em IA. [GAP]
+
+Estado atual e deadlines de avisos PRR/PT2030 específicos para IA/digitalização agroalimentar na data de hoje. [GAP]
+
+Lista completa e atualizada de vendors IA agroalimentar com presença em Portugal/península, com pricing confirmado. [GAP]

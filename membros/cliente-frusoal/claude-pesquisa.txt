@@ -1,0 +1,214 @@
+Frusoal – Briefing Comercial para Proposta de Consultoria IA
+Data do relatório: 22 de Abril de 2026
+Elaborado por: Consultoria (assistido por pesquisa web agregada)
+Convenções: [VERIFICADO] = facto com fonte directa · [INFERÊNCIA] = dedução razoável não confirmada · [GAP] = dado que não consegui obter em fontes públicas · [DESACTUALIZADO] = fonte anterior a 2023
+
+⚠️ AVISO INICIAL — CORRECÇÕES AO CONTEXTO COMUM
+Antes de avançar, três dados do briefing original precisam de ser revistos com base em fontes directas:
+Dado originalDado corrigidoFonteFundada 1981 (45 anos)Constituída 9/4/1981; início de actividade 3/5/1990 (35 anos operacionais). 2025 foi celebrado como os "35 anos"Iberinform (reg.); LinkedIn Frusoal; Postal do Algarve (17/5/2025)65 associados"Mais de 60 produtores" (Pedro Madeira, 2025)Postal do Algarve (17/5/2025)50+ funcionários directos"Mais de 150 funcionários" (case study Sisgarbe)sisgarbe.pt/en/frusoal
+O número de 170 funcionários aparece numa fonte de 2019 ([DESACTUALIZADO]), mas a fonte mais recente (2024, Sisgarbe) mantém "150+". Vou considerar 150+ como número de trabalho.
+
+🔍 FASE A — PERFIL EMPRESARIAL E MAPA DE DECISORES
+A.1 Indicadores Financeiros Públicos
+AnoVolume de NegóciosFonteNota2018€22,5 MPostal do Algarve (21/11/2019)[VERIFICADO] [DESACTUALIZADO]2020 (projecção)€25 M (meta anunciada)DN/Lusa (7/2/2019)[VERIFICADO] – meta, não resultado2021-2023——[GAP] — não consegui aceder a IES/Racius/Iberinform sem pagar2024≥ €40 M em volume físico (40 M kg)frusoal.pt (post "35 anos", 2025)[VERIFICADO] mas valor em kg, não €. Racius, Iberinform e Empresite têm os dados financeiros detalhados por trás de paywall
+Dados estáticos confirmados:
+
+Capital social: €1.045.139,68 (Racius) [VERIFICADO]
+NIF: 501186425 · CAE: 46311 · Natureza: Lda (Sociedade por Quotas)
+Data de constituição: 9/4/1981 (Iberinform)
+Faro – Vila Nova de Cacela – 8900-024 (Empresite)
+
+Estimativa de volume de negócios 2024 [INFERÊNCIA]:
+Com base no crescimento declarado (de 35.000 t em 2019 para 40.000 t em 2024, e preço médio ao produtor de laranja ~0,20 €/kg referido por Macário Correia no DN, Dez/2024):
+
+Cálculo conservador: 40.000 t × 0,20 €/kg = €8 M só ao produtor
+Volume de negócios da OP (já embalado e vendido a retalho) tipicamente 2x a 3x o preço ao produtor: estimativa €35–55 M. Esta é uma estimativa grosseira — confirmar com IES antes de enviar proposta.
+
+Subsídios / Fundos recebidos (confirmados):
+
+CRESC Algarve 2020 / FEDER: €259.552,50 elegíveis, 45% (€116.798,63) de comparticipação FEDER para o projecto de internacionalização/marcas Gomo/Biogomo [VERIFICADO – DN, 7/2/2019]
+Programa Operacional OP 2026-2028 (PEPAC) – enquadramento do novo centro InovCitrus [VERIFICADO – Postal, 5/2/2026]
+Outros fundos PRR / PT2030 / PDR2020: [GAP] — não identifiquei candidaturas específicas publicadas. Sugere-se consulta ao Portal dos Fundos (Recuperar Portugal) e IFAP por NIF para listagem exaustiva.
+
+Rating financeiro / scoring: [GAP] — apenas visível em relatórios Iberinform/D&B pagos.
+Resultado líquido / capitais próprios / dívida: [GAP] — IES paga.
+
+A.2 Decisores e Stakeholders
+NomeCargoLinkedInInfluência tech (1-5)FontePedro MadeiraSócio-gerente principal, face públicaExiste perfil (pt.linkedin.com/in/pedro-frusoal-frusoal-0739318b) — conteúdo pouco ativo5 — decisor absoluto em tecnologia e I&D. Todas as declarações recentes sobre parcerias científicas, digitalização e internacionalização são delePostal, Agroportal, Vida Rural, DN, InnovPlantProtectManuel ReisSócio-gerente (co-assinante)[GAP] — não identificado em LinkedIn3 — co-assinou protocolo com InnovPlantProtect em Nov 2024, logo tem capacidade de decisão estratégicaiplantprotect.pt (15/11/2024)"P. Godinho" (pgodinho@frusoal.pt)[INFERÊNCIA] RH / Admin — recebe candidaturas para vagas de técnico agrónomo[GAP]1-2 — ponto de contacto operacionalLinkedIn (post vaga técnico de campo)Equipa técnica de campo (agrónomos)Liderança de produção/campo[GAP] — sem nomes públicos2-3Site Frusoal referencia equipa técnica mas sem nomesDirector comercial / exportação[GAP] — sem identificação pública[GAP][GAP]—Director de qualidade[GAP][GAP][GAP]—CTO / IT Manager internoMuito provavelmente não existe [INFERÊNCIA forte] — o case study Sisgarbe mostra IT totalmente outsourced desde 1986. O desafio tecnológico é gerido no binómio sócio-gerente ⇄ Sisgarbe—0 (não existe)sisgarbe.pt/en/
+Implicação estratégica para a abordagem comercial
+A porta de entrada é Pedro Madeira. Não existe um decisor técnico intermédio que possa ser pré-vendido. A proposta tem de ser construída para uma conversa única com o sócio-gerente, em linguagem de ROI e não de tecnologia. A Sisgarbe é gatekeeper de facto do stack actual (39 anos de relação) — qualquer proposta que ameace esse território pode ser bloqueada. Estratégia vencedora: complementar, não substituir, a Sisgarbe. Posicionar a IA como camada que se monta por cima do ERP PHC existente.
+
+A.3 Estrutura Societária e Governance
+
+Sociedade por Quotas (Lda). Capital €1.045.139,68. CAE 46311 (comércio por grosso de fruta e produtos hortícolas).
+Organização de Produtores de Citrinos reconhecida pela UE desde 2001 [VERIFICADO – Pedro Madeira, Postal 17/5/2025]. Estatuto posteriormente alargado a abacates, dióspiros e alfarroba.
+Produtores associados: "mais de 60" em 2025 (vs. 28 fundadores em 1990). [GAP] na lista pública nominal — não existe listagem aberta dos 60+ produtores. A identificação exige pedido directo ou cruzamento com IFAP.
+Empresas do grupo:
+
+Frusoal – Frutas Sotavento Algarve, Lda (NIF 501186425) — empresa-mãe
+Tavifruta — adquirida em 2009, segundo armazém [VERIFICADO – Postal 17/5/2025]
+Frusoal Agroquímicos Unipessoal Lda (NIF 506111130) — [GAP – não consegui confirmar em fonte directa nesta pesquisa, mas a existência é plausível; confirmar via Portal da Empresa / BNI]
+
+
+Conselho de administração / Direcção da OP: [GAP] — não identificado em fontes públicas. Sugere-se pedido directo ou consulta ao BNI (Publicações do Ministério da Justiça).
+
+
+A.4 Cronologia "Momentum 24 meses"
+DataEventoFonteNov 2022Primeira detecção de Scirtothrips aurantii (tripes da África do Sul) nos pomares do Algarve — inicia preocupação fitossanitáriaPostal (5/2/2026)2023-2024Campanha com produção de 335 mil t no Algarve (+10% vs média); crescimento da Frusoal nas vendas em +4,5% nos primeiros 6 mesesObservador (6/11/2024); AlgarOrangeJan 2024Cortes de água de 25% agricultura / até 50-72% no Sotavento (onde está a Frusoal) – pior seca de semprePúblico, Jornal de Negócios (17/1/2024)Mai 2024Crise dos sumos de laranja — preços em máximos, oportunidade para produtores PTECO (30/5/2024)2024Frusoal fecha com recorde de 40 M kg vendidosfrusoal.ptNov 2024Protocolo com InnovPlantProtect (Pedro Madeira + Manuel Reis + Pedro Fevereiro)iplantprotect.pt (15/11/2024)Mai 2025Celebração dos 35 anos da Frusoal – entrevista pública a Pedro Madeira anuncia estratégia futura (Canadá, Escandinávia, Itália, centro InovCitrus)Postal (17/5/2025); Agroportal (18/5/2025)Fev 2026Lançamento oficial da Frusoal InovCitrus — polo I&D com sede própria em construção em Tavira; projecto trienal sobre Scirtothrips; enquadrado no PO OP 2026-2028Postal (5/2/2026)2026 (em curso)Obras de reestruturação do edifício laboratorial InovCitrusPostal (5/2/2026)
+Sinais mais quentes (últimos 3 meses)
+
+Inauguração iminente da InovCitrus — infraestrutura nova → janela óptima para integrar ferramentas de IA no design do novo centro (plataforma de dados de pragas, visão computacional para monitorização, etc.)
+PO OP 2026-2028 em execução — orçamento da OP está a ser alocado agora. Janela de elegibilidade curta.
+Entrada em Canadá + Itália — desafio de multilinguismo, documentação aduaneira, fitossanitária.
+
+Reputação / Risco
+
+2021: Embargo ICNF a trabalhos de plantação de citrinos em zona do Parque Natural da Ria Formosa. Movimento cívico "Tavira em Transição" denunciou destruição de alfarrobeiras, dunas e coberto vegetal. Pergunta parlamentar do Bloco de Esquerda [VERIFICADO – Sul Informação, planetalgarve.com]. [INFERÊNCIA] Este é um passivo reputacional que aumenta a importância de narrativas de sustentabilidade credíveis (reporting CSRD automático, pegada de carbono por lote) — angle útil para pitch IA.
+
+
+A.5 Concorrência Directa (Portugal)
+OP / OperadorDimensão declaradaMaturidade digital visívelDiferenciadorFrusoal (benchmark)60+ produtores, 1.500 ha, 40.000 t, >€22,5M (2018)Média-baixa. ERP PHC via Sisgarbe + site WordPress trilingue + Facebook modesto. Nenhuma IA visível. Presença LinkedIn corporativa fracaLiderança em citrinos biológicos (Biogomo), parceria InnovPlantProtect, centro InovCitrusCacial (Cooperativa Agrícola de Citricultores do Algarve)Fundada 1964; impulsionadora da IGP; "cerca de uma centena" de produtores/associados. Primeira central a higienizar e embalar industrialmente citrinos (1995)Média-baixa [INFERÊNCIA] — site cacial.com é mais informativo que transacional, sem portal B2B visívelHistórica, pioneira da IGP. Foco "mercado da saudade" (FR, LU, CH)Frutas Tereso (David Ferreira)~20.000 t/ano de citrinos (Barlavento)[GAP]Forte presença em media sobre secaAlgarOrange (associação, não OP)12 associados, 40% produção Algarve, 30% produção nacionalSecundária — é associação, não competidor directoPromoção IGP, aderiu à WCOUniprofrutal (gestor histórico IGP)[GAP][GAP]Detém a gestão formal da IGP Citrinos do AlgarveOutras OPs mencionadas no briefing (Citrigarbe, Cooperfrutas, Algafruta, Olival do Sul, Citrioeste)[GAP] — não consegui confirmar a existência actual de várias destas na pesquisa; "Citrigarbe" em particular não aparece em fontes web actualizadas. Recomendo validar localmente——
+Comparação IA vs. sector
+
+A AlgarOrange admite publicamente (Março/2024, vozdocampo.pt) que "a utilização da inteligência artificial também já é uma realidade entre alguns dos nossos operadores de citrinos do Algarve, quer ao nível do controlo do tamanho dos frutos em crescimento no campo, quer ao nível do processo de calibração nas centrais de preparação e acondicionamento." [VERIFICADO]
+Isto significa: há concorrentes dentro da própria região que já operam IA e a Frusoal está atrasada. Dado para o pitch: "A região já está a mover-se. A Frusoal, como a maior OP, não pode ser a última a chegar."
+[GAP] Identificar NOMINALMENTE quais OPs do Algarve já usam IA.
+
+
+A.6 [GAPS] da Fase A
+
+IES / Relatórios financeiros 2021-2024 (pagos)
+Lista nominal dos 60+ produtores associados
+Composição da Direcção da OP / conselho
+Perfis individuais de director comercial, director de qualidade, responsável de exportação, director de produção
+Histórico completo de candidaturas a PRR/PT2030/PDR2020/PEPAC por NIF
+Existência e actividade da Frusoal Agroquímicos Unipessoal Lda (NIF 506111130)
+Quais OPs algarvias em concreto já adoptaram IA
+
+
+⚙️ FASE B — STACK TECNOLÓGICO E DORES OPERACIONAIS
+B.1 Stack Tecnológico Actual
+CamadaSistema actualConfiançaFonteERP / GestãoPHC (provavelmente PHC CS) — implementado e customizado pela Sisgarbe desde 1986Altasisgarbe.pt/en/frusoal (case study público)Integrador / parceiro ITSisgarbe (Portimão/Algarve) — 39 anos de relação, desenvolvimento custom, hardware e softwareAltasisgarbe.pt/en/Módulos operacionais (desenvolvimento custom Sisgarbe/PHC)Entrada e classificação automática de fruta no armazém · emissão de guias de entrada · rotulagem de caixas/paletes · ordens de produção por calibre/qualidade/indústria/refugo · rotulagem à saída de linha com peso/calibre/lote · valorização automática para pagamento ao produtor (preço de mercado × qualidade × calibre) · serviços de colheita/despedra/transporte automatizados · integração contabilísticaAltasisgarbe.pt/en/frusoalClassificadora óptica / balança / linhas de embalamento[GAP] — não confirmada a marca/modelo. Pelo volume (40M kg), a Frusoal certamente opera classificadora óptica industrial. Hipóteses: Maf Roda, Greefa, Compac, Unitec, Pomone. Recomenda-se inspecção visual ou pergunta directa na visita comercial——Sitefrusoal.pt — WordPress (confirmar via BuiltWith não possível nesta sessão; [INFERÊNCIA forte] pela estrutura visual) — trilingue PT/EN/FR. Sem ecommerce, sem chat, sem portal B2B visívelMédiaObservação directa do sitePortal B2B para retalhoInexistente [INFERÊNCIA forte] — site não mostra área cliente; todas as fontes descrevem comércio por via tradicional——EDI com retalhistas (Continente, Pingo Doce, Auchan, Lidl, Mercadona, El Corte Inglés)Existe provavelmente alguma forma de EDI [INFERÊNCIA] — é requisito para fornecer estes retalhistas. Provavelmente operado via Sisgarbe/PHC ou terceiros (GS1 Portugal, WebEDI). [GAP] — confirmar——Rastreabilidade fitossanitária / passaporte fitossanitárioObrigatório para exportação citrinos (EU-PHP). [GAP] — solução específica não confirmada; PHC + add-on custom provavelmente——Gestão agrícola em campo (cuaderno de campo)[GAP] — não identificado. Possível uso de papel + digitalização manual, ou solução como Isagri / Agrivi / app custom——Sensores de humidade do solo + rega gota a gotaCONFIRMADO — Pedro Madeira: "sistema de rega gota a gota com sondas de humidade e programadores de rega"AltaPostal (17/5/2025)CRM[GAP] — possivelmente inexistente ou rudimentar (Excel / função básica no PHC)——BI / Analytics[GAP] — provavelmente relatórios estáticos do PHC——
+Leitura consolidada do stack: A Frusoal tem uma espinha dorsal operacional sólida mas envelhecida e altamente dependente de um único parceiro. O sistema foi concebido para operar o armazém e pagar produtores — não para capturar valor analítico, fazer pricing dinâmico, nem dialogar com clientes B2B internacionais em escala. O novo centro InovCitrus cria espaço lógico para uma camada de dados + IA separada mas integrada.
+
+B.2 Presença Digital e Redes
+CanalMétrica (observada)QualidadeÚltima actividade visívelSite frusoal.ptWordPress, 3 línguas (PT/EN/FR), blogBásica. Boa narrativa institucional (posts "35 anos"), mas sem ecommerce, sem portal cliente, sem chat, sem ficha técnica descarregável estruturadaPost "35 anos" (2025), post "I&D" (2026)Facebook (facebook.com/frusoal)3.069 gostos · 99 visitas · 168 "a falar sobre isto"Baixa. Presença mínima para uma empresa desta dimensão (40M kg). Para contexto: a Anecoop espanhola tem ordens de grandeza superiores[GAP] — não verificada exactamenteLinkedIn (Frusoal – Frutas do Sotavento Algarvio)Página corporativa existe mas uso aparentemente esporádicoMuito baixaPost com vaga de técnico de campo (pgodinho@frusoal.pt) – [GAP] dataInstagram[GAP] — não confirmado se existe conta oficial activa——YouTube[GAP] — aparição em "A Palavra aos Frescos – 8º episódio" (citado na página LinkedIn) mas não canal próprio——TikTok[GAP] — inexistente [INFERÊNCIA forte]——Blog / conteúdo próprioSecção "Frutaria/Receitas" no site — subaproveitada (poucos posts, sem calendário editorial visível)Baixa—SEO / tráfego orgânico[GAP] — Similarweb/SEMrush não consultados nesta sessão. [INFERÊNCIA] tráfego baixo, palavras-chave institucionais apenas
+Avaliação: Presença digital desproporcional em relação à dimensão e ambição declarada de internacionalização. Para quem está a entrar em Canadá, Itália, Escandinávia, ter 3.069 likes no Facebook é insuficiente para gerar pull do trade internacional.
+
+B.3 Sinais Públicos de Dor / Fricção
+Vagas de emprego públicas
+
+"Técnico(a) de campo" — Licenciatura em Engenharia Agronómica, disponibilidade imediata, contacto pgodinho@frusoal.pt [VERIFICADO – LinkedIn]. Indica pressão sobre a capacidade técnica de campo (contexto: novo centro InovCitrus, nova praga, seca). [GAP] data exacta da vaga.
+[GAP] — Outras vagas (admin, IT, comercial, exportação) não identificadas na pesquisa. Recomendo monitorizar NetEmpregos, Indeed, IEFP.
+
+Reviews / reclamações
+
+[GAP] — Não localizei reviews Google Maps / Portal da Queixa / Livro de Reclamações Online com volume significativo. [INFERÊNCIA] É uma empresa B2B, pelo que o canal de reclamação do consumidor final é os retalhistas, não a Frusoal directamente.
+
+Litígios / processos públicos
+
+Embargo ICNF 2021 (Quinta da Manta Rota) — destruição de alfarrobeiras em zona de protecção parcial do PNRF. Coimas em curso à data das últimas notícias. Pergunta parlamentar BE. [VERIFICADO — Sul Informação, Planeta Algarve]. Status em 2026: [GAP] — desconheço desfecho.
+
+Pressão regional: crise hídrica
+
+Cortes de 50-72% no Sotavento em 2024 [VERIFICADO – Público, JN, DN]
+Pomares com rega de sobrevivência; quebra de produção estimada em 16% já em 2024 pela CSHA [VERIFICADO]
+Cada hectare de laranja consome 6-6,5 milhões de litros/ano (DN, Dez/2024)
+Comissão para a Sustentabilidade Hidroagrícola do Algarve (CSHA) agrega 120 entidades incluindo OPs
+Isto é a maior dor operacional transversal. Qualquer oferta que melhore eficiência hídrica tem tracção imediata.
+
+Pressão do retalho
+
+Lidl, Mercadona, Continente, Pingo Doce exigem crescentemente: QR code rastreável, reporting carbono, EDI, previsão semanal. [INFERÊNCIA forte] — exigências documentadas no sector agroalimentar ibérico
+
+
+B.4 Gap vs. Best-in-Class (ES / IT / Israel)
+CapacidadeFrusoalBest-in-classGapClassificação óptica com IA (defeitos, calibre, cor, rot)[GAP] — provável classificadora sem IA de nova geraçãoBenihort (ES, associada Anecoop) investiu €3M em IA-calibradores em 2024; Maf Roda Globalscan 7 SMART Citrus standard com IA; Frutinter (ES) adopta IAGrande. Investimento típico €1-3M por linhaDetecção de praga por visão computacional em campo (drone/mobile)Inexistente — parceria InovCitrus é entomologia clássicaProjecto SENSOPLAG Valencia (controlo digital pragas citrinos); empresas com laser+IA para controlo de infestantes (80% poupança herbicidas)GrandePrevisão de colheita por satélite + ML[GAP] — provavelmente inexistenteAnecoop, NTT Data Agro, BynseGrandePortal B2B com self-serviceInexistenteMuitas OPs ES têm portais para retalhoGrandeChatbot multilíngue / comunicação clienteInexistenteCooperativas IT e ES têm chatbots B2B multilínguesMédio (mas fácil de fechar)Rastreabilidade blockchain + QR premiumInexistenteAnecoop testou com algumas linhas; Mehadrin (IL)MédioReporting CSRD / pegada carbono por loteInexistente [INFERÊNCIA]Anecoop, grandes OPs UE em cursoMédioGestão integrada de mão-de-obra sazonal[GAP] — provavelmente manualApps mobile (reconhecimento facial, fichaje) em grandes OPs ESMédioPrevisão de procura por SKU/cliente/semana (IA)[GAP] — provavelmente inexistenteAnecoop, grandes exportadorasMédioRega inteligente (sondas + ML preditivo)Parcial — sondas de humidade confirmadas, mas ML preditivo [GAP]Isagri, Agroop; startups espanholasPequeno-Médio
+
+B.5 Exposição Regulatória
+NormaAplica?PrazoRiscoGDPR / RGPDSim (dados de trabalhadores + contactos clientes + fornecedores)Em vigorBaixo a médio. [GAP] — não verifiquei cookies policy, livro de reclamações digital, canal de denúncias do siteCanal de Denúncias (Lei 93/2021 – Whistleblowing)Sim — aplica a entidades com ≥50 trabalhadores. Com 150+ funcionários, a Frusoal está obrigadaEm vigor desde Junho 2022Risco de coima se não tiver canal operacional. Oportunidade de oferta IA-leve.AI Act (Regulamento UE IA)Parcialmente. Uso interno de IA para operação não entra em alto risco. Atenção caso use IA para decisões de RH/recrutamento (alto risco) ou vídeo-vigilância biométricaFases: GPAI Ago 2025; alto risco Ago 2026-2027Baixo-médio. Requer governação de IA básicaNIS2Provavelmente não obriga — NIS2 abrange sectores essenciais (energia, água, saúde, alimentação é sector "importante" com limiares). Limiar: >50 trabalhadores OU >€10M volume de negócios. Com 150+ trabalhadores e actividade de produção alimentar, pode enquadrar-se como entidade importante. [GAP] — confirmação jurídica necessáriaTransposição portuguesa em cursoMédioCSRD / ESRS (Sustentabilidade)Actualmente não directamente (não é entidade de interesse público; não atinge 2/3 limiares: >250 colaboradores, >€50M receita, >€25M activo). MAS efeito cascata: se fornece retalhistas sujeitos a CSRD, terá de reportar dados a montanteReporting a partir de 2026-2028 por escalãoMédio. Dor crescente: retalho vai começar a exigir dados ESG.Rastreabilidade FSVP / exportação CanadáCanadá exige CFIA (Safe Food for Canadians) — rastreabilidade e testesEm vigorBaixo técnico, mas administrativamente pesado. Oportunidade de automação.Passaporte Fitossanitário UE (citrinos)Obrigatório em todas as movimentações de plantas vivas e fruta com risco fitossanitárioEm vigorBaixo — já cumprido, mas ineficienteIGP Citrinos do AlgarveCertificação voluntária mas comercialmente crítica—Oportunidade
+
+B.6 [GAPS] da Fase B
+
+Marca/modelo da classificadora óptica actual
+Existência de EDI estruturado com cada retalhista
+CRM actual (ou ausência)
+BI / dashboards executivos
+Cuaderno de campo digital (ou papel)
+Ferramenta de gestão de mão-de-obra sazonal
+Canal de denúncias implementado (compliance Lei 93/2021)
+Política RGPD do site e canais digitais
+Volume exacto de tráfego do site e origem geográfica
+Conta Instagram activa (ou inexistente)
+
+
+🤖 FASE C — OPORTUNIDADES IA E BENCHMARKS DE SECTOR
+C.1 Casos de Uso IA — Carteira Completa
+a) PRODUÇÃO / CAMPO
+CasoDescriçãoROI típicoVendor referênciaCase studyBarreiraDetecção IA de Scirtothrips e mosca-do-mediterrâneo (visão computacional + mobile)App para técnicos fotografarem frutos/folhas → classificação automática da infestação; alertas geolocalizadosRedução tratamentos fitossanitários 20-40%; detecção 2-3x mais precoceSENSOPLAG (Valencia); Plantix; CropX; startups ibéricasSENSOPLAG (citrinos Valencia)Baixa-Média — requer dataset fotográfico próprio no Algarve (diferente de Valencia)Previsão de colheita por satélite + MLEstimativas antecipadas por parcela → melhor planeamento de embalamento, contratação sazonal, comercial5-15% melhoria na precisão (reduz sobreprodução/rutura)EOS Data Analytics, Agroop (PT), ec2ce, HispatecAnecoop (partes de gama)Média — requer histórico de colheitas por parcelaRega de precisão com ML preditivo (pré-existente: sondas)Adicionar modelo preditivo climático + evapotranspiração + previsão de vento a sondas já instaladas15-25% poupança hídricaIsagri (ES), Bynse, agriPVVárias OPs ESBaixa — complementa setup existente; alta prioridade dada crise hídricaRobotização de apanhaBraços robóticos com IA que colhem citrinos madurosRedução 30-50% custo apanha; mas CAPEX elevadoTevel (IL), FFRoboticsPilotos em Israel/EUAAlta — citrinos ainda imaturos para robotização massiva; olhar-se daqui a 2-3 anos
+b) PÓS-COLHEITA / EMBALAMENTO
+CasoDescriçãoROI típicoVendorCase studyBarreiraClassificadora óptica com IA (upgrade ou substituição)Detecção automática de 20+ defeitos, rot, calibre, cor, com auto-aprendizagem. Alternativa: retrofit do software actualRedução 30-50% falsos positivos vs. classificação tradicional; aumento uniformidade exportaçãoMaf Roda Globalscan 7 SMART Citrus, Greefa iQS3, Compac Spectrim, Unitec UNICALBenihort €3M investidos 2024 (AI calibration); FrutinterMédia-Alta — CAPEX €500K-€3M. Pode enquadrar em IFIC ou Inovação Produtiva PT2030Predictive maintenance da linha de embalamentoSensores IoT + ML → antecipar falhas mecânicasRedução 15-30% downtime; 10-20% custos manutençãoAugury, Mobius (SKF), PHC IndustriaMuitos sectoresBaixa-Média — tecnologia maduraPrevisão de shelf-life por IAImagem + dados de origem → previsão de tempo de prateleira ideal5-10% redução desperdícioImpactVision, AgShiftGrandes cadeias retalhistasMédia
+c) RASTREABILIDADE E QUALIDADE
+CasoDescriçãoROIVendorBarreiraQR rastreabilidade "do pomar à mesa" + IA de qualidadeConsumidor scan → origem, produtor, data, certificações; backend com fingerprint por loteDiferenciação premium, +5-15% preço em exportação; defesa de marca IGPTE-FOOD, IBM Food Trust, StoryChain, soluções ibéricas low-costBaixa técnica; alta organizacionalBlockchain + QR para exportação premiumCanadá, Alemanha, Suíça pagam pela prova de origemPremium 10-20% em nichos bioAmbrosus, Vechain Food, WakefernMédiaIA para previsão de shelf-life no destinoReduzir rejeições por maturação20-30% redução devoluções(ver acima)Média
+d) COMERCIAL E MERCADO
+CasoDescriçãoROIVendorBarreiraPrevisão de procura por SKU/cliente/semanaML sobre histórico de vendas + weather + calendário + sentimentRedução 15-25% desperdício, melhor cumprimentoOwn ML + Databricks / Azure ML; ou solução embebida (Hispatec, Bynse)Média — requer dados limpos e volumetriaPricing dinâmico spot vs. contratoOptimização algorítmica entre contratos retalho e spot+2-5% margem brutaProphet, own MLAlta politica (toca produtores associados)CRM B2B com IA (Continente, Lidl, etc.)HubSpot/Salesforce + agente IA para priorizar contactos, preparar reuniõesEficiência comercial 20-30%HubSpot, Salesforce, Pipedrive, ZohoMuito baixa — quick winAnálise de sentiment e previsão de tendência retailMonitorizar reviews de retalho e redes sobre laranja/bioEarly warning de dor no consumidorBrandwatch, Talkwalker, ou GPT-wrappers customBaixa
+e) EXPORTAÇÃO
+CasoDescriçãoROIVendorBarreiraAutomação de documentação aduaneira + fitossanitáriaExtracção IA de dados + preenchimento automático de PHYTO, EUR.1, CMR, CFIA (Canadá)50-70% redução tempo admin; menos errosMake.com + GPT + APIs aduaneiras; PalladyneMuito baixa — quick win de elevado valor, alinhado com expansão Canadá/ItáliaChatbot B2B multilíngue (PT/EN/FR/ES/DE/PL/IT)Responde a pedidos comerciais, ficha técnica, disponibilidadeRedução 30-40% carga admin; captura de leads 24/7Intercom, Voiceflow, GPT+Make.com customMuito baixaTradução automática de catálogos, fichas técnicas, contratos com IAAcelera entrada em novos mercadosRedução 70% custo traduçãoDeepL, GPT-4, ModernMTMuito baixa
+f) RH / RECRUTAMENTO SAZONAL
+CasoDescriçãoROIVendorBarreiraPlataforma mobile gestão mão-de-obra sazonal (com reconhecimento facial para fichaje)Elimina papel; cumprimento laboral; produtividade15-30% redução custos administrativos RHAHORA Hortofrutícola (ES), Kelio, Bizneo HRBaixa-MédiaOnboarding/formação multilíngue com IA (trab. de leste, africanos)Microlearning adaptado ao idioma e nível literaciaRedução acidentes, conformidade GRASPAxonify, EdApp, custom LLMBaixa
+g) SUSTENTABILIDADE E REPORTING
+CasoROIVendorPegada de carbono automática por loteAntecipar exigências CSRD cascataNormative, Plan A, GreenlyReporting ESG automatizadoCumprir auditorias sem equipa dedicadaWorkiva, NormativeMonitorização água/energia com IAPoupança 10-20%Trane, Johnson Controls, startups PT
+h) MARKETING E CONTEÚDO
+CasoROIVendorGeração de conteúdo multilíngue (blog, receitas Gomo/Biogomo, redes)+200-400% output editorialChatGPT/Claude + Make.com + HootSuiteOptimização SEO internacional com IA+30-50% tráfego orgânico em 6 mesesSurfer SEO, ClearscopeCriação de imagens/reels para redes com IARitmo editorial 3x superiorMidjourney, Runway, Canva AI
+
+C.2 Concorrência IA no Sector (casos públicos)
+EmpresaPaísCasoInvestimento / ResultadoFonteBenihort (Anecoop)ES (Benicarló)2 calibradores IA para citrinos€3M investidos; arranque campanha Out/2024qcom.es (2/10/2024)FrutinterESIA pós-colheita (Maf Roda)[GAP valores]mafroda.comAnecoop (grupo)ES (Valencia)Múltiplas iniciativas digitais, satélite, IA em linhas[GAP valores consolidados]VáriosSENSOPLAG (Valencia)ESSistema controlo pragas citrinos (IA + IoT)Projecto co-financiado UEeurolab.esMaf Roda (vendor)FR/ESGlobalscan 7 SMART Citrus standard em toda a gamaTecnologia disponível no mercado desde 2024mafroda.com[GAP] Portugal—Não identifiquei caso público de adopção declarada de IA numa OP de citrinos PT. A AlgarOrange diz que "já é realidade" mas não nomeia—vozdocampo.pt
+Leitura: Este é um GAP que, curiosamente, favorece a proposta Frusoal. Posicionamento: "ser a primeira OP de citrinos portuguesa com um caso público de IA de ponta-a-ponta".
+
+C.3 Fundos Disponíveis (janelas abertas em Abril/2026)
+ProgramaAvisoDeadline / Estado% CofinanciamentoFocoAdequação FrusoalPRR – IFIC "IA nas PME" (C05-i14)AAC-SIFIC-3-IA-nas-PME (e SIFIC-7 aberto em 2026)Fase II fechou em 28/11/2025 para a 3.ª; Nova edição (SIFIC-7) aberta em 2026, ver recuperarportugal.gov.ptAté 75% não reembolsável, tecto €300K por empresaAquisição equipamentos + software IA (incl. SaaS), consultoria, técnicos dedicados até 2 × €80KExcelente. Investimento mínimo €5K, máximo €300K. Tem de ser PME (verificar limiares). Frusoal pode estar no limite PME (≤250 trabalhadores, ≤€50M, ≤€43M activo) — confirmarPRR – IFIC Inovação Empresarial (C05-i14.01)Aviso 06/2026 (aberto para empresas afectadas por calamidades; há outros em pipeline)Candidaturas até 31/3/2026 para aviso 06; outros em cursoInvestimento 100K-10M€; até 60% em produtivo, 80% I&DProjectos de investimento produtivo inovador, I&DExcelente para InovCitrus + linha de embalamento com IAPT2030 – COMPETE SICE Inovação ProdutivaAviso previsto Abril 2026A abrirTaxa base 50% (35-50% não reembolsável)Equipamento produtivo com tecnologia digital, software industrial, IoTBom para upgrade classificadora + IoTPT2030 – COMPETE SICE Qualificação PME[GAP — ver Portugal2030.pt]—SimilarSoftware, consultoria, cibersegurançaBom para camada softwarePRR Indústria 4.0 (IAPMEI)[GAP — verificar abertura 2026]—55-75% não reembolsável; tecto €200K / 3 exercíciosHardware + software + consultoriaBom para pacote IA mid-sizedPEPAC 2023-2027 (PDR sucessor) – OP CitrinosPlano Operacional da OP 2026-2028 já em execuçãoEm curso~50-75% dependendo da medidaI&D, sustentabilidade, qualidade, comercializaçãoCentral — é o que a Frusoal já está a usar para o InovCitrusHorizonte Europa (clusters agro-IA)Vários em curso (Pilar 2, Cluster 6 – Food, Bioeconomia)—Até 100% em ResearchProjectos colaborativos transnacionaisBom para InovCitrus em consórcio
+Plano Anual Avisos 2026: 220 avisos, €3,9 mil milhões para PME. Frusoal pode combinar 2-3 instrumentos (IFIC IA + Inovação Produtiva + PEPAC) para cobrir capex + software + I&D.
+
+C.4 Vendors IA Agroalimentar — Ibéria / PT
+VendorPaísFocoModelo pricingTTV (time-to-value)Casos PT/ESMaf RodaFR/ESClassificação óptica IA para citrinosCAPEX €500K-€3M por linha3-6 meses implementaçãoFrutinter, Anecoop sociosHispatecESERP Agro + IA; Pervue BISaaS + serviços3-9 mesesVárias coops ESBynse / AgroBasfESAgricultura de precisão + ML preditivo (rega, nutrição)SaaS por hectare3-6 mesesVárias ESAgroopPTSensores + plataforma SaaS gestão agrícolaSubscriçãoRápido (semanas)Portugal (vários)EOS Data AnalyticsUS/UASatélite + ML (rendimento, pragas)SaaS1-3 mesesGlobalNTT Data AgroESDigitalização agroalimentar end-to-endProjecto6-12 mesesGrandes players ESIsagriFR/ESSoftware gestão agrícola + sondasSaaS + hardwareRápidoMuitos PT e ESVisión Agro (Gregal)ESERP Hortofrutícola (MS Dynamics)Projecto6-12 mesesCentrais ESAHORA HortofrutícolaESERP + mobile + reconhecimento facialProjecto6-12 mesesVárias ESForagro / 4agroESERP Agro ibéricoProjecto6-12 mesesESSisgarbe (parceiro actual)PT (Algarve)PHC + customIntegrador PHCRelação já existenteFrusoal (39 anos)Tooling/automação leve: Make.com, n8n, OpenAI, Claude, ZapierGlobalFerramentas horizontais para quick winsSaaS baratoDias a semanasMuitos PME PT
+
+C.5 Custo do "Não Fazer Nada"
+PressãoCusto estimado (Frusoal) 3 anos se não actuarPerda de margem vs. Anecoop digitalizada (redução preço médio -3 a -8%)€3-8M sobre volume de negócios estimadoCusto regulatório CSRD cascata (reporting manual)€80-200K/ano (contratar consultoria/FTE) = €240-600K / 3 anosPerda de clientes retalho premium que exigem QR + ESG[INFERÊNCIA] 1-3 contratos estratégicos = €500K-€3MDesperdício de água em pomares próprios (10-20% evitável)Potencial poupança €100-400K/ano, mas sobretudo proteção de produçãoDesperdício de fruta em classificação e logística3-5% do volume × preço = €500K-€1M/anoCusto de oportunidade em Canadá / Itália sem ferramentas de exportação ágeisAtraso 12-24 meses na entrada efectiva
+Cenário total 3 anos de inacção: €5-15M de custo/receita em risco. Face a isso, um programa de €300-800K em IA (70% financiado por PRR) é um no-brainer financeiro.
+
+C.6 🎯 TOP 5 QUICK WINS — Recomendação Priorizada para Frusoal
+#Quick WinInvestimento totalROI estimado ano 1Prazo de implementação1Automação de documentação aduaneira e fitossanitária para exportação (Canadá, Itália, Escandinávia) — Make.com + GPT/Claude + APIs retalho e aduaneiras€30-50K (projecto) + €500-1.000/mês operaçãoPoupança 100-200h/mês em admin → €40-80K/ano + aceleração entrada em Canadá em 6 meses60-90 dias2Chatbot B2B multilíngue + portal cliente light (PT/EN/FR/ES/DE/PL/IT) no site WordPress + formulário inteligente para retalho → lead scoring€25-40KCaptura 20-40% mais leads internacionais; redução 30% email admin45-60 dias3Camada de BI + previsão de procura por SKU/cliente/semana sobre o PHC (extraindo dados via API/SQL) — Power BI ou Metabase + ML prophet/XGBoost€40-70K primeiro ano10-15% redução desperdício + visibilidade financeira imediata. ROI €100-250K no ano 190-120 dias4Fábrica de conteúdo multilíngue (blog Gomo/Biogomo, fichas de receita, posts redes) com IA + calendário editorial + automação LinkedIn/IG€15-25K setup + €1-2K/mêsMultiplicar output editorial 5-10x; criar pull internacional de compradores e fortalecer marca (InovCitrus, sustentabilidade, IGP)30-45 dias5App mobile de monitorização de pragas (Scirtothrips, mosca-do-mediterrâneo) para técnicos de campo e produtores associados — MVP em colaboração com InovCitrus€50-90K MVP + dataset próprioDetecção precoce; redução 15-25% tratamentos; diferencial competitivo IGP; potencial publicação científica com InnovPlantProtect/UAlg120-180 dias
+Investimento total estimado Top 5: €160-275K
+Financiamento PRR IA nas PME (até 75%): Frusoal contribui com ~€50-70K de capital próprio.
+ROI consolidado ano 1: 2-4x
+
+C.7 [GAPS] da Fase C
+
+Investimento concreto publicado de Anecoop e outras OPs ES (dados agregados existem; por caso de uso específico são opacos)
+Existência de pilotos IA em OPs de citrinos portuguesas nomeados
+Status exacto do próximo aviso IFIC IA nas PME (SIFIC-7 ou sucessor) em Abril 2026 — precisa de verificação no portal Recuperar Portugal antes de apresentar proposta
+Preços contratuais reais de Maf Roda, Greefa etc. para linhas do tamanho da Frusoal
+
+
+📌 CHECKLIST PRÉ-PROPOSTA (acções de verificação antes de enviar)
+
+ Obter IES 2021-2024 (Racius €11 / Informa D&B ~€30)
+ Ligar ao BNI / Portal da Empresa para confirmar Frusoal Agroquímicos NIF 506111130 e outras empresas do grupo
+ Consultar Portal Fundos UE + IFAP com NIF 501186425 para listar todos os subsídios já recebidos/em curso
+ Visita física à central de Vila Nova de Cacela (ou pedido de informação) para identificar marca da classificadora
+ Confirmar status AAC IA nas PME aberto em 22/4/2026 em recuperarportugal.gov.pt
+ Sondar Sisgarbe (se for possível sem queimar pontes) para entender até onde vai o actual PHC em termos de APIs e dados expostos
+ Testar o site com BuiltWith/Wappalyzer e PageSpeed
+ Cruzar Instagram — a Frusoal tem conta?
+ Análise breve das campanhas 2024-2025 e 2025-2026 no momento do envio para sincronizar timing
+
+
+🧠 ÂNGULOS-CHAVE PARA A NARRATIVA COMERCIAL COM PEDRO MADEIRA
+
+"A primeira OP de citrinos em Portugal com IA de ponta-a-ponta" — capitaliza o orgulho de "maior OP" e a ambição de liderança regional.
+"A IA que protege a água" — ligar directamente à maior dor do sector (crise hídrica + rega de sobrevivência) que Pedro Madeira já confessa em entrevista.
+"IA que amplifica a InovCitrus" — posicionar a vossa camada digital como o "cérebro" do novo centro físico que está a inaugurar. Timing perfeito.
+"Exportação sem fricção" — resolver agora a fricção administrativa para a expansão Canadá/Itália/Escandinávia, que está no topo da agenda dele.
+"Sem tocar no PHC" — tranquilizar que a Sisgarbe continua dona da espinha operacional. Vocês entregam a camada analítica e de interface.
+"70% pago pelo Estado" — financiar-se por PRR IA nas PME + IFIC + PT2030 muda completamente a discussão de preço.
+"Resposta ao passivo Ria Formosa" — sem mencionar o incidente de 2021 directamente, reforçar que rastreabilidade digital + reporting carbono + IGP são a melhor narrativa de reconquista de confiança pública e regulatória.

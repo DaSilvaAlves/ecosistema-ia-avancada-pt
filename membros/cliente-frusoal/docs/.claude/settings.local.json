@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm view *)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(npm run *)",
+      "Bash(npx aiox-core *)",
+      "Bash(echo \"---EXIT: $?---\")",
+      "Bash(node bin/aiox-init.js --force)",
+      "Bash(node bin/aiox-init.js --help)",
+      "Bash(awk -F'\\\\\\\\\\\\\\\\' '{print $2\"/\"$3}')",
+      "Bash(grep -oP \"ecosistema-ia-avancada-pt\\\\\\\\\\\\\\\\\\\\K[^\\\\\\\\\\\\\\\\]+\")",
+      "Bash(awk -F'\\\\' '{print $1}')",
+      "Bash(mkdir -p \"C:/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/02-prd/archive\")",
+      "Bash(mv \"C:/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/02-prd/prd-entrada-frusoal.md\" \"C:/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/02-prd/archive/prd-v2-obsoleto-pre-descoberta-inpp.md\")",
+      "WebFetch(domain:gd.eppo.int)",
+      "WebSearch",
+      "WebFetch(domain:www.frusoal.pt)",
+      "Bash(npm --version)",
+      "Bash(curl -s -o /dev/null -w \"root: %{http_code}\\\\n\" https://inovcitrus.vercel.app)",
+      "Bash(curl -s -o /dev/null -w \"pt:   %{http_code}\\\\n\" https://inovcitrus.vercel.app/pt)",
+      "Bash(npx vercel *)",
+      "Bash(node scripts/generate-roadmap-pdf.mjs)",
+      "Bash(pwd -W)",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless=new --disable-gpu --no-sandbox --hide-scrollbars --window-size=1280,720 --screenshot=\"$\\(pwd\\)/paleta-swatches.png\" \"file:///$\\(pwd -W\\)/paleta-swatches.html\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://inovcitrus.vercel.app)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://inovcitrus.vercel.app/pt)",
+      "Read(//c/Program Files/Google/Chrome/Application/**)",
+      "Bash(node scripts/generate-press-release-pdf.mjs)",
+      "Bash(mkdir -p output/PARA-IMPRIMIR)",
+      "Bash(cp output/press-release-pt.pdf            output/PARA-IMPRIMIR/1-press-release-pt.pdf)",
+      "Bash(cp output/ficha-tecnica-scirtothrips-pt.pdf output/PARA-IMPRIMIR/2-ficha-tecnica-scirtothrips-pt.pdf)",
+      "Bash(cp output/ficha-tecnica-scirtothrips-en.pdf output/PARA-IMPRIMIR/3-ficha-tecnica-scirtothrips-en.pdf)",
+      "Bash(cp output/ficha-tecnica-scirtothrips-es.pdf output/PARA-IMPRIMIR/4-ficha-tecnica-scirtothrips-es.pdf)",
+      "Bash(curl -s -o /dev/null -w \"/  → %{http_code}\\\\n\" https://inovcitrus.vercel.app)",
+      "Bash(curl -s -o /dev/null -w \"/pt → %{http_code}\\\\n\" https://inovcitrus.vercel.app/pt)"
+    ]
+  }
+}
