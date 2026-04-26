@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Auditoria personalizada do chatbot Botpress do Sr. José Moreira — entregue pela [IA]AVANÇADA PT.">
+<meta name="robots" content="noindex, nofollow">
+<title>Sr. José Moreira · Auditoria do bot · [IA]AVANÇADA PT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2304040A'/%3E%3Ctext x='50' y='65' font-family='monospace' font-size='42' font-weight='800' fill='%2300F5FF' text-anchor='middle'%3EIA%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#04040A;
+  --surface:rgba(255,255,255,0.025);
+  --surface-strong:rgba(255,255,255,0.04);
+  --border:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.14);
+  --white:#F0F4FF;
+  --cyan:#00F5FF;
+  --gold:#FFB800;
+  --purple:#9D00FF;
+  --magenta:#FF006E;
+  --lime:#39FF14;
+  --grey:#8892A4;
+  --grey2:#4A5568;
+  --max:1080px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--white);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-size:0.95rem;
+  font-weight:400;
+  line-height:1.8;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 0%,rgba(0,245,255,0.08),transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 10%,rgba(157,0,255,0.06),transparent 60%);
+  pointer-events:none;
+  z-index:0;
+}
+main,header,footer{position:relative;z-index:1}
+
+/* ---------- TYPE ---------- */
+h1,h2,h3,h4{font-family:'Inter',sans-serif;letter-spacing:-0.02em;line-height:1.2}
+h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:900;letter-spacing:-0.03em;line-height:1.05}
+h2{font-size:clamp(1.4rem,3vw,1.9rem);font-weight:800;margin-bottom:1.2rem}
+h3{font-size:1.15rem;font-weight:700;margin-bottom:0.6rem}
+p{margin-bottom:1rem}
+p:last-child{margin-bottom:0}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.65rem;
+  font-weight:700;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--grey);
+}
+strong{font-weight:700;color:var(--white)}
+em{font-style:italic;color:var(--cyan)}
+code{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.82em;
+  background:rgba(0,245,255,0.08);
+  border:1px solid rgba(0,245,255,0.18);
+  padding:0.12em 0.45em;
+  border-radius:4px;
+  color:var(--cyan);
+  white-space:nowrap;
+}
+a{
+  color:var(--cyan);
+  text-decoration:none;
+  border-bottom:1px solid rgba(0,245,255,0.3);
+  transition:all 0.2s ease;
+}
+a:hover{
+  border-bottom-color:var(--cyan);
+  text-shadow:0 0 8px rgba(0,245,255,0.4);
+}
+ul,ol{padding-left:1.4rem;margin-bottom:1rem}
+li{margin-bottom:0.5rem}
+li:last-child{margin-bottom:0}
+
+/* ---------- LAYOUT ---------- */
+.container{max-width:var(--max);margin:0 auto;padding:0 1.5rem}
+section{padding:4rem 0}
+section + section{padding-top:0}
+
+/* ---------- HEADER ---------- */
+.site-header{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(4,4,10,0.85);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.site-header .row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0.9rem 1.5rem;
+  max-width:var(--max);
+  margin:0 auto;
+  gap:1rem;
+  font-size:0.72rem;
+}
+.brand{
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+}
+.brand span{color:var(--cyan)}
+.site-header .center{
+  color:var(--grey);
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:0.06em;
+  text-align:center;
+  flex:1;
+}
+.site-header .center strong{color:var(--white);font-weight:500}
+.site-header .date{
+  font-family:'JetBrains Mono',monospace;
+  color:var(--gold);
+  letter-spacing:0.08em;
+}
+@media (max-width:680px){
+  .site-header .center{display:none}
+}
+
+/* ---------- HERO ---------- */
+.hero{
+  padding:5rem 0 3rem;
+  position:relative;
+}
+.hero-inner{
+  background:linear-gradient(135deg,rgba(0,245,255,0.08),rgba(157,0,255,0.06));
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:clamp(2rem,5vw,3.5rem);
+  position:relative;
+  overflow:hidden;
+}
+.hero-inner::before{
+  content:"";
+  position:absolute;
+  top:-30%;
+  right:-10%;
+  width:380px;
+  height:380px;
+  background:radial-gradient(circle,rgba(0,245,255,0.15),transparent 70%);
+  pointer-events:none;
+}
+.hero-meta{
+  display:flex;
+  align-items:center;
+  gap:0.8rem;
+  flex-wrap:wrap;
+  margin-bottom:2rem;
+}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:0.4rem;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.66rem;
+  font-weight:700;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  padding:0.4rem 0.85rem;
+  border-radius:20px;
+}
+.badge-cyan{background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.25);color:var(--cyan)}
+.badge-gold{background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);color:var(--gold)}
+.badge-magenta{background:rgba(255,0,110,0.08);border:1px solid rgba(255,0,110,0.3);color:var(--magenta)}
+.badge-lime{background:rgba(57,255,20,0.06);border:1px solid rgba(57,255,20,0.25);color:var(--lime)}
+.badge-grey{background:rgba(136,146,164,0.06);border:1px solid rgba(136,146,164,0.2);color:var(--grey)}
+
+.hero-row{
+  display:flex;
+  align-items:flex-start;
+  gap:1.6rem;
+  flex-wrap:wrap;
+}
+.avatar{
+  width:78px;
+  height:78px;
+  flex-shrink:0;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:800;
+  font-size:1.7rem;
+  color:var(--bg);
+  letter-spacing:-0.05em;
+  box-shadow:0 0 30px rgba(0,245,255,0.3);
+}
+.hero-text{flex:1;min-width:260px}
+.hero h1{margin-bottom:1.2rem}
+.hero .lede{
+  font-size:clamp(1.05rem,2vw,1.2rem);
+  color:var(--white);
+  line-height:1.65;
+  max-width:62ch;
+}
+.hero .lede strong{color:var(--cyan)}
+
+/* ---------- SNAPSHOT ---------- */
+.snapshot .grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:1rem;
+  margin-bottom:1.5rem;
+}
+.kpi{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:1.4rem 1.2rem;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  transition:all 0.25s ease;
+}
+.kpi:hover{
+  border-color:var(--border-strong);
+  transform:translateY(-2px);
+}
+.kpi .number{
+  font-family:'JetBrains Mono',monospace;
+  font-size:2rem;
+  font-weight:800;
+  color:var(--cyan);
+  line-height:1;
+  margin-bottom:0.4rem;
+}
+.kpi .label{
+  font-size:0.78rem;
+  color:var(--grey);
+  letter-spacing:0.02em;
+}
+.idstrip{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:1rem 1.2rem;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.74rem;
+  color:var(--grey);
+  letter-spacing:0.02em;
+  word-break:break-all;
+  line-height:2;
+}
+.idstrip strong{color:var(--white);font-weight:500}
+
+/* ---------- ALERTAS ---------- */
+.alert{
+  border-radius:14px;
+  padding:1.6rem 1.8rem;
+  margin-bottom:1.2rem;
+  border:1px solid;
+  background:var(--surface);
+  position:relative;
+  overflow:hidden;
+}
+.alert::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:3px;
+}
+.alert-magenta{border-color:rgba(255,0,110,0.3)}
+.alert-magenta::before{background:var(--magenta)}
+.alert-gold{border-color:rgba(255,184,0,0.3)}
+.alert-gold::before{background:var(--gold)}
+
+.alert-head{
+  display:flex;
+  align-items:center;
+  gap:0.8rem;
+  margin-bottom:1rem;
+  flex-wrap:wrap;
+}
+.alert h3{margin-bottom:0;font-size:1.2rem}
+.alert .meta-row{
+  display:flex;
+  gap:0.6rem;
+  flex-wrap:wrap;
+  margin-top:1rem;
+  padding-top:1rem;
+  border-top:1px solid var(--border);
+}
+.alert ol{margin-top:0.6rem}
+
+/* ---------- Q&A ---------- */
+.qa-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:clamp(1.6rem,3vw,2.4rem);
+  margin-bottom:1.6rem;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.qa-head{margin-bottom:1.4rem}
+.qa-head .eyebrow{margin-bottom:0.6rem;display:block}
+.qa-head h2{margin-bottom:0.8rem}
+.verdict{
+  display:inline-block;
+  font-size:0.85rem;
+  font-weight:700;
+  padding:0.55rem 1rem;
+  border-radius:8px;
+  margin-bottom:0;
+}
+.verdict-cyan{background:rgba(0,245,255,0.08);color:var(--cyan);border:1px solid rgba(0,245,255,0.25)}
+.verdict-gold{background:rgba(255,184,0,0.08);color:var(--gold);border:1px solid rgba(255,184,0,0.25)}
+.verdict-lime{background:rgba(57,255,20,0.06);color:var(--lime);border:1px solid rgba(57,255,20,0.25)}
+
+.qa-body h4{
+  font-size:1rem;
+  font-weight:700;
+  color:var(--white);
+  margin:1.6rem 0 0.7rem;
+  letter-spacing:0;
+}
+.qa-body h4:first-child{margin-top:0}
+.subheading{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.7rem;
+  font-weight:700;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--cyan);
+  margin:1.6rem 0 0.6rem;
+}
+.subheading.gold{color:var(--gold)}
+.subheading.grey{color:var(--grey)}
+
+/* mini info block */
+.note{
+  background:rgba(255,255,255,0.018);
+  border-left:2px solid var(--cyan);
+  padding:0.9rem 1.2rem;
+  margin:1rem 0;
+  border-radius:0 8px 8px 0;
+  font-size:0.92rem;
+  color:var(--white);
+}
+.note.gold{border-left-color:var(--gold)}
+.note.grey{border-left-color:var(--grey)}
+.note.lime{border-left-color:var(--lime)}
+.note p{margin-bottom:0.5rem}
+.note p:last-child{margin-bottom:0}
+
+/* tables */
+.table-wrap{
+  overflow-x:auto;
+  margin:1rem 0;
+  border-radius:10px;
+  border:1px solid var(--border);
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:0.88rem;
+}
+th,td{
+  padding:0.85rem 1rem;
+  text-align:left;
+  border-bottom:1px solid var(--border);
+}
+th{
+  background:rgba(0,245,255,0.04);
+  font-weight:700;
+  color:var(--white);
+  font-size:0.78rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+tr:last-child td{border-bottom:none}
+td.mono-cell{font-family:'JetBrains Mono',monospace;font-size:0.82rem}
+td .cyan{color:var(--cyan)}
+td .gold{color:var(--gold)}
+td .grey{color:var(--grey)}
+
+/* details/summary */
+details{
+  background:rgba(255,255,255,0.018);
+  border:1px solid var(--border);
+  border-radius:10px;
+  margin:1rem 0;
+  overflow:hidden;
+}
+summary{
+  padding:1rem 1.3rem;
+  cursor:pointer;
+  font-weight:700;
+  font-size:0.92rem;
+  color:var(--white);
+  display:flex;
+  align-items:center;
+  gap:0.6rem;
+  list-style:none;
+  user-select:none;
+  transition:background 0.2s ease;
+}
+summary::-webkit-details-marker{display:none}
+summary::before{
+  content:"+";
+  display:inline-block;
+  font-family:'JetBrains Mono',monospace;
+  color:var(--cyan);
+  font-weight:700;
+  width:16px;
+  transition:transform 0.2s ease;
+}
+details[open] summary::before{content:"−"}
+summary:hover{background:rgba(0,245,255,0.04)}
+details > div{padding:0 1.3rem 1.3rem;border-top:1px solid var(--border);padding-top:1rem}
+details ol,details ul{margin-bottom:0.4rem}
+
+/* ---------- ROADMAP ---------- */
+.roadmap-list{
+  list-style:none;
+  padding-left:0;
+  counter-reset:step;
+  position:relative;
+}
+.roadmap-list::before{
+  content:"";
+  position:absolute;
+  left:18px;
+  top:18px;
+  bottom:18px;
+  width:1px;
+  background:linear-gradient(to bottom,rgba(0,245,255,0.4),rgba(0,245,255,0.05));
+}
+.roadmap-list li{
+  position:relative;
+  padding-left:60px;
+  margin-bottom:1.4rem;
+  counter-increment:step;
+}
+.roadmap-list li::before{
+  content:counter(step);
+  position:absolute;
+  left:0;
+  top:0;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:var(--bg);
+  border:1.5px solid var(--cyan);
+  color:var(--cyan);
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;
+  font-size:0.95rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 0 12px rgba(0,245,255,0.2);
+}
+.roadmap-list .step-title{
+  font-weight:700;
+  color:var(--white);
+  margin-bottom:0.3rem;
+  font-size:1rem;
+}
+.roadmap-list .step-meta{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.7rem;
+  color:var(--grey);
+  letter-spacing:0.06em;
+  margin-bottom:0.4rem;
+}
+.roadmap-list .step-body{color:var(--grey);font-size:0.92rem;line-height:1.7}
+.roadmap-list .step-body strong{color:var(--white)}
+
+/* ---------- CLOSING ---------- */
+.closing-card{
+  background:linear-gradient(135deg,rgba(255,184,0,0.08),rgba(157,0,255,0.06));
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:clamp(1.8rem,4vw,2.6rem);
+  text-align:center;
+}
+.closing-card p{color:var(--white);margin-bottom:1rem}
+.signature{
+  margin-top:2rem;
+  padding-top:1.6rem;
+  border-top:1px solid var(--border);
+}
+.signature-name{
+  font-family:'Inter',sans-serif;
+  font-weight:700;
+  font-size:1.1rem;
+  color:var(--white);
+  letter-spacing:-0.01em;
+}
+.signature-org{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem;
+  font-weight:700;
+  letter-spacing:0.15em;
+  color:var(--grey);
+  margin-top:0.25rem;
+}
+.signature-org span{color:var(--cyan)}
+
+/* ---------- FOOTER ---------- */
+.site-footer{
+  border-top:1px solid var(--border);
+  padding:2rem 0 3rem;
+  margin-top:4rem;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.7rem;
+  color:var(--grey);
+  letter-spacing:0.04em;
+  line-height:2;
+}
+.site-footer .container{display:flex;justify-content:space-between;flex-wrap:wrap;gap:0.6rem}
+
+/* ---------- UTIL ---------- */
+.divider{
+  height:1px;
+  background:linear-gradient(to right,transparent,var(--border-strong),transparent);
+  margin:3rem 0;
+}
+.center{text-align:center}
+.muted{color:var(--grey)}
+.tight{margin-bottom:0.4rem}
+
+/* ---------- PRINT (mantém tema escuro — regra design-system-ia-avancada) ---------- */
+@page{
+  size:A4;
+  margin:14mm 12mm;
+  background:#04040A;
+}
+@media print{
+  *{
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+    color-adjust:exact !important;
+  }
+  html,body{background:#04040A !important;color:var(--white) !important}
+  body::before{display:block}
+  .site-header{position:relative}
+  details{break-inside:avoid}
+  details > div{display:block !important}
+  details:not([open]) > div{display:block !important}
+  details summary::before{content:"" !important;display:none}
+  details summary{cursor:default}
+  .qa-card,.alert,.closing-card,.kpi,.idstrip,.note,.table-wrap,.hero-inner{
+    break-inside:avoid;page-break-inside:avoid;
+  }
+  .roadmap-list li{break-inside:avoid;page-break-inside:avoid}
+  section{padding:2.5rem 0;break-inside:auto}
+  h1,h2,h3,h4{break-after:avoid;page-break-after:avoid}
+  a{color:var(--cyan) !important;text-decoration:none}
+  body{font-size:10pt}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="row">
+    <div class="brand">[<span>IA</span>]AVANÇADA PT</div>
+    <div class="center">Auditoria do bot · <strong>Sr. José Moreira</strong></div>
+    <div class="date">26 ABR 2026</div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-meta">
+        <span class="badge badge-cyan">Entrega exclusiva</span>
+        <span class="badge badge-grey">Cliente comunidade [IA]AVANÇADA PT</span>
+        <span class="badge badge-gold">Auditoria · 5 questões</span>
+      </div>
+      <div class="hero-row">
+        <div class="avatar">JM</div>
+        <div class="hero-text">
+          <h1>Sr. Moreira,</h1>
+          <p class="lede">Olhei o seu bot Botpress <strong>linha a linha</strong>. Cinco questões respondidas, dois alertas urgentes detectados, cinco passos concretos a seguir. Tudo verificável no <code>.bpz</code> que partilhou — cada afirmação tem a sua linha exacta no <code>bot.json</code>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SNAPSHOT ============ -->
+<section class="snapshot">
+  <div class="container">
+    <span class="eyebrow">Snapshot técnico</span>
+    <h2>O seu bot, em números</h2>
+    <p class="muted" style="margin-bottom:1.6rem;max-width:60ch">Recolhido directamente do ficheiro <code>Clientes_Chatbot — 2026 Apr 15.bpz</code>. Cada número confere com o estado actual do seu workspace.</p>
+    <div class="grid">
+      <div class="kpi">
+        <div class="number">45</div>
+        <div class="label">nodes no total<br><span style="color:var(--grey2);font-size:0.7rem">33 só no flow Main</span></div>
+      </div>
+      <div class="kpi">
+        <div class="number">4</div>
+        <div class="label">flows: Main · Error<br>Timeout · Conversation End</div>
+      </div>
+      <div class="kpi">
+        <div class="number">2</div>
+        <div class="label">hooks LLMz<br><span style="color:var(--grey2);font-size:0.7rem">track_iterations + inject_learnings</span></div>
+      </div>
+      <div class="kpi">
+        <div class="number">KB</div>
+        <div class="label">em modo <span style="color:var(--lime)">manual</span><br><span style="color:var(--grey2);font-size:0.7rem">não responde sozinha</span></div>
+      </div>
+    </div>
+    <div class="idstrip">
+      <strong>Bot ID:</strong> e7e5db81-ad3c-45e2-bf25-033d76b04059<br>
+      <strong>Owner:</strong> josemmoreira1@gmail.com<br>
+      <strong>Airtable base:</strong> app7S6wEWqhpQgMEV<br>
+      <strong>Workspace user:</strong> 0947e877-3373-45f2-8983-5c385007d6b1
+    </div>
+  </div>
+</section>
+
+<!-- ============ ALERTAS URGENTES ============ -->
+<section>
+  <div class="container">
+    <span class="eyebrow">Detectado durante a auditoria</span>
+    <h2>2 pontos urgentes — fora das suas 5 questões</h2>
+    <p class="muted" style="margin-bottom:1.6rem;max-width:60ch">Não fazem parte do que perguntou, mas qualquer dev responsável sinaliza. O primeiro é risco de segurança real.</p>
+
+    <!-- ALERTA 1 — PAT exposto -->
+    <div class="alert alert-magenta">
+      <div class="alert-head">
+        <span class="badge badge-magenta">🔒 Urgente — Segurança</span>
+        <h3>Personal Access Token do Airtable exposto no <code>.bpz</code></h3>
+      </div>
+      <p>O token Airtable que liga o bot à sua base aparece em texto claro dentro do <code>bot.json</code> (linha 15):</p>
+      <div class="note">
+        <p class="mono" style="color:var(--magenta);font-size:0.85rem;word-break:break-all">"AIRTABLE_PAT": "patQLv7Sp4JRQ55fv.fe674..."</p>
+      </div>
+      <p>Significa que qualquer pessoa que receba o <code>.bpz</code> (incluindo eu, neste momento) tem acesso completo à sua base Airtable. Antes de partilhar o ficheiro com mais alguém, recomendo:</p>
+      <ol>
+        <li>Entrar em <a href="https://airtable.com/create/tokens" target="_blank" rel="noopener">airtable.com/create/tokens</a> e <strong>revogar o token actual</strong> (<code>patQLv7Sp4JRQ55fv...</code>)</li>
+        <li>Gerar novo PAT com os mesmos scopes (provavelmente <code>data.records:read</code>, <code>data.records:write</code>, <code>schema.bases:read</code>)</li>
+        <li>Substituir no Botpress: Studio → bot settings → Variables → <code>AIRTABLE_PAT</code></li>
+        <li>Testar uma submissão de formulário no bot para confirmar que continua a gravar no Airtable</li>
+      </ol>
+      <div class="meta-row">
+        <span class="badge badge-grey">Tempo · 5 min</span>
+        <span class="badge badge-grey">Custo · 0 €</span>
+        <span class="badge badge-magenta">Prioridade · Antes de tudo o resto</span>
+      </div>
+    </div>
+
+    <!-- ALERTA 2 — ClientName -->
+    <div class="alert alert-gold">
+      <div class="alert-head">
+        <span class="badge badge-gold">⚠ Atenção — Bug funcional</span>
+        <h3>Variáveis de nome do cliente inconsistentes</h3>
+      </div>
+      <p>No bot existem <strong>três variáveis com nomes parecidos</strong>:</p>
+      <ul>
+        <li><code>workflowclientName</code> — linha 430</li>
+        <li><code>clientName</code> — linha 444</li>
+        <li><code>ClientName</code> — linha 479</li>
+      </ul>
+      <p>Os nós de saída da mensagem de sucesso usam <code>{{workflow.ClientName}}</code> (PascalCase). Se algum nó do flow gravar em <code>clientName</code> (camelCase) e outro ler de <code>ClientName</code>, o nome chega vazio ao Airtable e ao utilizador.</p>
+      <div class="note gold">
+        <p><strong>Recomendação:</strong> padronizar para uma só variável (<code>ClientName</code>, que é a usada nos templates de output) e remover as duplicadas.</p>
+      </div>
+      <div class="meta-row">
+        <span class="badge badge-grey">Tempo · 10–15 min</span>
+        <span class="badge badge-grey">Custo · 0 €</span>
+        <span class="badge badge-gold">Em ambiente de teste primeiro</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============ Q1 ============ -->
+<section>
+  <div class="container">
+    <article class="qa-card">
+      <div class="qa-head">
+        <span class="eyebrow">Q1 — Diagnóstico</span>
+        <h2>Upload que some — o ícone aparece em modo anónimo, desaparece em navegação normal</h2>
+        <span class="verdict verdict-cyan">Veredicto · A configuração do seu bot está correcta. O problema é local do browser.</span>
+      </div>
+      <div class="qa-body">
+
+        <div class="subheading">O que está correcto no seu lado</div>
+        <p>Confirmei a configuração pública do seu webchat (o ficheiro <code>20260323112227-A7N2XPSU.json</code> que o Botpress gera quando publica). A opção <code>allowFileUpload</code> está <strong>activada</strong>. O Vision Agent no bot também está <strong>ligado</strong>. Ou seja, a configuração do lado do bot está correcta. Se o ícone aparece em modo anónimo, é porque o sistema está preparado para o mostrar — o código sabe que há upload.</p>
+
+        <div class="subheading">Porque acontece</div>
+        <p>O padrão "anónimo funciona, normal não" raramente é problema do bot. Em modo anónimo (ou janela privada), o browser:</p>
+        <ul>
+          <li>Ignora <strong>cache local</strong> (carrega tudo fresh)</li>
+          <li><strong>Desactiva as extensões</strong> por defeito (no Chrome desktop)</li>
+          <li>Parte de uma sessão limpa, sem cookies nem localStorage anteriores</li>
+        </ul>
+        <p>Portanto o que está a esconder o ícone em modo normal é quase de certeza <strong>local do seu browser</strong> — ou um ficheiro antigo em cache, ou uma extensão a bloquear elementos em <code>botpress.cloud</code>. A configuração do bot está bem.</p>
+
+        <div class="subheading">Plano de teste — por ordem, pare assim que resolver</div>
+
+        <details open>
+          <summary>Se testar em Desktop (Chrome / Edge / Firefox)</summary>
+          <div>
+            <ol>
+              <li>No link do chat, fazer <strong>hard reload</strong>: <code>Ctrl + Shift + R</code></li>
+              <li>Se não resolver: <code>F12</code> &gt; separador <strong>Application</strong> &gt; <strong>Storage</strong> &gt; <strong>Clear site data</strong> (para <code>botpress.cloud</code> e <code>bpcontent.cloud</code>) &gt; reabrir link</li>
+              <li>Se não resolver: abrir o <strong>mesmo link noutro browser</strong> onde não tem extensões instaladas (Edge ou Firefox limpos). Se o ícone aparecer, a causa é uma extensão no Chrome — as suspeitas habituais são uBlock Origin, AdBlock Plus, Privacy Badger, Ghostery</li>
+            </ol>
+          </div>
+        </details>
+
+        <details open>
+          <summary>Se testar em Chrome Android (mobile)</summary>
+          <div>
+            <ol>
+              <li>Menu (3 pontos) &gt; <strong>Settings</strong> &gt; <strong>Privacy and security</strong> &gt; <strong>Clear browsing data</strong> &gt; escolher <strong>Cached images and files</strong> e <strong>Cookies and site data</strong> (últimas 24h chega). Fechar a aba. Reabrir o link do chat. Testar</li>
+              <li>Se não resolver: instalar temporariamente o <strong>Firefox</strong> ou <strong>Edge</strong> no telemóvel e abrir o mesmo link. Se aparecer, é cache-específica do Chrome</li>
+            </ol>
+          </div>
+        </details>
+
+        <div class="note">
+          <p><strong>Se mesmo assim falhar:</strong> aí sim é bug do widget Botpress v3.6 — mas é residual. Nesse caso abrimos ticket no suporte Botpress com os passos reproduzidos. A configuração do seu bot está correcta, portanto o ónus é deles.</p>
+        </div>
+
+        <div class="subheading grey">O que NÃO precisa de fazer</div>
+        <p>Não precisa de voltar ao Studio para "activar" a opção de upload — <strong>já está activa</strong>. E não há nenhuma regra do Botpress que desactive upload só para utilizadores identificados (isso não existe). Se alguém lhe sugerir mexer na configuração do bot para resolver isto, está a procurar no sítio errado.</p>
+
+        <div class="subheading gold">Para quando replicar noutros clientes</div>
+        <p>Este não é bug do seu bot em particular — é o mesmo comportamento que vai ver em qualquer chatbot Botpress publicado via shareable URL. Para as próximas replicações, a única nota é: <strong>confirmar no Studio que <code>allowFileUpload</code> está ligado</strong> antes de publicar o bot para o cliente. Fica como item de checklist de entrega — não precisa de fix especial.</p>
+
+        <p style="margin-top:1.5rem">Quando fizer os testes, diga-me em que passo resolveu — isso ajuda-me a construir a checklist de diagnóstico para os próximos bots dos seus clientes.</p>
+
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ Q2 ============ -->
+<section>
+  <div class="container">
+    <article class="qa-card">
+      <div class="qa-head">
+        <span class="eyebrow">Q2 — Solução técnica</span>
+        <h2>Skip no apoio humano — permitir saltar o upload e avançar para o agente</h2>
+        <span class="verdict verdict-cyan">Veredicto · Adicionar Choice antes do capture File. 20–30 min nos dois nós.</span>
+      </div>
+      <div class="qa-body">
+
+        <div class="subheading">O que está a acontecer no bot hoje</div>
+        <p>No nó <code>Apoio_Humano_PT</code> há duas perguntas em sequência:</p>
+        <ol>
+          <li>Primeiro pede a descrição da dúvida: <em>"Por favor, descreva a sua dúvida."</em></li>
+          <li>Depois pede o ficheiro: <em>"Se desejar, pode anexar aqui um print screen ou documento sobre o problema."</em></li>
+        </ol>
+        <p>O texto diz "se desejar" — sugere opcional. Mas tecnicamente o capture File do Botpress é <strong>estrito</strong>: só aceita URL de ficheiro. Se o utilizador escrever "não tenho", "skip" ou qualquer texto, o capture não reconhece, pede outra vez, e após 2 retries fica sem saída definida (a sua configuração tem <code>handleFailure: false</code>). Ou seja, o prompt <strong>convida</strong> a anexar, mas o motor <strong>exige</strong> um upload para avançar. É por isso que o utilizador encalha.</p>
+        <p>Isto confirma-se na documentação oficial do Botpress: o capture File não tem botão nativo de "skip".</p>
+
+        <div class="note gold">
+          <p><strong>A mesma coisa acontece no <code>Human_Support_EN</code>.</strong> Os dois nodes são gémeos — mesmo padrão, mesma variável de ficheiro partilhada. Qualquer correcção tem de ser feita em <strong>ambos</strong>, senão a versão inglesa fica inconsistente.</p>
+        </div>
+
+        <div class="subheading">Solução recomendada — Choice antes do File</div>
+        <p>Adicionar um <strong>Capture Information → Choice</strong> antes do capture File actual, com botões claros:</p>
+        <ul>
+          <li>Pergunta: <em>"Quer anexar um print ou documento sobre o problema?"</em></li>
+          <li>Opção 1 (label): <strong>"Sim, quero anexar"</strong> → value: <code>sim</code></li>
+          <li>Opção 2 (label): <strong>"Não, seguir para o agente"</strong> → value: <code>nao</code></li>
+        </ul>
+        <p>Depois configurar a transição condicional:</p>
+        <ul>
+          <li>Se o utilizador escolher <strong>"Não"</strong> → transição directa para a mensagem <em>"Um assistente entrará no chat em breve."</em> (saltar o capture File)</li>
+          <li>Se escolher <strong>"Sim"</strong> → continua para o capture File como já está</li>
+        </ul>
+        <p>Assim o utilizador tem controlo explícito: ou anexa, ou pressiona um botão e vai directo para o atendimento. Sem texto livre, sem confusão com o motor.</p>
+
+        <details open>
+          <summary>No Studio — passos concretos</summary>
+          <div>
+            <ol>
+              <li>Abrir o flow <code>wf-main</code>, nó <code>Apoio_Humano_PT</code></li>
+              <li>Entre a 2ª instrução (o capture File actual) e a mensagem "Um assistente entrará no chat em breve", <strong>inserir uma nova instrução Capture Information</strong> com:
+                <ul>
+                  <li><strong>Question:</strong> "Quer anexar um print ou documento sobre o problema?"</li>
+                  <li><strong>Choices</strong> (ligar o toggle): adicionar as duas opções acima</li>
+                </ul>
+              </li>
+              <li>Mover o capture File para dentro do ramo "Sim" do Choice (transição condicional). Assim só dispara se o utilizador escolher anexar</li>
+              <li>Repetir tudo no <code>Human_Support_EN</code> com os textos em inglês</li>
+              <li>Guardar e testar no emulador em ambos os caminhos (sim/não)</li>
+            </ol>
+            <p style="margin-top:0.8rem"><span class="badge badge-cyan">Tempo · 20–30 min</span> para os dois nós.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Alternativa mais simples — activar <code>handleFailure</code></summary>
+          <div>
+            <p>Se não quiser adicionar o Choice, a via mínima é:</p>
+            <ol>
+              <li>No capture File, ligar a flag <strong>"Add transition to handle failure"</strong> (<code>handleFailure: true</code> no JSON)</li>
+              <li>Definir a failure transition para o mesmo sítio onde já vai o caminho "sim" (a mensagem de assistente)</li>
+            </ol>
+            <p>Com isto, se o utilizador não conseguir anexar após as 2 tentativas de retry, o bot avança em vez de encalhar. É mais rápido de implementar mas a UX é pior — o utilizador passa por 3 prompts antes de seguir em frente. Recomendo só se não quiser tocar na estrutura do nó.</p>
+          </div>
+        </details>
+
+        <div class="subheading gold">Para quando replicar noutros clientes</div>
+        <p>O padrão Choice antes do capture File deve fazer parte do <strong>esqueleto mestre</strong> desde o início. Cada cliente herda já esta UX, sem ter de decidir caso a caso. Pode ficar no seu template Botpress exportável como regra: <em>"qualquer capture File sempre precedido de Choice Sim/Não"</em>.</p>
+
+        <div class="subheading grey">O que NÃO precisa fazer</div>
+        <p>Não precisa de alterar o capture File em si — só inserir um Choice antes. E não existe "flag optional" para ligar no capture File — isso não existe no Botpress v3 (já confirmei na doc oficial). Se alguém lhe propuser essa via, vai perder tempo a procurar algo que não está no produto.</p>
+
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ Q3 ============ -->
+<section>
+  <div class="container">
+    <article class="qa-card">
+      <div class="qa-head">
+        <span class="eyebrow">Q3 — Estratégia de replicação</span>
+        <h2>Replicação — é viável usar este esqueleto para várias empresas na versão gratuita?</h2>
+        <span class="verdict verdict-cyan">Veredicto · Viável com Modelo A. Free tier serve para 1º cliente, não para 5 em paralelo.</span>
+      </div>
+      <div class="qa-body">
+
+        <div class="subheading">Resposta directa</div>
+        <p>Usar o mesmo esqueleto para várias empresas é <strong>tecnicamente possível</strong>, mas o plano gratuito do Botpress <strong>não foi feito para isso</strong>. A viabilidade depende de como se organiza e de quanto cada bot vai falar com a IA. Vamos aos números reais.</p>
+
+        <div class="subheading">Os limites de hoje (Abril 2026)</div>
+        <p>Confirmei na <a href="https://botpress.com/pricing" target="_blank" rel="noopener">página oficial de pricing do Botpress</a>:</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th><span class="cyan">Free</span></th>
+                <th><span class="gold">Plus</span></th>
+                <th>Team</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Custo</td><td class="mono-cell">0 USD + AI Spend</td><td class="mono-cell">89 USD/mês</td><td class="mono-cell">495 USD/mês</td></tr>
+              <tr><td>Bots por workspace</td><td class="mono-cell"><strong style="color:var(--cyan)">1</strong></td><td class="mono-cell">2</td><td class="mono-cell">3</td></tr>
+              <tr><td>Mensagens recebidas/mês</td><td class="mono-cell">500</td><td class="mono-cell">5.000</td><td class="mono-cell">50.000</td></tr>
+              <tr><td>Crédito de IA mensal</td><td class="mono-cell">5 USD</td><td class="mono-cell">5 USD</td><td class="mono-cell">5 USD</td></tr>
+              <tr><td>AI Spend máx (overage)</td><td class="mono-cell">100 USD/mês</td><td class="mono-cell">100 USD/mês</td><td class="mono-cell">500 USD/mês</td></tr>
+              <tr><td>Colaboradores</td><td class="mono-cell">1 seat</td><td class="mono-cell">2 seats</td><td class="mono-cell">3 seats</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note">
+          <p><strong>Dois factos que mudam tudo:</strong></p>
+          <ol>
+            <li><strong>Free = 1 bot por workspace.</strong> Não são 5, não são 2. É um. Se quiser ter 10 clientes com 10 bots só seus, na conta free não cabe — precisa de 10 workspaces separados ou um plano pago</li>
+            <li><strong>O crédito de 5 USD de IA é o mesmo em todos os planos.</strong> Cada conversa com a base de conhecimento consome tokens (a sua Base de Conhecimento usa <code>gpt-4-turbo</code>). Uma conversa média pode custar entre 5 e 15 cêntimos americanos. 5 USD chegam para 30 a 100 conversas por mês, depois entra AI Spend pago. Isto aplica-se quer esteja em Free, Plus ou Team</li>
+          </ol>
+        </div>
+
+        <div class="subheading">A estrutura técnica actual — o que é genérico vs específico</div>
+        <p>No esqueleto que construiu, cruzo o que é <strong>reutilizável</strong> vs o que <strong>tem de mudar cliente a cliente</strong>:</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th><span class="cyan">Reutilizável</span> — fica igual entre clientes</th><th><span class="gold">Específico</span> — tem de mudar sempre</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <ul style="padding-left:1rem;margin:0">
+                    <li>Estrutura dos 33 nós do <code>wf-main</code> (RGPD, captura, menu, apoio humano PT/EN)</li>
+                    <li>Os 4 fluxos (<code>wf-main</code>, <code>wf-error</code>, <code>wf-timeout</code>, <code>wf-conversation-end</code>)</li>
+                    <li>Os hooks <code>track_iterations</code> e <code>inject_learnings</code></li>
+                    <li>Configuração do KnowledgeAgent, VisionAgent, TranslatorAgent</li>
+                    <li>Lógica de handoff para agente humano</li>
+                  </ul>
+                </td>
+                <td>
+                  <ul style="padding-left:1rem;margin:0">
+                    <li>3 variáveis de ambiente: <code>AIRTABLE_PAT</code>, <code>BASE_ID</code>, <code>TABLE_ID</code></li>
+                    <li>7+ blocos de texto com placeholders: <code>[Nome da Empresa]</code>, <code>[Serviço A/B/C]</code>, <code>IBAN PT50 XXXX...</code>, <code>[Rua, Número, Código Postal]</code>, GPS, carreiras de autocarro, email <code>financeiro@empresa.pt</code></li>
+                    <li>O conteúdo da Base de Conhecimento (HTML)</li>
+                    <li>A tabela <code>MailingListsEmailsTable</code> (se o cliente quiser a sua própria lista)</li>
+                  </ul>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Contei pelo menos 30 a 60 pontos distintos a preencher por cliente se for feito à mão. Não é impossível — mas também não é clonar e publicar em 5 minutos.</p>
+
+        <div class="subheading">Modelos de replicação viáveis</div>
+
+        <details open>
+          <summary><span style="color:var(--lime)">Modelo A</span> — Cada cliente tem a sua conta gratuita, o Sr. é colaborador <span class="badge badge-lime" style="margin-left:0.5rem">RECOMENDADO</span></summary>
+          <div>
+            <p>O cliente cria a conta dele no Botpress (gratuito), o Sr. é adicionado como o único colaborador.</p>
+            <p><strong>Vantagens:</strong></p>
+            <ul>
+              <li>Cada cliente tem os seus 500 msgs/mês e os seus 5 USD de AI credit — não acumulam no Sr.</li>
+              <li>O cliente é dono técnico do bot — reduz o risco de lock-in no seu lado</li>
+              <li>Custo zero para o Sr. enquanto o cliente não precisar mais do que a free tier dá</li>
+            </ul>
+            <p><strong>Desvantagens:</strong></p>
+            <ul>
+              <li>O cliente tem de criar conta Botpress (5 min, mas tem de fazer)</li>
+              <li>Se o cliente ultrapassar 500 msgs ou 5 USD de IA, é o cliente que decide se paga o AI Spend ou upgrade</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary><span style="color:var(--gold)">Modelo B</span> — Todos os bots na sua conta Plus (89 USD/mês)</summary>
+          <div>
+            <p>O Sr. cria o bot para cada cliente dentro da sua própria conta Plus. Limitado a 2 bots.</p>
+            <p>Só viável com 1 a 2 clientes. Depois disso, upgrade para Team (495 USD/mês) para 3 bots. Acima de 3, múltiplas subscrições ou múltiplos workspaces.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary><span class="muted">Modelo C</span> — Workspace Enterprise</summary>
+          <div>
+            <p>Preço por negociação. Relevante só a partir de 10+ clientes com bots pesados.</p>
+          </div>
+        </details>
+
+        <div class="subheading">O trabalho de refactor antes de replicar</div>
+        <p>Antes de ir ao 2º cliente, compensa fazer uma coisa uma vez só: <strong>substituir os 30-60 placeholders de texto por variáveis parametrizáveis</strong> do Botpress (<code>{{bot.companyName}}</code>, <code>{{bot.iban}}</code>, <code>{{bot.phone}}</code>, etc.). Depois, para cada novo cliente, só se preenchem as variáveis no painel do bot — sem tocar nos nós.</p>
+        <p>Tempo de refactor: estimo <strong>4 a 8 horas</strong> para um bot desta dimensão (depende da sua familiaridade com o Studio). A partir daí, cada cliente novo é:</p>
+        <ul>
+          <li>Clonar o bot template</li>
+          <li>Editar as 3 env vars (Airtable)</li>
+          <li>Preencher as 30-60 variáveis de empresa no painel</li>
+          <li>Substituir o documento da KB</li>
+          <li>Testar em PT e EN</li>
+        </ul>
+        <p><strong>Estimativa por cliente depois do refactor: 1 a 2 horas.</strong></p>
+
+        <div class="subheading">Então é ou não é viável?</div>
+        <p>É viável. Com estas notas:</p>
+        <ol>
+          <li><strong>Free tier serve para protótipo e para o 1º cliente</strong> a baixo volume. Não serve para 5 clientes em paralelo na mesma conta</li>
+          <li><strong>Recomendo o Modelo A</strong> (cada cliente tem a sua conta). Escala sem upgrade do seu lado e reduz lock-in</li>
+          <li><strong>O refactor de placeholders é o investimento de tempo uma vez só</strong> que transforma o esqueleto num verdadeiro template</li>
+          <li><strong>Fique atento ao AI Spend</strong> — é aí que a conta escala, não nos planos fixos. Com a KB activa e <code>gpt-4-turbo</code>, um bot com 100 conversas/mês pode facilmente ultrapassar os 5 USD de crédito incluídos</li>
+        </ol>
+
+        <div class="note grey">
+          <p><strong>O que NÃO vou fazer nesta resposta:</strong> não vou sugerir-lhe quanto cobrar aos seus clientes nem projectar ganhos mensais — essa é decisão sua, depende do valor que entrega e da dor concreta que resolve em cada PME. Assim que tiver um número que queira testar, podemos validar se está coerente com os custos técnicos que mostrei acima.</p>
+        </div>
+
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ Q4 ============ -->
+<section>
+  <div class="container">
+    <article class="qa-card">
+      <div class="qa-head">
+        <span class="eyebrow">Q4 — Autoria e governança</span>
+        <h2>Autoria e controlo — integrar anúncios e suporte sem perder autoria</h2>
+        <span class="verdict verdict-lime">Veredicto · Autoria 100% sua, técnica e juridicamente. Lado comercial em pausa voluntária até ter dados reais.</span>
+      </div>
+      <div class="qa-body">
+
+        <div class="subheading">Onde está a autoria do seu bot hoje — tecnicamente</div>
+        <p>O bot é seu. Não é formalidade, é facto verificável nos ficheiros:</p>
+        <ul>
+          <li>Bot <code>e7e5db81-ad3c-45e2-bf25-033d76b04059</code> criado e gerido por <code>josemmoreira1@gmail.com</code> no seu workspace</li>
+          <li>Os 4 flows (Main, Error, Timeout, Conversation End), 45 nodes no total (33 só no flow Main), 2 hooks LLMz — tudo gravado no seu nome</li>
+          <li>A base Airtable <code>app7S6wEWqhpQgMEV</code> está na sua conta pessoal, o PAT é seu</li>
+          <li>O <code>.bpz</code> é um snapshot seu — exportável e portável só por quem tenha acesso ao workspace</li>
+        </ul>
+        <p>Ninguém pode alterar nem apagar nada disto sem autorização sua explícita. <strong>A autoria está protegida por design.</strong> A pergunta real é: como manter isto assim quando começar a partilhar acessos (clientes, parceiros, consultores)?</p>
+
+        <div class="subheading">Os roles do Botpress — o que dar e a quem</div>
+        <p>O Botpress tem 6 níveis de colaborador. Os relevantes para o seu cenário:</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Role</th><th>O que pode fazer</th><th>Quando atribuir</th></tr></thead>
+            <tbody>
+              <tr><td><strong style="color:var(--lime)">Viewer</strong></td><td>Só vê o bot, não toca em nada</td><td>Cliente que quer ver conversas / observador externo</td></tr>
+              <tr><td><strong style="color:var(--cyan)">Developer</strong></td><td>Cria, vê, actualiza. Só apaga o que criou</td><td>Outro dev que o ajuda em tarefas concretas</td></tr>
+              <tr><td><strong style="color:var(--gold)">Manager</strong></td><td>Cria, vê, actualiza, apaga tudo. Vê auditoria e billing</td><td>Sócio operacional de confiança</td></tr>
+              <tr><td><strong style="color:var(--magenta)">Administrator</strong></td><td>Tudo + adiciona/remove colaboradores + billing</td><td><strong>Só o Sr.</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note magenta" style="border-left-color:var(--magenta);background:rgba(255,0,110,0.04)">
+          <p><strong>Regra simples: Admin é só seu.</strong> Qualquer outra pessoa (cliente, parceiro, consultor) entra no máximo como Viewer. Se precisar de ajuda em tarefas técnicas, concede Developer temporariamente e o Sr. revê antes de publicar. Nunca Admin a ninguém além do Sr.</p>
+        </div>
+
+        <div class="subheading">Como proteger a autoria em cada cenário</div>
+        <p>Três coisas simples, independentes do formato comercial:</p>
+        <ol>
+          <li><strong>Workspace sempre em nome do Sr.</strong> Se um cliente quiser criar o bot em nome da empresa dele, use o Modelo A da Q3 (cliente tem conta própria gratuita, o Sr. entra como colaborador). O seu workspace-mestre, onde vive o esqueleto template, fica sempre seu</li>
+          <li><strong>Viewer por defeito</strong> para clientes e terceiros. Níveis superiores só quando há necessidade concreta e temporária</li>
+          <li><strong>Exportar o <code>.bpz</code> regularmente</strong> e guardar localmente. É o seu código-fonte. Se um dia houver problema no Botpress cloud, o Sr. tem o bot em ficheiro para reimportar noutro workspace</li>
+        </ol>
+
+        <div class="subheading">Sobre integrar os meus anúncios e suporte técnico</div>
+        <p>Hoje, entre nós, não existe formato comercial estruturado. O acompanhamento que o Sr. tem é técnico, entre pares, e foi essa a condição desde que entrou na comunidade [IA]AVANÇADA PT — construímos ferramentas em conjunto, resolvemos problemas concretos, partilhamos o que aprendemos. Zero contrato, zero comissão, zero obrigação mútua.</p>
+        <p>Isto não é por distracção. É intencional. O Sr. está no início do caminho prático com o bot — tem 1 bot, flow em produção, KB configurada, Airtable ligado. Ainda não tem clientes pagantes em operação. Enquanto esse for o quadro, qualquer proposta minha de modelo comercial seria prematura e, sinceramente, pouco honesta.</p>
+
+        <div class="note lime">
+          <p><strong>O que faz sentido fazer agora:</strong></p>
+          <ul style="margin-bottom:0">
+            <li>Continuar a refinar o bot com o meu apoio técnico, sem custo</li>
+            <li>O Sr. testar o esqueleto com 1 ou 2 empresas reais (Modelo A da Q3 — cada cliente no Free dele, Sr. como colaborador)</li>
+            <li>Cobrar o que o Sr. entender ao cliente final — esse valor é integralmente seu, a autoria é sua, o controlo é seu</li>
+          </ul>
+        </div>
+
+        <p>Quando o Sr. tiver 2 ou 3 clientes pagantes a operar, retomamos a conversa sobre formato de parceria com dados reais: quanto tempo o Sr. gasta por cliente, quanto recebe, onde o meu input acelera, e se faz sentido alguma fórmula conjunta — seja co-marketing (Sr. aparece como caso da comunidade), afiliação voluntária (link para a comunidade no bot, se quiser), ou outra coisa que não imaginámos ainda. Qualquer uma dessas hipóteses parte de números reais do Sr., não de projecções minhas.</p>
+
+        <div class="note magenta" style="border-left-color:var(--magenta);background:rgba(255,0,110,0.04)">
+          <p><strong>O que não vai acontecer, em caso algum:</strong></p>
+          <ul style="margin-bottom:0">
+            <li>Eu colocar anúncios meus dentro do bot do Sr. sem a sua aprovação explícita</li>
+            <li>Pedir comissão sobre clientes que o Sr. angariar</li>
+            <li>Exigir exclusividade ou limitar o que pode construir</li>
+            <li>Propor modelo comercial sem o Sr. ter dados concretos sobre a sua operação</li>
+          </ul>
+        </div>
+
+        <p>A autoria fica protegida por design no Botpress (secção acima). O lado comercial fica em pausa voluntária até o Sr. ter base para decidir em igualdade.</p>
+        <p><em>Se em qualquer momento sentir que esta conversa precisa de formato mais claro, diga. O ritmo é o seu.</em></p>
+
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ Q5 ============ -->
+<section>
+  <div class="container">
+    <article class="qa-card">
+      <div class="qa-head">
+        <span class="eyebrow">Q5 — Diagnóstico + arquitectura</span>
+        <h2>Agente humano vs Baseknowledge — o que realmente está a acontecer</h2>
+        <span class="verdict verdict-cyan">Veredicto · A KB já está em modo passivo. O problema é a flag de handoff que ninguém lê.</span>
+      </div>
+      <div class="qa-body">
+
+        <div class="subheading lime">Primeiro, uma boa notícia sobre a KB</div>
+        <p>O Sr. temeu que a base de conhecimento (Baseknowledge) estivesse a intercetar respostas quando devia ser um humano a responder. Olhei linha a linha ao <code>bot.json</code> e encontrei o seguinte:</p>
+        <p>A sua configuração do Knowledge Agent tem <code>answerManually: true</code>. Segundo a documentação oficial do Botpress, isto significa exactamente:</p>
+        <div class="note lime">
+          <p style="font-style:italic">"When this option is enabled, your bot won't automatically provide answers in the conversation. The answers it generates will be saved to a dedicated variable which you can use manually in the conversation at a later point."</p>
+        </div>
+        <p>Traduzido: a KB <strong>não</strong> responde sozinha no chat. Ela gera respostas e guarda-as numa variável (<code>{{turn.KnowledgeAgent.answer}}</code>) — mas só aparecem se o Sr. (ou o flow) decidir explicitamente usá-las. No bot actual, não há nenhum nó que esteja a injectar essa variável na conversa depois do handoff.</p>
+        <p>Portanto, a preocupação "a KB vai responder em vez do agente humano" <strong>não é um problema real no seu bot hoje</strong>. A KB já está em modo passivo.</p>
+
+        <div class="subheading magenta" style="color:var(--magenta)">O que é um problema real</div>
+        <p>O problema real é outro: quando o fluxo chega a <code>Apoio_Humano_PT</code> ou <code>Human_Support_EN</code>, a última acção executa <code>conversation.handoff = true</code>. Esta é a convenção do Botpress para sinalizar "preciso de humano". O bot pede o ficheiro, marca a flag, e... termina.</p>
+        <p>Olhei todo o <code>bot.json</code> à procura de quem LÊ essa flag. <strong>Ninguém a lê.</strong> Não há hook, não há integração, não há dashboard conectado. Resultado: o utilizador fica à espera, e o Sr. nem fica a saber que alguém precisa de resposta.</p>
+        <p>Para um agente humano real responder dentro do webchat, tecnicamente existem três caminhos — com custos e complexidades diferentes.</p>
+
+        <details open>
+          <summary><span style="color:var(--lime)">Caminho A</span> — Handoff assíncrono por email/WhatsApp <span class="badge badge-lime" style="margin-left:0.5rem">ZERO CUSTO · HOJE</span></summary>
+          <div>
+            <p><strong>Onde vive:</strong> no Free, com o bot actual.</p>
+            <p><strong>Como funciona:</strong></p>
+            <ol>
+              <li>No nó <code>Apoio_Humano_PT</code> (e no <code>Human_Support_EN</code>), antes do upload do ficheiro, capturar o email ou telefone do utilizador</li>
+              <li>Adicionar uma acção a seguir ao <code>conversation.handoff = true</code>: enviar email para o Sr. (<code>josemmoreira1@gmail.com</code>) com o transcript da conversa + email/telefone do utilizador, ou disparar webhook para a sua conta WhatsApp Business</li>
+              <li>O bot diz ao utilizador: <em>"Recebi o seu pedido. Vou reencaminhar para a equipa humana. Será contactado dentro de X horas por email ou telefone."</em></li>
+              <li>O Sr. responde directamente por email ou WhatsApp, fora do webchat</li>
+            </ol>
+            <p><strong style="color:var(--lime)">Vantagens:</strong> zero custo adicional, implementação simples, mantém controlo total.<br>
+            <strong style="color:var(--gold)">Limitações:</strong> não é conversa em tempo real dentro do webchat. O utilizador sai do chat e fala consigo por outro canal.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary><span style="color:var(--gold)">Caminho B</span> — HITL nativo no Botpress (plano Plus 89 USD/mês)</summary>
+          <div>
+            <p><strong>Onde vive:</strong> requer subir do Free para Plus.</p>
+            <p><strong>Como funciona:</strong></p>
+            <ol>
+              <li>Subscrever Plus (89 USD/mês — 5.000 mensagens/mês, 2 bots, 1GB vector)</li>
+              <li>Instalar a integração <strong>HITL (oficial Botpress)</strong> no workspace</li>
+              <li>Adicionar o HITL Plugin ao bot</li>
+              <li>No nó <code>Apoio_Humano_PT</code>, em vez de <code>conversation.handoff = true</code>, invocar a acção HITL (abre ticket)</li>
+              <li>O Sr. entra no Botpress Desk (dashboard), vê a conversa em tempo real, assume o ticket, e responde directamente no webchat como se fosse o bot</li>
+            </ol>
+            <p><strong style="color:var(--lime)">Vantagens:</strong> resolve exactamente a sua pergunta — agente humano responde visivelmente no chat, KB fica silenciosa durante handoff.<br>
+            <strong style="color:var(--gold)">Limitações:</strong> 89 USD/mês recorrente. Faz sentido quando o volume justificar (por exemplo, &gt;50 conversas/mês que requerem handoff, ou quando tiver 2-3 clientes pagantes).</p>
+            <div class="note gold">
+              <p style="font-style:italic">"This feature requires a Botpress Plus plan or higher." <span style="font-style:normal" class="muted">— citação directa da <a href="https://botpress.com/docs/get-started/manage-your-agent/human-handoff" target="_blank" rel="noopener">doc oficial Botpress (Human Handoff)</a></span></p>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary><span class="muted">Caminho C</span> — Integração Zendesk</summary>
+          <div>
+            <p>Só faz sentido se o Sr. (ou o cliente final) já for cliente Zendesk. Não é o caso. Ignore.</p>
+          </div>
+        </details>
+
+        <div class="subheading">Recomendação pragmática</div>
+        <p><strong>Comece pelo Caminho A.</strong> Resolve o problema real (ninguém sabe que há pedido humano) sem custo adicional, usa infra que o Sr. já tem (email + telefone). Para 90% dos pedidos, um utilizador que escreve "preciso de ajuda humana" está a pedir um contacto — não uma conversa síncrona no webchat. Email ou WhatsApp resolve, provavelmente melhor que o webchat.</p>
+
+        <div class="note gold">
+          <p><strong>Migre para o Caminho B quando:</strong></p>
+          <ul style="margin-bottom:0">
+            <li>Tiver 2 ou 3 clientes PME pagantes a operar com o bot</li>
+            <li>O volume de pedidos de apoio humano ultrapassar ~30 a 50 por mês</li>
+            <li>Algum dos clientes pedir especificamente chat em tempo real no site</li>
+          </ul>
+        </div>
+
+        <p>Fique com isto em mente: <code>answerManually: true</code> continua a proteger o chat da KB no Caminho A e no Caminho B. Essa parte já está resolvida. O que estamos a resolver agora é o canal para o humano entrar.</p>
+
+        <div class="subheading grey">Nota adicional — os dois hooks presentes no bot</div>
+        <p>Os hooks <code>track_iterations</code> e <code>inject_learnings</code> não têm nada a ver com handoff ou KB. Fazem parte do sistema interno <code>agi/improvement</code> do Botpress — são mecanismos de aprendizagem contínua: <code>track_iterations</code> grava dados de execução do LLMz, <code>inject_learnings</code> injecta aprendizagens passadas no prompt. Não interferem em nada na questão do agente humano. Ignore-os nesta decisão.</p>
+
+      </div>
+    </article>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============ ROADMAP ============ -->
+<section>
+  <div class="container">
+    <span class="eyebrow">Plano de execução</span>
+    <h2>Próximos passos concretos — 5 acções, uma por questão</h2>
+    <p class="muted" style="margin-bottom:2rem;max-width:60ch">Sugiro esta ordem de execução. O ponto urgente do PAT (alerta no topo) é prioritário e deve ser feito <strong>antes</strong> de tudo o resto.</p>
+
+    <ol class="roadmap-list">
+      <li>
+        <div class="step-title">Diagnóstico do upload em modo normal</div>
+        <div class="step-meta">Q1 · 5–15 min · zero custo</div>
+        <div class="step-body">Antes de assumir bug do Botpress: hard reload (<code>Ctrl+Shift+R</code>) → limpar cache → testar noutro browser sem extensões. <strong>90% das vezes resolve.</strong> Se não, abrimos ticket no suporte Botpress com os passos reproduzidos.</div>
+      </li>
+      <li>
+        <div class="step-title">Adicionar Choice antes do capture File</div>
+        <div class="step-meta">Q2 · 20–30 min · zero custo</div>
+        <div class="step-body">Nos nós <code>Apoio_Humano_PT</code> e <code>Human_Support_EN</code>, inserir Capture Information → Choice antes do capture File. Mover o capture File para o ramo "Sim". <strong>Em alternativa mínima:</strong> activar <code>handleFailure: true</code> no capture File.</div>
+      </li>
+      <li>
+        <div class="step-title">Adoptar Modelo A para clientes novos</div>
+        <div class="step-meta">Q3 · refactor 4–8h uma vez · 1–2h por cliente novo daí em diante</div>
+        <div class="step-body">Cada cliente cria conta Botpress gratuita própria, o Sr. entra como Manager ou Developer. Antes do 2º cliente, fazer o <strong>refactor de 30–60 placeholders para variáveis Botpress</strong> (<code>{{bot.companyName}}</code>, <code>{{bot.iban}}</code>, etc.).</div>
+      </li>
+      <li>
+        <div class="step-title">Hierarquia de roles + backup regular</div>
+        <div class="step-meta">Q4 · permanente · zero custo</div>
+        <div class="step-body">Qualquer pessoa que aceda ao bot do Sr. entra como Viewer; só promove a Developer/Manager temporariamente quando há tarefa concreta. <strong>Exportar <code>.bpz</code> mensalmente</strong> como backup local — é o seu código-fonte.</div>
+      </li>
+      <li>
+        <div class="step-title">Implementar Caminho A para handoff humano</div>
+        <div class="step-meta">Q5 · 1–2h · zero custo</div>
+        <div class="step-body">Reutilizar o email já capturado em <code>{{workflow.ClientEmail}}</code> (fase RGPD) e enviar notificação para <code>josemmoreira1@gmail.com</code> com transcript + contacto do utilizador. Resolve o problema sem custo, sem fricção adicional para quem pede ajuda. <strong>Caminho B</strong> (HITL Plus 89 USD/mês) entra quando o volume justificar.</div>
+      </li>
+    </ol>
+
+    <div class="note magenta" style="border-left-color:var(--magenta);background:rgba(255,0,110,0.04);margin-top:1.5rem">
+      <p style="margin-bottom:0"><strong style="color:var(--magenta)">Antes de tudo:</strong> revogar e rotar o PAT do Airtable (alerta no topo desta página). 5 minutos. Faça-o antes de partilhar o <code>.bpz</code> com mais alguém.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============ FECHO ============ -->
+<section>
+  <div class="container">
+    <div class="closing-card">
+      <span class="eyebrow">Disponibilidade</span>
+      <p style="font-size:1.05rem;line-height:1.7;margin-top:1rem">Fico ao seu dispor para acompanhar a implementação destes pontos no ritmo que preferir. Se quiser revisitar alguma das respostas, pedir esclarecimento, ou apoio na configuração concreta dos nós no Studio, basta dizer — respondo por aqui ou marcamos uma chamada quando for útil para si.</p>
+      <div class="signature">
+        <div class="signature-name">Um abraço,<br>Eurico</div>
+        <div class="signature-org">[<span>IA</span>]AVANÇADA PT</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div>Documento personalizado · Sr. José Moreira · 26 ABR 2026</div>
+    <div>Auditoria baseada em <code style="background:none;border:none;color:var(--grey);padding:0">Clientes_Chatbot — 2026 Apr 15.bpz</code></div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -12,6 +12,8 @@ KnowlegeBase*.docx
 Cronograma*.pdf
 *.docx
 *.pdf
+# Excepcao: PDF de auditoria gerado por nos para entrega ao cliente (output, nao material pessoal)
+!04-landing/auditoria-bot/output/*.pdf
 
 # Working files da auditoria — contêm CV, foto, screenshots, KB com placeholders sensíveis
 02-prd/auditoria-profunda-v2/working/
