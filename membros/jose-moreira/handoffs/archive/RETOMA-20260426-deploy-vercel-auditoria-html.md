@@ -13,8 +13,10 @@
 from_agent: ux-design-expert (Uma)
 to_agent: devops (Gage)
 created: 2026-04-26
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: 2026-04-26
+consumed_by: devops (Gage)
 project: jose-moreira (membros/jose-moreira/)
 session_type: deploy-vercel-auditoria-html
 branch: main
@@ -22,6 +24,10 @@ cwd_previsto: C:\Users\XPS\Documents\ecosistema-ia-avancada-pt
 handoff_anterior: RETOMA-20260425-revisao-5-respostas-completa-aguarda-4-decisoes-meta.md (consumido nesta sessão 26/04)
 next_critical_action: "Commit + push + deploy Vercel da pasta isolada `04-landing/auditoria-bot/`"
 priority: alta — Eurico quer link partilhável para enviar ao Moreira hoje
+vercel_url_production: https://moreira-auditoria-bot.vercel.app
+vercel_url_deploy: https://moreira-auditoria-akinlen02-euricojsalves-4744s-projects.vercel.app
+vercel_inspector: https://vercel.com/euricojsalves-4744s-projects/moreira-auditoria-bot/DxnHU6cnJaMp91bagmmmsf8Qet4T
+commit_hash: 7bf5af58
 ```
 
 ---
