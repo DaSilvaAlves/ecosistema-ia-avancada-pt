@@ -1,0 +1,230 @@
+{
+  "$schema": "https://design-tokens.org/schemas/dtcg/draft-0.json",
+  "$description": "Atlas Citrícola — Sistema Visual Frusoal InovCitrus · v1.0 · 26/04/2026 · W3C DTCG draft format",
+  "color": {
+    "core": {
+      "citrus": {
+        "$value": "#E8A53C",
+        "$type": "color",
+        "$description": "Laranja citrino maduro · primário · acção"
+      },
+      "citrus-dark": {
+        "$value": "#C68420",
+        "$type": "color",
+        "$description": "Hover · links · destaque editorial"
+      },
+      "citrus-light": {
+        "$value": "#F5C570",
+        "$type": "color",
+        "$description": "Variante clara"
+      },
+      "algarve": {
+        "$value": "#5A8C45",
+        "$type": "color",
+        "$description": "Verde algarvio sóbrio · secundário"
+      },
+      "algarve-dark": {
+        "$value": "#3F6A2E",
+        "$type": "color",
+        "$description": "Verde escuro · texto sobre fundo claro"
+      },
+      "algarve-light": {
+        "$value": "#8AB16C",
+        "$type": "color",
+        "$description": "Variante clara"
+      },
+      "ink": {
+        "$value": "#1A1A1A",
+        "$type": "color",
+        "$description": "Texto principal · preto suave"
+      },
+      "ink-muted": {
+        "$value": "#3A3A3A",
+        "$type": "color",
+        "$description": "Texto corpo"
+      },
+      "ink-subtle": {
+        "$value": "#6B6B6B",
+        "$type": "color",
+        "$description": "Texto secundário · meta info"
+      },
+      "surface": {
+        "$value": "#FFFFFF",
+        "$type": "color",
+        "$description": "Branco puro · cards"
+      },
+      "surface-warm": {
+        "$value": "#FAF8F4",
+        "$type": "color",
+        "$description": "Off-white quente · fundo institucional"
+      },
+      "surface-border": {
+        "$value": "#E5E2DA",
+        "$type": "color",
+        "$description": "Border sóbrio neutro"
+      }
+    },
+    "functional": {
+      "solar": {
+        "$value": "#FFD27A",
+        "$type": "color",
+        "$description": "Luz dourada quente · destaques · selo IGP"
+      },
+      "pomar": {
+        "$value": "#7FB069",
+        "$type": "color",
+        "$description": "Verde folha viva · sucesso · estado activo"
+      },
+      "tinta": {
+        "$value": "#1B2A4E",
+        "$type": "color",
+        "$description": "Navy científico · citações · footnotes"
+      },
+      "critico": {
+        "$value": "#8B2E22",
+        "$type": "color",
+        "$description": "Bordeaux seco · alertas · Scirtothrips"
+      },
+      "pergaminho": {
+        "$value": "#F1EBDB",
+        "$type": "color",
+        "$description": "Bege quente · cards Plate · destaques sóbrios"
+      }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "display": {
+        "$value": ["Fraunces", "Georgia", "Cambria", "Times New Roman", "serif"],
+        "$type": "fontFamily",
+        "$description": "Display · serif moderno com ressonância clássica"
+      },
+      "body": {
+        "$value": ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+        "$type": "fontFamily",
+        "$description": "Body · UI · sans humanista"
+      },
+      "mono": {
+        "$value": ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+        "$type": "fontFamily",
+        "$description": "Mono · code · footnotes · IDs científicos"
+      }
+    },
+    "fontSize": {
+      "display-xl": { "$value": "4rem", "$type": "dimension", "$description": "Hero único · landing apenas" },
+      "display-l": { "$value": "3rem", "$type": "dimension", "$description": "Page H1" },
+      "display-m": { "$value": "2.25rem", "$type": "dimension", "$description": "Section H2" },
+      "pull-quote": { "$value": "1.75rem", "$type": "dimension", "$description": "Citações destacadas" },
+      "body-l": { "$value": "1.125rem", "$type": "dimension", "$description": "Body destaque · intro" },
+      "body-m": { "$value": "1rem", "$type": "dimension", "$description": "Body padrão" },
+      "body-s": { "$value": "0.875rem", "$type": "dimension", "$description": "Body compact · meta" },
+      "caption": { "$value": "0.75rem", "$type": "dimension", "$description": "Captions · labels · alt text" },
+      "mono-tag": { "$value": "0.6875rem", "$type": "dimension", "$description": "Tags · badges UI uppercase" },
+      "mono-footnote": { "$value": "0.75rem", "$type": "dimension", "$description": "Footnotes F-source" },
+      "mono-code": { "$value": "0.875rem", "$type": "dimension", "$description": "Code blocks" }
+    },
+    "fontWeight": {
+      "regular": { "$value": 400, "$type": "fontWeight" },
+      "medium": { "$value": 500, "$type": "fontWeight" },
+      "semibold": { "$value": 600, "$type": "fontWeight" },
+      "bold": { "$value": 700, "$type": "fontWeight" },
+      "extrabold": { "$value": 800, "$type": "fontWeight" }
+    },
+    "lineHeight": {
+      "tight": { "$value": 1.05, "$type": "number" },
+      "snug": { "$value": 1.15, "$type": "number" },
+      "normal": { "$value": 1.4, "$type": "number" },
+      "relaxed": { "$value": 1.6, "$type": "number" },
+      "loose": { "$value": 1.7, "$type": "number" }
+    },
+    "letterSpacing": {
+      "tightest": { "$value": "-0.04em", "$type": "dimension" },
+      "tighter": { "$value": "-0.03em", "$type": "dimension" },
+      "tight": { "$value": "-0.02em", "$type": "dimension" },
+      "normal": { "$value": "0", "$type": "dimension" },
+      "wide": { "$value": "0.02em", "$type": "dimension" },
+      "wider": { "$value": "0.05em", "$type": "dimension" },
+      "widest": { "$value": "0.1em", "$type": "dimension" }
+    }
+  },
+  "spacing": {
+    "1": { "$value": "0.25rem", "$type": "dimension" },
+    "2": { "$value": "0.5rem", "$type": "dimension" },
+    "3": { "$value": "0.75rem", "$type": "dimension" },
+    "4": { "$value": "1rem", "$type": "dimension" },
+    "6": { "$value": "1.5rem", "$type": "dimension" },
+    "8": { "$value": "2rem", "$type": "dimension" },
+    "12": { "$value": "3rem", "$type": "dimension" },
+    "16": { "$value": "4rem", "$type": "dimension" },
+    "20": { "$value": "5rem", "$type": "dimension" }
+  },
+  "borderRadius": {
+    "plate": { "$value": "4px", "$type": "dimension", "$description": "Plate cards · sóbrio" },
+    "card": { "$value": "6px", "$type": "dimension", "$description": "UI cards padrão" },
+    "badge": { "$value": "20px", "$type": "dimension", "$description": "Badges · chips · pills" }
+  },
+  "shadow": {
+    "plate": {
+      "$value": {
+        "color": "rgba(198,132,32,0.15)",
+        "offsetX": "0",
+        "offsetY": "4px",
+        "blur": "12px",
+        "spread": "0"
+      },
+      "$type": "shadow",
+      "$description": "Plate card hover"
+    },
+    "plate-deep": {
+      "$value": {
+        "color": "rgba(26,26,26,0.10)",
+        "offsetX": "0",
+        "offsetY": "8px",
+        "blur": "24px",
+        "spread": "0"
+      },
+      "$type": "shadow",
+      "$description": "Modal · drawer"
+    },
+    "solar-glow": {
+      "$value": {
+        "color": "rgba(255,210,122,0.5)",
+        "offsetX": "0",
+        "offsetY": "0",
+        "blur": "12px",
+        "spread": "0"
+      },
+      "$type": "shadow",
+      "$description": "Selo IGP destaque hover"
+    },
+    "focus": {
+      "$value": {
+        "color": "rgba(232,165,60,0.3)",
+        "offsetX": "0",
+        "offsetY": "0",
+        "blur": "0",
+        "spread": "3px"
+      },
+      "$type": "shadow",
+      "$description": "Focus ring acessibilidade"
+    }
+  },
+  "motion": {
+    "duration": {
+      "fast": { "$value": "150ms", "$type": "duration", "$description": "Hover · focus · micro" },
+      "base": { "$value": "250ms", "$type": "duration", "$description": "Padrão" },
+      "slow": { "$value": "400ms", "$type": "duration", "$description": "Modal · drawer" }
+    },
+    "easing": {
+      "quiet": { "$value": "cubic-bezier(0.25, 0.46, 0.45, 0.94)", "$type": "cubicBezier", "$description": "Sóbrio padrão" },
+      "emphasis": { "$value": "cubic-bezier(0.4, 0, 0.2, 1)", "$type": "cubicBezier", "$description": "Hover destacado" }
+    }
+  },
+  "breakpoints": {
+    "sm": { "$value": "640px", "$type": "dimension" },
+    "md": { "$value": "768px", "$type": "dimension" },
+    "lg": { "$value": "1024px", "$type": "dimension" },
+    "xl": { "$value": "1280px", "$type": "dimension" },
+    "2xl": { "$value": "1536px", "$type": "dimension" }
+  }
+}

@@ -14,6 +14,7 @@ export const Header = ({ locale }: HeaderProps) => {
     { key: 'project', href: `/${locale}/project` },
     { key: 'structure', href: `/${locale}/structure` },
     { key: 'repository', href: `/${locale}/repository` },
+    { key: 'identity', href: `/${locale}/identidade` },
     { key: 'contacts', href: `/${locale}/contacts` }
   ];
 

@@ -33,7 +33,8 @@ export const ui = {
       project: 'Projecto Trienal',
       structure: 'Estrutura',
       repository: 'Repositório',
-      contacts: 'Contactos'
+      contacts: 'Contactos',
+      identity: 'Sistema Visual'
     },
     institutionalNote:
       'Comunicação institucional via Frusoal — frusoal.pt'
@@ -47,7 +48,8 @@ export const ui = {
       project: 'Three-Year Project',
       structure: 'Structure',
       repository: 'Repository',
-      contacts: 'Contacts'
+      contacts: 'Contacts',
+      identity: 'Visual System'
     },
     institutionalNote:
       'Institutional communication via Frusoal — frusoal.pt'
@@ -61,7 +63,8 @@ export const ui = {
       project: 'Proyecto Trienal',
       structure: 'Estructura',
       repository: 'Repositorio',
-      contacts: 'Contactos'
+      contacts: 'Contactos',
+      identity: 'Sistema Visual'
     },
     institutionalNote:
       'Comunicación institucional vía Frusoal — frusoal.pt'
@@ -75,7 +78,8 @@ export const ui = {
       project: 'Projet Triennal',
       structure: 'Structure',
       repository: 'Référentiel',
-      contacts: 'Contacts'
+      contacts: 'Contacts',
+      identity: 'Système Visuel'
     },
     institutionalNote:
       'Communication institutionnelle via Frusoal — frusoal.pt'

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:design-system.expressia.pt)",
+      "Bash(mkdir -p /c/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/04-landing/inovcitrus-site/public/material/kit)",
+      "Bash(cp /c/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/04-landing/inovcitrus-pdfs/output/ficha-tecnica-scirtothrips-pt.pdf /c/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/04-landing/inovcitrus-site/public/material/)",
+      "Bash(cp /c/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/04-landing/inovcitrus-pdfs/output/ficha-tecnica-scirtothrips-en.pdf /c/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/04-landing/inovcitrus-site/public/material/)",
+      "Bash(cp /c/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/04-landing/inovcitrus-pdfs/output/ficha-tecnica-scirtothrips-es.pdf /c/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/04-landing/inovcitrus-site/public/material/)",
+      "Bash(cp /c/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/04-landing/inovcitrus-pdfs/output/ficha-tecnica-scirtothrips-fr.pdf /c/Users/XPS/Documents/ecosistema-ia-avancada-pt/membros/cliente-frusoal/04-landing/inovcitrus-site/public/material/)",
+      "Bash(npm run *)",
+      "Bash(npx next *)",
+      "Bash(curl -s -o /dev/null -w \"ready %{http_code}\\\\n\" http://localhost:3010/pt/abertura)"
+    ]
+  }
+}
