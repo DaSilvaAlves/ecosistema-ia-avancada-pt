@@ -1,24 +1,24 @@
 import type { AberturaContent } from './types';
 
 export const aberturaFR: AberturaContent = {
-  metaTitle: "Pedro, c'est pour toi · Frusoal InovCitrus",
+  metaTitle: "Pedro, c'est pour vous · Frusoal InovCitrus",
   metaDescription:
     "Travail préparé par Eurico Alves pour Pedro Madeira au sujet de Frusoal InovCitrus — sans brief, sans proposition, juste une étude sérieuse. Accès intégral au site, PDF, feuille de route et sources.",
 
   hero: {
     greeting: 'Pedro,',
-    message: "c'est pour toi.",
+    message: "c'est pour vous.",
     context:
-      "Une curiosité de ma part qui a pris corps. Sans brief, sans proposition, sans contrat. Juste un travail sérieux sur Frusoal — pour te le montrer."
+      "Une curiosité de ma part qui a pris corps. Sans brief, sans proposition, sans contrat. Juste un travail sérieux sur Frusoal — pour vous le montrer."
   },
 
   beats: [
     {
       number: 1,
-      heading: "Nous nous connaissons depuis trop longtemps pour que je te donne un CV.",
+      heading: "Nous nous connaissons depuis trop longtemps pour que je vous donne un CV.",
       paragraphs: [
-        "Mais il y a une partie de ce que je fais qui ne t'est probablement pas parvenue. Il y a quelques années, je me suis consacré sérieusement à l'intelligence artificielle — pas à en lire, à l'appliquer. J'ai construit des outils, formé une communauté, et j'aide des entreprises portugaises à introduire l'IA dans leurs processus.",
-        "C'est cette partie qui manque entre ce que tu sais de moi et ce que tu lis ici."
+        "Mais il y a une partie de ce que je fais qui ne vous est probablement pas parvenue. Il y a quelques années, je me suis consacré sérieusement à l'intelligence artificielle — pas à en lire, à l'appliquer. J'ai construit des outils, formé une communauté, et j'aide des entreprises portugaises à introduire l'IA dans leurs processus.",
+        "C'est cette partie qui manque entre ce que vous savez de moi et ce que vous lisez ici."
       ]
     },
     {
@@ -51,24 +51,24 @@ export const aberturaFR: AberturaContent = {
       paragraphs: [
         "J'ai trouvé l'InovCitrus que vous venez de lancer — le projet triennal sur Scirtothrips aurantii, le partenariat avec InnovPlantProtect, la conception scientifique, la vision à 36 mois. J'ai imaginé comment l'IA pouvait s'intégrer à ce processus — sans disruption, en horizon pluriannuel, alignée à la conception scientifique que vous avez déjà.",
         "J'ai commencé à dessiner. Et ce qui était une étude de cas est devenu un matériel d'une certaine consistance : site institutionnel en quatre langues, fiches techniques, feuille de route à 36 mois, kit presse, seize sources documentées.",
-        "Tout est en bas, sur cette page. Regarde quand tu voudras."
+        "Tout est en bas, sur cette page. Regardez quand vous voudrez."
       ]
     },
     {
       number: 6,
-      heading: "Et me voici à te raconter cela.",
+      heading: "Et me voici à vous raconter cela.",
       paragraphs: [
-        "Je dois être honnête avec toi, Pedro : tu ne m'as rien demandé de tout cela. Personne de Frusoal ne m'a contacté. Je n'ai pas de brief, pas de mandat, pas de proposition à présenter.",
-        "C'était ma curiosité. J'ai voulu comprendre jusqu'où nous pouvions aller en étudiant une entreprise comme la tienne. Et quand j'ai vu ce que j'avais en main, j'ai pensé que cela avait du sens de te le montrer."
+        "Je dois être honnête avec vous, Pedro : vous ne m'avez rien demandé de tout cela. Personne de Frusoal ne m'a contacté. Je n'ai pas de brief, pas de mandat, pas de proposition à présenter.",
+        "C'était ma curiosité. J'ai voulu comprendre jusqu'où nous pouvions aller en étudiant une entreprise comme la vôtre. Et quand j'ai vu ce que j'avais en main, j'ai pensé que cela avait du sens de vous le montrer."
       ]
     },
     {
       number: 7,
-      heading: "Ce que je demande est simple — regarde.",
+      heading: "Ce que je demande est simple — regardez.",
       paragraphs: [
-        "Regarde ce qui concerne Frusoal et ce qui ne la concerne pas. Regarde si cela a du sens. Si tu vois du potentiel dans quelque chose, on en parle.",
-        "Si tu n'en vois pas, c'est très bien aussi. Tu m'as rendu service en étant toi, et le travail que j'ai fait ici m'est resté comme un apprentissage sérieux du secteur.",
-        "Pas de pression. Pas de relance. Regarde quand tu voudras."
+        "Regardez ce qui concerne Frusoal et ce qui ne la concerne pas. Regardez si cela a du sens. Si vous voyez du potentiel dans quelque chose, on en parle.",
+        "Si vous n'en voyez pas, c'est très bien aussi. Vous m'avez rendu service en étant vous-même, et le travail que j'ai fait ici m'est resté comme un apprentissage sérieux du secteur.",
+        "Pas de pression. Pas de relance. Regardez quand vous voudrez."
       ]
     }
   ],
@@ -76,16 +76,16 @@ export const aberturaFR: AberturaContent = {
   material: {
     heading: "Tout est ici.",
     intro:
-      "Sept jours de travail · six documents · seize sources · un site en quatre langues. Sans login, sans formulaire, sans \"laisse ton e-mail\". On clique et on voit.",
+      "Sept jours de travail · six documents · seize sources · un site en quatre langues. Sans login, sans formulaire, sans \"laissez votre e-mail\". On clique et on voit.",
     items: [
-      { id: 'site', kind: 'web', title: 'Site institutionnel InovCitrus', subtitle: 'Quatre langues · projet triennal complet', href: '/fr', external: false },
-      { id: 'ficha-pt', kind: 'pdf', title: 'Fiche technique Scirtothrips aurantii', subtitle: 'PDF · 6 pages · Português', href: '/material/ficha-tecnica-scirtothrips-pt.pdf', download: true },
-      { id: 'ficha-en', kind: 'pdf', title: 'Fiche technique Scirtothrips aurantii', subtitle: 'PDF · 6 pages · English', href: '/material/ficha-tecnica-scirtothrips-en.pdf', download: true },
-      { id: 'ficha-es', kind: 'pdf', title: 'Fiche technique Scirtothrips aurantii', subtitle: 'PDF · 7 pages · Español', href: '/material/ficha-tecnica-scirtothrips-es.pdf', download: true },
-      { id: 'ficha-fr', kind: 'pdf', title: 'Fiche technique Scirtothrips aurantii', subtitle: 'PDF · 7 pages · Français', href: '/material/ficha-tecnica-scirtothrips-fr.pdf', download: true },
-      { id: 'roadmap', kind: 'pdf', title: 'Feuille de route à 36 mois', subtitle: 'PDF · A4 paysage · 12 jalons', href: '/material/roadmap-36-meses.pdf', download: true },
-      { id: 'press-release', kind: 'pdf', title: 'Communiqué de presse initial', subtitle: 'PDF · 1-2 pages · modèle éditable Frusoal', href: '/material/press-release-pt.pdf', download: true },
-      { id: 'kit', kind: 'kit', title: 'Kit presse', subtitle: 'Wordmarks · palette · communiqués éditables', href: '/material/kit/README.md', external: true },
+      { id: 'site', kind: 'web', title: 'Site institutionnel InovCitrus', subtitle: 'Quatre langues · projet triennal complet', href: '/fr', external: true },
+      { id: 'ficha-pt', kind: 'pdf', title: 'Fiche technique Scirtothrips aurantii', subtitle: 'PDF · 6 pages · Português', href: '/material/ficha-tecnica-scirtothrips-pt.pdf', external: true },
+      { id: 'ficha-en', kind: 'pdf', title: 'Fiche technique Scirtothrips aurantii', subtitle: 'PDF · 6 pages · English', href: '/material/ficha-tecnica-scirtothrips-en.pdf', external: true },
+      { id: 'ficha-es', kind: 'pdf', title: 'Fiche technique Scirtothrips aurantii', subtitle: 'PDF · 7 pages · Español', href: '/material/ficha-tecnica-scirtothrips-es.pdf', external: true },
+      { id: 'ficha-fr', kind: 'pdf', title: 'Fiche technique Scirtothrips aurantii', subtitle: 'PDF · 7 pages · Français', href: '/material/ficha-tecnica-scirtothrips-fr.pdf', external: true },
+      { id: 'roadmap', kind: 'pdf', title: 'Feuille de route à 36 mois', subtitle: 'PDF · A4 paysage · 12 jalons', href: '/material/roadmap-36-meses.pdf', external: true },
+      { id: 'press-release', kind: 'pdf', title: 'Communiqué de presse initial', subtitle: 'PDF · 1-2 pages · modèle éditable Frusoal', href: '/material/press-release-pt.pdf', external: true },
+      { id: 'kit', kind: 'kit', title: 'Kit presse', subtitle: 'Wordmarks · palette · communiqués éditables', href: '/fr/kit-imprensa', external: true },
       { id: 'sources', kind: 'sources', title: 'Sources documentées', subtitle: 'F01 à F16 · avec URL et date de vérification', href: '#fontes' }
     ]
   },
@@ -115,7 +115,7 @@ export const aberturaFR: AberturaContent = {
   },
 
   contact: {
-    heading: 'Quand tu voudras parler.',
+    heading: 'Quand vous voudrez parler.',
     name: 'Eurico Alves',
     brand: '[IA]AVANÇADA PT',
     phone: null,

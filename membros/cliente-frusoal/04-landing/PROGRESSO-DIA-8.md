@@ -157,4 +157,68 @@ Build incluiu `Linting and checking validity of types ...` sem erros reportados 
 
 ---
 
+## Iteração 2 — correcções pós-feedback Eurico (26/04/2026 fim-de-tarde)
+
+Após primeira validação visual, Eurico apontou 4 bugs. Todos corrigidos.
+
+### Bug 1 — Tratamento informal a Pedro Madeira
+
+Pedro tem 65 anos, sócio-gerente, merece tratamento formal mesmo conhecendo Eurico desde infância.
+
+| Língua | Antes | Depois |
+|--------|-------|--------|
+| PT | "isto é para ti" · "te chegou" · "fizeste-me" · "vê quando quiseres" | "isto é para si" · "lhe chegou" · "fez-me" · "veja quando quiser" |
+| ES | "esto es para ti" · "tú" · "mira" | "esto es para usted" · "le/su" · "mire" |
+| FR | "c'est pour toi" · "tu" · "regarde" | "c'est pour vous" · "vous" · "regardez" |
+| EN | (mantém — "you" é neutro) | (sem alteração) |
+
+Ficheiros modificados: `src/data/abertura/{pt,es,fr}.ts` (hero, beats 1/5/6/7, metaTitle).
+
+### Bug 2 — Cards abriam na mesma aba
+
+Pedro perdia contexto da página `/abertura` ao clicar num card.
+
+Mudei todos os 8 cards de material para `external: true` → `target="_blank" rel="noopener noreferrer"`. Excepção: card "Fontes" continua âncora interna `#fontes`.
+
+### Bug 3 — Card "Kit imprensa" abria README.md em texto puro
+
+Antes: `href: '/material/kit/README.md'` → markdown raw em fundo preto, sem estilo.
+
+Agora: `href: '/{locale}/kit-imprensa'` → página real Next.js com layout visual, badge formato, descrição, botão Descarregar, pré-visualização inline da paleta.
+
+Ficheiro novo: `src/app/[locale]/kit-imprensa/page.tsx` (4 línguas hardcoded no próprio ficheiro · ~200 linhas).
+
+### Bug 4 — PDFs forçavam download em vez de mostrar inline
+
+Removido `download: true` em todos os PDFs. Browser decide — geralmente mostra inline em nova aba.
+
+### Build pós-correcção
+
+```
+npm run build
+✓ Compiled successfully
+36 rotas estáticas (eram 28 · +4 kit-imprensa +4 identidade)
+```
+
+### Smoke test pós-correcção
+
+| URL | HTTP |
+|-----|------|
+| `/{pt,en,es,fr}/abertura` | 200 × 4 |
+| `/{pt,en,es,fr}/kit-imprensa` | 200 × 4 |
+| `/pt/identidade` (criada por Eurico em paralelo) | 200 |
+| `/material/*.pdf` | 200 |
+| `/material/kit/wordmark-inovcitrus.svg` | 200 |
+| `/material/kit/paleta-swatches.png` | 200 |
+
+### Verificação literal do tratamento PT
+
+Curl ao HTML servido confirmou:
+- `<title>Pedro, isto é para si · Frusoal InovCitrus</title>`
+- 0 ocorrências de `contigo`, `pediste`, `tua`, `mostrar-te`, `fizeste-me`
+- 10× `lhe`, 2× `consigo`, 2× `veja`, 6× `quiser` ✓
+
+---
+
 *Change log Dia 8 · 26/04/2026 · Uma (`@ux-design-expert`) · cumpre `mandatory-change-log.md` e `frusoal-source-of-truth.md`*
+*Iteração 2 (fim-de-tarde) · correcções de tratamento formal + bugs UX após feedback Eurico*

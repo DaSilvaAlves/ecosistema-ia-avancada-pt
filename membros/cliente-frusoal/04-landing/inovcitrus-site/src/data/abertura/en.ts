@@ -84,7 +84,7 @@ export const aberturaEN: AberturaContent = {
         title: 'InovCitrus institutional site',
         subtitle: 'Four languages · full three-year project',
         href: '/en',
-        external: false
+        external: true
       },
       {
         id: 'ficha-pt',
@@ -92,7 +92,7 @@ export const aberturaEN: AberturaContent = {
         title: 'Technical sheet Scirtothrips aurantii',
         subtitle: 'PDF · 6 pages · Português',
         href: '/material/ficha-tecnica-scirtothrips-pt.pdf',
-        download: true
+        external: true
       },
       {
         id: 'ficha-en',
@@ -100,7 +100,7 @@ export const aberturaEN: AberturaContent = {
         title: 'Technical sheet Scirtothrips aurantii',
         subtitle: 'PDF · 6 pages · English',
         href: '/material/ficha-tecnica-scirtothrips-en.pdf',
-        download: true
+        external: true
       },
       {
         id: 'ficha-es',
@@ -108,7 +108,7 @@ export const aberturaEN: AberturaContent = {
         title: 'Technical sheet Scirtothrips aurantii',
         subtitle: 'PDF · 7 pages · Español',
         href: '/material/ficha-tecnica-scirtothrips-es.pdf',
-        download: true
+        external: true
       },
       {
         id: 'ficha-fr',
@@ -116,7 +116,7 @@ export const aberturaEN: AberturaContent = {
         title: 'Technical sheet Scirtothrips aurantii',
         subtitle: 'PDF · 7 pages · Français',
         href: '/material/ficha-tecnica-scirtothrips-fr.pdf',
-        download: true
+        external: true
       },
       {
         id: 'roadmap',
@@ -124,7 +124,7 @@ export const aberturaEN: AberturaContent = {
         title: '36-month roadmap',
         subtitle: 'PDF · A4 landscape · 12 milestones',
         href: '/material/roadmap-36-meses.pdf',
-        download: true
+        external: true
       },
       {
         id: 'press-release',
@@ -132,14 +132,14 @@ export const aberturaEN: AberturaContent = {
         title: 'Initial press release',
         subtitle: 'PDF · 1-2 pages · editable Frusoal template',
         href: '/material/press-release-pt.pdf',
-        download: true
+        external: true
       },
       {
         id: 'kit',
         kind: 'kit',
         title: 'Press kit',
         subtitle: 'Wordmarks · palette · editable press releases',
-        href: '/material/kit/README.md',
+        href: '/en/kit-imprensa',
         external: true
       },
       {
