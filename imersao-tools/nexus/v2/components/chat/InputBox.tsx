@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, KeyboardEvent, ReactElement } from 'react';
 import { Mic, Paperclip, Send } from 'lucide-react';
 
 /**
@@ -25,7 +25,7 @@ export function InputBox({
   onSend,
   disabled = false,
   placeholder = 'Escreve qualquer coisa — uma tarefa, despesa, lembrete... 3 acções numa só frase.',
-}: InputBoxProps): React.ReactElement {
+}: InputBoxProps): ReactElement {
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 

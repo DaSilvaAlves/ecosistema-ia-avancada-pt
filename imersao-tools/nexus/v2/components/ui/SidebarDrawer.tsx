@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactElement, ReactNode, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 /**
@@ -20,7 +20,7 @@ export function SidebarDrawer({
   open,
   onClose,
   children,
-}: SidebarDrawerProps): React.ReactElement | null {
+}: SidebarDrawerProps): ReactElement | null {
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent): void {

@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactElement } from 'react';
+
 /**
  * Nexus v2 — MessageList (Story 0.4)
  *
@@ -27,7 +29,7 @@ const WELCOME_MESSAGE: ChatMessageView = {
   pinned: true,
 };
 
-export function MessageList({ messages = [] }: MessageListProps): React.ReactElement {
+export function MessageList({ messages = [] }: MessageListProps): ReactElement {
   const display: ChatMessageView[] = messages.length > 0 ? messages : [WELCOME_MESSAGE];
 
   return (
