@@ -4,6 +4,9 @@ pnpm-lock.yaml
 bun.lock
 deno.lock
 
+# Vercel
+.vercel/
+
 # Logs
 logs/
 *.log

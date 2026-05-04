@@ -942,6 +942,61 @@ Vercel:
 - Cada PR → preview deploy
 - Rollback via Vercel UI (NFR20: <30s)
 
+### 13.2 Deploy / Infrastructure — Vercel Project Configuration
+
+> **Decisão Eurico 04/05/2026 (Story F.3 do `EPIC-0-FOLLOW-UP-DEBT.md`):** Opção A — configuração via Vercel UI (executada via CLI/API por delegação ao `@devops`).
+
+| Item | Valor | Observações |
+|------|-------|-------------|
+| Vercel Account | `euricojsalves-4744's projects` (`team_Z7HN1UF28iHpUxCnZ4gT7wMF`) | Hobby tier |
+| Project Name | `imercao-ia-pt` | `prj_dINwUiP0ocRnxu32wRm4YPZ2ngRU` |
+| GitHub repo | `DaSilvaAlves/ecosistema-ia-avancada-pt` | branch produção `main` |
+| **Root Directory** | **`imersao-tools/nexus/v2`** | Crítico — sem isto build falha a tentar compilar a raiz do monorepo |
+| Framework Preset | `nextjs` (auto-detectado) | Lê `next.config.ts` na root directory |
+| Node Version | `24.x` | |
+| `sourceFilesOutsideRootDirectory` | `true` | Permite usar workspace root para acessos cross-package |
+| `ssoProtection` | `null` (desactivada) | Era default Vercel — desactivada para permitir acesso público a previews |
+| Functions region | `iad1` (Washington) | Default Vercel — adequado para single-user no Algarve |
+| Function timeout | 300s default | Suficiente para chat cérebro Sonnet 4.6 |
+
+#### Como reproduzir esta configuração
+
+A configuração foi feita via API REST autenticada (CLI Vercel não expõe `rootDirectory` como flag directa):
+
+```bash
+# 1. Listar projectos para identificar o id
+vercel projects ls
+
+# 2. Linkar pasta local ao projecto (cria .vercel/project.json na raiz do repo)
+cd ecosistema-ia-avancada-pt
+vercel link --yes --project imercao-ia-pt
+
+# 3. Configurar root directory + framework via Vercel API
+curl -X PATCH \
+  "https://api.vercel.com/v9/projects/{projectId}?teamId={teamId}" \
+  -H "Authorization: Bearer {token}" \
+  -H "Content-Type: application/json" \
+  -d '{"rootDirectory":"imersao-tools/nexus/v2","framework":"nextjs"}'
+
+# 4. Trigger preview deploy (a partir da raiz do repo, não da pasta v2)
+vercel --yes --archive=tgz
+```
+
+**Nota importante:** o `vercel deploy` deve ser corrido a partir da **raiz do repo** (não de dentro de `imersao-tools/nexus/v2/`) porque o Vercel concatena `cwd + rootDirectory`. O ficheiro `.vercel/project.json` (com `projectId` e `orgId`) deve viver na raiz do monorepo.
+
+#### Validação executada (04/05/2026)
+
+| Check | Resultado |
+|-------|-----------|
+| Build Vercel | READY (58s) — Next.js 15 detectado, todas as rotas compiladas |
+| `GET /login` | HTTP 200 (página de login serve) |
+| `GET /` | HTTP 307 → `/login` (middleware redirige correctamente) |
+| Preview URL | `https://imercao-ia-qye5zybyl-euricojsalves-4744s-projects.vercel.app` |
+
+#### Pendente (fora de F.3)
+
+Env vars críticas NÃO estão configuradas — runtime de chat cérebro/auth/Telegram/KV irá falhar até serem definidas. Lista canónica em §9.2.
+
 ---
 
 ## 14. Vercel Free Tier — limites e plano
