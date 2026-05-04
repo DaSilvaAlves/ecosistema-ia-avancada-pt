@@ -1,5 +1,11 @@
 # RETOMA — Nexus v2 — Epic 0 fixes aplicados (CSP + AC3 waiver), aguarda @devops para commit + push + PR
 
+> **CONSUMED:** true
+> **CONSUMED_AT:** 2026-05-04T19:30:00+01:00
+> **CONSUMED_BY:** @devops (Gage) — commit + push + PR #2 executados
+> **STATUS:** consumed
+> **SUPERSEDED_BY:** `imersao-tools/nexus/docs/handoffs/RETOMA-20260504-epic-0-pushed-pr-aberta.md`
+
 > ATENÇÃO — ESTE HANDOFF SEGUE A REGRA OBRIGATÓRIA `handoff-location.md`.
 > ANTES DE CRIAR OU MOVER QUALQUER HANDOFF, CONSULTAR `.claude/rules/handoff-location.md`.
 > HANDOFFS SÓ VIVEM DENTRO DA PASTA DO PROJECTO A QUE SE REFEREM.
