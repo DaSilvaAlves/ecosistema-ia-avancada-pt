@@ -1,0 +1,39 @@
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
+
+/**
+ * Nexus v2 — Vitest config (Story 0.9)
+ *
+ * Environment jsdom para testes de componentes.
+ * `fake-indexeddb/auto` carregado em `tests/setup.ts`.
+ * Coverage gate 60% APENAS em `lib/agent/`, `lib/db/`, `lib/shared/` (architecture §5.4).
+ */
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./tests/setup.ts'],
+    include: ['tests/unit/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['tests/e2e/**', 'node_modules/**', '.next/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['lib/agent/**', 'lib/db/**', 'lib/shared/**'],
+      exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+      thresholds: {
+        lines: 60,
+        functions: 60,
+        branches: 60,
+        statements: 60,
+      },
+    },
+  },
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, '.'),
+    },
+  },
+});

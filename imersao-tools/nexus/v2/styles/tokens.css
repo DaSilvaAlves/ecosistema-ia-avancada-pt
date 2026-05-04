@@ -1,0 +1,63 @@
+/**
+ * Nexus v2 — Design tokens [IA]AVANÇADA PT
+ *
+ * CSS custom properties — fonte canónica `front-end-spec-v2.md §5.1`.
+ * Estas variáveis NUNCA devem ser sobrepostas por hex literais nos componentes.
+ */
+:root {
+  /* Backgrounds */
+  --bg: #04040A;
+  --bg-elevated: rgba(255, 255, 255, 0.025);
+  --bg-elevated-2: rgba(255, 255, 255, 0.04);
+  --bg-overlay: rgba(4, 4, 10, 0.85);
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  /* Text */
+  --text: #F0F4FF;
+  --text-secondary: #8892A4;
+  --text-disabled: #4A5568;
+
+  /* Acentos da paleta */
+  --color-background: #04040A;
+  --color-white: #F0F4FF;
+  --color-cyan: #00F5FF;
+  --color-gold: #FFB800;
+  --color-purple: #9D00FF;
+  --color-magenta: #FF006E;
+  --color-lime: #39FF14;
+
+  --cyan: #00F5FF;
+  --cyan-glow: rgba(0, 245, 255, 0.4);
+  --gold: #FFB800;
+  --purple: #9D00FF;
+  --magenta: #FF006E;
+  --lime: #39FF14;
+
+  /* Tipografia */
+  --font-ui: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Espaçamento (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+
+  /* Glassmorphism */
+  --blur-sm: blur(8px);
+  --blur-md: blur(12px);
+  --blur-lg: blur(20px);
+}
