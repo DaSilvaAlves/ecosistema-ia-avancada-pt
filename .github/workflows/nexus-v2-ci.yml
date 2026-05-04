@@ -1,0 +1,97 @@
+name: Nexus v2 CI
+
+# Story 0.10 — CI gate para Nexus v2.
+# Corre apenas quando há alterações em imersao-tools/nexus/v2/**.
+# 3 jobs paralelos: lint-typecheck, unit-tests, e2e.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'imersao-tools/nexus/v2/**'
+      - '.github/workflows/nexus-v2-ci.yml'
+  pull_request:
+    paths:
+      - 'imersao-tools/nexus/v2/**'
+      - '.github/workflows/nexus-v2-ci.yml'
+
+jobs:
+  lint-typecheck:
+    name: Lint + TypeScript
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: imersao-tools/nexus/v2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: imersao-tools/nexus/v2/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+
+  unit-tests:
+    name: Vitest unit + coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: imersao-tools/nexus/v2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: imersao-tools/nexus/v2/package-lock.json
+      - run: npm ci
+      - run: npm run test:coverage
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nexus-v2-coverage
+          path: imersao-tools/nexus/v2/coverage/
+          retention-days: 7
+
+  e2e:
+    name: Playwright E2E + bundle key check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: imersao-tools/nexus/v2
+    env:
+      # Test env — chaves fake (não vão a prod)
+      ANTHROPIC_API_KEY: sk-ant-test-fake-not-real
+      NEXUS_PASSWORD_HASH: '$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+      SESSION_SECRET: '0000000000000000000000000000000000000000000000000000000000000000'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: imersao-tools/nexus/v2/package-lock.json
+      - run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Build
+        run: npm run build
+      - name: Verify Anthropic key NOT in client bundle (NFR5 / PRD Epic 0 AC4)
+        run: |
+          if grep -r "sk-ant-" .next/static/ 2>/dev/null; then
+            echo "::error::API key Anthropic vazou para o bundle client"
+            exit 1
+          fi
+          echo "OK — API key não encontrada no bundle client"
+      - name: Run E2E tests
+        run: npm run test:e2e
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nexus-v2-playwright-report
+          path: imersao-tools/nexus/v2/playwright-report/
+          retention-days: 7
