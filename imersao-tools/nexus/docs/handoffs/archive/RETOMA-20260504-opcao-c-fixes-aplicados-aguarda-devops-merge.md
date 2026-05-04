@@ -1,5 +1,7 @@
 # RETOMA — Nexus v2 — Decisão Eurico Opção C híbrido aplicada, fixes prontos, aguarda @devops para push + merge PR #2
 
+> **CONSUMED:** 04/05/2026 17:50 UTC por Gage (`@devops`) — commit `43cc3434` push + merge squash `c362b171` em main. Branch `feat/nexus-v2-epic-0` apagada. PR #2 fechada. Stories 0.1–0.10 movidas para `completed/`. Ver handoff `RETOMA-20260504-epic-0-merged-pronto-epic-1.md`.
+
 > ATENÇÃO — ESTE HANDOFF SEGUE A REGRA OBRIGATÓRIA `handoff-location.md`.
 > ANTES DE CRIAR OU MOVER QUALQUER HANDOFF, CONSULTAR `.claude/rules/handoff-location.md`.
 > HANDOFFS SÓ VIVEM DENTRO DA PASTA DO PROJECTO A QUE SE REFEREM.
