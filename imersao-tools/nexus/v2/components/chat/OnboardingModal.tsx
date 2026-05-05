@@ -174,16 +174,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps): React.Rea
           />
         )}
 
-        {step === 3 && (
-          <Step3
-            onConnect={() => {
-              // Stub — Epic 6 redirige para OAuth real
-              window.location.href = '/api/google/oauth/google';
-            }}
-            onSkip={next}
-            busy={busy}
-          />
-        )}
+        {step === 3 && <Step3 onSkip={next} busy={busy} />}
 
         {step === 4 && (
           <Step4
@@ -312,10 +303,11 @@ function Step2({
 }
 
 function Step3({
-  onConnect,
   onSkip,
   busy,
-}: StepProps & { onConnect: () => void; onSkip: () => void }): React.ReactElement {
+}: StepProps & { onSkip: () => void }): React.ReactElement {
+  // Story 0.11 (F.4): Google OAuth real só chega no Epic 6. Botão "Ligar Google"
+  // fica desactivado com tooltip; "Saltar" continua funcional.
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
@@ -327,7 +319,11 @@ function Step3({
       <p style={{ margin: '0 0 20px 0', color: '#8892A4', fontSize: '0.9rem', lineHeight: 1.6 }}>
         Sincronização opcional — podes ligar mais tarde nas Definições.
       </p>
-      <PrimaryButton onClick={onConnect} disabled={busy}>
+      <PrimaryButton
+        onClick={() => {}}
+        disabled
+        title="Disponível em breve — integração Google Calendar/Gmail a chegar."
+      >
         Ligar Google
       </PrimaryButton>
       <GhostButton onClick={onSkip} disabled={busy}>
@@ -400,10 +396,12 @@ function Step4({
 function PrimaryButton({
   onClick,
   disabled,
+  title,
   children,
 }: {
   onClick: () => void;
   disabled: boolean;
+  title?: string;
   children: React.ReactNode;
 }): React.ReactElement {
   return (
@@ -411,6 +409,8 @@ function PrimaryButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
+      title={title}
+      aria-disabled={disabled || undefined}
       style={{
         display: 'block',
         width: '100%',
