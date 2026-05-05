@@ -124,11 +124,40 @@ Na sessão 04/05/2026 o job `Vercel Preview` falhou em CI porque o Vercel projec
 
 ---
 
+### Story F.4 — OnboardingModal Google link → 404 — DONE
+
+**Tipo:** Tech Debt (Bug Fix)
+**Estado:** **Done — 05/05/2026 (Opção B aplicada)** via Story `0.11.story.md` (`imersao-tools/nexus/docs/stories/active/0.11.story.md`). Implementado por `@dev` Dex em branch `fix/nexus-v2-story-0.11-onboarding-google-disable`. Quality gates 4/4 PASS local. Aguarda `@qa *qa-gate 0.11` + `@devops *push`.
+
+**User Story:**
+Como Eurico, quero que o passo Google do OnboardingModal aponte para uma rota válida (ou seja claramente skippable sem 404) para não cair numa página `404 This page could not be found` durante o primeiro login.
+
+**Background:**
+Após login bem-sucedido em produção (`https://imersao.ia.expressia.pt`, sessão 04/05/2026), ao clicar no passo Google do OnboardingModal, o browser navegou para `/api/google/oauth/google` que devolveu **404** porque a pasta `app/api/google/` não existe (será implementada em Epic 1).
+
+**Acceptance Criteria:**
+
+1. Identificar onde o OnboardingModal define o link Google (`app/(app)/components/OnboardingModal.tsx` ou similar) e a rota esperada.
+2. **Decisão entre Opção A e B:**
+   - **Opção A — Stub temporário:** criar `app/api/google/oauth/start/route.ts` que redirige para `/?onboarding-google=skipped` com mensagem "Google OAuth disponível em Epic 1".
+   - **Opção B — Disable temporário do passo:** marcar o passo Google como `disabled` no OnboardingModal com tooltip "Disponível em Epic 1". Botão Skip continua activo.
+3. Garantir que clicar nesse passo não leva a 404. Smoke test em produção.
+4. Documentar a opção escolhida em `EPIC-0-FOLLOW-UP-DEBT.md` (este documento).
+5. CI passa após fix.
+
+**Referências:**
+- Sessão 04/05/2026 — primeiro login produção, Eurico reportou 404 em `/api/google/oauth/google`
+- Story 0.7 (OnboardingModal) — gate PASS com note "Google/Telegram/Push são saltáveis"
+- `imersao-tools/nexus/v2/app/(app)/components/OnboardingModal.tsx` (a confirmar path)
+
+---
+
 ## Prioridade sugerida
 
 | Story | Prioridade | Estado | Estimativa |
 |-------|-----------|--------|------------|
 | F.3 | ALTA | **Done — 04/05/2026** (config Vercel CLI/API + preview verde) | Real: ~30min |
+| F.4 | ALTA | **Done — 05/05/2026** (Story 0.11 — Opção B disable temporário, aguarda @qa + @devops) | Real: ~30min |
 | F.2 | MÉDIA | Pending — bloqueador: confiança no fluxo auth E2E em CI | 1-2h |
 | F.1 | MÉDIA | Pending — bloqueador: restaurar quality gate arquitectural de 60% | 3-5h (depende de quanto código `lib/shared/*` precisa de testes) |
 
@@ -136,7 +165,7 @@ Na sessão 04/05/2026 o job `Vercel Preview` falhou em CI porque o Vercel projec
 
 ## Quem cria estas stories
 
-`@sm` (River) deve transformar F.1, F.2, F.3 em stories formais sob naming convention `1.X.story.md` quando Epic 1 arrancar (ou criar `0.11.story.md`, `0.12.story.md`, `0.13.story.md` se Eurico preferir manter Epic 0 como container).
+`@sm` (River) deve transformar F.1, F.2, F.4 em stories formais sob naming convention `1.X.story.md` quando Epic 1 arrancar (ou criar `0.11.story.md`, `0.12.story.md`, `0.14.story.md` se Eurico preferir manter Epic 0 como container). F.3 já fechada.
 
 ---
 
