@@ -80,4 +80,49 @@ describe('chat-messages repo', () => {
     const updated = await db.chat_messages.get(msg.id);
     expect(updated?.agentRunId).toBe(runId);
   });
+
+  it('linkMessageToRun lança erro se messageId não existe', async () => {
+    await expect(
+      linkMessageToRun('00000000-0000-0000-0000-000000000000', crypto.randomUUID())
+    ).rejects.toThrow(/não encontrado/i);
+  });
+
+  it('listConversation rejeita limit <= 0', async () => {
+    await expect(listConversation('main', { limit: 0 })).rejects.toThrow(/limit inválido/i);
+    await expect(listConversation('main', { limit: -5 })).rejects.toThrow(/limit inválido/i);
+  });
+
+  it('listConversation rejeita limit não finito', async () => {
+    await expect(listConversation('main', { limit: NaN })).rejects.toThrow(/limit inválido/i);
+    await expect(listConversation('main', { limit: Infinity })).rejects.toThrow(/limit inválido/i);
+  });
+
+  it('listConversation rejeita sinceMs negativo ou não finito', async () => {
+    await expect(listConversation('main', { sinceMs: -1 })).rejects.toThrow(/sinceMs inválido/i);
+    await expect(listConversation('main', { sinceMs: NaN })).rejects.toThrow(/sinceMs inválido/i);
+  });
+
+  it('listConversation aceita sinceMs=0 (janela colapsa para "agora")', async () => {
+    // sinceMs=0 significa "desde 0ms atrás" → janela `timestamp >= Date.now()`,
+    // por isso mensagens do passado não aparecem. Aceitar o input sem lançar é
+    // o comportamento esperado; o resultado vazio é uma consequência matemática.
+    await addChatMessage(makeMessage({ timestamp: Date.now() - 1000, content: 'msg-1' }));
+    const result = await listConversation('main', { sinceMs: 0 });
+    expect(result).toEqual([]);
+  });
+
+  it('listConversation aplica filtro sinceMs correctamente', async () => {
+    const now = Date.now();
+    await addChatMessage(makeMessage({ timestamp: now - 60_000, content: 'antiga' }));
+    await addChatMessage(makeMessage({ timestamp: now - 100, content: 'recente' }));
+
+    const recent = await listConversation('main', { sinceMs: 5_000 });
+    expect(recent).toHaveLength(1);
+    expect(recent[0].content).toBe('recente');
+  });
+
+  it('getRecentMessages rejeita limit <= 0', async () => {
+    await expect(getRecentMessages('main', 0)).rejects.toThrow(/limit inválido/i);
+    await expect(getRecentMessages('main', -3)).rejects.toThrow(/limit inválido/i);
+  });
 });

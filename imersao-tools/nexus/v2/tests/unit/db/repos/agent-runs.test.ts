@@ -131,6 +131,32 @@ describe('agent-runs repo', () => {
     ).rejects.toThrow(/não encontrado/i);
   });
 
+  it('appendToolCall preserva todas as tool calls em chamadas concorrentes (transacção)', async () => {
+    const run = makeRun({ toolCalls: [] });
+    await createAgentRun(run);
+
+    const tc1 = makeToolCall({ toolName: 'concurrent-1' });
+    const tc2 = makeToolCall({ toolName: 'concurrent-2' });
+    const tc3 = makeToolCall({ toolName: 'concurrent-3' });
+
+    await Promise.all([
+      appendToolCall(run.id, tc1),
+      appendToolCall(run.id, tc2),
+      appendToolCall(run.id, tc3),
+    ]);
+
+    const updated = await getAgentRun(run.id);
+    expect(updated?.toolCalls).toHaveLength(3);
+    const names = updated?.toolCalls.map((t) => t.toolName).sort();
+    expect(names).toEqual(['concurrent-1', 'concurrent-2', 'concurrent-3']);
+  });
+
+  it('updateAgentRunStatus lança erro se id não existe', async () => {
+    await expect(
+      updateAgentRunStatus('00000000-0000-0000-0000-000000000000', 'failed')
+    ).rejects.toThrow(/não encontrado/i);
+  });
+
   it('markRunReverted muda status para reverted', async () => {
     const run = makeRun({ status: 'success' });
     await createAgentRun(run);
@@ -138,5 +164,11 @@ describe('agent-runs repo', () => {
 
     const updated = await getAgentRun(run.id);
     expect(updated?.status).toBe('reverted');
+  });
+
+  it('markRunReverted lança erro se id não existe', async () => {
+    await expect(markRunReverted('00000000-0000-0000-0000-000000000000')).rejects.toThrow(
+      /não encontrado/i
+    );
   });
 });

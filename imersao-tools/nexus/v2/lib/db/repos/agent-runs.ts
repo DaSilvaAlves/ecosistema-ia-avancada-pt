@@ -48,17 +48,30 @@ export async function updateAgentRunStatus(
 ): Promise<void> {
   const patch: Partial<AgentRun> = { status };
   if (errorMessage !== undefined) patch.errorMessage = errorMessage;
-  await db.agent_runs.update(id, patch);
+  const updated = await db.agent_runs.update(id, patch);
+  if (updated === 0) {
+    throw new Error(`AgentRun ${id} não encontrado — não foi possível actualizar status`);
+  }
 }
 
+/**
+ * Anexa um `ToolCall` ao array `toolCalls` do run. Wrap em transacção Dexie
+ * para evitar TOCTOU: dois `appendToolCall` concorrentes lendo o mesmo array
+ * antes de qualquer escrita perderiam tool calls (last write wins). Dentro de
+ * `db.transaction('rw', ...)` o Dexie serializa reads/writes na mesma tabela,
+ * garantindo que o `[...run.toolCalls, toolCall]` é construído sobre o estado
+ * mais recente do registo.
+ */
 export async function appendToolCall(runId: string, toolCall: ToolCall): Promise<void> {
   ToolCallSchema.parse(toolCall);
-  const run = await db.agent_runs.get(runId);
-  if (!run) {
-    throw new Error(`AgentRun ${runId} não encontrado`);
-  }
-  await db.agent_runs.update(runId, {
-    toolCalls: [...run.toolCalls, toolCall],
+  await db.transaction('rw', db.agent_runs, async () => {
+    const run = await db.agent_runs.get(runId);
+    if (!run) {
+      throw new Error(`AgentRun ${runId} não encontrado`);
+    }
+    await db.agent_runs.update(runId, {
+      toolCalls: [...run.toolCalls, toolCall],
+    });
   });
 }
 

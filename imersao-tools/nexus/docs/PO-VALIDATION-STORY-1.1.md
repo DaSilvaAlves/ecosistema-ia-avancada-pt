@@ -133,7 +133,7 @@ Nenhum.
 
 1. **`run-builder.ts` rotulado como "açúcar sintáctico opcional"** — Dev Notes diz "opcional para Stories 1.5-1.7". Mas AC6 obriga a entrega. Recomendação: `@dev` (ou `@sm` em revisão futura) clarificar Dev Notes para "preferred path para Stories 1.5-1.7" — deixa de soar opcional e mantém AC6. Não é blocker desta gate; pode ser ajustado em commit do @dev.
 
-2. **Hook reactividade não tem teste explícito de re-render** — AC8 e AC9 testam roundtrip e ordering mas não validam que `useLiveQuery` re-renderiza ao inserir novo registo. Recomendação ao `@dev`: incluir 1 caso por hook que usa `renderHook` + insert manual + assert que retorno actualiza. Não é blocker; é polimento de coverage.
+2. **Hook reactividade não tem teste explícito de re-render** — AC8 e AC9 testam roundtrip e ordering mas não validam que `useLiveQuery` re-renderiza ao inserir novo registo. Recomendação ao `@dev`: incluir 1 caso por hook que usa `renderHook` + insert manual + assert que retorno actualiza. Não é blocker; é polimento de coverage. **[ENDEREÇADO durante `*develop` — ver `tests/unit/hooks/useAgentRuns.test.tsx` (2 casos `renderHook` cobrem re-render reactivo); confirmado em Dev Agent Record §3.]**
 
 ### Nice-to-Have Improvements
 

@@ -33,6 +33,16 @@ export async function listConversation(
   opts: ListConversationOptions = {}
 ): Promise<ChatMessage[]> {
   const { limit = DEFAULT_LIMIT, sinceMs } = opts;
+
+  if (!Number.isFinite(limit) || limit <= 0) {
+    throw new Error(`listConversation: limit inválido (${limit}) — deve ser inteiro positivo`);
+  }
+  if (sinceMs !== undefined && (!Number.isFinite(sinceMs) || sinceMs < 0)) {
+    throw new Error(
+      `listConversation: sinceMs inválido (${sinceMs}) — deve ser número não-negativo`
+    );
+  }
+
   const sinceTs = sinceMs !== undefined ? Date.now() - sinceMs : 0;
 
   const baseCollection = db.chat_messages.where('conversationId').equals(conversationId);
@@ -47,6 +57,10 @@ export async function getRecentMessages(
   conversationId: string,
   limit: number
 ): Promise<ChatMessage[]> {
+  if (!Number.isFinite(limit) || limit <= 0) {
+    throw new Error(`getRecentMessages: limit inválido (${limit}) — deve ser inteiro positivo`);
+  }
+
   const results = await db.chat_messages.where('conversationId').equals(conversationId).toArray();
 
   return results
@@ -56,5 +70,10 @@ export async function getRecentMessages(
 }
 
 export async function linkMessageToRun(messageId: string, agentRunId: string): Promise<void> {
-  await db.chat_messages.update(messageId, { agentRunId });
+  const updated = await db.chat_messages.update(messageId, { agentRunId });
+  if (updated === 0) {
+    throw new Error(
+      `ChatMessage ${messageId} não encontrado — não foi possível ligar ao agentRun ${agentRunId}`
+    );
+  }
 }
