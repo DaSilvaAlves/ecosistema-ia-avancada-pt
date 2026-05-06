@@ -73,13 +73,18 @@ export interface ExecutorOpts {
  * com `resultSchema`, `domain`, `requiresPreview`, `reversible`, `execute`,
  * `reverse` mas PRESERVA os 3 campos base (`name`, `description`, `argsSchema`).
  *
+ * `argsSchema` é `z.ZodObject<z.ZodRawShape>` (apertado na Iter 3 — CodeRabbit
+ * Nitpick A) e não `z.ZodType<unknown>`: tools só fazem sentido com object
+ * schemas (Anthropic SDK requer `input_schema.type === 'object'`). Apertar
+ * o tipo evita uso incorrecto pelo registry da Story 1.3 e pela API SDK.
+ *
  * O `AnthropicExecutor` converte `argsSchema` (Zod) → `input_schema` (JSON Schema)
  * via `zod-to-json-schema` internamente antes de chamar o SDK.
  */
 export interface ToolDefinition {
   name: string;
   description: string;
-  argsSchema: z.ZodType<unknown>;
+  argsSchema: z.ZodObject<z.ZodRawShape>;
 }
 
 /**

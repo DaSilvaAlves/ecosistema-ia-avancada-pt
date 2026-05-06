@@ -35,7 +35,7 @@
     "@dnd-kit/sortable": "^8.0.0",
     "date-fns": "^4.1.0",
     "rrule": "^2.8.0",
-    "zod": "^3.23.0",
+    "zod": "^3.25.28",
     "zod-to-json-schema": "^3.23.0",
     "googleapis": "^144.0.0",
     "node-telegram-bot-api": "^0.66.0",

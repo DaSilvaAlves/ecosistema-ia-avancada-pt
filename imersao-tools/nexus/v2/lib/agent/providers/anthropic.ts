@@ -39,6 +39,45 @@ const DEFAULT_EXECUTOR_MAX_TOKENS = 4096;
 export { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL };
 
 /**
+ * Erro sentinela que sinaliza ao outer catch do `execute()` que o evento
+ * `error` já foi emitido pelo handler interno (e.g., parse de
+ * `input_json_delta` falhou). Evita double-emission.
+ */
+class StreamErrorAlreadyEmitted extends Error {
+  readonly inner: unknown;
+  constructor(inner: unknown) {
+    super(inner instanceof Error ? inner.message : String(inner));
+    this.name = 'StreamErrorAlreadyEmitted';
+    this.inner = inner;
+  }
+}
+
+/**
+ * Indica se estamos a correr em ambiente de testes (Vitest jsdom).
+ * Usado para gatear `dangerouslyAllowBrowser: true` apenas em testes.
+ *
+ * Em produção (Edge/Node runtime) a flag MUST ficar `false` para impedir
+ * que a API key vaze caso o bundle alguma vez corra em contexto browser.
+ * Em tests, o SDK detecta `window` (jsdom) e bloqueia — esta flag é o
+ * workaround documentado pela Anthropic. MSW intercepta todas as chamadas,
+ * portanto a key nunca sai do processo de teste.
+ */
+function isTestEnv(): boolean {
+  return process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+}
+
+/**
+ * Constrói as opções do cliente Anthropic, gateando `dangerouslyAllowBrowser`
+ * apenas para o ambiente de testes — Major 2 da review CodeRabbit Iter 3.
+ */
+function buildClientOptions(apiKey: string): ConstructorParameters<typeof Anthropic>[0] {
+  return {
+    apiKey,
+    ...(isTestEnv() ? { dangerouslyAllowBrowser: true } : {}),
+  };
+}
+
+/**
  * Classifier baseado em Claude Haiku.
  *
  * `classify()` chama `client.messages.create()` (não-streaming) com system
@@ -53,11 +92,7 @@ export class AnthropicClassifier implements ClassifierProvider {
   private readonly client: Anthropic;
 
   constructor(apiKey: string) {
-    // dangerouslyAllowBrowser: true necessário porque vitest jsdom expõe `window`,
-    // o que faz o SDK detectar ambiente browser e bloquear. Em produção (Edge/Node)
-    // não há `window`, portanto este flag é no-op. Em tests, MSW intercepta tudo —
-    // a key nunca sai do processo.
-    this.client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+    this.client = new Anthropic(buildClientOptions(apiKey));
   }
 
   async classify(
@@ -194,11 +229,7 @@ export class AnthropicExecutor implements ExecutorProvider {
   private readonly client: Anthropic;
 
   constructor(apiKey: string) {
-    // dangerouslyAllowBrowser: true necessário porque vitest jsdom expõe `window`,
-    // o que faz o SDK detectar ambiente browser e bloquear. Em produção (Edge/Node)
-    // não há `window`, portanto este flag é no-op. Em tests, MSW intercepta tudo —
-    // a key nunca sai do processo.
-    this.client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+    this.client = new Anthropic(buildClientOptions(apiKey));
   }
 
   async *execute(
@@ -226,6 +257,24 @@ export class AnthropicExecutor implements ExecutorProvider {
     let inputTokens = 0;
     let outputTokens = 0;
 
+    /**
+     * Buffer de tool_use por `content_block_index`.
+     *
+     * Protocolo Anthropic real (corrigido na Iter 3 — CodeRabbit Major 1):
+     * 1. `content_block_start` com `content_block.type === 'tool_use'`
+     *    fornece apenas `id` + `name`; `input` chega vazio.
+     * 2. `content_block_delta` com `delta.type === 'input_json_delta'` traz
+     *    chunks `partial_json` que devem ser concatenados.
+     * 3. `content_block_stop` finaliza — só aí é seguro `JSON.parse` o
+     *    accumulator e emitir o `tool_use` event canónico com `input` completo.
+     *
+     * Refs: SDK Anthropic issue #960; API docs Streaming Messages.
+     */
+    const toolUseBuffers = new Map<
+      number,
+      { id: string; name: string; jsonAccumulator: string }
+    >();
+
     try {
       for await (const sdkEvent of stream) {
         if (sdkEvent.type === 'message_start') {
@@ -236,14 +285,14 @@ export class AnthropicExecutor implements ExecutorProvider {
 
         if (sdkEvent.type === 'content_block_start') {
           if (sdkEvent.content_block.type === 'tool_use') {
-            const event: LLMStreamEvent = {
-              type: 'tool_use',
+            // NÃO emitir tool_use ainda — aguardar input_json_delta chunks
+            // até content_block_stop. O `input` do start vem vazio (`{}`)
+            // no protocolo real.
+            toolUseBuffers.set(sdkEvent.index, {
               id: sdkEvent.content_block.id,
               name: sdkEvent.content_block.name,
-              input: sdkEvent.content_block.input,
-            };
-            LLMStreamEventSchema.parse(event);
-            yield event;
+              jsonAccumulator: '',
+            });
           }
           continue;
         }
@@ -256,8 +305,51 @@ export class AnthropicExecutor implements ExecutorProvider {
             };
             LLMStreamEventSchema.parse(event);
             yield event;
+            continue;
           }
-          // input_json_delta acumulado pelo SDK no content_block.input — não emitimos delta parcial
+          if (sdkEvent.delta.type === 'input_json_delta') {
+            const buf = toolUseBuffers.get(sdkEvent.index);
+            if (buf) {
+              buf.jsonAccumulator += sdkEvent.delta.partial_json;
+            }
+            // Sem buffer correspondente → ignorar silenciosamente
+            // (delta de tool_use que não vimos starting — defensivo).
+          }
+          continue;
+        }
+
+        if (sdkEvent.type === 'content_block_stop') {
+          const buf = toolUseBuffers.get(sdkEvent.index);
+          if (buf) {
+            // Reagrega chunks acumulados → JSON object → tool_use event.
+            // Args vazio ('') é interpretado como `{}` (tool sem args).
+            let parsedInput: unknown;
+            try {
+              parsedInput =
+                buf.jsonAccumulator.length > 0
+                  ? JSON.parse(buf.jsonAccumulator)
+                  : {};
+            } catch (parseErr) {
+              const errorEvent: LLMStreamEvent = {
+                type: 'error',
+                message: `Executor: input_json_delta accumulator não é JSON válido para tool_use ${buf.name} (id=${buf.id}): ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`,
+              };
+              LLMStreamEventSchema.parse(errorEvent);
+              yield errorEvent;
+              // Sentinel — outer catch sabe que o error event já foi emitido,
+              // não duplica. Re-throw final preserva stack trace original.
+              throw new StreamErrorAlreadyEmitted(parseErr);
+            }
+            const event: LLMStreamEvent = {
+              type: 'tool_use',
+              id: buf.id,
+              name: buf.name,
+              input: parsedInput,
+            };
+            LLMStreamEventSchema.parse(event);
+            yield event;
+            toolUseBuffers.delete(sdkEvent.index);
+          }
           continue;
         }
 
@@ -268,7 +360,7 @@ export class AnthropicExecutor implements ExecutorProvider {
           continue;
         }
 
-        // content_block_stop, message_stop — ignored (done emitted at end)
+        // message_stop — ignored (done emitted at end)
       }
 
       const doneEvent: LLMStreamEvent = {
@@ -279,7 +371,14 @@ export class AnthropicExecutor implements ExecutorProvider {
       LLMStreamEventSchema.parse(doneEvent);
       yield doneEvent;
     } catch (error) {
-      // Propagar erro como evento — não silenciar (CodeRabbit lição Story 1.1)
+      // Sentinel: error event já foi emitido pelo handler interno
+      // (e.g., parse de input_json_delta falhou) — só re-throw o erro
+      // original para preservar stack trace, sem duplicar.
+      if (error instanceof StreamErrorAlreadyEmitted) {
+        throw error.inner instanceof Error ? error.inner : new Error(String(error.inner));
+      }
+      // Caso geral: emitir error event antes de re-throw
+      // (CodeRabbit lição Story 1.1 — não silenciar erros).
       const errorEvent: LLMStreamEvent = {
         type: 'error',
         message: error instanceof Error ? error.message : String(error),

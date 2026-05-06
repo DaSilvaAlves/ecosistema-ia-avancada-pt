@@ -113,7 +113,17 @@ function buildSimpleTextStream(model: string, text: string = 'Olá mundo'): Read
 }
 
 /**
- * SSE stream com 1 tool_use block — para testar executor a emitir LLMStreamEvent tool_use.
+ * SSE stream com 1 tool_use block — protocolo Anthropic real.
+ *
+ * Iter 3 (CodeRabbit Major 1): refactor para emitir o protocolo correcto:
+ * - `content_block_start` com `input: {}` (NÃO `{ titulo: 'Comprar pão' }`)
+ * - `content_block_delta` com `input_json_delta` chunks finalizando o JSON
+ * - `content_block_stop` para sinalizar fim do tool_use
+ *
+ * Args canónico: `{"titulo":"Comprar pão"}` — partido em 2 chunks pelo
+ * meio para exercitar concatenação básica.
+ *
+ * Refs: SDK Anthropic issue #960; API docs Streaming Messages.
  */
 function buildToolUseStream(model: string): ReadableStream<Uint8Array> {
   return buildSseStream([
@@ -142,8 +152,27 @@ function buildToolUseStream(model: string): ReadableStream<Uint8Array> {
           type: 'tool_use',
           id: 'toolu_test_01',
           name: 'criar_tarefa',
-          input: { titulo: 'Comprar pão' },
+          // Protocolo real: `input` chega vazio no start; args vêm em deltas
+          input: {},
         },
+      },
+    },
+    // Chunk 1 — primeira parte do JSON (deliberadamente parte na string)
+    {
+      event: 'content_block_delta',
+      data: {
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'input_json_delta', partial_json: '{"titulo":"Comp' },
+      },
+    },
+    // Chunk 2 — segunda parte que completa o JSON
+    {
+      event: 'content_block_delta',
+      data: {
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'input_json_delta', partial_json: 'rar pão"}' },
       },
     },
     {
@@ -156,6 +185,175 @@ function buildToolUseStream(model: string): ReadableStream<Uint8Array> {
         type: 'message_delta',
         delta: { stop_reason: 'tool_use', stop_sequence: null },
         usage: { output_tokens: 15 },
+      },
+    },
+    {
+      event: 'message_stop',
+      data: { type: 'message_stop' },
+    },
+  ]);
+}
+
+/**
+ * Variante stress-test do tool_use stream — fragmenta o JSON em 5 chunks
+ * com cortes em pontos hostis: meio de string (com aspas), meio de número,
+ * e separador `:` isolado. Usado para validar que a reagregação no executor
+ * é robusta independentemente de onde o servidor parte os chunks.
+ *
+ * Args canónico: `{"titulo":"Olá mundo","prioridade":42}`
+ */
+function buildToolUseStreamChunked(model: string): ReadableStream<Uint8Array> {
+  return buildSseStream([
+    {
+      event: 'message_start',
+      data: {
+        type: 'message_start',
+        message: {
+          id: 'msg_tool_use_chunked',
+          type: 'message',
+          role: 'assistant',
+          content: [],
+          model,
+          stop_reason: null,
+          stop_sequence: null,
+          usage: { input_tokens: 30, output_tokens: 0 },
+        },
+      },
+    },
+    {
+      event: 'content_block_start',
+      data: {
+        type: 'content_block_start',
+        index: 0,
+        content_block: {
+          type: 'tool_use',
+          id: 'toolu_chunked_01',
+          name: 'criar_tarefa',
+          input: {},
+        },
+      },
+    },
+    // 5 chunks, cortes hostis: dentro de string, num separador, num inteiro
+    {
+      event: 'content_block_delta',
+      data: {
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'input_json_delta', partial_json: '{"titulo":"Olá ' },
+      },
+    },
+    {
+      event: 'content_block_delta',
+      data: {
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'input_json_delta', partial_json: 'mundo","prio' },
+      },
+    },
+    {
+      event: 'content_block_delta',
+      data: {
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'input_json_delta', partial_json: 'ridade":' },
+      },
+    },
+    {
+      event: 'content_block_delta',
+      data: {
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'input_json_delta', partial_json: '4' },
+      },
+    },
+    {
+      event: 'content_block_delta',
+      data: {
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'input_json_delta', partial_json: '2}' },
+      },
+    },
+    {
+      event: 'content_block_stop',
+      data: { type: 'content_block_stop', index: 0 },
+    },
+    {
+      event: 'message_delta',
+      data: {
+        type: 'message_delta',
+        delta: { stop_reason: 'tool_use', stop_sequence: null },
+        usage: { output_tokens: 20 },
+      },
+    },
+    {
+      event: 'message_stop',
+      data: { type: 'message_stop' },
+    },
+  ]);
+}
+
+/**
+ * Variante de erro — tool_use com `input_json_delta` que produz JSON inválido.
+ * Usado para validar que o executor emite `error` event e re-throws.
+ */
+function buildToolUseStreamMalformed(model: string): ReadableStream<Uint8Array> {
+  return buildSseStream([
+    {
+      event: 'message_start',
+      data: {
+        type: 'message_start',
+        message: {
+          id: 'msg_tool_use_malformed',
+          type: 'message',
+          role: 'assistant',
+          content: [],
+          model,
+          stop_reason: null,
+          stop_sequence: null,
+          usage: { input_tokens: 20, output_tokens: 0 },
+        },
+      },
+    },
+    {
+      event: 'content_block_start',
+      data: {
+        type: 'content_block_start',
+        index: 0,
+        content_block: {
+          type: 'tool_use',
+          id: 'toolu_malformed_01',
+          name: 'criar_tarefa',
+          input: {},
+        },
+      },
+    },
+    {
+      event: 'content_block_delta',
+      data: {
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'input_json_delta', partial_json: '{"titulo":NOT_VAL' },
+      },
+    },
+    {
+      event: 'content_block_delta',
+      data: {
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'input_json_delta', partial_json: 'ID_JSON' },
+      },
+    },
+    {
+      event: 'content_block_stop',
+      data: { type: 'content_block_stop', index: 0 },
+    },
+    {
+      event: 'message_delta',
+      data: {
+        type: 'message_delta',
+        delta: { stop_reason: 'tool_use', stop_sequence: null },
+        usage: { output_tokens: 5 },
       },
     },
     {
@@ -240,15 +438,22 @@ export const anthropicHandlers = [
 
     // ── Story 1.2 — Executor (SSE streaming) ────────────────────────────────
     if (body.stream === true) {
-      // Detect tool_use scenario by checking if userMsg mentions specific keywords
-      // OR if user explicitly requests tool use via system prompt
-      const wantsToolUse =
+      // Iter 3: variantes de tool_use detectadas por magic strings explícitas
+      // no system prompt. Mantém detecção implícita por keyword "comprar pão"
+      // para preservar tests pré-existentes da Iter 1.
+      let stream: ReadableStream<Uint8Array>;
+      if (system.includes('MOCK_EXECUTOR_TOOL_USE_CHUNKED')) {
+        stream = buildToolUseStreamChunked(body.model);
+      } else if (system.includes('MOCK_EXECUTOR_TOOL_USE_MALFORMED')) {
+        stream = buildToolUseStreamMalformed(body.model);
+      } else if (
         system.includes('MOCK_EXECUTOR_TOOL_USE') ||
-        userMsgText.toLowerCase().includes('comprar pão');
-
-      const stream = wantsToolUse
-        ? buildToolUseStream(body.model)
-        : buildSimpleTextStream(body.model);
+        userMsgText.toLowerCase().includes('comprar pão')
+      ) {
+        stream = buildToolUseStream(body.model);
+      } else {
+        stream = buildSimpleTextStream(body.model);
+      }
 
       return new HttpResponse(stream, {
         headers: {

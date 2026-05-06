@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach } from 'vitest';
 import { z } from 'zod';
+import { http, HttpResponse } from 'msw';
 import { server } from '../../../mocks/server';
 import {
   AnthropicClassifier,
@@ -8,6 +9,7 @@ import {
   DEFAULT_EXECUTOR_MODEL,
 } from '@/lib/agent/providers/anthropic';
 import { getClassifier, getExecutor } from '@/lib/agent/providers/factory';
+import { LLMMessageSchema } from '@/lib/agent/schemas';
 import type {
   LLMMessage,
   LLMStreamEvent,
@@ -277,5 +279,211 @@ describe('AnthropicExecutor — error handling', () => {
     );
     // Path normal: nenhum error event
     expect(events.filter((e) => e.type === 'error')).toHaveLength(0);
+  });
+});
+
+/**
+ * Iter 3 — CodeRabbit Major 1: protocolo Anthropic real para tool_use.
+ *
+ * Bug original: executor emitia `tool_use` no `content_block_start` com
+ * `input` vazio. Protocolo real emite o `id`/`name` no start e os args
+ * em `input_json_delta` chunks finalizando no `content_block_stop`.
+ * O mock antigo reproduzia o bug — passamos a emitir o protocolo correcto.
+ *
+ * Estes tests validam que:
+ * 1. O executor reagrega chunks parciais num único `tool_use` event com
+ *    `input` completo (caso 2-chunk básico via mock principal — assert na
+ *    suite "tool calling" acima).
+ * 2. O executor é robusto a chunks que partem em pontos hostis: meio de
+ *    string com aspas, no separador `:`, ou no meio de número.
+ * 3. JSON malformado emerge como `error` event seguido de re-throw.
+ */
+describe('AnthropicExecutor — input_json_delta reaggregation (Iter 3 / Major 1)', () => {
+  const sampleTool: ToolDefinition = {
+    name: 'criar_tarefa',
+    description: 'Cria uma nova tarefa',
+    argsSchema: z.object({
+      titulo: z.string().min(1),
+      prioridade: z.number().int().optional(),
+    }),
+  };
+
+  const opts = { runId: '11111111-2222-3333-4444-555555555555' };
+
+  it('reagrega 2 chunks input_json_delta em 1 único tool_use event', async () => {
+    // O mock canónico (palavra "comprar pão") usa 2 chunks: '{"titulo":"Comp'
+    // e 'rar pão"}'. Test: executor recompõe correctamente.
+    const executor = new AnthropicExecutor(MOCK_API_KEY);
+    const messages: LLMMessage[] = [
+      { role: 'user', content: 'Lembra-me de comprar pão' },
+    ];
+    const events = await collectEvents(executor.execute(messages, [sampleTool], opts));
+
+    const toolUseEvents = events.filter((e) => e.type === 'tool_use');
+    // Crítico: UM único tool_use event (não dois — chunks foram reagregados)
+    expect(toolUseEvents).toHaveLength(1);
+    if (toolUseEvents[0]?.type === 'tool_use') {
+      expect(toolUseEvents[0].id).toBe('toolu_test_01');
+      expect(toolUseEvents[0].name).toBe('criar_tarefa');
+      expect(toolUseEvents[0].input).toEqual({ titulo: 'Comprar pão' });
+    }
+  });
+
+  it('reagrega 5 chunks com cortes hostis (string, separador, número)', async () => {
+    // Adicionamos handler runtime override para testar a variante chunked.
+    // Cria executor que envia system prompt com MOCK_EXECUTOR_TOOL_USE_CHUNKED
+    // — mas como ExecutorOpts não expõe system, replicamos via run override
+    // do MSW: inserimos um handler que força a variante chunked para qualquer
+    // request com stream=true.
+    server.use(
+      http.post(
+        'https://api.anthropic.com/v1/messages',
+        async ({ request }) => {
+          const body = (await request.json()) as { model: string; stream?: boolean };
+          if (body.stream !== true) {
+            return new HttpResponse(null, { status: 404 });
+          }
+          // Reaproveita exactamente a sequência de events do buildToolUseStreamChunked
+          // — duplicação minimal para isolar o test do dispatch principal.
+          const encoder = new TextEncoder();
+          const seq = [
+            `event: message_start\ndata: ${JSON.stringify({ type: 'message_start', message: { id: 'm', type: 'message', role: 'assistant', content: [], model: body.model, stop_reason: null, stop_sequence: null, usage: { input_tokens: 30, output_tokens: 0 } } })}\n\n`,
+            `event: content_block_start\ndata: ${JSON.stringify({ type: 'content_block_start', index: 0, content_block: { type: 'tool_use', id: 'toolu_chunked_01', name: 'criar_tarefa', input: {} } })}\n\n`,
+            `event: content_block_delta\ndata: ${JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: '{"titulo":"Olá ' } })}\n\n`,
+            `event: content_block_delta\ndata: ${JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: 'mundo","prio' } })}\n\n`,
+            `event: content_block_delta\ndata: ${JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: 'ridade":' } })}\n\n`,
+            `event: content_block_delta\ndata: ${JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: '4' } })}\n\n`,
+            `event: content_block_delta\ndata: ${JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: '2}' } })}\n\n`,
+            `event: content_block_stop\ndata: ${JSON.stringify({ type: 'content_block_stop', index: 0 })}\n\n`,
+            `event: message_delta\ndata: ${JSON.stringify({ type: 'message_delta', delta: { stop_reason: 'tool_use', stop_sequence: null }, usage: { output_tokens: 20 } })}\n\n`,
+            `event: message_stop\ndata: ${JSON.stringify({ type: 'message_stop' })}\n\n`,
+          ];
+          const stream = new ReadableStream<Uint8Array>({
+            start(c) {
+              for (const s of seq) c.enqueue(encoder.encode(s));
+              c.close();
+            },
+          });
+          return new HttpResponse(stream, {
+            headers: { 'content-type': 'text/event-stream' },
+          });
+        }
+      )
+    );
+
+    const executor = new AnthropicExecutor(MOCK_API_KEY);
+    const messages: LLMMessage[] = [{ role: 'user', content: 'qualquer' }];
+    const events = await collectEvents(executor.execute(messages, [sampleTool], opts));
+
+    const toolUseEvents = events.filter((e) => e.type === 'tool_use');
+    expect(toolUseEvents).toHaveLength(1);
+    if (toolUseEvents[0]?.type === 'tool_use') {
+      expect(toolUseEvents[0].id).toBe('toolu_chunked_01');
+      expect(toolUseEvents[0].name).toBe('criar_tarefa');
+      expect(toolUseEvents[0].input).toEqual({ titulo: 'Olá mundo', prioridade: 42 });
+    }
+    // done sempre presente no fim
+    expect(events[events.length - 1]?.type).toBe('done');
+  });
+
+  it('emite error event + re-throws quando input_json_delta produz JSON inválido', async () => {
+    // Override runtime — emite chunks que somados são JSON sintacticamente inválido
+    server.use(
+      http.post(
+        'https://api.anthropic.com/v1/messages',
+        async ({ request }) => {
+          const body = (await request.json()) as { model: string; stream?: boolean };
+          if (body.stream !== true) {
+            return new HttpResponse(null, { status: 404 });
+          }
+          const encoder = new TextEncoder();
+          const seq = [
+            `event: message_start\ndata: ${JSON.stringify({ type: 'message_start', message: { id: 'mErr', type: 'message', role: 'assistant', content: [], model: body.model, stop_reason: null, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 0 } } })}\n\n`,
+            `event: content_block_start\ndata: ${JSON.stringify({ type: 'content_block_start', index: 0, content_block: { type: 'tool_use', id: 'toolu_err_01', name: 'criar_tarefa', input: {} } })}\n\n`,
+            `event: content_block_delta\ndata: ${JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: '{"titulo":NOT_VAL' } })}\n\n`,
+            `event: content_block_delta\ndata: ${JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: 'ID_JSON' } })}\n\n`,
+            `event: content_block_stop\ndata: ${JSON.stringify({ type: 'content_block_stop', index: 0 })}\n\n`,
+          ];
+          const stream = new ReadableStream<Uint8Array>({
+            start(c) {
+              for (const s of seq) c.enqueue(encoder.encode(s));
+              c.close();
+            },
+          });
+          return new HttpResponse(stream, {
+            headers: { 'content-type': 'text/event-stream' },
+          });
+        }
+      )
+    );
+
+    const executor = new AnthropicExecutor(MOCK_API_KEY);
+    const messages: LLMMessage[] = [{ role: 'user', content: 'qualquer' }];
+
+    let error: unknown = null;
+    const events: LLMStreamEvent[] = [];
+    try {
+      for await (const e of executor.execute(messages, [sampleTool], opts)) {
+        events.push(e);
+      }
+    } catch (e) {
+      error = e;
+    }
+
+    // Re-throw obrigatório (preservar stack trace)
+    expect(error).not.toBeNull();
+    // Error event emitido antes de re-throw
+    const errorEvents = events.filter((e) => e.type === 'error');
+    expect(errorEvents).toHaveLength(1);
+    if (errorEvents[0]?.type === 'error') {
+      expect(errorEvents[0].message).toMatch(/input_json_delta accumulator/);
+    }
+    // tool_use NÃO deve ter sido emitido (parse falhou)
+    expect(events.filter((e) => e.type === 'tool_use')).toHaveLength(0);
+  });
+});
+
+/**
+ * Iter 3 — CodeRabbit Nitpick B: superRefine garante toolCallId quando role==='tool'.
+ */
+describe('LLMMessageSchema — superRefine toolCallId (Iter 3 / Nitpick B)', () => {
+  it('aceita mensagem role tool quando toolCallId presente', () => {
+    const result = LLMMessageSchema.safeParse({
+      role: 'tool',
+      content: 'resultado',
+      toolCallId: 'toolu_123',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejeita mensagem role tool sem toolCallId (ZodError com path correcto)', () => {
+    const result = LLMMessageSchema.safeParse({
+      role: 'tool',
+      content: 'resultado',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((i) => i.path[0] === 'toolCallId');
+      expect(issue).toBeDefined();
+      expect(issue?.message).toMatch(/obrigatório/);
+    }
+  });
+
+  it('rejeita mensagem role tool com toolCallId vazio', () => {
+    const result = LLMMessageSchema.safeParse({
+      role: 'tool',
+      content: 'resultado',
+      toolCallId: '',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('aceita mensagem role user/assistant sem toolCallId', () => {
+    expect(
+      LLMMessageSchema.safeParse({ role: 'user', content: 'olá' }).success
+    ).toBe(true);
+    expect(
+      LLMMessageSchema.safeParse({ role: 'assistant', content: 'oi' }).success
+    ).toBe(true);
   });
 });

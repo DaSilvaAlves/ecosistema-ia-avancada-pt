@@ -78,14 +78,26 @@ export const ClassificationResultSchema = z.object({
  * Mensagem individual no array passado ao executor.
  *
  * Reusa `ChatMessageRoleSchema` (Story 1.1) — nice-to-have #1 da PO Pax.
- * `toolCallId` opcional, presente apenas em mensagens com role 'tool'
- * (resposta a um tool_use anterior — Anthropic API requirement).
+ * `toolCallId` opcional no shape base, mas apertado por `superRefine` na
+ * Iter 3 (CodeRabbit Nitpick B): quando `role === 'tool'`, `toolCallId` é
+ * semanticamente obrigatório — sem ele não é possível ligar a mensagem ao
+ * `tool_use` original do executor (Anthropic API requirement).
  */
-export const LLMMessageSchema = z.object({
-  role: ChatMessageRoleSchema,
-  content: z.string(),
-  toolCallId: z.string().optional(),
-});
+export const LLMMessageSchema = z
+  .object({
+    role: ChatMessageRoleSchema,
+    content: z.string(),
+    toolCallId: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.role === 'tool' && (!data.toolCallId || data.toolCallId.length === 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['toolCallId'],
+        message: 'toolCallId é obrigatório quando role === "tool"',
+      });
+    }
+  });
 
 /**
  * Stream events emitidos pelo `ExecutorProvider.execute()`.
