@@ -1,5 +1,6 @@
 import { db } from '@/lib/db/client';
 import { createAgentRun, getAgentRun } from '@/lib/db/repos/agent-runs';
+import { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL } from '@/lib/agent/models';
 import type { AgentRun } from '@/types/db';
 
 /**
@@ -13,13 +14,11 @@ import type { AgentRun } from '@/types/db';
  * Preferred path para Stories 1.5 (Executor) e 1.7 (Undo) — evita boilerplate
  * "lê run, calcula delta, faz update".
  *
- * Defaults dos models seguem ADR-1 da architecture-v2.md:
+ * Defaults dos models importados de `lib/agent/models.ts` (single source of truth,
+ * Story 1.2 should-fix #3 Opção A) — ver ADR-1 da architecture-v2.md:
  * - classifier: claude-haiku-4-5-20251001 (rápido, cheap, classificação)
  * - executor: claude-sonnet-4-6 (capaz, function calling)
  */
-
-const DEFAULT_MODEL_CLASSIFIER = 'claude-haiku-4-5-20251001';
-const DEFAULT_MODEL_EXECUTOR = 'claude-sonnet-4-6';
 
 export interface StartRunInput {
   prompt: string;
@@ -46,8 +45,8 @@ export async function startRun(input: StartRunInput): Promise<{ runId: string }>
     toolCalls: [],
     status: 'partial',
     durationMs: 0,
-    modelClassifier: input.modelClassifier ?? DEFAULT_MODEL_CLASSIFIER,
-    modelExecutor: input.modelExecutor ?? DEFAULT_MODEL_EXECUTOR,
+    modelClassifier: input.modelClassifier ?? DEFAULT_CLASSIFIER_MODEL,
+    modelExecutor: input.modelExecutor ?? DEFAULT_EXECUTOR_MODEL,
     inputTokens: 0,
     outputTokens: 0,
   });
