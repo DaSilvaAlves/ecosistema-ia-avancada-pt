@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from 'vitest';
 import { z } from 'zod';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../../mocks/server';
@@ -206,13 +206,21 @@ describe('AnthropicExecutor — basic streaming (AC2, AC8)', () => {
 });
 
 describe('AnthropicExecutor — tool calling (AC3)', () => {
+  // Story 1.3: ToolDefinition estendida — campos `domain`, `resultSchema`,
+  // `requiresPreview`, `reversible`, `execute` agora são obrigatórios.
+  // Adição estrutural, sem mudar assertions de comportamento (AC8 zero-regressão).
   const sampleTool: ToolDefinition = {
     name: 'criar_tarefa',
     description: 'Cria uma nova tarefa na lista do utilizador',
+    domain: 'tasks',
     argsSchema: z.object({
       titulo: z.string().min(1),
       prazo: z.string().optional(),
     }),
+    resultSchema: z.object({ id: z.string() }),
+    requiresPreview: false,
+    reversible: true,
+    execute: vi.fn().mockResolvedValue({ id: 'mock-id' }),
   };
 
   const opts = { runId: '11111111-2222-3333-4444-555555555555' };
@@ -299,13 +307,19 @@ describe('AnthropicExecutor — error handling', () => {
  * 3. JSON malformado emerge como `error` event seguido de re-throw.
  */
 describe('AnthropicExecutor — input_json_delta reaggregation (Iter 3 / Major 1)', () => {
+  // Story 1.3: ToolDefinition estendida (ver nota equivalente acima).
   const sampleTool: ToolDefinition = {
     name: 'criar_tarefa',
     description: 'Cria uma nova tarefa',
+    domain: 'tasks',
     argsSchema: z.object({
       titulo: z.string().min(1),
       prioridade: z.number().int().optional(),
     }),
+    resultSchema: z.object({ id: z.string() }),
+    requiresPreview: false,
+    reversible: true,
+    execute: vi.fn().mockResolvedValue({ id: 'mock-id' }),
   };
 
   const opts = { runId: '11111111-2222-3333-4444-555555555555' };
