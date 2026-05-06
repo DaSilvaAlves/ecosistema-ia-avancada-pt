@@ -1,10 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import {
   ClassificationResultSchema,
   LLMStreamEventSchema,
 } from '@/lib/agent/schemas';
 import { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL } from '@/lib/agent/models';
+import { toolsToAnthropicShape } from '@/lib/agent/tools/registry';
 import type {
   ClassifierProvider,
   ClassifierOpts,
@@ -179,32 +179,6 @@ function toAnthropicMessages(
 }
 
 /**
- * Mapeia ToolDefinition[] → formato Anthropic SDK (`tools: [{ name, description, input_schema }]`).
- *
- * Conversão Zod → JSON Schema via `zod-to-json-schema`. O AnthropicExecutor
- * é stateless — não cacheia; cada chamada faz a conversão. Para optimização
- * futura, Story 1.3 pode introduzir cache no `toolRegistry`.
- */
-function toAnthropicTools(
-  tools: ToolDefinition[]
-): Array<{ name: string; description: string; input_schema: { type: 'object'; [k: string]: unknown } }> {
-  return tools.map((t) => {
-    const jsonSchema = zodToJsonSchema(t.argsSchema, { target: 'openApi3' });
-    // Anthropic SDK requer `input_schema.type === 'object'` — garantir shape mínimo
-    // mesmo se o Zod produzir algo diferente (defensive — Zod object → JSON 'object' typically).
-    const input_schema =
-      typeof jsonSchema === 'object' && jsonSchema !== null && 'type' in jsonSchema && jsonSchema.type === 'object'
-        ? (jsonSchema as { type: 'object'; [k: string]: unknown })
-        : ({ type: 'object' as const, properties: {} });
-    return {
-      name: t.name,
-      description: t.description,
-      input_schema,
-    };
-  });
-}
-
-/**
  * Executor baseado em Claude Sonnet com tool calling.
  *
  * `execute()` é async generator que retorna `AsyncIterable<LLMStreamEvent>`.
@@ -245,7 +219,7 @@ export class AnthropicExecutor implements ExecutorProvider {
     }
 
     const anthropicMessages = toAnthropicMessages(messages);
-    const anthropicTools = toAnthropicTools(tools);
+    const anthropicTools = toolsToAnthropicShape(tools);
 
     const stream = this.client.messages.stream({
       model: opts.model ?? DEFAULT_EXECUTOR_MODEL,

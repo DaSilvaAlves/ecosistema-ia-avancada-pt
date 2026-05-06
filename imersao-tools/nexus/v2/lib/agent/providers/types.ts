@@ -1,5 +1,3 @@
-import type { z } from 'zod';
-
 /**
  * Nexus v2 — Provider Abstraction Types (Story 1.2)
  *
@@ -22,6 +20,7 @@ import type {
   LLMMessage,
   LLMStreamEvent,
 } from '@/lib/agent/schemas';
+import type { ToolDefinition } from '@/lib/agent/tools/types';
 
 // Re-export tipos inferidos de Zod para single-import nos consumidores
 export type { ClassificationResult, LLMMessage, LLMStreamEvent };
@@ -67,25 +66,21 @@ export interface ExecutorOpts {
 }
 
 /**
- * Tool definition mínima para o executor.
+ * Tool definition canónica — re-export.
  *
- * Alinhada com architecture-v2.md §7.2 (canónico) — Story 1.3 expandirá
- * com `resultSchema`, `domain`, `requiresPreview`, `reversible`, `execute`,
- * `reverse` mas PRESERVA os 3 campos base (`name`, `description`, `argsSchema`).
+ * A versão estendida (com `domain`, `resultSchema`, `requiresPreview`,
+ * `reversible`, `execute`, `reverse?`) vive em `lib/agent/tools/types.ts`
+ * desde a Story 1.3 (Tool Registry) — single source of truth.
  *
- * `argsSchema` é `z.ZodObject<z.ZodRawShape>` (apertado na Iter 3 — CodeRabbit
- * Nitpick A) e não `z.ZodType<unknown>`: tools só fazem sentido com object
- * schemas (Anthropic SDK requer `input_schema.type === 'object'`). Apertar
- * o tipo evita uso incorrecto pelo registry da Story 1.3 e pela API SDK.
+ * Os 3 campos base (`name`, `description`, `argsSchema: z.ZodObject<z.ZodRawShape>`)
+ * que esta story (1.2) introduziu mantêm-se preservados na versão estendida —
+ * TypeScript estrutural permite passar `ToolDefinition` estendida onde mínima
+ * é esperada (e.g., `AnthropicExecutor.execute(messages, tools, opts)`).
  *
  * O `AnthropicExecutor` converte `argsSchema` (Zod) → `input_schema` (JSON Schema)
- * via `zod-to-json-schema` internamente antes de chamar o SDK.
+ * via helper `toolsToAnthropicShape` do registry (Story 1.3) antes de chamar o SDK.
  */
-export interface ToolDefinition {
-  name: string;
-  description: string;
-  argsSchema: z.ZodObject<z.ZodRawShape>;
-}
+export type { ToolDefinition };
 
 /**
  * Provider de classificação (consumido por Story 1.4).
