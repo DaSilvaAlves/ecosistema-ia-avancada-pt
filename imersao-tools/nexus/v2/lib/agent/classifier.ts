@@ -78,16 +78,35 @@ export interface ClassifyOpts {
 }
 
 /**
- * Trunca raw response para inclusão em error messages — debug útil sem
- * floodar logs ou expor floods de PII em produção.
+ * Redacta padrões PII conhecidos do raw response e trunca para inclusão segura
+ * em error messages.
  *
- * NOTA SF-3 PO Pax: para Story 1.8 (endpoint público com error handling),
- * considerar redação de PII (valores monetários, emails) antes de logar
- * — fora de scope desta story.
+ * Aborda **SF-3 (PO Pax)** promovido a actionable pelo CodeRabbit Iter 1
+ * (comment #4 sobre `classifier.ts:108-134`): o raw response do Haiku pode
+ * ecoar valores monetários, emails ou IDs longos do prompt do utilizador.
+ * Antes de inserir em `Error.message` (visível em logs públicos / error
+ * tracking via Story 1.8 `/api/agent/prompt`), substitui esses padrões por
+ * placeholders `[REDACTED:type]` mantendo estrutura JSON visível para debug
+ * (chaves `intents`, `confidence`, nomes de domains permanecem legíveis).
+ *
+ * Patterns redactados (ordem importa — mais específicos primeiro):
+ * 1. Email — `local@host.tld` → `[REDACTED:email]`
+ * 2. Valores monetários — `€78,70`, `$100`, `£50.5` → `[REDACTED:money]`
+ * 3. Sequências de 6+ dígitos — IDs, números de telefone, NIFs, IBANs →
+ *    `[REDACTED:digits]`
+ *
+ * Trade-off vs simples truncate: mantém debuggability da estrutura JSON e
+ * domain names (essenciais para perceber o erro) mas remove valores
+ * sensíveis. Trunca a `maxLen` chars no final para limitar tamanho do log.
  */
-function truncateRawResponse(raw: string, maxLen: number = 200): string {
-  if (raw.length <= maxLen) return raw;
-  return `${raw.slice(0, maxLen)}…[truncated ${raw.length - maxLen} chars]`;
+function redactRawResponse(raw: string, maxLen: number = 200): string {
+  const redacted = raw
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, '[REDACTED:email]')
+    .replace(/[€$£¥]\s*\d+(?:[.,]\d+)?/g, '[REDACTED:money]')
+    .replace(/\b\d{6,}\b/g, '[REDACTED:digits]');
+
+  if (redacted.length <= maxLen) return redacted;
+  return `${redacted.slice(0, maxLen)}…[truncated ${redacted.length - maxLen} chars]`;
 }
 
 /**
@@ -105,7 +124,7 @@ function validateClassifierOutput(
 ): void {
   const allowed = new Set<string>(availableDomains);
   const declaredIntents = new Set<string>(result.intents);
-  const rawHint = truncateRawResponse(result.rawResponse);
+  const rawHint = redactRawResponse(result.rawResponse);
 
   // 1. Cada intent ∈ availableDomains
   for (const intent of result.intents) {
@@ -167,6 +186,16 @@ export async function classifyPrompt(
   const trimmed = userPrompt.trim();
   if (trimmed.length === 0) {
     throw new Error('Classifier: userPrompt obrigatório');
+  }
+
+  // Guard upfront (CodeRabbit comment #3): rejeita lista vazia explícita
+  // ANTES de aplicar default ALL_DOMAINS ou construir o system prompt. Lista
+  // vazia significa "nenhum domain válido" — chamar Haiku seria desperdício
+  // (sempre retornaria intents fora de availableDomains).
+  if (opts.availableDomains !== undefined && opts.availableDomains.length === 0) {
+    throw new Error(
+      'Classifier: availableDomains não pode ser vazio — fornece pelo menos um domain ou omite o parâmetro para usar todos os 10 domains (ALL_DOMAINS)'
+    );
   }
 
   const availableDomains = opts.availableDomains ?? ALL_DOMAINS;

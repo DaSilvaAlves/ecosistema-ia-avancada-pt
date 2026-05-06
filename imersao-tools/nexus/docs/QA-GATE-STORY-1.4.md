@@ -141,7 +141,7 @@ Uncovered branch `classifier.ts:90-91` (`Number.isNaN(value)`): caso defensivo o
 
 ## Próximo passo recomendado
 
-```
+```text
 @devops *push
 ```
 
@@ -153,7 +153,7 @@ Gage executa sequência operacional alinhada com Stories 1.1+1.2+1.3:
 
 **Tech debt opcional (não bloqueador):**
 
-```
+```text
 @po *backlog-add 1.4 tech-debt low "SF-3+SF-4 Story 1.4: PII redaction em error messages para Story 1.8 endpoint público + calibração Haiku real para Story 1.10 regression suite manual de 50 prompts PT-PT"
 ```
 

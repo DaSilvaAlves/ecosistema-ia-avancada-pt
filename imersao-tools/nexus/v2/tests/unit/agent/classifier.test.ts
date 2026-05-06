@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
-import { server } from '../../mocks/server';
+import { server } from '@/tests/mocks/server';
 import { ALL_DOMAINS, classifyPrompt } from '@/lib/agent/classifier';
 import {
   CLASSIFIER_OUTPUT_FORMAT_RULES,
@@ -126,6 +126,67 @@ describe('classifyPrompt — validação adicional (AC4)', () => {
     ).rejects.toThrow(
       /confidence\["finance"\] não corresponde a intent declarado/
     );
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CodeRabbit Iter 1 fixes — guard empty domains + PII redaction
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('classifyPrompt — CodeRabbit Iter 1 fixes', () => {
+  it('rejeita availableDomains:[] com erro PT-PT sem chamar Haiku (comment #3)', async () => {
+    // Guard upfront: lista vazia explícita deve falhar imediatamente, sem
+    // chegar ao MSW handler. Se a guard não funcionasse, MSW devolveria
+    // resposta default (fallback genérico) e teste passaria por outras razões.
+    await expect(
+      classifyPrompt('teste guard', { availableDomains: [] })
+    ).rejects.toThrow(/availableDomains não pode ser vazio/);
+  });
+
+  it('redacta PII (€, email, dígitos longos) do rawResponse em error message (SF-3 / comment #4)', async () => {
+    // Mock devolve JSON com campo extra `_pii` (Zod `.strip()` remove-o no
+    // parse, mas o rawResponse text — usado em error messages — preserva-o).
+    // Combina os 3 patterns redactados (email, money, digits ≥6) num só case.
+    server.use(
+      http.post('https://api.anthropic.com/v1/messages', async () => {
+        return HttpResponse.json({
+          id: 'msg_pii_redaction_test',
+          type: 'message',
+          role: 'assistant',
+          model: 'claude-haiku-4-5-20251001',
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                intents: ['NOT_A_DOMAIN'],
+                confidence: { NOT_A_DOMAIN: 0.9 },
+                _pii: 'pago €78,70 a user@example.com nif 123456789',
+              }),
+            },
+          ],
+          stop_reason: 'end_turn',
+          usage: { input_tokens: 10, output_tokens: 5 },
+        });
+      })
+    );
+
+    try {
+      await classifyPrompt('test PII redaction');
+      expect.fail('Esperado throw');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // Estrutura JSON + domain inválido preservados (debug útil)
+      expect(msg).toContain('NOT_A_DOMAIN');
+      expect(msg).toContain('intents');
+      // PII removida (não exposta em logs / error tracking público Story 1.8)
+      expect(msg).not.toContain('€78,70');
+      expect(msg).not.toContain('user@example.com');
+      expect(msg).not.toContain('123456789');
+      // Placeholders presentes
+      expect(msg).toContain('[REDACTED:money]');
+      expect(msg).toContain('[REDACTED:email]');
+      expect(msg).toContain('[REDACTED:digits]');
+    }
   });
 });
 
