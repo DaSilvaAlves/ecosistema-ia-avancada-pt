@@ -36,6 +36,7 @@
     "date-fns": "^4.1.0",
     "rrule": "^2.8.0",
     "zod": "^3.23.0",
+    "zod-to-json-schema": "^3.23.0",
     "googleapis": "^144.0.0",
     "node-telegram-bot-api": "^0.66.0",
     "web-push": "^3.6.0",
@@ -65,8 +66,7 @@
     "fake-indexeddb": "^6.0.0",
     "@playwright/test": "^1.48.0",
     "@next/bundle-analyzer": "^15.0.0",
-    "@vitejs/plugin-react": "^4.3.0",
-    "zod-to-json-schema": "^3.23.0"
+    "@vitejs/plugin-react": "^4.3.0"
   },
   "engines": {
     "node": ">=20.0.0"
