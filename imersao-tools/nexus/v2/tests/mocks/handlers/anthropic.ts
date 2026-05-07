@@ -408,8 +408,86 @@ export const anthropicHandlers = [
       });
     }
 
+    // ── Story 1.4 — Classifier wrapper PT-PT (intents = domains) ────────────
+    // Magic strings novas (Story 1.4 AC10). Detectadas ANTES do `MOCK_CLASSIFIER`
+    // genérico (Story 1.2) porque `system.includes('MOCK_CLASSIFIER')` daria
+    // match-positivo em todas estas variantes.
+    //
+    // Helper inline que constrói resposta classifier well-formed:
+    function classifierResponse(payload: {
+      intents: string[];
+      confidence: Record<string, number>;
+    }) {
+      return HttpResponse.json({
+        id: 'msg_classifier_v14',
+        type: 'message',
+        role: 'assistant',
+        model: body.model,
+        content: [{ type: 'text', text: JSON.stringify(payload) }],
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 80, output_tokens: 40 },
+      });
+    }
+
+    // Story 1.4: detectar magic strings TANTO no system (Story 1.2 pattern) COMO
+    // no userMsgText (Story 1.4 pattern — wrapper `classifyPrompt` constrói o
+    // system internamente, então tests injectam magic via prefix do user prompt).
+    const triggers = `${system}\n${userMsgText}`;
+
+    if (triggers.includes('MOCK_CLASSIFIER_MULTI_INTENT')) {
+      // AC6 Epic 1 AC1 benchmark — multi-domain
+      return classifierResponse({
+        intents: ['calendar', 'finance'],
+        confidence: { calendar: 0.95, finance: 0.93 },
+      });
+    }
+
+    if (triggers.includes('MOCK_CLASSIFIER_TASKS')) {
+      return classifierResponse({
+        intents: ['tasks'],
+        confidence: { tasks: 0.95 },
+      });
+    }
+
+    if (triggers.includes('MOCK_CLASSIFIER_EMPTY')) {
+      // AC8 — prompt sem domínio relevante
+      return classifierResponse({ intents: [], confidence: {} });
+    }
+
+    if (triggers.includes('MOCK_CLASSIFIER_INVALID_DOMAIN')) {
+      // AC4 — intent fora de availableDomains (esperado erro PT-PT no wrapper)
+      return classifierResponse({
+        intents: ['NOT_A_DOMAIN'],
+        confidence: { NOT_A_DOMAIN: 0.9 },
+      });
+    }
+
+    if (triggers.includes('MOCK_CLASSIFIER_OUT_OF_RANGE_CONFIDENCE_HIGH')) {
+      // AC4 — confidence > 1 (prompt drift)
+      return classifierResponse({
+        intents: ['tasks'],
+        confidence: { tasks: 1.5 },
+      });
+    }
+
+    if (triggers.includes('MOCK_CLASSIFIER_OUT_OF_RANGE_CONFIDENCE_LOW')) {
+      // AC4 — confidence < 0
+      return classifierResponse({
+        intents: ['tasks'],
+        confidence: { tasks: -0.2 },
+      });
+    }
+
+    if (triggers.includes('MOCK_CLASSIFIER_ORPHAN_CONFIDENCE')) {
+      // AC4 — key em confidence sem intent correspondente
+      return classifierResponse({
+        intents: ['tasks'],
+        confidence: { tasks: 0.9, finance: 0.5 },
+      });
+    }
+
     if (system.includes('MOCK_CLASSIFIER')) {
-      // Resposta canónica — bem formada
+      // Story 1.2 — resposta canónica original (preservada para backward compat)
       return HttpResponse.json({
         id: 'msg_classifier_ok',
         type: 'message',
