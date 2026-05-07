@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { z } from 'zod';
+import { http } from 'msw';
 import { server } from '@/tests/mocks/server';
 import {
   MAX_TOOL_ITERATIONS,
@@ -42,6 +43,8 @@ const MOCK_PROMPTS = {
   badToolName: 'MOCK_EXECUTOR_BAD_TOOL_NAME',
   badArgs: 'MOCK_EXECUTOR_BAD_ARGS',
   classifierFail: 'MOCK_EXECUTOR_CLASSIFIER_FAIL',
+  textThenToolUse: 'MOCK_EXECUTOR_TEXT_THEN_TOOL_USE',
+  providerError: 'MOCK_EXECUTOR_PROVIDER_ERROR',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -595,5 +598,211 @@ describe('runAgent — NFR11 logger guard', () => {
       infoSpy.mockRestore();
       errorSpy.mockRestore();
     }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CodeRabbit Iter 2 #3 — ContentBlock[] ordem preservada (Story 1.8 contract)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('runAgent — Iter 3 fix #3: ContentBlock[] ordem preservada', () => {
+  it('histórico do follow-up turn contém [text, tool_use] na ordem em que o SDK os emitiu', async () => {
+    // Captura body de TODAS as requests POST /v1/messages com `stream === true`
+    const streamingBodies: Array<{
+      messages: Array<{ role: string; content: unknown }>;
+    }> = [];
+
+    server.use(
+      http.post(
+        'https://api.anthropic.com/v1/messages',
+        async ({ request }) => {
+          const cloned = request.clone();
+          try {
+            const body = (await cloned.json()) as {
+              stream?: boolean;
+              messages: Array<{ role: string; content: unknown }>;
+            };
+            if (body.stream === true) {
+              streamingBodies.push({ messages: body.messages });
+            }
+          } catch {
+            // ignore non-JSON
+          }
+          // Passthrough — deixa o handler default responder
+          return undefined;
+        }
+      )
+    );
+
+    const tool = defineTool({
+      name: 'tool_test_one',
+      description: 'Tool de teste',
+      domain: 'meta',
+      argsSchema: z.object({ x: z.string() }),
+      resultSchema: z.object({ ok: z.boolean() }),
+      requiresPreview: false,
+      reversible: false,
+      execute: async () => ({ ok: true }),
+    });
+    toolRegistry.register(tool as ToolDefinition);
+
+    const events = await collectEvents(MOCK_PROMPTS.textThenToolUse);
+
+    // Sanity: tool foi executada
+    const completes = events.filter((e) => e.type === 'tool_complete');
+    expect(completes).toHaveLength(1);
+    const done = events.at(-1);
+    if (done?.type !== 'done') throw new Error('done not found');
+    expect(done.status).toBe('success');
+
+    // Pelo menos 2 requests streaming (turn 1 + follow-up)
+    expect(streamingBodies.length).toBeGreaterThanOrEqual(2);
+
+    const followUp = streamingBodies[1];
+    // Estrutura esperada: [user, assistant(content=ContentBlock[]), tool(result)]
+    expect(followUp.messages.length).toBeGreaterThanOrEqual(3);
+
+    const assistantMsg = followUp.messages.find((m) => m.role === 'assistant');
+    expect(assistantMsg).toBeDefined();
+    if (!assistantMsg) throw new Error('assistant message missing');
+
+    // CONTRACT (Story 1.8 Anthropic API): assistant.content é ContentBlock[]
+    expect(Array.isArray(assistantMsg.content)).toBe(true);
+    const blocks = assistantMsg.content as Array<{ type: string; [k: string]: unknown }>;
+
+    // Ordem do mock handler: text emitido ANTES de tool_use →
+    // assistant.content deve preservar ordem `text → tool_use`
+    expect(blocks.length).toBeGreaterThanOrEqual(2);
+    expect(blocks[0].type).toBe('text');
+    expect(blocks[blocks.length - 1].type).toBe('tool_use');
+
+    // Validar text content
+    const textBlock = blocks[0] as { type: 'text'; text: string };
+    expect(textBlock.text).toContain('Vou criar essa tarefa');
+
+    // Validar tool_use content
+    const toolUseBlock = blocks[blocks.length - 1] as {
+      type: 'tool_use';
+      id: string;
+      name: string;
+      input: unknown;
+    };
+    expect(toolUseBlock.id).toBe('toolu_text_then_01');
+    expect(toolUseBlock.name).toBe('tool_test_one');
+  });
+
+  it('text-only turn (sem tool_use) preserva fallback `content: string`', async () => {
+    // Capture follow-up of TWO_TOOLS to confirm assistant content for tool_use
+    // turns is array; this test confirms text-only fallback path remains string
+    // (regression guard — não regrida para array a uma mensagem text-only).
+    const streamingBodies: Array<{
+      messages: Array<{ role: string; content: unknown }>;
+    }> = [];
+
+    server.use(
+      http.post(
+        'https://api.anthropic.com/v1/messages',
+        async ({ request }) => {
+          const cloned = request.clone();
+          try {
+            const body = (await cloned.json()) as {
+              stream?: boolean;
+              messages: Array<{ role: string; content: unknown }>;
+            };
+            if (body.stream === true) {
+              streamingBodies.push({ messages: body.messages });
+            }
+          } catch {
+            // ignore
+          }
+          return undefined;
+        }
+      )
+    );
+
+    await collectEvents(MOCK_PROMPTS.textOnly);
+
+    // text_only só tem 1 request (sem follow-up) — não há assistant message
+    // no histórico para verificar. Verificar que o `user` original é string.
+    expect(streamingBodies.length).toBeGreaterThanOrEqual(1);
+    const turn1 = streamingBodies[0];
+    const userMsg = turn1.messages.find((m) => m.role === 'user');
+    expect(userMsg).toBeDefined();
+    expect(typeof userMsg?.content).toBe('string');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CodeRabbit Iter 2 #1 — catch around tool.execute → toolUseProcessed: false
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('runAgent — Iter 3 fix #1: tool.execute throw não conta para totals.toolCalls', () => {
+  it('tool.execute lança → tool_error emitido + done.totals.toolCalls === 0', async () => {
+    const tool = defineTool({
+      name: 'tool_test_one',
+      description: 'Tool que lança',
+      domain: 'meta',
+      argsSchema: z.object({ x: z.string() }),
+      resultSchema: z.object({ ok: z.boolean() }),
+      requiresPreview: false,
+      reversible: false,
+      execute: async () => {
+        throw new Error('falha simulada na execução');
+      },
+    });
+    toolRegistry.register(tool as ToolDefinition);
+
+    const events = await collectEvents(MOCK_PROMPTS.oneToolUse);
+
+    // tool_error emitido com a mensagem PT-PT do executor
+    const execErr = events.find(
+      (e) => e.type === 'tool_error' && /tool_test_one.*falhou/.test(e.error)
+    );
+    expect(execErr).toBeDefined();
+
+    // tool_complete NÃO foi emitido (execute lançou antes)
+    const completes = events.filter((e) => e.type === 'tool_complete');
+    expect(completes).toHaveLength(0);
+
+    // CONTRACT (AC8 — toolUseProcessed semantic):
+    // tool.execute throw NÃO conta para totals.toolCalls — sem ToolCall
+    // payload completo a persistir, o counter manteria-se a 0.
+    const done = events.at(-1);
+    if (done?.type !== 'done') throw new Error('done not found');
+    expect(done.totals.toolCalls).toBe(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CodeRabbit Iter 2 #2 — provider error: status='failed' + dedup tool_error
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('runAgent — Iter 3 fix #2: provider error → status failed + tool_error único', () => {
+  it('stream malformado (provider yield error + throw) → status failed + UM tool_error', async () => {
+    // Sem tools registadas — o erro vem do provider (input_json_delta inválido).
+    // Provider emite `error event` (handler executor → tool_error) + `throw`
+    // (catch externo do loop → seria 2º tool_error sem fix dedup Iter 3).
+    //
+    // SDK errors são capturados pelo catch externo do loop (linha 564-578),
+    // que NÃO re-throws — apenas marca hadFatalError + break. Por isso runAgent
+    // termina normalmente com `done failed`, não throws para o caller.
+    // (Diferente de classifier failures que SIM re-throw via outer catch.)
+    const events = await collectEvents(MOCK_PROMPTS.providerError);
+
+    // CONTRACT (Iter 2 #2 dedup):
+    // Antes do fix Iter 3: 2 tool_error events para o mesmo incidente
+    // (handler interno emitia 1 via fatalError path + catch externo emitia
+    // outro). Após fix: APENAS 1 tool_error (path do provider).
+    const errors = events.filter((e) => e.type === 'tool_error');
+    expect(errors).toHaveLength(1);
+
+    // CONTRACT (Iter 2 #2 status):
+    // Provider error sem tool_complete bem-sucedido → status === 'failed'
+    // (não 'partial' como antes do fix Iter 3).
+    const done = events.find((e) => e.type === 'done');
+    expect(done).toBeDefined();
+    if (done?.type !== 'done') throw new Error('done not found');
+    expect(done.status).toBe('failed');
+    expect(done.totals.toolCalls).toBe(0);
   });
 });

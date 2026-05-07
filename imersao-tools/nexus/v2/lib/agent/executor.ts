@@ -371,7 +371,19 @@ export async function* runAgent(
     outputTokens = loopResult.outputTokens;
     toolCallCount = loopResult.toolCallCount;
 
-    if (loopResult.hitMaxIterations) {
+    // Status mapping (CodeRabbit Iter 2 #2 — fix Iter 3):
+    // - hadFatalError: erro do provider/SDK (rede, parse fatal) → 'failed'
+    //   (terminal — flow não pode continuar; sem nenhum trabalho útil
+    //   entregue).
+    // - hitMaxIterations: loop atingiu o limite defensivo mas o que foi
+    //   executado é válido → 'partial' (alguma utilidade entregue, alguma
+    //   parte do plano ficou por executar).
+    // - hadError sem `hadFatalError`: erros de tools individuais (unknown,
+    //   args inválidos, tool.execute throw) — o resto da run prosseguiu →
+    //   'partial' (algum trabalho válido + algumas falhas isoladas).
+    if (loopResult.hadFatalError) {
+      status = 'failed';
+    } else if (loopResult.hitMaxIterations) {
       status = 'partial';
     } else if (loopResult.hadError) {
       status = 'partial';
@@ -431,6 +443,15 @@ interface LoopResult {
   toolCallCount: number;
   hitMaxIterations: boolean;
   hadError: boolean;
+  /**
+   * `true` quando o erro foi do **provider/SDK** (e.g., rede, parse de
+   * `input_json_delta`), não de uma tool individual. `hadError` é mais lato
+   * e cobre também tool unknown/args inválidos/tool.execute throw — esses
+   * são parciais (resto da run pode prosseguir). `hadFatalError` distingue
+   * a falha terminal do flow para o status mapping no caller (CodeRabbit
+   * Iter 2 #2: provider error → 'failed', não 'partial').
+   */
+  hadFatalError: boolean;
 }
 
 interface LoopParams {
@@ -479,6 +500,7 @@ async function* toolCallingLoop(
   let iterationCount = 0;
   let hitMaxIterations = false;
   let hadError = false;
+  let hadFatalError = false;
 
   while (iterationCount < maxIterations) {
     iterationCount += 1;
@@ -496,6 +518,12 @@ async function* toolCallingLoop(
     let assistantText = '';
 
     let sdkErrored = false;
+    // Track se o handler interno já emitiu `tool_error` para o erro fatal
+    // do provider. CodeRabbit Iter 2 #2: o `AnthropicExecutor` faz
+    // `yield error_event` ANTES de `throw error` (anthropic.ts L369-374) —
+    // sem este flag, o catch externo emitia um segundo `tool_error` para o
+    // mesmo incidente. Single-emission é o contrato correcto.
+    let fatalErrorAlreadyEmitted = false;
     try {
       for await (const sdkEvent of executor.execute(messages, tools, {
         runId,
@@ -529,17 +557,23 @@ async function* toolCallingLoop(
         if (handled.fatalError) {
           sdkErrored = true;
           hadError = true;
+          hadFatalError = true;
+          fatalErrorAlreadyEmitted = true;
         }
       }
     } catch (e) {
-      // SDK lançou (e.g., rede). Emit tool_error executor + flag + break.
+      // SDK lançou (e.g., rede, parse). Emit `tool_error executor` SÓ se o
+      // handler interno ainda não o emitiu para este mesmo incidente.
       hadError = true;
-      yield {
-        type: 'tool_error',
-        runId,
-        toolName: 'executor',
-        error: errorMessage(e),
-      };
+      hadFatalError = true;
+      if (!fatalErrorAlreadyEmitted) {
+        yield {
+          type: 'tool_error',
+          runId,
+          toolName: 'executor',
+          error: errorMessage(e),
+        };
+      }
       break;
     }
 
@@ -556,22 +590,38 @@ async function* toolCallingLoop(
     // (1) assistant message com text + tool_use blocks (formato Anthropic);
     // (2) tool_result messages (uma por tool_use, com toolCallId).
     //
-    // Story 1.5 Iter 2 (CodeRabbit fix #2): emitir `ContentBlock[]` estruturado
-    // em vez de string flatten. A API Anthropic real (Story 1.8) exige content
-    // blocks como objectos quando há `tool_use`/`tool_result` — string serializada
-    // quebraria pairing `tool_use` ↔ `tool_result` por `tool_use_id`. Mock MSW
-    // continua a funcionar porque é format-agnostic (matching por turn count).
-    const toolUseBlocks = assistantBlocks.filter(
-      (b): b is { type: 'tool_use'; id: string; name: string; input: unknown } =>
-        b.type === 'tool_use'
-    );
-    if (toolUseBlocks.length > 0) {
+    // Story 1.5 Iter 3 (CodeRabbit Iter 2 #3): preservar ordem ORIGINAL dos
+    // ContentBlock[]. A API Anthropic real (Story 1.8) exige sequências como
+    // `text → tool_use → text → tool_use` reproduzidas literalmente — flatten
+    // do texto antes dos `tool_use` reordena `tool_use` para o fim e quebra
+    // multi-turn streaming com texto interleaved. Iter 2 emitia array mas
+    // colapsava todo o `assistantText` num único bloco no início, perdendo
+    // a sequência. Iter 3 itera `assistantBlocks` em ordem de chegada do SDK.
+    //
+    // Coalesce de blocos `text` consecutivos: o SDK do Anthropic emite
+    // `content_block_delta` em chunks pequenos — sem coalesce, terias N
+    // blocos `text` curtos no histórico por cada delta. Coalesce reconstroi
+    // o bloco semanticamente equivalente ao que o modelo gerou.
+    const hasToolUse = assistantBlocks.some((b) => b.type === 'tool_use');
+    if (hasToolUse) {
       const blocks: ContentBlock[] = [];
-      if (assistantText.length > 0) {
-        blocks.push({ type: 'text', text: assistantText });
-      }
-      for (const tu of toolUseBlocks) {
-        blocks.push({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input });
+      for (const block of assistantBlocks) {
+        if (block.type === 'text') {
+          // Coalesce: se o último bloco é text, append; senão push novo.
+          const last = blocks[blocks.length - 1];
+          if (last && last.type === 'text') {
+            last.text += block.text;
+          } else if (block.text.length > 0) {
+            blocks.push({ type: 'text', text: block.text });
+          }
+        } else {
+          blocks.push({
+            type: 'tool_use',
+            id: block.id,
+            name: block.name,
+            input: block.input,
+          });
+        }
       }
       messages.push({ role: 'assistant', content: blocks });
     } else if (assistantText.length > 0) {
@@ -602,6 +652,7 @@ async function* toolCallingLoop(
     toolCallCount,
     hitMaxIterations,
     hadError,
+    hadFatalError,
   };
 }
 
@@ -742,9 +793,14 @@ async function handleSdkEvent(
         content: JSON.stringify({ error: errorMessage(e) }),
         toolCallId: event.id,
       });
+      // CodeRabbit Iter 2 #1: regressão directa do Iter 1 #3 noutro local.
+      // AC8 semântica = "tool calls executed AND have result to persist".
+      // `tool.execute` lançou → não há `tool_complete` event nem `ToolCall`
+      // payload completo a emitir → não conta para `done.totals.toolCalls`.
+      // `errorEmitted: true` mantém-se: consumer já recebeu `tool_error`.
       return {
         events,
-        toolUseProcessed: true,
+        toolUseProcessed: false,
         errorEmitted: true,
         fatalError: false,
       };

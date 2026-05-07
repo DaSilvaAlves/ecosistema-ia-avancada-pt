@@ -626,7 +626,9 @@ export const anthropicHandlers = [
       (userMsgText.includes('MOCK_EXECUTOR_ONE_TOOL_USE') ||
         userMsgText.includes('MOCK_EXECUTOR_BAD_TOOL_NAME') ||
         userMsgText.includes('MOCK_EXECUTOR_BAD_ARGS') ||
-        userMsgText.includes('MOCK_EXECUTOR_INFINITE_LOOP'))
+        userMsgText.includes('MOCK_EXECUTOR_INFINITE_LOOP') ||
+        userMsgText.includes('MOCK_EXECUTOR_TEXT_THEN_TOOL_USE') ||
+        userMsgText.includes('MOCK_EXECUTOR_PROVIDER_ERROR'))
     ) {
       // Tools de domain `meta` — registry test injecta tools com domain='meta'
       // que `getToolsForDomains` sempre inclui (independentemente dos intents).
@@ -803,6 +805,65 @@ export const anthropicHandlers = [
             },
           }
         );
+      }
+
+      // Story 1.5 Iter 3 (CodeRabbit Iter 2 #3): turn 1 emite `text` + `tool_use`
+      // — turn 2 deve receber assistant message com ContentBlock[] em ordem:
+      // [{ type: 'text', text }, { type: 'tool_use', ... }]. Test correspondente
+      // captura o body do segundo request via `server.use` e valida ordem.
+      if (userMsgText.includes('MOCK_EXECUTOR_TEXT_THEN_TOOL_USE')) {
+        if (!isFollowUp) {
+          return new HttpResponse(
+            buildExecutorStream(body.model, {
+              text: 'Vou criar essa tarefa para ti.',
+              toolUses: [
+                {
+                  id: 'toolu_text_then_01',
+                  name: 'tool_test_one',
+                  argsJson: '{"x":"hello"}',
+                },
+              ],
+              stopReason: 'tool_use',
+              inputTokens: 30,
+              outputTokens: 18,
+            }),
+            {
+              headers: {
+                'content-type': 'text/event-stream',
+                'cache-control': 'no-cache',
+              },
+            }
+          );
+        }
+        return new HttpResponse(
+          buildExecutorStream(body.model, {
+            text: 'Concluído.',
+            stopReason: 'end_turn',
+            inputTokens: 60,
+            outputTokens: 5,
+          }),
+          {
+            headers: {
+              'content-type': 'text/event-stream',
+              'cache-control': 'no-cache',
+            },
+          }
+        );
+      }
+
+      // Story 1.5 Iter 3 (CodeRabbit Iter 2 #2): provider yield error event +
+      // throw (anthropic.ts L369-374). Reutiliza `buildToolUseStreamMalformed`
+      // que produz `input_json_delta` inválido — provider emite `tool_error`
+      // event e re-throws. Sem fix Iter 3, o catch do executor emite um
+      // segundo `tool_error executor` (duplicação) e marca status='partial'
+      // (deveria ser 'failed' porque nenhum tool executou com sucesso).
+      if (userMsgText.includes('MOCK_EXECUTOR_PROVIDER_ERROR')) {
+        return new HttpResponse(buildToolUseStreamMalformed(body.model), {
+          headers: {
+            'content-type': 'text/event-stream',
+            'cache-control': 'no-cache',
+          },
+        });
       }
 
       if (userMsgText.includes('MOCK_EXECUTOR_INFINITE_LOOP') || userText.includes('MOCK_EXECUTOR_INFINITE_LOOP')) {
