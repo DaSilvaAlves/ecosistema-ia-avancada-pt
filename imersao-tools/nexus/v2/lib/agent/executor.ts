@@ -76,6 +76,41 @@ import type { NexusDB } from '@/lib/db/client';
 export const MAX_TOOL_ITERATIONS = 5;
 
 /**
+ * Threshold de confiança abaixo do qual o gate de preview é activado.
+ *
+ * Trace canónico: PRD §6.1 FR5 (linha 125) — `"Confidence < 70% → preview
+ * antes de persistir"`. Story 1.6 implementa este FR como constante exportada
+ * para permitir override em testes e documentar como knob de tuning.
+ *
+ * Range: [0, 1] (calibrado pela Story 1.4 few-shot prompt). Valor 0.7 == 70%.
+ *
+ * Strict less-than: `confidence[domain] < PREVIEW_CONFIDENCE_THRESHOLD` —
+ * confidence === 0.7 NÃO activa o gate (consistente com FR5 "< 70%").
+ */
+export const PREVIEW_CONFIDENCE_THRESHOLD = 0.7;
+
+/**
+ * Provider de confirmação injectado opcionalmente em `RunAgentOpts`.
+ *
+ * Quando o gate de preview é activado (`confidence[domain] < 0.7` ou
+ * `tool.requiresPreview === true`), o executor invoca
+ * `requestConfirmation(runId, toolName)` e aguarda (`await`) a Promise
+ * antes de executar a tool. Resolução `'confirm'` → executa; `'cancel'` →
+ * emite `tool_error` e prossegue o loop.
+ *
+ * Story 1.6 expõe a abstracção; Stories 1.8 (endpoint) e 1.9 (UI) escolhem
+ * a implementação concreta (Vercel KV poll, Promise in-process, etc.) — o
+ * executor é agnóstico. Auto-confirm default (provider `undefined`) preserva
+ * retrocompatibilidade com Story 1.5: o gate emite `preview_request` +
+ * `preview_confirmed { action: 'confirm' }` e continua imediatamente.
+ *
+ * Trace: Story 1.6 AC3.
+ */
+export interface ConfirmationProvider {
+  requestConfirmation(runId: string, toolName: string): Promise<'confirm' | 'cancel'>;
+}
+
+/**
  * Options para `runAgent`. Todos opcionais — defaults preservam comportamento
  * canónico: executor Sonnet com `maxTokens` default do provider, `MAX_TOOL_ITERATIONS=5`,
  * classifier Haiku com `ALL_DOMAINS` (10 domains).
@@ -89,6 +124,15 @@ export interface RunAgentOpts {
   maxToolIterations?: number;
   /** Forwarded para `classifyPrompt` (`availableDomains`, `model`, `maxTokens`, `temperature`). */
   classifyOpts?: ClassifyOpts;
+  /**
+   * Story 1.6 — provider de confirmação para gate de preview.
+   *
+   * Sem provider (default): auto-confirm — o executor emite
+   * `preview_request` + `preview_confirmed { action: 'confirm' }` e executa
+   * a tool imediatamente, preservando comportamento Story 1.5. Stories 1.8/1.9
+   * injectam o provider real para bloquear até confirmação humana via UI.
+   */
+  confirmationProvider?: ConfirmationProvider;
 }
 
 /**
@@ -137,6 +181,38 @@ export type ExecutorSSEEvent =
     }
   | { type: 'tool_error'; runId: string; toolName: string; error: string }
   | { type: 'text_delta'; runId: string; delta: string }
+  /**
+   * Story 1.6 — preview gate activado antes da execução de uma tool. Emitido
+   * quando `confidence[tool.domain] < PREVIEW_CONFIDENCE_THRESHOLD` ou
+   * `tool.requiresPreview === true`. Após emitir, o executor aguarda
+   * `confirmationProvider.requestConfirmation()` (se fornecido) antes de
+   * executar/cancelar a tool. Sem provider, auto-confirm (ver `confirmationProvider`).
+   *
+   * `reason` discrimina os 3 cenários de gate (low_confidence, requires_preview,
+   * both) para a UI poder mostrar copy informativa. `confidence` só é incluído
+   * quando `reason` inclui `'low_confidence'` (omitido para `'requires_preview'`).
+   */
+  | {
+      type: 'preview_request';
+      runId: string;
+      toolName: string;
+      args: unknown;
+      reason: 'low_confidence' | 'requires_preview' | 'both';
+      confidence?: number;
+      domain: ToolDomain;
+    }
+  /**
+   * Story 1.6 — emitido após `confirmationProvider.requestConfirmation()`
+   * resolver (auto-confirm ou provider real), antes de executar/cancelar a
+   * tool. Permite ao client actualizar UI (fechar diálogo de confirmação,
+   * mostrar loading state) sem ambiguidade temporal.
+   */
+  | {
+      type: 'preview_confirmed';
+      runId: string;
+      toolName: string;
+      action: 'confirm' | 'cancel';
+    }
   | {
       type: 'done';
       runId: string;
@@ -147,6 +223,13 @@ export type ExecutorSSEEvent =
       durationMs: number;
       errorMessage?: string;
       totals: { intents: number; toolCalls: number };
+      /**
+       * Story 1.6 — número de tools que passaram pelo gate de preview neste
+       * run (incluindo auto-confirmed e cancelled). Permite ao client saber
+       * se o run teve ambiguidade. Campo opcional para retrocompat com
+       * consumers Story 1.5 que não conhecem este campo.
+       */
+      previewCount?: number;
     };
 
 /**
@@ -187,6 +270,74 @@ function getToolsForDomains(domains: readonly ToolDomain[]): ToolDefinition[] {
   }
 
   return collected;
+}
+
+/**
+ * Story 1.6 — verifica se a confidence per-domain do classifier está abaixo
+ * do threshold de preview (`PREVIEW_CONFIDENCE_THRESHOLD = 0.7`).
+ *
+ * Retorna `true` apenas quando `result.confidence[domain]` está definido E
+ * é estritamente menor que o threshold. Domain ausente do mapa `confidence`
+ * (e.g., classifier não classificou esse domain mas a tool é `meta` sempre
+ * incluída) NÃO activa o gate — meta tools são consultivas e read-only por
+ * design (consultar_*), logo não precisam de preview por baixa confidence.
+ *
+ * Trace: PRD §6.1 FR5 — `"Confidence < 70% → preview antes de persistir"`.
+ *
+ * Função interna (não exportada). Test coverage via cenários do gate em
+ * `tests/unit/agent/executor.test.ts`.
+ */
+function hasConfidenceBelowThreshold(
+  result: ClassificationResult,
+  domain: ToolDomain
+): boolean {
+  const score = result.confidence[domain];
+  return score !== undefined && score < PREVIEW_CONFIDENCE_THRESHOLD;
+}
+
+/**
+ * Story 1.6 — avalia o gate de preview para uma tool. Retorna `null` quando
+ * o gate NÃO está activado (caminho rápido — comportamento Story 1.5);
+ * retorna payload completo do `preview_request` quando o gate activa.
+ *
+ * Os 3 cenários de `reason`:
+ * - `'low_confidence'`: só `confidence < 0.7` activa o gate
+ * - `'requires_preview'`: só `tool.requiresPreview === true` activa
+ * - `'both'`: ambos activam — UI pode mostrar copy mais informativa
+ *
+ * `confidence` no payload só é incluído quando `reason` inclui
+ * `'low_confidence'` (consistente com discriminação semântica do AC2).
+ */
+function evaluatePreviewGate(
+  classification: ClassificationResult,
+  tool: ToolDefinition
+): {
+  reason: 'low_confidence' | 'requires_preview' | 'both';
+  confidence?: number;
+} | null {
+  const lowConfidence = hasConfidenceBelowThreshold(classification, tool.domain);
+  const requiresPreview = tool.requiresPreview === true;
+
+  if (!lowConfidence && !requiresPreview) {
+    return null;
+  }
+
+  if (lowConfidence && requiresPreview) {
+    return {
+      reason: 'both',
+      confidence: classification.confidence[tool.domain],
+    };
+  }
+
+  if (lowConfidence) {
+    return {
+      reason: 'low_confidence',
+      confidence: classification.confidence[tool.domain],
+    };
+  }
+
+  // requiresPreview only — confidence omitido
+  return { reason: 'requires_preview' };
 }
 
 /**
@@ -306,6 +457,8 @@ export async function* runAgent(
   let outputTokens = 0;
   let toolCallCount = 0;
   let errorMessageOut: string | undefined;
+  // Story 1.6 — counter de tools que passaram pelo gate de preview neste run.
+  let previewCount = 0;
 
   try {
     // Step 4 — meta(start)
@@ -365,11 +518,14 @@ export async function* runAgent(
       modelExecutor,
       maxTokens: opts.maxTokens,
       maxIterations,
+      classification,
+      confirmationProvider: opts.confirmationProvider,
     });
 
     inputTokens = loopResult.inputTokens;
     outputTokens = loopResult.outputTokens;
     toolCallCount = loopResult.toolCallCount;
+    previewCount = loopResult.previewCount;
 
     // Status mapping (CodeRabbit Iter 2 #2 — fix Iter 3):
     // - hadFatalError: erro do provider/SDK (rede, parse fatal) → 'failed'
@@ -419,6 +575,7 @@ export async function* runAgent(
       durationMs: Date.now() - startedAt,
       errorMessage: errorMessageOut,
       totals: { intents: intents.length, toolCalls: toolCallCount },
+      previewCount,
     };
     throw e;
   }
@@ -434,6 +591,7 @@ export async function* runAgent(
     durationMs: Date.now() - startedAt,
     ...(errorMessageOut !== undefined ? { errorMessage: errorMessageOut } : {}),
     totals: { intents: intents.length, toolCalls: toolCallCount },
+    previewCount,
   };
 }
 
@@ -452,6 +610,12 @@ interface LoopResult {
    * Iter 2 #2: provider error → 'failed', não 'partial').
    */
   hadFatalError: boolean;
+  /**
+   * Story 1.6 — número de tools que passaram pelo gate de preview neste run.
+   * Incrementa por cada `preview_request` emitido (independentemente de
+   * confirm/cancel/auto-confirm). Propagado para o evento `done.previewCount`.
+   */
+  previewCount: number;
 }
 
 interface LoopParams {
@@ -462,6 +626,17 @@ interface LoopParams {
   modelExecutor: string;
   maxTokens?: number;
   maxIterations: number;
+  /**
+   * Story 1.6 — resultado do classifier, propagado ao handler para avaliar o
+   * gate de preview por confidence per-domain antes de cada `tool.execute()`.
+   */
+  classification: ClassificationResult;
+  /**
+   * Story 1.6 — provider opcional de confirmação. Sem provider, o gate usa
+   * auto-confirm (emite `preview_request` + `preview_confirmed { confirm }`
+   * e prossegue), preservando comportamento Story 1.5.
+   */
+  confirmationProvider?: ConfirmationProvider;
 }
 
 /**
@@ -490,7 +665,16 @@ interface LoopParams {
 async function* toolCallingLoop(
   params: LoopParams
 ): AsyncGenerator<ExecutorSSEEvent, LoopResult> {
-  const { tools, ctx, runId, modelExecutor, maxTokens, maxIterations } = params;
+  const {
+    tools,
+    ctx,
+    runId,
+    modelExecutor,
+    maxTokens,
+    maxIterations,
+    classification,
+    confirmationProvider,
+  } = params;
   const messages = [...params.messages]; // shallow copy — não mutamos input
 
   const executor = getExecutor();
@@ -501,6 +685,8 @@ async function* toolCallingLoop(
   let hitMaxIterations = false;
   let hadError = false;
   let hadFatalError = false;
+  // Story 1.6 — counter de tools que passaram pelo gate de preview.
+  let previewCount = 0;
 
   while (iterationCount < maxIterations) {
     iterationCount += 1;
@@ -535,6 +721,8 @@ async function* toolCallingLoop(
           ctx,
           assistantBlocks,
           toolResultsToInject,
+          classification,
+          confirmationProvider,
         });
         if (handled.textDelta !== undefined) {
           assistantText += handled.textDelta;
@@ -559,6 +747,10 @@ async function* toolCallingLoop(
           hadError = true;
           hadFatalError = true;
           fatalErrorAlreadyEmitted = true;
+        }
+        // Story 1.6 — propaga preview gate counter
+        if (handled.previewGated) {
+          previewCount += 1;
         }
       }
     } catch (e) {
@@ -653,6 +845,7 @@ async function* toolCallingLoop(
     hitMaxIterations,
     hadError,
     hadFatalError,
+    previewCount,
   };
 }
 
@@ -668,6 +861,12 @@ interface SdkEventHandled {
   tokenDeltas?: { inputTokens: number; outputTokens: number };
   errorEmitted: boolean;
   fatalError: boolean;
+  /**
+   * Story 1.6 — `true` quando o gate de preview foi activado para esta tool
+   * (tanto path confirm como cancel). Caller incrementa `previewCount` para
+   * propagar ao `done.previewCount`.
+   */
+  previewGated: boolean;
 }
 
 /**
@@ -690,6 +889,10 @@ async function handleSdkEvent(
       | { type: 'tool_use'; id: string; name: string; input: unknown }
     >;
     toolResultsToInject: LLMMessage[];
+    /** Story 1.6 — classifier result para avaliar gate por confidence per-domain. */
+    classification: ClassificationResult;
+    /** Story 1.6 — provider opcional de confirmação. Sem provider, auto-confirm. */
+    confirmationProvider?: ConfirmationProvider;
   }
 ): Promise<SdkEventHandled> {
   const events: ExecutorSSEEvent[] = [];
@@ -702,6 +905,7 @@ async function handleSdkEvent(
       toolUseProcessed: false,
       errorEmitted: false,
       fatalError: false,
+      previewGated: false,
     };
   }
 
@@ -738,6 +942,7 @@ async function handleSdkEvent(
         toolUseProcessed: false,
         errorEmitted: true,
         fatalError: false,
+        previewGated: false,
       };
     }
 
@@ -765,6 +970,7 @@ async function handleSdkEvent(
         toolUseProcessed: false,
         errorEmitted: true,
         fatalError: false,
+        previewGated: false,
       };
     }
 
@@ -775,6 +981,101 @@ async function handleSdkEvent(
       toolName,
       args: event.input,
     });
+
+    // Story 1.6 — gate de preview. Avalia ANTES de `tool.execute()`. Se gate
+    // activado, emite `preview_request`, aguarda confirmação (provider real
+    // ou auto-confirm), emite `preview_confirmed`. Cancel ramo → emite
+    // `tool_error` + injecta `tool_result` indicando cancelamento + retorna
+    // sem executar a tool. Confirm ramo → prossegue para `tool.execute()`.
+    const gateResult = evaluatePreviewGate(ctx.classification, tool);
+    let previewGated = false;
+    if (gateResult !== null) {
+      previewGated = true;
+
+      const previewRequest: ExecutorSSEEvent = {
+        type: 'preview_request',
+        runId: ctx.runId,
+        toolName,
+        args: event.input,
+        reason: gateResult.reason,
+        domain: tool.domain,
+        ...(gateResult.confidence !== undefined
+          ? { confidence: gateResult.confidence }
+          : {}),
+      };
+      events.push(previewRequest);
+
+      // Auto-confirm default (sem provider) — Story 1.5 backward compat.
+      // Com provider: aguarda Promise; resolução `'confirm'` ou `'cancel'`.
+      let action: 'confirm' | 'cancel' = 'confirm';
+      if (ctx.confirmationProvider) {
+        try {
+          action = await ctx.confirmationProvider.requestConfirmation(
+            ctx.runId,
+            toolName
+          );
+        } catch (e) {
+          // Provider falhou: tratamos como erro de tool individual (não fatal).
+          // Emite `tool_error` + injecta `tool_result` para o modelo continuar
+          // o loop. Não emitimos `preview_confirmed` (semanticamente o provider
+          // não resolveu).
+          events.push({
+            type: 'tool_error',
+            runId: ctx.runId,
+            toolName,
+            error: `Executor: provider de confirmação falhou — ${errorMessage(e)}`,
+          });
+          ctx.toolResultsToInject.push({
+            role: 'tool',
+            content: JSON.stringify({
+              error: `Provider de confirmação falhou: ${errorMessage(e)}`,
+            }),
+            toolCallId: event.id,
+          });
+          return {
+            events,
+            toolUseProcessed: false,
+            errorEmitted: true,
+            fatalError: false,
+            previewGated,
+          };
+        }
+      }
+
+      events.push({
+        type: 'preview_confirmed',
+        runId: ctx.runId,
+        toolName,
+        action,
+      });
+
+      if (action === 'cancel') {
+        // Cancel: emite `tool_error` PT-PT + injecta `tool_result` para o
+        // modelo poder continuar com a informação que a acção foi cancelada.
+        // Não conta para `totals.toolCalls` (consistente com semântica AC8 —
+        // tool nunca foi executada). `errorEmitted` mantém status='partial'
+        // se foi a única ocorrência (loop continua sem outras falhas).
+        events.push({
+          type: 'tool_error',
+          runId: ctx.runId,
+          toolName,
+          error: 'Cancelado pelo utilizador',
+        });
+        ctx.toolResultsToInject.push({
+          role: 'tool',
+          content: JSON.stringify({ error: 'Cancelado pelo utilizador' }),
+          toolCallId: event.id,
+        });
+        return {
+          events,
+          toolUseProcessed: false,
+          errorEmitted: true,
+          fatalError: false,
+          previewGated,
+        };
+      }
+      // action === 'confirm' — fall through para tool.execute()
+    }
 
     // Execução SEQUENCIAL (RESOLVED-1) — `await` bloqueia até completar.
     const startedAt = Date.now();
@@ -803,6 +1104,7 @@ async function handleSdkEvent(
         toolUseProcessed: false,
         errorEmitted: true,
         fatalError: false,
+        previewGated,
       };
     }
     const durationMs = Date.now() - startedAt;
@@ -829,6 +1131,7 @@ async function handleSdkEvent(
       toolUseProcessed: true,
       errorEmitted: false,
       fatalError: false,
+      previewGated,
     };
   }
 
@@ -842,6 +1145,7 @@ async function handleSdkEvent(
       },
       errorEmitted: false,
       fatalError: false,
+      previewGated: false,
     };
   }
 
@@ -857,6 +1161,7 @@ async function handleSdkEvent(
       toolUseProcessed: false,
       errorEmitted: true,
       fatalError: true,
+      previewGated: false,
     };
   }
 
@@ -866,6 +1171,7 @@ async function handleSdkEvent(
     toolUseProcessed: false,
     errorEmitted: false,
     fatalError: false,
+    previewGated: false,
   };
 }
 
