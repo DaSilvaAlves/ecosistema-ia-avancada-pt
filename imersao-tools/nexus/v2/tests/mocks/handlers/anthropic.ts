@@ -294,6 +294,118 @@ function buildToolUseStreamChunked(model: string): ReadableStream<Uint8Array> {
 }
 
 /**
+ * SSE stream que emite uma sequência específica de eventos (Story 1.5).
+ *
+ * `multipleToolUses=N` cria `N` content_block tool_use distintos numa só
+ * resposta — usado para testar execução SEQUENCIAL multi-intent (RESOLVED-1).
+ * Cada tool_use é um índice diferente e tem args que o test pode discriminar.
+ *
+ * `infiniteLoop=true` força stop_reason `tool_use` para o executor continuar
+ * a iterar — usado para testar `MAX_TOOL_ITERATIONS` guard (Story 1.5 AC3).
+ *
+ * `textOnly=true` emite apenas text_delta + done — happy path sem tools.
+ */
+interface ExecutorMockOpts {
+  textOnly?: boolean;
+  toolUses?: Array<{ id: string; name: string; argsJson: string }>;
+  stopReason?: 'end_turn' | 'tool_use';
+  inputTokens?: number;
+  outputTokens?: number;
+  text?: string;
+}
+
+function buildExecutorStream(model: string, opts: ExecutorMockOpts): ReadableStream<Uint8Array> {
+  const events: Array<{ event: string; data: object }> = [];
+  const inputTokens = opts.inputTokens ?? 30;
+  const outputTokens = opts.outputTokens ?? 15;
+
+  events.push({
+    event: 'message_start',
+    data: {
+      type: 'message_start',
+      message: {
+        id: 'msg_executor_mock',
+        type: 'message',
+        role: 'assistant',
+        content: [],
+        model,
+        stop_reason: null,
+        stop_sequence: null,
+        usage: { input_tokens: inputTokens, output_tokens: 0 },
+      },
+    },
+  });
+
+  let blockIndex = 0;
+
+  if (opts.textOnly || opts.text !== undefined) {
+    const text = opts.text ?? 'Resposta de teste do executor.';
+    events.push({
+      event: 'content_block_start',
+      data: {
+        type: 'content_block_start',
+        index: blockIndex,
+        content_block: { type: 'text', text: '' },
+      },
+    });
+    events.push({
+      event: 'content_block_delta',
+      data: {
+        type: 'content_block_delta',
+        index: blockIndex,
+        delta: { type: 'text_delta', text },
+      },
+    });
+    events.push({
+      event: 'content_block_stop',
+      data: { type: 'content_block_stop', index: blockIndex },
+    });
+    blockIndex += 1;
+  }
+
+  if (opts.toolUses) {
+    for (const tu of opts.toolUses) {
+      events.push({
+        event: 'content_block_start',
+        data: {
+          type: 'content_block_start',
+          index: blockIndex,
+          content_block: { type: 'tool_use', id: tu.id, name: tu.name, input: {} },
+        },
+      });
+      events.push({
+        event: 'content_block_delta',
+        data: {
+          type: 'content_block_delta',
+          index: blockIndex,
+          delta: { type: 'input_json_delta', partial_json: tu.argsJson },
+        },
+      });
+      events.push({
+        event: 'content_block_stop',
+        data: { type: 'content_block_stop', index: blockIndex },
+      });
+      blockIndex += 1;
+    }
+  }
+
+  events.push({
+    event: 'message_delta',
+    data: {
+      type: 'message_delta',
+      delta: { stop_reason: opts.stopReason ?? 'end_turn', stop_sequence: null },
+      usage: { output_tokens: outputTokens },
+    },
+  });
+  events.push({
+    event: 'message_stop',
+    data: { type: 'message_stop' },
+  });
+
+  return buildSseStream(events);
+}
+
+/**
  * Variante de erro — tool_use com `input_json_delta` que produz JSON inválido.
  * Usado para validar que o executor emite `error` event e re-throws.
  */
@@ -486,6 +598,57 @@ export const anthropicHandlers = [
       });
     }
 
+    // ── Story 1.5 — Classifier auto-responses para MOCK_EXECUTOR_* prompts ──
+    //
+    // O wrapper `classifyPrompt` (Story 1.4) é invocado como primeiro passo do
+    // `runAgent` (Story 1.5). Tests injectam magic strings `MOCK_EXECUTOR_*` no
+    // userPrompt — o classifier vê o prompt completo e precisa de retornar
+    // intents válidos (empty se o test não regista tools, ou específicos se
+    // o test regista tools de domains concretos). NUNCA passa pelo
+    // `MOCK_CLASSIFIER_*` genérico; intercept aqui.
+    //
+    // Tests são request-non-streaming (classifier) — distinguidos de executor
+    // pelo `body.stream` undefined/false. Classifier nunca usa stream.
+    if (
+      !body.stream &&
+      (userMsgText.includes('MOCK_EXECUTOR_TWO_TOOLS') ||
+        userMsgText.includes('MOCK_EXECUTOR_MULTI_DOMAIN'))
+    ) {
+      // Multi-intent: retorna calendar + finance (Story 1.5 multi-intent benchmark)
+      return classifierResponse({
+        intents: ['calendar', 'finance'],
+        confidence: { calendar: 0.95, finance: 0.93 },
+      });
+    }
+
+    if (
+      !body.stream &&
+      (userMsgText.includes('MOCK_EXECUTOR_ONE_TOOL_USE') ||
+        userMsgText.includes('MOCK_EXECUTOR_BAD_TOOL_NAME') ||
+        userMsgText.includes('MOCK_EXECUTOR_BAD_ARGS') ||
+        userMsgText.includes('MOCK_EXECUTOR_INFINITE_LOOP'))
+    ) {
+      // Tools de domain `meta` — registry test injecta tools com domain='meta'
+      // que `getToolsForDomains` sempre inclui (independentemente dos intents).
+      return classifierResponse({
+        intents: ['meta'],
+        confidence: { meta: 0.9 },
+      });
+    }
+
+    if (!body.stream && userMsgText.includes('MOCK_EXECUTOR_TEXT_ONLY')) {
+      // Text-only: empty intents → registry vazio → Sonnet só gera texto
+      return classifierResponse({ intents: [], confidence: {} });
+    }
+
+    if (!body.stream && userMsgText.includes('MOCK_EXECUTOR_CLASSIFIER_FAIL')) {
+      // Story 1.5 AC9 — classifier lança excepção
+      return HttpResponse.json(
+        { type: 'error', error: { type: 'api_error', message: 'mock classifier 500' } },
+        { status: 500 }
+      );
+    }
+
     if (system.includes('MOCK_CLASSIFIER')) {
       // Story 1.2 — resposta canónica original (preservada para backward compat)
       return HttpResponse.json({
@@ -519,6 +682,232 @@ export const anthropicHandlers = [
       // Iter 3: variantes de tool_use detectadas por magic strings explícitas
       // no system prompt. Mantém detecção implícita por keyword "comprar pão"
       // para preservar tests pré-existentes da Iter 1.
+      //
+      // Story 1.5: novas magic strings `MOCK_EXECUTOR_*` detectadas no
+      // userMsgText (executor não constrói system prompt — Story 1.5 AC2
+      // passa apenas `[{ role: 'user', content }]` ao SDK). Avaliadas
+      // ANTES das Story 1.2 magic strings para evitar conflito.
+
+      // Story 1.5 — turn-aware: Story 1.5 magic strings só se aplicam à
+      // PRIMEIRA invocação do executor (turn 1). Em turn 2+ (depois de tool_use
+      // injectado como tool_result), o messages já tem `assistant` + `user`
+      // (tool_result) — detectar via `body.messages.length > 1`. Em turn 2+,
+      // resposta canónica é text-only `end_turn` para fechar o loop sem mais
+      // tool_use (excepto para INFINITE_LOOP que continua a pedir).
+      const isFollowUp = body.messages.length > 1;
+      const lastUserText =
+        body.messages
+          .slice()
+          .reverse()
+          .find((m) => m.role === 'user' && typeof m.content === 'string')?.content ?? '';
+      const userText = typeof lastUserText === 'string' ? lastUserText : '';
+
+      // Story 1.5 mock variants
+      if (userMsgText.includes('MOCK_EXECUTOR_TEXT_ONLY')) {
+        return new HttpResponse(
+          buildExecutorStream(body.model, {
+            textOnly: true,
+            text: 'OK feito.',
+            stopReason: 'end_turn',
+          }),
+          {
+            headers: {
+              'content-type': 'text/event-stream',
+              'cache-control': 'no-cache',
+            },
+          }
+        );
+      }
+
+      if (userMsgText.includes('MOCK_EXECUTOR_ONE_TOOL_USE')) {
+        if (!isFollowUp) {
+          return new HttpResponse(
+            buildExecutorStream(body.model, {
+              toolUses: [
+                {
+                  id: 'toolu_one_01',
+                  name: 'tool_test_one',
+                  argsJson: '{"x":"hello"}',
+                },
+              ],
+              stopReason: 'tool_use',
+              inputTokens: 25,
+              outputTokens: 12,
+            }),
+            {
+              headers: {
+                'content-type': 'text/event-stream',
+                'cache-control': 'no-cache',
+              },
+            }
+          );
+        }
+        // Follow-up turn — fecha com texto
+        return new HttpResponse(
+          buildExecutorStream(body.model, {
+            text: 'Tarefa criada com sucesso.',
+            stopReason: 'end_turn',
+            inputTokens: 50,
+            outputTokens: 8,
+          }),
+          {
+            headers: {
+              'content-type': 'text/event-stream',
+              'cache-control': 'no-cache',
+            },
+          }
+        );
+      }
+
+      if (userMsgText.includes('MOCK_EXECUTOR_TWO_TOOLS')) {
+        if (!isFollowUp) {
+          return new HttpResponse(
+            buildExecutorStream(body.model, {
+              toolUses: [
+                {
+                  id: 'toolu_two_01',
+                  name: 'tool_calendar',
+                  argsJson: '{"titulo":"reunião","hora":"15:00"}',
+                },
+                {
+                  id: 'toolu_two_02',
+                  name: 'tool_finance',
+                  argsJson: '{"valor":78.7,"descricao":"supermercado"}',
+                },
+              ],
+              stopReason: 'tool_use',
+              inputTokens: 40,
+              outputTokens: 25,
+            }),
+            {
+              headers: {
+                'content-type': 'text/event-stream',
+                'cache-control': 'no-cache',
+              },
+            }
+          );
+        }
+        return new HttpResponse(
+          buildExecutorStream(body.model, {
+            text: 'Evento e despesa registados.',
+            stopReason: 'end_turn',
+            inputTokens: 80,
+            outputTokens: 10,
+          }),
+          {
+            headers: {
+              'content-type': 'text/event-stream',
+              'cache-control': 'no-cache',
+            },
+          }
+        );
+      }
+
+      if (userMsgText.includes('MOCK_EXECUTOR_INFINITE_LOOP') || userText.includes('MOCK_EXECUTOR_INFINITE_LOOP')) {
+        // Sempre responde com tool_use, mesmo em follow-up — testa MAX_TOOL_ITERATIONS guard
+        return new HttpResponse(
+          buildExecutorStream(body.model, {
+            toolUses: [
+              {
+                id: `toolu_loop_${Date.now()}`,
+                name: 'tool_test_loop',
+                argsJson: '{"x":"again"}',
+              },
+            ],
+            stopReason: 'tool_use',
+            inputTokens: 20,
+            outputTokens: 10,
+          }),
+          {
+            headers: {
+              'content-type': 'text/event-stream',
+              'cache-control': 'no-cache',
+            },
+          }
+        );
+      }
+
+      if (userMsgText.includes('MOCK_EXECUTOR_BAD_TOOL_NAME')) {
+        // tool_use para tool nunca registada — testa AC4 unknown tool branch
+        if (!isFollowUp) {
+          return new HttpResponse(
+            buildExecutorStream(body.model, {
+              toolUses: [
+                {
+                  id: 'toolu_bad_01',
+                  name: 'tool_inexistente_xyz',
+                  argsJson: '{"x":"y"}',
+                },
+              ],
+              stopReason: 'tool_use',
+              inputTokens: 22,
+              outputTokens: 9,
+            }),
+            {
+              headers: {
+                'content-type': 'text/event-stream',
+                'cache-control': 'no-cache',
+              },
+            }
+          );
+        }
+        return new HttpResponse(
+          buildExecutorStream(body.model, {
+            text: 'Não consegui invocar a tool.',
+            stopReason: 'end_turn',
+            inputTokens: 50,
+            outputTokens: 6,
+          }),
+          {
+            headers: {
+              'content-type': 'text/event-stream',
+              'cache-control': 'no-cache',
+            },
+          }
+        );
+      }
+
+      if (userMsgText.includes('MOCK_EXECUTOR_BAD_ARGS')) {
+        // tool_use com args que falham Zod parse na tool registada
+        if (!isFollowUp) {
+          return new HttpResponse(
+            buildExecutorStream(body.model, {
+              toolUses: [
+                {
+                  id: 'toolu_bad_args_01',
+                  name: 'tool_test_one',
+                  argsJson: '{"x":42}',
+                },
+              ],
+              stopReason: 'tool_use',
+              inputTokens: 24,
+              outputTokens: 11,
+            }),
+            {
+              headers: {
+                'content-type': 'text/event-stream',
+                'cache-control': 'no-cache',
+              },
+            }
+          );
+        }
+        return new HttpResponse(
+          buildExecutorStream(body.model, {
+            text: 'Args inválidos detectados.',
+            stopReason: 'end_turn',
+            inputTokens: 50,
+            outputTokens: 7,
+          }),
+          {
+            headers: {
+              'content-type': 'text/event-stream',
+              'cache-control': 'no-cache',
+            },
+          }
+        );
+      }
+
+      // Story 1.2 — handlers existentes preservados
       let stream: ReadableStream<Uint8Array>;
       if (system.includes('MOCK_EXECUTOR_TOOL_USE_CHUNKED')) {
         stream = buildToolUseStreamChunked(body.model);
