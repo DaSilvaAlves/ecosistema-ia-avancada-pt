@@ -3,6 +3,7 @@ import { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL } from '@/lib/agent/mo
 import { getExecutor } from '@/lib/agent/providers/factory';
 import type {
   ClassificationResult,
+  ContentBlock,
   LLMMessage,
   LLMStreamEvent,
 } from '@/lib/agent/schemas';
@@ -390,25 +391,24 @@ export async function* runAgent(
         error: errorMessageOut,
       };
     }
-    // Re-throw APÓS finally para preservar contract com Story 1.8 (HTTP 500)
-    // mas garantir que o `done` é emitido primeiro.
-    try {
-      // Step 9 — done emitido no finally implícito do throw
-      yield {
-        type: 'done',
-        runId,
-        status,
-        intents,
-        inputTokens,
-        outputTokens,
-        durationMs: Date.now() - startedAt,
-        errorMessage: errorMessageOut,
-        totals: { intents: intents.length, toolCalls: toolCallCount },
-      };
-    } finally {
-      // Re-throw original
-      throw e;
-    }
+    // CodeRabbit Iter 1 fix: substituído `try { yield done } finally { throw e }`
+    // por sequencial `yield done` + `throw e`. `throw` em `finally` viola Biome
+    // `noUnsafeFinally` e mascara o intent de `.return()` do consumer SSE caso
+    // este chame `.return()` enquanto suspenso no `yield done`. Sequencial
+    // preserva contract Story 1.8 (HTTP 500): consumer recebe `done` primeiro,
+    // depois o generator throw chega ao `for await...of` ou `.next()`.
+    yield {
+      type: 'done',
+      runId,
+      status,
+      intents,
+      inputTokens,
+      outputTokens,
+      durationMs: Date.now() - startedAt,
+      errorMessage: errorMessageOut,
+      totals: { intents: intents.length, toolCalls: toolCallCount },
+    };
+    throw e;
   }
 
   // Step 9 — done (happy path)
@@ -555,24 +555,29 @@ async function* toolCallingLoop(
     // Com tool_use processados → injectar histórico antes da próxima iteração:
     // (1) assistant message com text + tool_use blocks (formato Anthropic);
     // (2) tool_result messages (uma por tool_use, com toolCallId).
-    if (assistantBlocks.length > 0) {
-      // Texto + tool_use no histórico assistant — flatten para `content` string.
-      // O AnthropicExecutor `toAnthropicMessages` mapeia `assistant` directo;
-      // mas para tool_use precisamos preservar como structured content. O SDK
-      // aceita string OU array — para histórico com tool_use, é necessário
-      // array. Workaround: serializar como JSON e enviar como string que o
-      // Sonnet aceita como contexto livre. Trade-off documentado: o histórico
-      // tool_use real é reproduzido textualmente, suficiente para o Sonnet
-      // entender que já invocou aquelas tools (preserva semântica do follow-up).
-      const summary = assistantText.length > 0 ? assistantText : '';
-      const toolUseSummary = assistantBlocks
-        .filter((b): b is { type: 'tool_use'; id: string; name: string; input: unknown } => b.type === 'tool_use')
-        .map((b) => `[tool_use id=${b.id} name=${b.name} input=${stringifyToolResult(b.input)}]`)
-        .join('\n');
-      const combined = [summary, toolUseSummary].filter((s) => s.length > 0).join('\n');
-      if (combined.length > 0) {
-        messages.push({ role: 'assistant', content: combined });
+    //
+    // Story 1.5 Iter 2 (CodeRabbit fix #2): emitir `ContentBlock[]` estruturado
+    // em vez de string flatten. A API Anthropic real (Story 1.8) exige content
+    // blocks como objectos quando há `tool_use`/`tool_result` — string serializada
+    // quebraria pairing `tool_use` ↔ `tool_result` por `tool_use_id`. Mock MSW
+    // continua a funcionar porque é format-agnostic (matching por turn count).
+    const toolUseBlocks = assistantBlocks.filter(
+      (b): b is { type: 'tool_use'; id: string; name: string; input: unknown } =>
+        b.type === 'tool_use'
+    );
+    if (toolUseBlocks.length > 0) {
+      const blocks: ContentBlock[] = [];
+      if (assistantText.length > 0) {
+        blocks.push({ type: 'text', text: assistantText });
       }
+      for (const tu of toolUseBlocks) {
+        blocks.push({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input });
+      }
+      messages.push({ role: 'assistant', content: blocks });
+    } else if (assistantText.length > 0) {
+      // Sem tool_use mas com texto → manter shape simples (string) — fallback
+      // canónico para mensagens text-only.
+      messages.push({ role: 'assistant', content: assistantText });
     }
     for (const tr of toolResultsToInject) {
       messages.push(tr);
@@ -673,9 +678,13 @@ async function handleSdkEvent(
         content: JSON.stringify({ error: `Tool "${toolName}" não registada` }),
         toolCallId: event.id,
       });
+      // CodeRabbit Iter 1 fix #3: `toolUseProcessed: false` em error branches
+      // — AC8 semântica = "tool calls executed AND have result to persist".
+      // Tool não registada não foi executada → não conta para totals.toolCalls.
+      // `errorEmitted: true` mantém-se: consumer já recebeu o tool_error event.
       return {
         events,
-        toolUseProcessed: true,
+        toolUseProcessed: false,
         errorEmitted: true,
         fatalError: false,
       };
@@ -697,9 +706,12 @@ async function handleSdkEvent(
         content: JSON.stringify({ error: `Args inválidos: ${errorMessage(e)}` }),
         toolCallId: event.id,
       });
+      // CodeRabbit Iter 1 fix #3: ver justificação acima — Zod parse failure
+      // significa que tool nunca chegou a `tool.execute()`, logo não deve
+      // contar para totals.toolCalls.
       return {
         events,
-        toolUseProcessed: true,
+        toolUseProcessed: false,
         errorEmitted: true,
         fatalError: false,
       };

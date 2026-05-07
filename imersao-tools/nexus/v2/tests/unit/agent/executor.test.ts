@@ -9,6 +9,7 @@ import {
   type ExecutorSSEEvent,
   _getToolsForDomains,
 } from '@/lib/agent/executor';
+import { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL } from '@/lib/agent/models';
 import { toolRegistry, defineTool } from '@/lib/agent/tools/registry';
 import type { ToolDefinition } from '@/lib/agent/tools/types';
 
@@ -161,8 +162,8 @@ describe('runAgent — happy path text-only', () => {
     }
     expect(metaStart.runId).toMatch(/^[0-9a-f-]{36}$/);
     expect(metaStart.prompt).toBe(MOCK_PROMPTS.textOnly);
-    expect(metaStart.modelClassifier).toBe('claude-haiku-4-5-20251001');
-    expect(metaStart.modelExecutor).toBe('claude-sonnet-4-6');
+    expect(metaStart.modelClassifier).toBe(DEFAULT_CLASSIFIER_MODEL);
+    expect(metaStart.modelExecutor).toBe(DEFAULT_EXECUTOR_MODEL);
     expect(metaStart.classifierResult).toBeNull();
 
     const metaClassified = events[1];

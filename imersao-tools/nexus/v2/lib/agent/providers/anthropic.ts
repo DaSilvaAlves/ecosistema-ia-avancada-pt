@@ -152,6 +152,12 @@ export class AnthropicClassifier implements ClassifierProvider {
  * Anthropic não tem role 'tool' directo — mensagens com role 'tool' são
  * convertidas para `user` com `content: [{ type: 'tool_result', tool_use_id, content }]`.
  * Outras roles passam directo.
+ *
+ * Story 1.5 Iter 2 (CodeRabbit fix #2): `LLMMessage.content` é agora
+ * `string | ContentBlock[]`. Para `assistant` com `ContentBlock[]` (ex: text +
+ * tool_use), passamos directo — Anthropic API aceita `content: ContentBlock[]`.
+ * Para `user` simples (string) e `tool` (sempre string semanticamente), shape
+ * mantém-se igual.
  */
 function toAnthropicMessages(
   messages: LLMMessage[]
@@ -163,17 +169,23 @@ function toAnthropicMessages(
           'Executor: mensagens com role "tool" requerem toolCallId (Anthropic SDK requirement)'
         );
       }
+      // tool_result content é canónicamente string (JSON-stringified result da
+      // tool). Se chegar array (defensivo), serializar para preservar contract.
+      const toolResultContent =
+        typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
       return {
         role: 'user' as const,
         content: [
           {
             type: 'tool_result',
             tool_use_id: m.toolCallId,
-            content: m.content,
+            content: toolResultContent,
           },
         ],
       };
     }
+    // assistant/user → passa string OU ContentBlock[] directo (Anthropic SDK
+    // aceita ambos os shapes).
     return { role: m.role, content: m.content };
   });
 }

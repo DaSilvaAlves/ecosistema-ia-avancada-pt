@@ -695,12 +695,14 @@ export const anthropicHandlers = [
       // resposta canónica é text-only `end_turn` para fechar o loop sem mais
       // tool_use (excepto para INFINITE_LOOP que continua a pedir).
       const isFollowUp = body.messages.length > 1;
-      const lastUserText =
+      // CodeRabbit Iter 1 nit-2: typeof guard redundante — `?? ''` já garante
+      // string. O find já filtra por `typeof m.content === 'string'`, logo o
+      // valor é sempre string ou cai no fallback `''`.
+      const userText =
         body.messages
           .slice()
           .reverse()
           .find((m) => m.role === 'user' && typeof m.content === 'string')?.content ?? '';
-      const userText = typeof lastUserText === 'string' ? lastUserText : '';
 
       // Story 1.5 mock variants
       if (userMsgText.includes('MOCK_EXECUTOR_TEXT_ONLY')) {
