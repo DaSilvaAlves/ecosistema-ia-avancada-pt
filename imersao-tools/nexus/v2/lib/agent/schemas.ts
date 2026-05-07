@@ -75,6 +75,41 @@ export const ClassificationResultSchema = z.object({
 });
 
 /**
+ * ContentBlock — bloco estruturado dentro de `LLMMessage.content`.
+ *
+ * Adicionado em Story 1.5 Iter 2 (CodeRabbit fix #2) para suportar histórico
+ * multi-turn com `tool_use` blocks no formato real da API Anthropic. Antes
+ * desta iteração, o executor serializava `tool_use` blocks como string
+ * `[tool_use id=... name=... input=...]` num único `content: string`, o que
+ * funcionava com MSW mock (matching format-agnostic) mas quebraria em runtime
+ * real (Story 1.8) — Anthropic API exige `content: ContentBlock[]` quando há
+ * `tool_use`/`tool_result`.
+ *
+ * Discriminated union por `type` — tipagem stricta sem `any`. Mantém-se
+ * intencionalmente um subset do shape Anthropic (text + tool_use + tool_result)
+ * — Story 1.5 não usa image/document blocks.
+ */
+export const ContentBlockSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('text'),
+    text: z.string(),
+  }),
+  z.object({
+    type: z.literal('tool_use'),
+    id: z.string(),
+    name: z.string(),
+    input: z.unknown(),
+  }),
+  z.object({
+    type: z.literal('tool_result'),
+    tool_use_id: z.string(),
+    content: z.string(),
+  }),
+]);
+
+export type ContentBlock = z.infer<typeof ContentBlockSchema>;
+
+/**
  * Mensagem individual no array passado ao executor.
  *
  * Reusa `ChatMessageRoleSchema` (Story 1.1) — nice-to-have #1 da PO Pax.
@@ -82,11 +117,18 @@ export const ClassificationResultSchema = z.object({
  * Iter 3 (CodeRabbit Nitpick B): quando `role === 'tool'`, `toolCallId` é
  * semanticamente obrigatório — sem ele não é possível ligar a mensagem ao
  * `tool_use` original do executor (Anthropic API requirement).
+ *
+ * Story 1.5 Iter 2 (CodeRabbit fix #2): `content` agora aceita
+ * `string | ContentBlock[]` — array é necessário para preservar `tool_use`
+ * blocks estruturados no histórico multi-turn (Anthropic API real-API
+ * compliance, Story 1.8). Path string-only mantém-se como fallback canónico
+ * para mensagens simples (user prompt inicial, tool_result texto, assistant
+ * text-only).
  */
 export const LLMMessageSchema = z
   .object({
     role: ChatMessageRoleSchema,
-    content: z.string(),
+    content: z.union([z.string(), z.array(ContentBlockSchema)]),
     toolCallId: z.string().optional(),
   })
   .superRefine((data, ctx) => {
