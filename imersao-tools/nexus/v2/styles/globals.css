@@ -98,3 +98,49 @@ a:hover {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Story 1.9 — keyframes globais usados por componentes do chat
+ * (ToolCard, MessageList ThinkingIndicator). Story 1.9 Iter 2 migrou
+ * estes keyframes do `<style jsx>` (que não está instalado em Next 14
+ * deste projecto e era inert) para CSS global. Trace: CodeRabbit Iter 1 #3.
+ */
+@keyframes nexus-tool-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nexus-pulse-cyan {
+  0%,
+  100% {
+    border-color: rgba(0, 245, 255, 0.5);
+  }
+  50% {
+    border-color: rgba(0, 245, 255, 0.9);
+  }
+}
+
+@keyframes nexus-pulse-gold-slow {
+  0%,
+  100% {
+    border-color: rgba(255, 184, 0, 0.5);
+  }
+  50% {
+    border-color: rgba(255, 184, 0, 0.9);
+  }
+}
+
+@keyframes nexus-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

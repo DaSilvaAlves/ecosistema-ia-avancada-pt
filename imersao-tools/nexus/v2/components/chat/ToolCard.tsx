@@ -116,7 +116,7 @@ function StateIcon({ state, color }: { state: ToolCardState; color: string }): R
   const props = { size, color, 'aria-hidden': true } as const;
   if (state === 'loading') {
     return (
-      <span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}>
+      <span style={{ display: 'inline-flex', animation: 'nexus-spin 1s linear infinite' }}>
         <Loader2 {...props} />
       </span>
     );
@@ -221,12 +221,15 @@ export function ToolCard(props: ToolCardProps): ReactElement {
     textDecoration: state === 'reverted' ? 'line-through' : 'none',
   };
 
+  // Story 1.9 Iter 2 — keyframes definidos em `styles/globals.css` (prefixo
+  // `nexus-`). `<style jsx>` removido (não está instalado neste projecto
+  // Next 14 e era inert). CodeRabbit Iter 1 #3.
   const animationValue =
     tokens.pulseAnimation === 'pulse-cyan'
-      ? 'tool-card-enter 200ms ease-out, pulse-cyan 1.5s ease-in-out infinite'
+      ? 'nexus-tool-card-enter 200ms ease-out, nexus-pulse-cyan 1.5s ease-in-out infinite'
       : tokens.pulseAnimation === 'pulse-gold-slow'
-        ? 'tool-card-enter 200ms ease-out, pulse-gold-slow 2.4s ease-in-out infinite'
-        : 'tool-card-enter 200ms ease-out';
+        ? 'nexus-tool-card-enter 200ms ease-out, nexus-pulse-gold-slow 2.4s ease-in-out infinite'
+        : 'nexus-tool-card-enter 200ms ease-out';
 
   const cardStyle: CSSProperties = {
     border: `1px ${tokens.borderStyle ?? 'solid'} ${tokens.borderColor}`,
@@ -243,6 +246,8 @@ export function ToolCard(props: ToolCardProps): ReactElement {
     <div
       role="article"
       aria-label={`Tool ${toolName} — estado ${state}`}
+      data-testid="tool-card"
+      data-animation={animationValue}
       style={cardStyle}
     >
       {/* Header: ícone + título */}
@@ -355,45 +360,6 @@ export function ToolCard(props: ToolCardProps): ReactElement {
           Tentar de novo
         </button>
       )}
-
-      <style jsx>{`
-        @keyframes tool-card-enter {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes pulse-cyan {
-          0%,
-          100% {
-            border-color: rgba(0, 245, 255, 0.5);
-          }
-          50% {
-            border-color: rgba(0, 245, 255, 0.9);
-          }
-        }
-        @keyframes pulse-gold-slow {
-          0%,
-          100% {
-            border-color: rgba(255, 184, 0, 0.5);
-          }
-          50% {
-            border-color: rgba(255, 184, 0, 0.9);
-          }
-        }
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </div>
   );
 }
