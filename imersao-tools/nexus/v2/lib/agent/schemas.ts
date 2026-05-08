@@ -241,3 +241,63 @@ export const UndoRequestSchema = z.object({
 export type UndoEntry = z.infer<typeof UndoEntrySchema>;
 export type UndoRequest = z.infer<typeof UndoRequestSchema>;
 export type ToolCall = z.infer<typeof ToolCallSchema>;
+
+/**
+ * Story 1.8 — Endpoint `POST /api/agent/prompt` body schema.
+ *
+ * Trace canónico:
+ * - PRD §10 linha 419 — "1.8 Endpoint /api/agent/prompt com auth + rate limit + telemetria"
+ * - PRD §6.1 FR1 (linha 121) — "Layout principal é chat com input always-visible"
+ * - Architecture v2 ADR-1 (linha 24) — Edge runtime, streaming token-by-token
+ *
+ * `prompt` é PT-PT, max 4000 chars (limite defensivo para evitar abuso de
+ * input_tokens; o classifier Haiku da Story 1.4 funciona bem com prompts
+ * curtos típicos da imersão pessoal).
+ *
+ * `conversationId` é OPCIONAL — Story 1.8 ignora-o (executor é stateless,
+ * RESOLVED-2 Story 1.5). Incluído agora a custo zero para evitar breaking
+ * change na Story 1.9 que vai consumi-lo para juntar mensagens à mesma
+ * conversa Dexie client-side. Decisão @po Pax 08/05/2026 (OQ-3 RESOLVED).
+ */
+export const PromptRequestSchema = z.object({
+  prompt: z
+    .string()
+    .min(1, 'prompt é obrigatório')
+    .max(4000, 'prompt excede 4000 caracteres'),
+  conversationId: z
+    .string()
+    .uuid('conversationId deve ser UUID válido')
+    .optional(),
+});
+
+export type PromptRequest = z.infer<typeof PromptRequestSchema>;
+
+/**
+ * Story 1.8 — Endpoint `POST /api/agent/confirm` body schema.
+ *
+ * Trace canónico:
+ * - Story 1.8 AC8 — endpoint auxiliar para resolver `KvConfirmationProvider`
+ * - Story 1.6 `ConfirmationProvider` interface (executor.ts L112-114) —
+ *   `requestConfirmation(runId, toolName)` retorna `'confirm' | 'cancel'`
+ * - ADR-7 (Story 1.8) — namespace KV `nexus:agent:confirm:<runId>:<toolName>`
+ *
+ * O browser invoca este endpoint quando o utilizador clica em
+ * Confirmar/Cancelar no diálogo de preview gate. O endpoint escreve em KV
+ * com TTL `CONFIRM_TTL_SECONDS = 60` (lib/agent/kv-confirmation-provider.ts);
+ * o `KvConfirmationProvider` que está a correr noutro Edge process
+ * (POST /api/agent/prompt) faz polling KV até encontrar o valor e resolve.
+ *
+ * `runId` UUID — gerado internamente pelo executor (executor.ts L473) e
+ * exposto via evento `meta(start)` da SSE — o browser propaga-o de volta
+ * neste body.
+ *
+ * `toolName` string min 1 — não é UUID, é o nome canónico da tool no
+ * registry (Story 1.3). Exposto pelo evento `preview_request` da SSE.
+ */
+export const ConfirmRequestSchema = z.object({
+  runId: z.string().uuid('runId deve ser UUID válido'),
+  toolName: z.string().min(1, 'toolName é obrigatório'),
+  action: z.enum(['confirm', 'cancel']),
+});
+
+export type ConfirmRequest = z.infer<typeof ConfirmRequestSchema>;
