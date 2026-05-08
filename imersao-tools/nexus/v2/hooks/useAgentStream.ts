@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ExecutorSSEEvent } from '@/lib/agent/executor';
 import { db } from '@/lib/db/client';
 import { addChatMessage, DEFAULT_CONVERSATION_ID } from '@/lib/db/repos/chat-messages';
@@ -224,12 +224,36 @@ export function useAgentStream(): UseAgentStreamResult {
   // ref em vez de state: evita rerender por cada delta (a UI consome `events` para mostrar streaming).
   const accumulatedTextRef = useRef<string>('');
 
+  /**
+   * Story 1.9 Iter 2 — Major #4 — AbortController para cancelar fetch+stream
+   * em duplo submit ou unmount. Antes deste fix:
+   *   - Click duplo no submit: dois streams simultâneos disputavam state +
+   *     ambos persistiam side-effects Dexie em duplicado.
+   *   - Unmount durante stream: stream continuava em background, persistia
+   *     ChatMessage em conversation que já não está visível, e o reader
+   *     `releaseLock` era chamado tarde.
+   * Solução: AbortController guardado em ref; cada submit aborta o anterior
+   * antes de iniciar; unmount aborta o último.
+   */
+  const controllerRef = useRef<AbortController | null>(null);
+
   const reset = useCallback(() => {
+    // Aborta stream em curso antes de limpar state (evita race com setEvents)
+    controllerRef.current?.abort();
+    controllerRef.current = null;
     setIsStreaming(false);
     setCurrentRunId(null);
     setEvents([]);
     setError(null);
     accumulatedTextRef.current = '';
+  }, []);
+
+  // Cleanup automático no unmount — abort qualquer stream pendente.
+  useEffect(() => {
+    return () => {
+      controllerRef.current?.abort();
+      controllerRef.current = null;
+    };
   }, []);
 
   /**
@@ -289,9 +313,13 @@ export function useAgentStream(): UseAgentStreamResult {
   /**
    * Consume a `Response.body` ReadableStream — itera linhas `data: ...\n\n`,
    * pipa para `processSseLine`, termina ao receber `[DONE]` ou `EOF`.
+   *
+   * Story 1.9 Iter 2 — `signal` opcional para abortar leitura quando o caller
+   * cancelar (duplo submit, unmount, ou `reset()`). `reader.cancel()` solta
+   * upstream cleanly; `releaseLock` em finally como antes.
    */
   const consumeStream = useCallback(
-    async (response: Response): Promise<void> => {
+    async (response: Response, signal?: AbortSignal): Promise<void> => {
       if (!response.body) {
         throw new Error('Resposta sem body — stream impossível');
       }
@@ -300,8 +328,24 @@ export function useAgentStream(): UseAgentStreamResult {
       const decoder = new TextDecoder();
       let buffer = '';
 
+      // Liga o signal ao reader: ao abortar, `reader.cancel()` desbloqueia o
+      // `await reader.read()` próximo. Listener removido em finally para
+      // evitar leak entre runs.
+      const onAbort = (): void => {
+        // Cancel é safe mesmo se o reader já estiver fechado.
+        void reader.cancel().catch(() => undefined);
+      };
+      if (signal) {
+        if (signal.aborted) {
+          onAbort();
+        } else {
+          signal.addEventListener('abort', onAbort, { once: true });
+        }
+      }
+
       try {
         while (true) {
+          if (signal?.aborted) return;
           const { done, value } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
@@ -309,15 +353,17 @@ export function useAgentStream(): UseAgentStreamResult {
           const lines = buffer.split('\n\n');
           buffer = lines.pop() ?? '';
           for (const line of lines) {
+            if (signal?.aborted) return;
             const sseDone = await processSseLine(line);
             if (sseDone) return;
           }
         }
         // Flush buffer remanescente (sem `\n\n` final)
-        if (buffer.length > 0) {
+        if (!signal?.aborted && buffer.length > 0) {
           await processSseLine(buffer);
         }
       } finally {
+        if (signal) signal.removeEventListener('abort', onAbort);
         // Liberta o reader explicitamente — em Edge runtime o GC pode demorar.
         try {
           reader.releaseLock();
@@ -333,6 +379,14 @@ export function useAgentStream(): UseAgentStreamResult {
     (prompt: string) => {
       const trimmed = prompt.trim();
       if (trimmed.length === 0) return;
+
+      // Story 1.9 Iter 2 — Major #4 — abortar qualquer stream em curso antes
+      // de iniciar nova. Duplo submit / submit-durante-stream agora cancela
+      // o anterior em vez de duplicar side-effects Dexie.
+      controllerRef.current?.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      const { signal } = controller;
 
       // Reset state do run anterior. Não usamos `reset()` aqui para evitar
       // race com setState batching — definimos directamente.
@@ -352,7 +406,10 @@ export function useAgentStream(): UseAgentStreamResult {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt: trimmed }),
+            signal,
           });
+
+          if (signal.aborted) return;
 
           if (!response.ok) {
             const status = response.status;
@@ -367,12 +424,22 @@ export function useAgentStream(): UseAgentStreamResult {
             return;
           }
 
-          await consumeStream(response);
+          await consumeStream(response, signal);
         } catch (e) {
+          // AbortError é esperado em duplo submit / unmount — não mostra
+          // erro ao utilizador (UX: foi intencional).
+          if (signal.aborted || (e instanceof Error && e.name === 'AbortError')) {
+            return;
+          }
           setError(networkErrorMessage(e));
           console.error('[useAgentStream] submit falhou', e);
         } finally {
-          setIsStreaming(false);
+          // Só limpa isStreaming se o signal corresponde ao actual — evita
+          // que um abort tardio limpe o flag de uma run posterior.
+          if (controllerRef.current === controller) {
+            setIsStreaming(false);
+            controllerRef.current = null;
+          }
         }
       })();
     },

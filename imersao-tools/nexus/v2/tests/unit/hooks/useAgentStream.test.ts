@@ -549,4 +549,160 @@ describe('useAgentStream', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
+
+  // Story 1.9 Iter 2 — Major #4 — AbortController em duplo submit / unmount
+  describe('AbortController (Story 1.9 Iter 2 Major #4)', () => {
+    it('submit duplo aborta o anterior — apenas o último completa', async () => {
+      const requestSignals: AbortSignal[] = [];
+      // Box pattern: TS strict não consegue inferir que callbacks async
+      // atribuem variáveis após `waitFor`; objecto wrapper resolve isto.
+      const resolverBox: { fn: (() => void) | null } = { fn: null };
+
+      server.use(
+        http.post('/api/agent/prompt', async ({ request }) => {
+          requestSignals.push(request.signal);
+          // 1º submit: stream que bloqueia até resolver — deve ser abortado
+          if (requestSignals.length === 1) {
+            const blocked = new ReadableStream({
+              async start(controller) {
+                await new Promise<void>((resolve) => {
+                  resolverBox.fn = resolve;
+                  request.signal.addEventListener('abort', () => resolve(), {
+                    once: true,
+                  });
+                });
+                try {
+                  controller.close();
+                } catch {
+                  // já fechado
+                }
+              },
+            });
+            return new HttpResponse(blocked, {
+              status: 200,
+              headers: { 'Content-Type': 'text/event-stream' },
+            });
+          }
+          // 2º submit: stream rápido com [DONE]
+          return new HttpResponse(buildSseStream([]), {
+            status: 200,
+            headers: { 'Content-Type': 'text/event-stream' },
+          });
+        })
+      );
+
+      const { result } = renderHook(() => useAgentStream());
+
+      // Primeiro submit (fica pendente)
+      act(() => {
+        result.current.submit('primeiro');
+      });
+      await waitFor(() => expect(requestSignals).toHaveLength(1));
+
+      // Segundo submit — deve abortar o primeiro
+      act(() => {
+        result.current.submit('segundo');
+      });
+
+      await waitFor(() => expect(requestSignals).toHaveLength(2));
+      // O signal do primeiro request deve estar agora aborted
+      expect(requestSignals[0].aborted).toBe(true);
+      // Limpar bloqueio do primeiro caso ainda exista
+      resolverBox.fn?.();
+
+      // Esperar o segundo terminar
+      await waitFor(() => expect(result.current.isStreaming).toBe(false));
+      expect(result.current.error).toBeNull();
+    });
+
+    it('unmount durante stream aborta o request — sem state update tardio', async () => {
+      const requestSignals: AbortSignal[] = [];
+      const resolverBox: { fn: (() => void) | null } = { fn: null };
+
+      server.use(
+        http.post('/api/agent/prompt', ({ request }) => {
+          requestSignals.push(request.signal);
+          const blocked = new ReadableStream({
+            async start(controller) {
+              await new Promise<void>((resolve) => {
+                resolverBox.fn = resolve;
+                request.signal.addEventListener('abort', () => resolve(), {
+                  once: true,
+                });
+              });
+              try {
+                controller.close();
+              } catch {
+                // já fechado
+              }
+            },
+          });
+          return new HttpResponse(blocked, {
+            status: 200,
+            headers: { 'Content-Type': 'text/event-stream' },
+          });
+        })
+      );
+
+      const { result, unmount } = renderHook(() => useAgentStream());
+
+      act(() => {
+        result.current.submit('teste');
+      });
+      await waitFor(() => expect(requestSignals).toHaveLength(1));
+      expect(requestSignals[0].aborted).toBe(false);
+
+      unmount();
+
+      // Após unmount o signal deve estar aborted
+      expect(requestSignals[0].aborted).toBe(true);
+      resolverBox.fn?.();
+    });
+
+    it('reset() aborta stream em curso e limpa state', async () => {
+      const requestSignals: AbortSignal[] = [];
+      const resolverBox: { fn: (() => void) | null } = { fn: null };
+
+      server.use(
+        http.post('/api/agent/prompt', ({ request }) => {
+          requestSignals.push(request.signal);
+          const blocked = new ReadableStream({
+            async start(controller) {
+              await new Promise<void>((resolve) => {
+                resolverBox.fn = resolve;
+                request.signal.addEventListener('abort', () => resolve(), {
+                  once: true,
+                });
+              });
+              try {
+                controller.close();
+              } catch {
+                // já fechado
+              }
+            },
+          });
+          return new HttpResponse(blocked, {
+            status: 200,
+            headers: { 'Content-Type': 'text/event-stream' },
+          });
+        })
+      );
+
+      const { result } = renderHook(() => useAgentStream());
+
+      act(() => {
+        result.current.submit('teste');
+      });
+      await waitFor(() => expect(requestSignals).toHaveLength(1));
+
+      act(() => {
+        result.current.reset();
+      });
+
+      expect(requestSignals[0].aborted).toBe(true);
+      expect(result.current.events).toHaveLength(0);
+      expect(result.current.currentRunId).toBeNull();
+      resolverBox.fn?.();
+    });
+  });
 });
