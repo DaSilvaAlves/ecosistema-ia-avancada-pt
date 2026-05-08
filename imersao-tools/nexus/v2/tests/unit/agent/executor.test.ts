@@ -1120,3 +1120,163 @@ describe('runAgent — Story 1.6: previewCount counter (AC5)', () => {
     expect(done.previewCount).toBe(0);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CodeRabbit Iter 1 fix #1 — preview_request usa validatedArgs (pós-Zod)
+// em vez de event.input (raw do SDK)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('runAgent — CR Iter 1 fix #1: preview_request reflecte args validados', () => {
+  it('schema com default → preview_request.args mostra payload pós-validação (com default aplicado)', async () => {
+    // ToolDefinition exige `argsSchema` ser z.ZodObject (não permite .transform
+    // no top-level). Usamos um campo OPCIONAL com `.default()` que o Zod
+    // injecta durante `.parse()`. O mock MSW emite apenas
+    // `{"titulo":"comprar pão"}` como `tool_use.input` (sem `prioridade`).
+    // O schema injecta `prioridade: 'normal'` por default. Antes do fix #1,
+    // `preview_request.args === event.input` mostrava SEM prioridade. Após
+    // fix #1, mostra a payload PÓS-validação que será de facto passada a
+    // `tool.execute()` (com prioridade preenchida).
+    let executedArgs: unknown = null;
+    const tool = defineTool({
+      name: 'tool_preview',
+      description: 'Tool com schema default',
+      domain: 'tasks',
+      argsSchema: z.object({
+        titulo: z.string(),
+        prioridade: z.string().default('normal'),
+      }),
+      resultSchema: z.object({ ok: z.boolean() }),
+      requiresPreview: false,
+      reversible: false,
+      execute: async (args: { titulo: string; prioridade: string }) => {
+        executedArgs = args;
+        return { ok: true };
+      },
+    });
+    toolRegistry.register(tool as ToolDefinition);
+
+    const events = await collectEvents(MOCK_PROMPTS.lowConfidence);
+
+    const previewReq = events.find((e) => e.type === 'preview_request');
+    expect(previewReq).toBeDefined();
+    if (previewReq?.type !== 'preview_request') throw new Error();
+
+    // CORE assertion #1: preview_request.args inclui o campo `prioridade`
+    // injectado pelo `.default()` do Zod (prova de que veio do parse, não
+    // do event.input raw que NÃO tinha esse campo).
+    expect(previewReq.args).toEqual({ titulo: 'comprar pão', prioridade: 'normal' });
+
+    // CORE assertion #2: tool.execute recebeu exactamente os mesmos args
+    // que estavam no preview_request (regra de correctness do fix #1 —
+    // utilizador confirma X e executor corre X).
+    expect(executedArgs).toEqual({ titulo: 'comprar pão', prioridade: 'normal' });
+
+    // tool_complete está presente (auto-confirm)
+    const complete = events.find((e) => e.type === 'tool_complete');
+    expect(complete).toBeDefined();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CodeRabbit Iter 1 fix #2 — toolUseSeen desacoplado de toolUseProcessed
+// permite que o tool_result enfileirado seja injectado no histórico mesmo
+// quando a tool não foi executada (preview cancel, provider error, etc.).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('runAgent — CR Iter 1 fix #2: tool_result injectado em error branches permite follow-up turn', () => {
+  it('preview cancel → loop continua para 2ª iteração e modelo emite text_delta de follow-up', async () => {
+    // Após cancel, o `tool_result` com `error: 'Cancelado pelo utilizador'`
+    // tem de ser injectado no histórico. Sem fix #2, `toolUseProcessed: false`
+    // levaria `toolUsesInThisIteration === 0` e o loop quebrava ANTES de
+    // injectar — modelo nunca via o resultado e a 2ª iteração nunca corria.
+    //
+    // O mock MSW para LOW_CONFIDENCE tem 2 turnos:
+    //   turn 1 (isFollowUp=false): emite tool_use 'tool_preview'
+    //   turn 2 (isFollowUp=true):  emite text 'Acção concluída.' + end_turn
+    //
+    // Após o fix, com cancel: o loop deve injectar o tool_result e fazer turn 2.
+    // Resultado observável: o evento `text_delta` 'Acção concluída.' é emitido,
+    // provando que o follow-up turn correu.
+    registerPreviewTool('tasks', false);
+
+    const provider: ConfirmationProvider = {
+      requestConfirmation: vi.fn(async () => 'cancel' as const),
+    };
+
+    const events = await collectEvents(MOCK_PROMPTS.lowConfidence, {
+      confirmationProvider: provider,
+    });
+
+    // 1. preview_request emitido
+    expect(events.find((e) => e.type === 'preview_request')).toBeDefined();
+
+    // 2. preview_confirmed{cancel} emitido
+    const cancelled = events.find((e) => e.type === 'preview_confirmed');
+    if (cancelled?.type !== 'preview_confirmed') throw new Error();
+    expect(cancelled.action).toBe('cancel');
+
+    // 3. tool_error 'Cancelado pelo utilizador' emitido
+    expect(
+      events.find(
+        (e) => e.type === 'tool_error' && /Cancelado pelo utilizador/.test(e.error)
+      )
+    ).toBeDefined();
+
+    // 4. CORE assertion #2: text_delta da 2ª iteração foi recebido
+    //    (sem fix, o loop quebrava após cancel e turn 2 nunca corria)
+    const followUpText = events
+      .filter((e) => e.type === 'text_delta')
+      .map((e) => (e.type === 'text_delta' ? e.delta : ''))
+      .join('');
+    expect(followUpText).toContain('Acção concluída.');
+
+    // 5. done.status === 'partial' (cancel marca errorEmitted=true)
+    const done = events.at(-1);
+    if (done?.type !== 'done') throw new Error();
+    expect(done.status).toBe('partial');
+    expect(done.previewCount).toBe(1);
+    expect(done.totals.toolCalls).toBe(0); // tool nunca executou
+
+    // 6. Token deltas da 2ª iteração foram acumulados (output > 0 prova
+    //    que o text_delta de turn 2 chegou ao token accounting)
+    expect(done.outputTokens).toBeGreaterThan(0);
+  });
+
+  it('provider rejeita Promise → loop continua para 2ª iteração após injectar tool_result de erro', async () => {
+    // Mesmo cenário do test acima, mas com provider que rejeita em vez
+    // de retornar 'cancel'. Path interno é diferente (catch block dentro
+    // do gate) mas o efeito esperado é idêntico: tool_result enfileirado
+    // + loop continua → text_delta de turn 2 recebido.
+    registerPreviewTool('tasks', false);
+
+    const provider: ConfirmationProvider = {
+      requestConfirmation: vi.fn(async () => {
+        throw new Error('falha de coordenação KV');
+      }),
+    };
+
+    const events = await collectEvents(MOCK_PROMPTS.lowConfidence, {
+      confirmationProvider: provider,
+    });
+
+    // tool_error emitido
+    expect(
+      events.find(
+        (e) => e.type === 'tool_error' && /provider de confirmação falhou/i.test(e.error)
+      )
+    ).toBeDefined();
+
+    // CORE assertion: 2ª iteração correu (text_delta presente)
+    const followUpText = events
+      .filter((e) => e.type === 'text_delta')
+      .map((e) => (e.type === 'text_delta' ? e.delta : ''))
+      .join('');
+    expect(followUpText).toContain('Acção concluída.');
+
+    const done = events.at(-1);
+    if (done?.type !== 'done') throw new Error();
+    expect(done.status).toBe('partial');
+    expect(done.previewCount).toBe(1);
+    expect(done.totals.toolCalls).toBe(0);
+  });
+});

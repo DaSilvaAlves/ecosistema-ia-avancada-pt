@@ -731,8 +731,17 @@ async function* toolCallingLoop(
         for (const ev of handled.events) {
           yield ev;
         }
-        if (handled.toolUseProcessed) {
+        // CodeRabbit Iter 1 fix #2: desacoplar `toolUseSeen` (houve tool_use
+        // emitido pelo SDK?) de `toolUseProcessed` (a tool foi executada com
+        // sucesso?). `toolUsesInThisIteration` controla se o outer loop
+        // injecta o histórico antes da próxima iteração — tem de incrementar
+        // em todos os caminhos que enfileiraram `tool_result` (incluindo
+        // ramos de erro, preview cancel, provider error). `toolCallCount`
+        // continua a contar apenas execuções bem-sucedidas (AC8 semântica).
+        if (handled.toolUseSeen) {
           toolUsesInThisIteration += 1;
+        }
+        if (handled.toolUseProcessed) {
           toolCallCount += 1;
         }
         if (handled.tokenDeltas) {
@@ -857,6 +866,22 @@ async function* toolCallingLoop(
 interface SdkEventHandled {
   textDelta?: string;
   events: ExecutorSSEEvent[];
+  /**
+   * CodeRabbit Iter 1 fix #2: `true` sempre que o SDK emitiu um `tool_use`
+   * neste evento, INDEPENDENTEMENTE de a tool ter sido executada com sucesso.
+   *
+   * Distinto de `toolUseProcessed` (que requer execução completa). Necessário
+   * porque o outer loop usa este flag para decidir se deve injectar o
+   * `assistant` message + `toolResultsToInject` no histórico antes da próxima
+   * iteração. Sem este desacoplamento, ramos de erro (tool desconhecida, args
+   * inválidos, preview cancel, provider error, tool.execute throw) enfileiram
+   * `tool_result` mas o loop quebra antes de injectar — o modelo nunca vê o
+   * `tool_result` e o follow-up turn fica perdido. Bug funcional real.
+   *
+   * Regra: `toolUseSeen: true` em qualquer return dentro de `if (event.type
+   * === 'tool_use')`; `false` para text_delta, done, error, fallback.
+   */
+  toolUseSeen: boolean;
   toolUseProcessed: boolean;
   tokenDeltas?: { inputTokens: number; outputTokens: number };
   errorEmitted: boolean;
@@ -902,6 +927,7 @@ async function handleSdkEvent(
     return {
       textDelta: event.text,
       events,
+      toolUseSeen: false,
       toolUseProcessed: false,
       errorEmitted: false,
       fatalError: false,
@@ -937,8 +963,13 @@ async function handleSdkEvent(
       // — AC8 semântica = "tool calls executed AND have result to persist".
       // Tool não registada não foi executada → não conta para totals.toolCalls.
       // `errorEmitted: true` mantém-se: consumer já recebeu o tool_error event.
+      // CodeRabbit Iter 1 fix #2: `toolUseSeen: true` — o SDK emitiu um
+      // `tool_use` que enfileirou `tool_result` em `toolResultsToInject`.
+      // Outer loop precisa de saber para injectar o histórico antes da
+      // próxima iteração; sem isto, o modelo nunca vê o tool_result.
       return {
         events,
+        toolUseSeen: true,
         toolUseProcessed: false,
         errorEmitted: true,
         fatalError: false,
@@ -965,8 +996,12 @@ async function handleSdkEvent(
       // CodeRabbit Iter 1 fix #3: ver justificação acima — Zod parse failure
       // significa que tool nunca chegou a `tool.execute()`, logo não deve
       // contar para totals.toolCalls.
+      // CodeRabbit Iter 1 fix #2: `toolUseSeen: true` — `tool_result` foi
+      // enfileirado e tem de ser injectado no histórico (mesma justificação
+      // do branch "tool não registada" acima).
       return {
         events,
+        toolUseSeen: true,
         toolUseProcessed: false,
         errorEmitted: true,
         fatalError: false,
@@ -992,11 +1027,16 @@ async function handleSdkEvent(
     if (gateResult !== null) {
       previewGated = true;
 
+      // CodeRabbit Iter 1 fix #1: usar `validatedArgs` (pós-Zod) em vez de
+      // `event.input` (raw do SDK). Schema pode strip/coerce/transform/default
+      // — utilizador deve confirmar a payload PÓS-validação que será de facto
+      // passada a `tool.execute()`. Caso contrário UI mostra X mas executor
+      // corre Y. Trace: AC2 spec (`args` no payload do preview_request).
       const previewRequest: ExecutorSSEEvent = {
         type: 'preview_request',
         runId: ctx.runId,
         toolName,
-        args: event.input,
+        args: validatedArgs,
         reason: gateResult.reason,
         domain: tool.domain,
         ...(gateResult.confidence !== undefined
@@ -1032,8 +1072,12 @@ async function handleSdkEvent(
             }),
             toolCallId: event.id,
           });
+          // CodeRabbit Iter 1 fix #2: `toolUseSeen: true` — sem isto o outer
+          // loop quebraria antes de injectar o `tool_result` da falha do
+          // provider, e o modelo nunca veria a informação para fazer follow-up.
           return {
             events,
+            toolUseSeen: true,
             toolUseProcessed: false,
             errorEmitted: true,
             fatalError: false,
@@ -1066,8 +1110,14 @@ async function handleSdkEvent(
           content: JSON.stringify({ error: 'Cancelado pelo utilizador' }),
           toolCallId: event.id,
         });
+        // CodeRabbit Iter 1 fix #2: `toolUseSeen: true` — preview cancel
+        // ainda enfileira `tool_result` indicando o cancelamento. O outer
+        // loop precisa de injectar para o modelo continuar a conversa
+        // sabendo que a acção foi cancelada (e.g., reformular ou escolher
+        // outra tool). Sem este flag o follow-up turn ficava perdido.
         return {
           events,
+          toolUseSeen: true,
           toolUseProcessed: false,
           errorEmitted: true,
           fatalError: false,
@@ -1099,8 +1149,12 @@ async function handleSdkEvent(
       // `tool.execute` lançou → não há `tool_complete` event nem `ToolCall`
       // payload completo a emitir → não conta para `done.totals.toolCalls`.
       // `errorEmitted: true` mantém-se: consumer já recebeu `tool_error`.
+      // CodeRabbit Iter 1 fix #2: `toolUseSeen: true` — `tool_result` com
+      // o erro está enfileirado e tem de ser injectado no próximo turno
+      // para o modelo poder reagir à falha (e.g., tentar outra tool).
       return {
         events,
+        toolUseSeen: true,
         toolUseProcessed: false,
         errorEmitted: true,
         fatalError: false,
@@ -1128,6 +1182,7 @@ async function handleSdkEvent(
 
     return {
       events,
+      toolUseSeen: true,
       toolUseProcessed: true,
       errorEmitted: false,
       fatalError: false,
@@ -1138,6 +1193,7 @@ async function handleSdkEvent(
   if (event.type === 'done') {
     return {
       events,
+      toolUseSeen: false,
       toolUseProcessed: false,
       tokenDeltas: {
         inputTokens: event.inputTokens,
@@ -1158,6 +1214,7 @@ async function handleSdkEvent(
     });
     return {
       events,
+      toolUseSeen: false,
       toolUseProcessed: false,
       errorEmitted: true,
       fatalError: true,
@@ -1168,6 +1225,7 @@ async function handleSdkEvent(
   // tool_result não é emitido pelo provider — defensive no-op.
   return {
     events,
+    toolUseSeen: false,
     toolUseProcessed: false,
     errorEmitted: false,
     fatalError: false,
