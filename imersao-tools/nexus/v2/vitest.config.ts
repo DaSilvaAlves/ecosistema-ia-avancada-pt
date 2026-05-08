@@ -31,6 +31,10 @@ export default defineConfig({
         'components/chat/ToolCard.tsx',
         'components/chat/UndoToast.tsx',
         'components/chat/InputBox.tsx',
+        // Story 1.9 Iter 2 — fixes em MessageList (Major #2 toolCallId) e
+        // ChatPanel (Major #1 dedup, Minor #4 error handling)
+        'components/chat/MessageList.tsx',
+        'components/chat/ChatPanel.tsx',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)
