@@ -189,3 +189,55 @@ export const LLMStreamEventSchema = z.discriminatedUnion('type', [
 export type ClassificationResult = z.infer<typeof ClassificationResultSchema>;
 export type LLMMessage = z.infer<typeof LLMMessageSchema>;
 export type LLMStreamEvent = z.infer<typeof LLMStreamEventSchema>;
+
+/**
+ * Story 1.7 — Undo schemas (storage 30s + endpoint reverse).
+ *
+ * Trace canónico:
+ * - PRD §6.1 FR6 (linha 126) — "Botão undo (toast 30s) reverte última acção do agente"
+ * - PRD §10 linha 418 — "1.7 Undo mechanism (storage 30s + endpoint reverse)"
+ * - Epic 1 AC4 (PRD §10 linha 427) — "Undo reverte última operação dentro de 30s; após 30s não é possível"
+ * - Architecture v2 §3 linha 130 — `lib/agent/undo.ts`
+ * - Architecture v2 §6.5 linhas 538-546 — KV namespace pattern (Story 1.7 introduz `nexus:undo:run:<runId>`)
+ *
+ * Adicionados ao ficheiro existente sem apagar Stories 1.1/1.2/1.5/1.6 — fonte canónica
+ * arch §6.1 + §7. Consumidos por `lib/agent/undo.ts` e `app/api/agent/undo/route.ts`.
+ *
+ * RESOLVED-1 (Architect Aria 08/05/2026): convenção canonical Zod (mesmo pattern
+ * Stories 1.1+1.5+1.6) com mensagens PT-PT. NÃO usar `@vercel/kv` directamente
+ * neste schema — `UndoEntry` é payload puro, KV adapter mete-o em `set()`.
+ */
+
+/**
+ * Payload persistido em `nexus:undo:run:<runId>` durante a janela de 30s.
+ *
+ * Reusa `ToolCallSchema` (Story 1.1) — mesma forma que `AgentRun.toolCalls`
+ * para o reverse loop poder iterar `toolCalls` em ordem inversa e chamar
+ * `toolRegistry.get(toolCall.toolName).reverse(args, result, ctx)`.
+ *
+ * Campo `expiresAt` é redundante face a KV `ex: 30` mas é defense-in-depth
+ * (RESOLVED-2 Architect): Upstash Redis TTL é precisão de 1s, não ms; clock
+ * skew Edge regions é tipicamente <1s mas pode existir. Endpoint guard
+ * `entry.expiresAt < Date.now()` fecha a race window de ~1s sem custo extra.
+ */
+export const UndoEntrySchema = z.object({
+  runId: z.string().uuid('runId deve ser UUID válido'),
+  timestamp: z.number().int().positive('timestamp deve ser epoch ms positivo'),
+  toolCalls: z.array(ToolCallSchema),
+  expiresAt: z.number().int().positive('expiresAt deve ser epoch ms positivo'),
+});
+
+/**
+ * Body schema do endpoint `POST /api/agent/undo`.
+ *
+ * `runId` é o único campo necessário — endpoint lookup via
+ * `getUndoEntry(runId, kv)` e reverte todos os `toolCalls` em ordem reversa
+ * (RESOLVED-4 Architect: "última operação" = último AgentRun, multi-tool).
+ */
+export const UndoRequestSchema = z.object({
+  runId: z.string().uuid('runId deve ser UUID válido'),
+});
+
+export type UndoEntry = z.infer<typeof UndoEntrySchema>;
+export type UndoRequest = z.infer<typeof UndoRequestSchema>;
+export type ToolCall = z.infer<typeof ToolCallSchema>;
