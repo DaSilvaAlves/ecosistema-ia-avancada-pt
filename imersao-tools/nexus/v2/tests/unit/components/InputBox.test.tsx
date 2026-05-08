@@ -15,7 +15,7 @@ describe('InputBox', () => {
   it('chama onSend ao pressionar Enter', () => {
     const onSend = vi.fn();
     render(<InputBox onSend={onSend} />);
-    const textarea = screen.getByRole('textbox', { name: /mensagem/i });
+    const textarea = screen.getByRole('textbox', { name: /prompt/i });
     fireEvent.change(textarea, { target: { value: 'hello' } });
     fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
     expect(onSend).toHaveBeenCalledWith('hello');
@@ -24,7 +24,7 @@ describe('InputBox', () => {
   it('NÃO chama onSend ao pressionar Shift+Enter (nova linha)', () => {
     const onSend = vi.fn();
     render(<InputBox onSend={onSend} />);
-    const textarea = screen.getByRole('textbox', { name: /mensagem/i });
+    const textarea = screen.getByRole('textbox', { name: /prompt/i });
     fireEvent.change(textarea, { target: { value: 'multi\nline' } });
     fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: true });
     expect(onSend).not.toHaveBeenCalled();
@@ -33,7 +33,7 @@ describe('InputBox', () => {
   it('NÃO chama onSend com texto vazio', () => {
     const onSend = vi.fn();
     render(<InputBox onSend={onSend} />);
-    const textarea = screen.getByRole('textbox', { name: /mensagem/i });
+    const textarea = screen.getByRole('textbox', { name: /prompt/i });
     fireEvent.keyDown(textarea, { key: 'Enter' });
     expect(onSend).not.toHaveBeenCalled();
   });
