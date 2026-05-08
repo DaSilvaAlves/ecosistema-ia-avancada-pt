@@ -638,6 +638,39 @@ export const anthropicHandlers = [
       });
     }
 
+    // ── Story 1.6 — Classifier responses para gate de preview ─────────────
+    //
+    // `MOCK_EXECUTOR_LOW_CONFIDENCE` — classifier retorna `confidence: { tasks: 0.55 }`
+    // para activar o gate por baixa confiança. Test regista tool com domain='tasks'.
+    //
+    // `MOCK_EXECUTOR_REQUIRES_PREVIEW` — classifier retorna confidence normal
+    // (>= 0.7); o gate é activado pelo flag `requiresPreview: true` da tool
+    // registada pelo test. Tools `meta` (sempre incluídas) com domain != 'tasks'
+    // não passam para o gate-by-confidence (`hasConfidenceBelowThreshold` retorna
+    // false para domains ausentes do mapa).
+    //
+    // `MOCK_EXECUTOR_BOTH_GATES` — confidence < 0.7 E tool com requiresPreview=true.
+    if (!body.stream && userMsgText.includes('MOCK_EXECUTOR_LOW_CONFIDENCE')) {
+      return classifierResponse({
+        intents: ['tasks'],
+        confidence: { tasks: 0.55 },
+      });
+    }
+
+    if (!body.stream && userMsgText.includes('MOCK_EXECUTOR_REQUIRES_PREVIEW')) {
+      return classifierResponse({
+        intents: ['tasks'],
+        confidence: { tasks: 0.92 },
+      });
+    }
+
+    if (!body.stream && userMsgText.includes('MOCK_EXECUTOR_BOTH_GATES')) {
+      return classifierResponse({
+        intents: ['tasks'],
+        confidence: { tasks: 0.45 },
+      });
+    }
+
     if (!body.stream && userMsgText.includes('MOCK_EXECUTOR_TEXT_ONLY')) {
       // Text-only: empty intents → registry vazio → Sonnet só gera texto
       return classifierResponse({ intents: [], confidence: {} });
@@ -864,6 +897,56 @@ export const anthropicHandlers = [
             'cache-control': 'no-cache',
           },
         });
+      }
+
+      // ── Story 1.6 — Executor SSE streams para gate de preview ─────────────
+      //
+      // Cada magic string tem um par `(turn 1 = tool_use, turn 2 = end_turn)`.
+      // O nome da tool e args vêm dos tests via tool registada — o handler
+      // emite o nome canónico `tool_preview` (que o test regista com config
+      // adequada: domain='tasks' para LOW_CONFIDENCE/BOTH; requiresPreview
+      // para REQUIRES_PREVIEW/BOTH).
+      if (
+        userMsgText.includes('MOCK_EXECUTOR_LOW_CONFIDENCE') ||
+        userMsgText.includes('MOCK_EXECUTOR_REQUIRES_PREVIEW') ||
+        userMsgText.includes('MOCK_EXECUTOR_BOTH_GATES')
+      ) {
+        if (!isFollowUp) {
+          return new HttpResponse(
+            buildExecutorStream(body.model, {
+              toolUses: [
+                {
+                  id: 'toolu_preview_01',
+                  name: 'tool_preview',
+                  argsJson: '{"titulo":"comprar pão"}',
+                },
+              ],
+              stopReason: 'tool_use',
+              inputTokens: 28,
+              outputTokens: 14,
+            }),
+            {
+              headers: {
+                'content-type': 'text/event-stream',
+                'cache-control': 'no-cache',
+              },
+            }
+          );
+        }
+        return new HttpResponse(
+          buildExecutorStream(body.model, {
+            text: 'Acção concluída.',
+            stopReason: 'end_turn',
+            inputTokens: 55,
+            outputTokens: 6,
+          }),
+          {
+            headers: {
+              'content-type': 'text/event-stream',
+              'cache-control': 'no-cache',
+            },
+          }
+        );
       }
 
       if (userMsgText.includes('MOCK_EXECUTOR_INFINITE_LOOP') || userText.includes('MOCK_EXECUTOR_INFINITE_LOOP')) {
