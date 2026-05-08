@@ -131,6 +131,10 @@ export async function POST(req: Request): Promise<Response> {
 
   // 3. Construir KvConfirmationProvider — apenas `kv`, runId via método
   // (interface canónica Story 1.6 L112-114). UMA instância por request.
+  // TODO Story 1.9+: alinhar interface VercelKV interna (lib/agent/tools/types.ts)
+  // com o tipo real de @vercel/kv para eliminar `as unknown as VercelKV`.
+  // CR Iter 1 nitpick #3 — adiado: VercelKV é usado por executor/undo/etc.,
+  // refactor sai do scope desta story.
   const kvProvider = new KvConfirmationProvider(kv as unknown as VercelKV);
 
   // Telemetria de início (NFR11): hash em vez de prompt cru.

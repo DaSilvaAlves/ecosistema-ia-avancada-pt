@@ -1,7 +1,7 @@
 import { kv } from '@vercel/kv';
 import {
   CONFIRM_TTL_SECONDS,
-  KV_CONFIRM_NAMESPACE,
+  kvConfirmKey,
 } from '@/lib/agent/kv-confirmation-provider';
 import { ConfirmRequestSchema } from '@/lib/agent/schemas';
 import { getSession } from '@/lib/auth/session';
@@ -113,9 +113,10 @@ export async function POST(req: Request): Promise<Response> {
 
   // 3. Escrever em KV com TTL CONFIRM_TTL_SECONDS (60s).
   // Chave canónica `nexus:agent:confirm:<runId>:<toolName>` — alinhada com
-  // `KvConfirmationProvider.requestConfirmation` que faz polling em
-  // `${KV_CONFIRM_NAMESPACE}:${runId}:${toolName}`.
-  const key = `${KV_CONFIRM_NAMESPACE}:${runId}:${toolName}`;
+  // `KvConfirmationProvider.requestConfirmation` que faz polling na mesma
+  // chave. CR Iter 1 fix: usar `kvConfirmKey()` helper exportada do provider
+  // (single source of truth — eliminou drift risk de template literal duplo).
+  const key = kvConfirmKey(runId, toolName);
   try {
     await kv.set(key, action, { ex: CONFIRM_TTL_SECONDS });
   } catch (e) {

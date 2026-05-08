@@ -40,7 +40,7 @@ Story 1.8 (`POST /api/agent/prompt` + `KvConfirmationProvider` + `POST /api/agen
 
 ### Quality Gates 5/5 PASS
 
-```
+```text
 npm run lint          → zero novos warnings
 npm run typecheck     → exit 0
 npm run test:unit     → 264 testes PASS (224 → 264, +40 novos)

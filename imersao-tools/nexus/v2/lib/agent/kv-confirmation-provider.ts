@@ -71,8 +71,12 @@ export const KV_CONFIRM_NAMESPACE = 'nexus:agent:confirm';
  * Usa dois separadores `:` para alinhamento com pattern arch §6.5; o
  * `toolName` é uma string controlada pelo registry (Story 1.3) — não
  * contém caracteres exóticos que requeiram encoding.
+ *
+ * Exportada (CR Iter 1 fix) para eliminar drift risk: `app/api/agent/confirm`
+ * usa esta helper em vez de duplicar o template literal. Single source of
+ * truth do formato da chave.
  */
-function kvConfirmKey(runId: string, toolName: string): string {
+export function kvConfirmKey(runId: string, toolName: string): string {
   return `${KV_CONFIRM_NAMESPACE}:${runId}:${toolName}`;
 }
 
@@ -135,7 +139,28 @@ export class KvConfirmationProvider implements ConfirmationProvider {
     const deadline = Date.now() + CONFIRM_TTL_SECONDS * 1000;
 
     while (Date.now() < deadline) {
-      const value = await this.kvClient.get<string>(key);
+      // CR Iter 1 fix: try/catch defensivo em kvClient.get. Erros transientes
+      // de leitura KV (rede, throttling Upstash) NÃO devem escapar — safe
+      // default é 'cancel' (não executar a tool). Cleanup best-effort também
+      // protegido. TTL natural (CONFIRM_TTL_SECONDS) limpa entradas perdidas.
+      let value: string | null;
+      try {
+        value = await this.kvClient.get<string>(key);
+      } catch (e) {
+        kvConfirmLogger.error('KV read failed', {
+          runId,
+          toolName,
+          error: e instanceof Error ? e.message : String(e),
+        });
+        // Best-effort cleanup. NÃO bloqueia retorno em caso de falha.
+        try {
+          await this.kvClient.del(key);
+        } catch {
+          // Silencioso: KV down em get → del provavelmente também falha.
+          // TTL natural limpa.
+        }
+        return 'cancel';
+      }
       if (value === 'confirm' || value === 'cancel') {
         // Cleanup imediato. Best-effort: falha de del NÃO bloqueia retorno
         // (TTL natural limpa em CONFIRM_TTL_SECONDS).

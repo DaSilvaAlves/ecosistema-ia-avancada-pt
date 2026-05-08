@@ -220,3 +220,44 @@ describe('KvConfirmationProvider.requestConfirmation — timeout', () => {
     errorSpy.mockRestore();
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// requestConfirmation — defensive try/catch em kvClient.get (CR Iter 1 fix)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('KvConfirmationProvider.requestConfirmation — defensive errors', () => {
+  it('retorna "cancel" + log error quando kvClient.get throws (transient KV error)', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    kvMock.get.mockRejectedValueOnce(new Error('Upstash throttled'));
+    // del é best-effort — pode ser invocado, irrelevante neste assert principal.
+    const provider = new KvConfirmationProvider(kvClient);
+
+    const result = await provider.requestConfirmation(VALID_RUN_ID, TOOL_NAME);
+
+    expect(result).toBe('cancel');
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('KV read failed'),
+      expect.objectContaining({
+        runId: VALID_RUN_ID,
+        toolName: TOOL_NAME,
+        error: 'Upstash throttled',
+      })
+    );
+
+    errorSpy.mockRestore();
+  });
+
+  it('NÃO escapa erro mesmo se cleanup del também falhar (best-effort)', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    kvMock.get.mockRejectedValueOnce(new Error('KV down'));
+    kvMock.del.mockRejectedValueOnce(new Error('KV still down'));
+    const provider = new KvConfirmationProvider(kvClient);
+
+    // Não throw — devolve 'cancel' silenciosamente mesmo com double failure.
+    const result = await provider.requestConfirmation(VALID_RUN_ID, TOOL_NAME);
+
+    expect(result).toBe('cancel');
+
+    errorSpy.mockRestore();
+  });
+});
