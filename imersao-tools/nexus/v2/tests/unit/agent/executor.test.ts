@@ -4,6 +4,26 @@ import { resolve } from 'node:path';
 import { z } from 'zod';
 import { http } from 'msw';
 import { server } from '@/tests/mocks/server';
+
+// Story 1.7 — mock global do `@vercel/kv` singleton. Sem este mock, qualquer
+// teste que execute `runAgent` lança "Missing required environment variables
+// KV_REST_API_URL and KV_REST_API_TOKEN" porque o executor agora importa o
+// singleton real (Story 1.5 placeholder `null as unknown as VercelKV` foi
+// substituído na Story 1.7). RESOLVED-1 (Architect Aria): `vi.mock` directo
+// é o pattern aprovado (alinhado Stories 1.4-1.6 com Anthropic). Tests
+// específicos de undo registam comportamento adicional via `kvMock.set/get/del`
+// — ver describe block "Story 1.7" no fim deste ficheiro.
+vi.mock('@vercel/kv', () => ({
+  kv: {
+    set: vi.fn().mockResolvedValue('OK'),
+    get: vi.fn().mockResolvedValue(null),
+    del: vi.fn().mockResolvedValue(0),
+  },
+}));
+
+// Story 1.7 — import necessário para os tests `Story 1.7 undo registration`
+// poderem aceder ao mock do `kv` singleton via `vi.mocked(kv.set/get/del)`.
+import { kv } from '@vercel/kv';
 import {
   MAX_TOOL_ITERATIONS,
   PREVIEW_CONFIDENCE_THRESHOLD,
@@ -445,9 +465,11 @@ describe('runAgent — Edge runtime safety (AC12)', () => {
     const runtimeDbImport = /^\s*import\s+(?!type\s)[^;]*from\s+['"]@\/lib\/db\/client['"]/m;
     expect(source).not.toMatch(runtimeDbImport);
 
-    // Zero imports de @vercel/kv (Story 1.7)
+    // Story 1.7: import runtime de `@vercel/kv` é PERMITIDO (Edge-safe — Upstash
+    // REST API via fetch). Pre-Story 1.7 este teste rejeitava qualquer import.
+    // Agora valida apenas que o import existe (KV é necessário para undo).
     const vercelKvImport = /^\s*import\s+(?!type\s)[^;]*from\s+['"]@vercel\/kv['"]/m;
-    expect(source).not.toMatch(vercelKvImport);
+    expect(source).toMatch(vercelKvImport);
 
     // Zero Node-only APIs
     expect(source).not.toMatch(/from\s+['"]fs['"]/);
@@ -457,7 +479,7 @@ describe('runAgent — Edge runtime safety (AC12)', () => {
     expect(source).not.toMatch(/createHmac\s*\(/);
   });
 
-  it('ctx.db e ctx.kv são null durante execução de tool', async () => {
+  it('ctx.db é null e ctx.kv é o singleton @vercel/kv durante execução de tool', async () => {
     let capturedDb: unknown = 'unset';
     let capturedKv: unknown = 'unset';
     let capturedUserId: unknown = 'unset';
@@ -480,8 +502,16 @@ describe('runAgent — Edge runtime safety (AC12)', () => {
 
     await collectEvents(MOCK_PROMPTS.oneToolUse);
 
+    // Story 1.7: db continua null (RESOLVED-2 Story 1.5 — Dexie é client-side),
+    // mas kv é agora o singleton real (mockado neste test file). Tool tem
+    // `reversible: false` portanto `registerUndoEntry` não é chamado neste run.
     expect(capturedDb).toBeNull();
-    expect(capturedKv).toBeNull();
+    expect(capturedKv).toBeDefined();
+    expect(capturedKv).not.toBeNull();
+    // Singleton do `@vercel/kv` (real ou mock) expõe pelo menos get/set/del
+    expect(typeof (capturedKv as { set?: unknown }).set).toBe('function');
+    expect(typeof (capturedKv as { get?: unknown }).get).toBe('function');
+    expect(typeof (capturedKv as { del?: unknown }).del).toBe('function');
     expect(capturedUserId).toBe('eurico');
   });
 });
@@ -1289,5 +1319,158 @@ describe('runAgent — CR Iter 1 fix #2: tool_result injectado em error branches
     expect(done.status).toBe('partial');
     expect(done.previewCount).toBe(1);
     expect(done.totals.toolCalls).toBe(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Story 1.7 — undo registration
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('runAgent — Story 1.7 undo registration', () => {
+  // Acedemos ao mock global declarado no topo (vi.mock('@vercel/kv'))
+  const kvMockSet = vi.mocked((kv as unknown as { set: ReturnType<typeof vi.fn> }).set);
+  const kvMockGet = vi.mocked((kv as unknown as { get: ReturnType<typeof vi.fn> }).get);
+  const kvMockDel = vi.mocked((kv as unknown as { del: ReturnType<typeof vi.fn> }).del);
+
+  beforeEach(() => {
+    kvMockSet.mockClear();
+    kvMockGet.mockClear();
+    kvMockDel.mockClear();
+    kvMockSet.mockResolvedValue('OK');
+    kvMockGet.mockResolvedValue(null);
+    kvMockDel.mockResolvedValue(0);
+  });
+
+  it('regista undo entry e emite undo_registered após tool reversível bem-sucedida', async () => {
+    const tool = defineTool({
+      name: 'tool_test_one',
+      description: 'Tool reversível de teste',
+      domain: 'meta',
+      argsSchema: z.object({ x: z.string() }),
+      resultSchema: z.object({ ok: z.boolean(), echo: z.string() }),
+      requiresPreview: false,
+      reversible: true,
+      execute: async (args: { x: string }) => ({ ok: true, echo: args.x }),
+      reverse: async () => undefined,
+    });
+    toolRegistry.register(tool as ToolDefinition);
+
+    const events = await collectEvents(MOCK_PROMPTS.oneToolUse);
+
+    // kv.set chamado com chave canónica + ex: 30
+    expect(kvMockSet).toHaveBeenCalledTimes(1);
+    const [key, value, opts] = kvMockSet.mock.calls[0];
+    expect(key).toMatch(/^nexus:undo:run:[0-9a-f-]{36}$/);
+    expect(opts).toEqual({ ex: 30 });
+    expect(value).toMatchObject({
+      runId: expect.any(String),
+      toolCalls: [
+        {
+          toolName: 'tool_test_one',
+          args: { x: 'hello' },
+          result: { ok: true, echo: 'hello' },
+          durationMs: expect.any(Number),
+          reverted: false,
+        },
+      ],
+    });
+
+    // undo_registered event emitido ANTES de done
+    const undoRegistered = events.find((e) => e.type === 'undo_registered');
+    expect(undoRegistered).toBeDefined();
+    if (undoRegistered?.type !== 'undo_registered') throw new Error();
+    expect(undoRegistered.undoableToolCount).toBe(1);
+    expect(undoRegistered.expiresAt).toBeGreaterThan(Date.now());
+
+    const undoIdx = events.findIndex((e) => e.type === 'undo_registered');
+    const doneIdx = events.findIndex((e) => e.type === 'done');
+    expect(undoIdx).toBeLessThan(doneIdx);
+  });
+
+  it('NÃO regista undo quando tool tem reversible: false', async () => {
+    const tool = defineTool({
+      name: 'tool_test_one',
+      description: 'Tool não reversível',
+      domain: 'meta',
+      argsSchema: z.object({ x: z.string() }),
+      resultSchema: z.object({ ok: z.boolean() }),
+      requiresPreview: false,
+      reversible: false,
+      execute: async () => ({ ok: true }),
+    });
+    toolRegistry.register(tool as ToolDefinition);
+
+    const events = await collectEvents(MOCK_PROMPTS.oneToolUse);
+
+    expect(kvMockSet).not.toHaveBeenCalled();
+    expect(events.find((e) => e.type === 'undo_registered')).toBeUndefined();
+
+    const done = events.at(-1);
+    if (done?.type !== 'done') throw new Error();
+    expect(done.status).toBe('success');
+  });
+
+  it('NÃO regista undo quando done.status === failed (classifier falha)', async () => {
+    // Classifier falha → status 'failed' → NÃO regista undo
+    // (mesmo que houvesse tool reversível registada — não chega ao loop)
+    const tool = defineTool({
+      name: 'tool_test_one',
+      description: 'Tool reversível',
+      domain: 'meta',
+      argsSchema: z.object({ x: z.string() }),
+      resultSchema: z.object({ ok: z.boolean() }),
+      requiresPreview: false,
+      reversible: true,
+      execute: async () => ({ ok: true }),
+      reverse: async () => undefined,
+    });
+    toolRegistry.register(tool as ToolDefinition);
+
+    const { events } = await collectEventsExpectingThrow(
+      MOCK_PROMPTS.classifierFail
+    );
+
+    expect(kvMockSet).not.toHaveBeenCalled();
+    expect(events.find((e) => e.type === 'undo_registered')).toBeUndefined();
+
+    const done = events.find((e) => e.type === 'done');
+    if (done?.type !== 'done') throw new Error();
+    expect(done.status).toBe('failed');
+  });
+
+  it('emite done mesmo quando registerUndoEntry lança (best-effort)', async () => {
+    kvMockSet.mockRejectedValueOnce(new Error('KV connection refused'));
+
+    const tool = defineTool({
+      name: 'tool_test_one',
+      description: 'Tool reversível',
+      domain: 'meta',
+      argsSchema: z.object({ x: z.string() }),
+      resultSchema: z.object({ ok: z.boolean(), echo: z.string() }),
+      requiresPreview: false,
+      reversible: true,
+      execute: async (args: { x: string }) => ({ ok: true, echo: args.x }),
+      reverse: async () => undefined,
+    });
+    toolRegistry.register(tool as ToolDefinition);
+
+    const events = await collectEvents(MOCK_PROMPTS.oneToolUse);
+
+    // tool_error com toolName 'undo_register' emitido (observability)
+    const undoErr = events.find(
+      (e) => e.type === 'tool_error' && e.toolName === 'undo_register'
+    );
+    expect(undoErr).toBeDefined();
+    if (undoErr?.type !== 'tool_error') throw new Error();
+    expect(undoErr.error).toMatch(/KV connection refused/);
+
+    // undo_registered NÃO emitido (registerUndoEntry falhou)
+    expect(events.find((e) => e.type === 'undo_registered')).toBeUndefined();
+
+    // done EMITIDO (best-effort: KV down não bloqueia o run)
+    const done = events.at(-1);
+    if (done?.type !== 'done') throw new Error();
+    expect(done.status).toBe('success'); // tool executou OK; só undo registration falhou
+    expect(done.totals.toolCalls).toBe(1);
   });
 });
