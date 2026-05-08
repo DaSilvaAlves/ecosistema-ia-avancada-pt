@@ -21,7 +21,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['lib/agent/**', 'lib/db/**', 'lib/shared/**'],
+      include: [
+        'lib/agent/**',
+        'lib/db/**',
+        'lib/shared/**',
+        'app/api/agent/**',
+      ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)
       thresholds: {
