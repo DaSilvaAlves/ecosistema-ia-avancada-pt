@@ -938,6 +938,13 @@ describe('runAgent — Story 1.6: gate activado por ambos os triggers (AC3)', ()
     expect(previewReq.reason).toBe('both');
     expect(previewReq.confidence).toBe(0.45);
     expect(previewReq.domain).toBe('tasks');
+
+    // AC5 + AC4: previewCount incrementa uma vez por gate; auto-confirm default
+    // produz status=success e preview executado com sucesso (sem provider).
+    const done = events.at(-1);
+    if (done?.type !== 'done') throw new Error();
+    expect(done.previewCount).toBe(1);
+    expect(done.status).toBe('success');
   });
 });
 
@@ -1045,6 +1052,10 @@ describe('runAgent — Story 1.6: confirmationProvider mock confirm (AC3)', () =
     expect(previewConfirmed.action).toBe('confirm');
 
     expect(executed).toBe(true);
+
+    // Simetria com cancel test (L1019): valida que provider foi consultado
+    // exactamente uma vez antes do tool.execute().
+    expect(provider.requestConfirmation).toHaveBeenCalledTimes(1);
 
     const done = events.at(-1);
     if (done?.type !== 'done') throw new Error();
