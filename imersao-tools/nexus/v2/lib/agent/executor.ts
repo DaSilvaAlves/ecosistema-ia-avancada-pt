@@ -1,3 +1,4 @@
+import { kv } from '@vercel/kv';
 import { classifyPrompt, type ClassifyOpts } from '@/lib/agent/classifier';
 import { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL } from '@/lib/agent/models';
 import { getExecutor } from '@/lib/agent/providers/factory';
@@ -6,6 +7,7 @@ import type {
   ContentBlock,
   LLMMessage,
   LLMStreamEvent,
+  ToolCall,
 } from '@/lib/agent/schemas';
 import type {
   ExecutionContext,
@@ -15,6 +17,7 @@ import type {
   VercelKV,
 } from '@/lib/agent/tools/types';
 import { toolRegistry } from '@/lib/agent/tools/registry';
+import { registerUndoEntry, UNDO_TTL_SECONDS } from '@/lib/agent/undo';
 import type { NexusDB } from '@/lib/db/client';
 
 /**
@@ -213,6 +216,25 @@ export type ExecutorSSEEvent =
       toolName: string;
       action: 'confirm' | 'cancel';
     }
+  /**
+   * Story 1.7 — undo entry registado em KV (TTL 30s) após execução de N tools
+   * reversíveis bem-sucedidas no run. Emitido APENAS quando
+   * `reversibleToolCalls.length > 0` E `registerUndoEntry` resolveu sem erro.
+   * Emitido ANTES do evento `done` para permitir ao client (Story 1.9)
+   * preparar o toast undo com countdown.
+   *
+   * `undoableToolCount` reflecte tools reversíveis bem-sucedidas (não inclui
+   * tools com `reversible: false` nem tools que falharam em `tool.execute()`).
+   * `expiresAt` é epoch ms — `Date.now() + UNDO_TTL_SECONDS * 1000`.
+   *
+   * Trace: PRD §6.1 FR6 + Epic 1 AC4 + arch §8 linha 703 (toast undo).
+   */
+  | {
+      type: 'undo_registered';
+      runId: string;
+      undoableToolCount: number;
+      expiresAt: number;
+    }
   | {
       type: 'done';
       runId: string;
@@ -364,8 +386,12 @@ const executorLogger: Logger = {
  *
  * - `db = null as unknown as NexusDB` — Edge runtime NÃO tem IndexedDB.
  *   Stories 2-7 que precisem de Dexie devolvem command no result (cliente executa).
- * - `kv = null as unknown as VercelKV` — Story 1.7 introduz `@vercel/kv` real
- *   para undo mechanism (TTL 30s); pattern Zod canonical (ADR-5).
+ * - `kv` — singleton real `@vercel/kv` (Story 1.7 substituiu o placeholder
+ *   `null as unknown as VercelKV`). Cliente Upstash Redis para undo window
+ *   (TTL 30s) e Stories 6.x cache OAuth. Type-cast `as unknown as VercelKV`
+ *   alinha com a interface mínima local (apenas `get`/`set`/`del`) — o
+ *   singleton real do `@vercel/kv` expõe muito mais mas Story 1.7 só usa este
+ *   subset (RESOLVED-1: `vi.mock('@vercel/kv')` directo nos tests).
  * - `userId = 'eurico'` — single-user constraint C1 da arch.
  * - `fetch = globalThis.fetch` — Edge + Node compatible.
  * - `logger` — `executorLogger` com guard NFR11 implícito.
@@ -376,8 +402,7 @@ function buildExecutionContext(runId: string): ExecutionContext {
     userId: 'eurico',
     /** @todo Stories 2-7 — tools que precisem de Dexie devem devolver "commands" no result (RESOLVED-2 da Story 1.5); persistência Dexie é client-only conforme arch §8 line 689 + ADR-2 */
     db: null as unknown as NexusDB,
-    /** @todo Story 1.7 — substituir por cliente Vercel KV real (@vercel/kv); tipagem segue pattern Zod canonical (ADR-5) tal como Tool Registry da Story 1.3 */
-    kv: null as unknown as VercelKV,
+    kv: kv as unknown as VercelKV,
     fetch: globalThis.fetch,
     logger: executorLogger,
     runId,
@@ -544,6 +569,49 @@ export async function* runAgent(
     } else if (loopResult.hadError) {
       status = 'partial';
     }
+
+    // Story 1.7 — registar undo entry antes do `done` (apenas se houve tools
+    // reversíveis bem-sucedidas E status não é 'failed'). Best-effort (AC4):
+    // KV down ou network error NÃO bloqueia `done` — operação principal já
+    // foi feita; undo é nice-to-have. Falha emite `tool_error toolName:
+    // 'undo_register'` para observability + omite `undo_registered`.
+    //
+    // RESOLVED-4 (Architect): "última operação" = último AgentRun (multi-tool);
+    // todos os toolCalls reversíveis revertem em ordem reversa via endpoint.
+    if (
+      status !== 'failed' &&
+      loopResult.reversibleToolCalls.length > 0
+    ) {
+      const expiresAt = Date.now() + UNDO_TTL_SECONDS * 1000;
+      try {
+        await registerUndoEntry(
+          runId,
+          loopResult.reversibleToolCalls,
+          ctx.kv
+        );
+        yield {
+          type: 'undo_registered',
+          runId,
+          undoableToolCount: loopResult.reversibleToolCalls.length,
+          expiresAt,
+        };
+      } catch (e) {
+        // Best-effort: KV down não falha o run. Logar para observability
+        // (NFR Observability arch §12) e emitir `tool_error` para o cliente
+        // saber que undo NÃO está disponível neste run específico (UI Story 1.9
+        // pode esconder o toast).
+        executorLogger.error('undo register failed', {
+          runId,
+          error: errorMessage(e),
+        });
+        yield {
+          type: 'tool_error',
+          runId,
+          toolName: 'undo_register',
+          error: errorMessage(e),
+        };
+      }
+    }
   } catch (e) {
     // Classifier ou erro inesperado fora do loop. Loop interno apanha SDK errors
     // e yielda tool_error sem re-throw (status='partial' via hadError flag).
@@ -616,6 +684,19 @@ interface LoopResult {
    * confirm/cancel/auto-confirm). Propagado para o evento `done.previewCount`.
    */
   previewCount: number;
+  /**
+   * Story 1.7 — array de `ToolCall` payloads completos para tools reversíveis
+   * bem-sucedidas neste run, em ordem de execução. Usado pelo caller para
+   * `registerUndoEntry(runId, reversibleToolCalls, ctx.kv)` antes do evento
+   * `done`. RESOLVED-4 (Architect): "última operação" = último AgentRun
+   * (multi-tool); undo reverte TODOS os tool calls em ordem reversa.
+   *
+   * Apenas tools com `reversible: true` E `tool.execute()` bem-sucedida
+   * entram aqui — invariant violations (`reverse === undefined` apesar de
+   * `reversible: true`) são detectadas pelo endpoint `/api/agent/undo` no
+   * loop de reverse, não na fase de registo.
+   */
+  reversibleToolCalls: ToolCall[];
 }
 
 interface LoopParams {
@@ -687,6 +768,10 @@ async function* toolCallingLoop(
   let hadFatalError = false;
   // Story 1.6 — counter de tools que passaram pelo gate de preview.
   let previewCount = 0;
+  // Story 1.7 — acumula `ToolCall` payloads para tools reversíveis bem-sucedidas
+  // (em ordem de execução). Caller (`runAgent`) chama `registerUndoEntry`
+  // antes do evento `done` quando este array tem >= 1 elemento.
+  const reversibleToolCalls: ToolCall[] = [];
 
   while (iterationCount < maxIterations) {
     iterationCount += 1;
@@ -760,6 +845,12 @@ async function* toolCallingLoop(
         // Story 1.6 — propaga preview gate counter
         if (handled.previewGated) {
           previewCount += 1;
+        }
+        // Story 1.7 — acumula tool calls reversíveis para registo de undo entry.
+        // Apenas tools com `reversible: true` E execute bem-sucedida fornecem
+        // este campo (ver `handleSdkEvent` happy path da branch `tool_use`).
+        if (handled.reversibleToolCall) {
+          reversibleToolCalls.push(handled.reversibleToolCall);
         }
       }
     } catch (e) {
@@ -855,6 +946,7 @@ async function* toolCallingLoop(
     hadError,
     hadFatalError,
     previewCount,
+    reversibleToolCalls,
   };
 }
 
@@ -892,6 +984,15 @@ interface SdkEventHandled {
    * propagar ao `done.previewCount`.
    */
   previewGated: boolean;
+  /**
+   * Story 1.7 — `ToolCall` payload completo quando uma tool reversível foi
+   * executada com sucesso. Caller acumula em `reversibleToolCalls` para
+   * `registerUndoEntry`. `undefined` se: (a) `tool.reversible === false`,
+   * (b) `tool.execute()` falhou, (c) preview cancel, (d) tool not registered,
+   * (e) args inválidos. Garantia: invariante `reversibleToolCall?.reverted === false`
+   * — é payload acabado de criar pelo executor, não tocou em Dexie ainda.
+   */
+  reversibleToolCall?: ToolCall;
 }
 
 /**
@@ -1180,6 +1281,22 @@ async function handleSdkEvent(
       toolCallId: event.id,
     });
 
+    // Story 1.7 — se a tool é reversível, criar ToolCall payload para undo entry.
+    // RESOLVED-4: undo reverte TODOS os tool calls do AgentRun em ordem reversa.
+    // Caller acumula estes em `reversibleToolCalls` e chama `registerUndoEntry`
+    // antes do evento `done`. Apenas tools com `reversible: true` E execute
+    // bem-sucedida entram aqui (qualquer erro mata este return cedo).
+    let reversibleToolCall: ToolCall | undefined;
+    if (tool.reversible) {
+      reversibleToolCall = {
+        toolName,
+        args: validatedArgs,
+        result,
+        durationMs,
+        reverted: false,
+      };
+    }
+
     return {
       events,
       toolUseSeen: true,
@@ -1187,6 +1304,7 @@ async function handleSdkEvent(
       errorEmitted: false,
       fatalError: false,
       previewGated,
+      reversibleToolCall,
     };
   }
 
