@@ -173,16 +173,26 @@ export type ExecutorSSEEvent =
       runId: string;
       classifierResult: ClassificationResult;
     }
-  | { type: 'tool_start'; runId: string; toolName: string; args: unknown }
+  /**
+   * Story 1.9 Iter 2 — `toolCallId` (opcional) propagado pelo executor a partir
+   * do `event.id` do SDK Anthropic, permitindo à UI distinguir múltiplas
+   * invocations da mesma tool no mesmo run (CodeRabbit Iter 1 Major #2).
+   *
+   * Opcional para retrocompat: events emitidos por código que não conhece o id
+   * (e.g., `tool_error` com `toolName: 'executor'`/'loop_guard'/'undo_register')
+   * omitem o campo, e a UI faz fallback para `toolName` como key.
+   */
+  | { type: 'tool_start'; runId: string; toolName: string; toolCallId?: string; args: unknown }
   | {
       type: 'tool_complete';
       runId: string;
       toolName: string;
+      toolCallId?: string;
       args: unknown;
       result: unknown;
       durationMs: number;
     }
-  | { type: 'tool_error'; runId: string; toolName: string; error: string }
+  | { type: 'tool_error'; runId: string; toolName: string; toolCallId?: string; error: string }
   | { type: 'text_delta'; runId: string; delta: string }
   /**
    * Story 1.6 — preview gate activado antes da execução de uma tool. Emitido
@@ -199,6 +209,7 @@ export type ExecutorSSEEvent =
       type: 'preview_request';
       runId: string;
       toolName: string;
+      toolCallId?: string;
       args: unknown;
       reason: 'low_confidence' | 'requires_preview' | 'both';
       confidence?: number;
@@ -214,6 +225,7 @@ export type ExecutorSSEEvent =
       type: 'preview_confirmed';
       runId: string;
       toolName: string;
+      toolCallId?: string;
       action: 'confirm' | 'cancel';
     }
   /**
@@ -1051,6 +1063,7 @@ async function handleSdkEvent(
         type: 'tool_error',
         runId: ctx.runId,
         toolName,
+        toolCallId: event.id,
         error: `Executor: tool "${toolName}" não registada`,
       });
       // Anthropic protocolo: precisamos injectar tool_result mesmo em erro
@@ -1087,6 +1100,7 @@ async function handleSdkEvent(
         type: 'tool_error',
         runId: ctx.runId,
         toolName,
+        toolCallId: event.id,
         error: `Executor: args inválidos para tool "${toolName}" — ${errorMessage(e)}`,
       });
       ctx.toolResultsToInject.push({
@@ -1115,6 +1129,7 @@ async function handleSdkEvent(
       type: 'tool_start',
       runId: ctx.runId,
       toolName,
+      toolCallId: event.id,
       args: event.input,
     });
 
@@ -1137,6 +1152,7 @@ async function handleSdkEvent(
         type: 'preview_request',
         runId: ctx.runId,
         toolName,
+        toolCallId: event.id,
         args: validatedArgs,
         reason: gateResult.reason,
         domain: tool.domain,
@@ -1164,6 +1180,7 @@ async function handleSdkEvent(
             type: 'tool_error',
             runId: ctx.runId,
             toolName,
+            toolCallId: event.id,
             error: `Executor: provider de confirmação falhou — ${errorMessage(e)}`,
           });
           ctx.toolResultsToInject.push({
@@ -1191,6 +1208,7 @@ async function handleSdkEvent(
         type: 'preview_confirmed',
         runId: ctx.runId,
         toolName,
+        toolCallId: event.id,
         action,
       });
 
@@ -1204,6 +1222,7 @@ async function handleSdkEvent(
           type: 'tool_error',
           runId: ctx.runId,
           toolName,
+          toolCallId: event.id,
           error: 'Cancelado pelo utilizador',
         });
         ctx.toolResultsToInject.push({
@@ -1238,6 +1257,7 @@ async function handleSdkEvent(
         type: 'tool_error',
         runId: ctx.runId,
         toolName,
+        toolCallId: event.id,
         error: `Executor: tool "${toolName}" falhou — ${errorMessage(e)}`,
       });
       ctx.toolResultsToInject.push({
@@ -1269,6 +1289,7 @@ async function handleSdkEvent(
       type: 'tool_complete',
       runId: ctx.runId,
       toolName,
+      toolCallId: event.id,
       args: event.input,
       result,
       durationMs,
