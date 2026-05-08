@@ -26,6 +26,11 @@ export default defineConfig({
         'lib/db/**',
         'lib/shared/**',
         'app/api/agent/**',
+        // Story 1.9 — UI consumer
+        'hooks/useAgentStream.ts',
+        'components/chat/ToolCard.tsx',
+        'components/chat/UndoToast.tsx',
+        'components/chat/InputBox.tsx',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)
