@@ -4,28 +4,63 @@ import { useEffect, useRef, useState, KeyboardEvent, ReactElement } from 'react'
 import { Mic, Paperclip, Send } from 'lucide-react';
 
 /**
- * Nexus v2 — InputBox (Story 0.4)
+ * Nexus v2 — InputBox / ChatInput (Story 0.4 + Story 1.9 AC6 + AC9)
  *
  * Textarea autosize sticky bottom. Atalhos: `/` foca, `↵` envia, `⇧↵` nova linha.
- * Botões 📎 (anexo, Story 1.x), 🎙️ (voz, Story 1.x), ⏎ (enviar).
+ * Botões 📎 (anexo, Story 1.x), 🎙️ (voz, Epic 7), ⏎ (enviar).
  *
- * Em Story 0.4, `onSend` é placeholder — Epic 1 liga ao agente real.
+ * Trace canónico:
+ * - Story 0.4 — base do componente (textarea autosize + atalhos + botões)
+ * - Story 1.9 AC6 — estados `streamingState` (`idle`/`streaming`/`preview-pending`),
+ *   placeholders contextuais, opacity 60% durante streaming, mic placeholder idle-only
+ * - Story 1.9 AC9 — `aria-disabled`, `aria-describedby`, `aria-label` específico
+ * - GAP-2 (PO Pax 08/05/2026) — `<Mic>` é placeholder visual idle-only;
+ *   funcionalidade voice completa fica para Epic 7 (FR77-80)
+ * - Front-end-spec §2.2 — tokens visuais (background blur, border)
+ * - Front-end-spec §4.4 estado `idle` do `VoiceModeButton`
+ *
+ * Story 1.9 estende a Story 0.4 com `streamingState` para o ChatPanel poder
+ * comunicar à UI o estado actual da agent stream sem múltiplas props booleanas.
+ * O `disabled` legacy continua a funcionar (retrocompat com testes Story 0.4).
  */
+
+/**
+ * Estados de input agent-aware. `idle` permite escrever; `streaming` desactiva
+ * com placeholder "A processar..."; `preview-pending` desactiva com mensagem
+ * indicando que há ToolCard a aguardar confirmação.
+ */
+export type InputBoxStreamingState = 'idle' | 'streaming' | 'preview-pending';
 
 interface InputBoxProps {
   onSend?: (text: string) => void;
+  /** Legacy — Story 0.4 — força disabled. `streamingState` é preferível em Story 1.9+. */
   disabled?: boolean;
   placeholder?: string;
+  /** Story 1.9 — estado da agent stream. Default `'idle'`. */
+  streamingState?: InputBoxStreamingState;
 }
 
 const MIN_HEIGHT = 64;
 const MAX_HEIGHT = 200;
 
+const STATE_PLACEHOLDERS: Record<InputBoxStreamingState, string> = {
+  idle: 'Escreve qualquer coisa — uma tarefa, despesa, lembrete... 3 acções numa só frase.',
+  streaming: 'A processar...',
+  'preview-pending': 'Confirma a acção acima antes de continuar',
+};
+
+const DESCRIBED_BY_ID = 'input-box-state-message';
+
 export function InputBox({
   onSend,
-  disabled = false,
-  placeholder = 'Escreve qualquer coisa — uma tarefa, despesa, lembrete... 3 acções numa só frase.',
+  disabled: disabledProp = false,
+  placeholder,
+  streamingState = 'idle',
 }: InputBoxProps): ReactElement {
+  const isStreaming = streamingState === 'streaming';
+  const isPreviewPending = streamingState === 'preview-pending';
+  const disabled = disabledProp || isStreaming || isPreviewPending;
+  const effectivePlaceholder = placeholder ?? STATE_PLACEHOLDERS[streamingState];
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -110,8 +145,12 @@ export function InputBox({
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder={placeholder}
-          aria-label="Mensagem para o agente"
+          placeholder={effectivePlaceholder}
+          aria-label="Escreve o teu prompt"
+          aria-disabled={disabled}
+          aria-describedby={
+            isPreviewPending || isStreaming ? DESCRIBED_BY_ID : undefined
+          }
           style={{
             flex: 1,
             minHeight: MIN_HEIGHT,
@@ -132,16 +171,24 @@ export function InputBox({
 
         <button
           type="button"
-          aria-label="Activar voz"
+          /*
+           * GAP-2 (Story 1.9 PO Pax) — placeholder visual idle-only.
+           * Funcionalidade voice completa (FR77-80) fica para Epic 7. Não há
+           * onClick handler activo — clicar é no-op (UX parity sem regressão
+           * de scope para Epic 1).
+           */
+          aria-label="Voz (em breve — disponível em Epic 7)"
+          title="Voz (em breve — disponível em Epic 7)"
           disabled={disabled}
           style={{
             background: 'transparent',
             border: 'none',
             color: '#8892A4',
-            cursor: disabled ? 'not-allowed' : 'pointer',
+            cursor: disabled ? 'not-allowed' : 'default',
             padding: 8,
             display: 'flex',
             alignItems: 'center',
+            opacity: 0.6,
           }}
         >
           <Mic size={18} />
@@ -167,6 +214,25 @@ export function InputBox({
           <Send size={16} />
         </button>
       </div>
+
+      {(isStreaming || isPreviewPending) && (
+        <p
+          id={DESCRIBED_BY_ID}
+          style={{
+            marginTop: 8,
+            marginBottom: 0,
+            textAlign: 'center',
+            color: isPreviewPending ? '#FFB800' : '#8892A4',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.8rem',
+            fontWeight: 500,
+          }}
+        >
+          {isPreviewPending
+            ? 'Confirma a acção acima antes de continuar'
+            : 'A processar...'}
+        </p>
+      )}
 
       <p
         style={{
