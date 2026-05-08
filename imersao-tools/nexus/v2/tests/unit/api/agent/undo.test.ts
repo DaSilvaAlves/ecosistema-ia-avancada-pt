@@ -19,11 +19,12 @@ import type { ToolDefinition } from '@/lib/agent/tools/types';
  *   - 401 sem cookie de sessão
  *   - 410 quando KV retorna null (TTL natural)
  *   - 410 quando entry.expiresAt < Date.now() (defense-in-depth, RESOLVED-2)
- *   - 200 happy path (reverte 2 tools em ordem reversa)
+ *   - 200 happy path (reverte 2 tools em ordem reversa, delete ANTES do reverse)
  *   - 200 + errors[] quando 1 de 3 tools falha em reverse
  *   - 200 + errors[] + logger.error quando tool ausente do registry (RESOLVED-6)
  *   - 200 + errors[] + logger.error quando tool.reverse undefined (invariant violation)
  *   - 410 idempotência (2º POST após 1º consumir)
+ *   - 503 quando del falha antes do reverse (at-most-once invariant — CR Iter 1)
  *   - Edge runtime safety estática (ausência de imports proibidos)
  *
  * Mock pattern `vi.mock('@vercel/kv')` (RESOLVED-1 Architect Aria — alinhado
@@ -170,8 +171,18 @@ describe('POST /api/agent/undo — 410 TTL expired', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('POST /api/agent/undo — happy path multi-tool', () => {
-  it('200 + reverte 2 tools em ordem reversa + apaga entry', async () => {
-    const reverseLog: string[] = [];
+  it('200 + reverte 2 tools em ordem reversa + apaga entry ANTES dos reverses (at-most-once)', async () => {
+    // Sequência canónica esperada (CR Iter 1 fix — consume-before-reverse):
+    //   1. kv.del(key)            ← passo 4.5: consume entry
+    //   2. tool_beta.reverse()    ← passo 5: reverse loop em ordem reversa
+    //   3. tool_alpha.reverse()
+    // Se um retry ocorrer, a entry já foi consumida → 410.
+    const sequence: string[] = [];
+    kvMock.del.mockImplementation(async () => {
+      sequence.push('del');
+      return 1;
+    });
+
     const tool1 = defineTool({
       name: 'tool_alpha',
       description: 'Tool alpha',
@@ -182,7 +193,7 @@ describe('POST /api/agent/undo — happy path multi-tool', () => {
       reversible: true,
       execute: async () => ({ ok: true }),
       reverse: async () => {
-        reverseLog.push('tool_alpha');
+        sequence.push('reverse:tool_alpha');
       },
     });
     const tool2 = defineTool({
@@ -195,7 +206,7 @@ describe('POST /api/agent/undo — happy path multi-tool', () => {
       reversible: true,
       execute: async () => ({ ok: true }),
       reverse: async () => {
-        reverseLog.push('tool_beta');
+        sequence.push('reverse:tool_beta');
       },
     });
     toolRegistry.register(tool1 as ToolDefinition);
@@ -233,10 +244,15 @@ describe('POST /api/agent/undo — happy path multi-tool', () => {
     expect(json.reverted).toBe(2);
     expect(json.errors).toEqual([]);
 
-    // Ordem reversa: tool_beta primeiro, depois tool_alpha
-    expect(reverseLog).toEqual(['tool_beta', 'tool_alpha']);
+    // Ordem total esperada: del primeiro (at-most-once), depois reverse em ordem reversa
+    expect(sequence).toEqual([
+      'del',
+      'reverse:tool_beta',
+      'reverse:tool_alpha',
+    ]);
 
-    // Entry apagada após processamento
+    // Entry apagada exactamente uma vez (não há delete final redundante)
+    expect(kvMock.del).toHaveBeenCalledTimes(1);
     expect(kvMock.del).toHaveBeenCalledWith(
       `nexus:undo:run:${VALID_RUN_ID}`
     );
@@ -459,6 +475,102 @@ describe('POST /api/agent/undo — idempotência', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 503 — at-most-once invariant (CodeRabbit Iter 1 fix)
+// Se o `del` falha ANTES do reverse, abortamos sem executar nenhum reverse —
+// o cliente pode tentar de novo sem risco de duplicar side-effects.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('POST /api/agent/undo — at-most-once invariant', () => {
+  it('503 + reverses NÃO executam quando del falha antes do reverse', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    let reverseCalled = false;
+    const tool = defineTool({
+      name: 'tool_should_not_run',
+      description: 'Não deve correr — del falhou antes',
+      domain: 'meta',
+      argsSchema: z.object({}).passthrough(),
+      resultSchema: z.object({ ok: z.boolean() }),
+      requiresPreview: false,
+      reversible: true,
+      execute: async () => ({ ok: true }),
+      reverse: async () => {
+        reverseCalled = true;
+      },
+    });
+    toolRegistry.register(tool as ToolDefinition);
+
+    // Entry válida (não expirada) — para forçar passar pelo TTL guard e cair
+    // no consume-before-reverse (passo 4.5).
+    kvMock.get.mockResolvedValueOnce({
+      runId: VALID_RUN_ID,
+      timestamp: NOW - 5000,
+      expiresAt: NOW + 25000,
+      toolCalls: [
+        {
+          toolName: 'tool_should_not_run',
+          args: {},
+          result: {},
+          durationMs: 1,
+          reverted: false,
+        },
+      ],
+    });
+
+    // del falha — KV down ou network error
+    kvMock.del.mockRejectedValueOnce(new Error('KV unreachable'));
+
+    const resp = await callUndo({ runId: VALID_RUN_ID });
+
+    expect(resp.status).toBe(503);
+    const json = (await resp.json()) as { error: string; message: string };
+    expect(json.error).toBe('undo_cleanup_failed');
+    expect(json.message).toMatch(/Falha ao preparar/);
+
+    // Reverse NÃO foi executado — at-most-once preservado
+    expect(reverseCalled).toBe(false);
+
+    // logger.error invocado para observability (Vercel logs)
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to consume undo entry before reverse'),
+      expect.anything()
+    );
+
+    errorSpy.mockRestore();
+  });
+
+  it('410 mantido + log de erro quando del do TTL guard falha (defense-in-depth não mascara expiry)', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    // Entry com expiresAt no passado — cai no TTL guard (passo 4)
+    kvMock.get.mockResolvedValueOnce({
+      runId: VALID_RUN_ID,
+      timestamp: NOW - 35000,
+      toolCalls: [],
+      expiresAt: NOW - 1000,
+    });
+
+    // del falha — KV down
+    kvMock.del.mockRejectedValueOnce(new Error('KV unreachable'));
+
+    const resp = await callUndo({ runId: VALID_RUN_ID });
+
+    // Mantém 410 — semântica do utilizador é "expirou", não "tenta novamente"
+    expect(resp.status).toBe(410);
+    const json = (await resp.json()) as { error: string };
+    expect(json.error).toBe('undo_window_expired');
+
+    // logger.error invocado para observability
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to cleanup expired undo entry'),
+      expect.anything()
+    );
+
+    errorSpy.mockRestore();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // AC12 — Edge runtime safety estática
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -488,6 +600,12 @@ describe('AC12 — Edge runtime safety', () => {
     expect(source).not.toMatch(/createHmac\s*\(/);
 
     // db é apenas import type (Dexie é client-only — RESOLVED-2 Story 1.5)
+    // Nota: este regex apanha `import { … }` runtime imports e exclui o
+    // statement-level `import type { … }`. NÃO cobre o TS 4.5+ inline modifier
+    // `import { type Foo } from '@/lib/db/client'` (sintaxe que mistura runtime
+    // import com type marker inline). Para manter este guard simples e
+    // determinístico, a convenção do projecto é usar `import type { … }` no
+    // source quando se importa apenas tipos de `@/lib/db/client`.
     const runtimeDbImport = /^\s*import\s+(?!type\s)[^;]*from\s+['"]@\/lib\/db\/client['"]/m;
     expect(source).not.toMatch(runtimeDbImport);
   });

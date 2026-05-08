@@ -105,7 +105,7 @@ Mensagens detalhadas via `git log --oneline -3` ou `git show <sha>`.
 | `npm run test:coverage` | undo.ts ≥90%, route.ts ≥85%, executor.ts ≥93% | ✅ PASS — **undo.ts 100%, route.ts 89.11%, executor.ts 94.6%** (não regrediu de Story 1.6 93.83%) |
 
 Coverage details (via `npm run test:coverage`):
-```
+```text
  lib/agent/undo.ts             100   84.61    100   100   100,135
  lib/agent/executor.ts         94.6  87.15    100   94.6  ...
  app/api/agent/undo/route.ts   89.11 89.28    83.33 89.11 115-116,164-175
@@ -131,7 +131,7 @@ Falhas Coverage Report + Record Quality Metrics são tech debt pre-existing — 
 
 ## Comando para @devops
 
-```
+```text
 @devops *push 1.7
 ```
 

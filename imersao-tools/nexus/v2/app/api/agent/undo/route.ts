@@ -44,6 +44,12 @@ import type { NexusDB } from '@/lib/db/client';
  * Idempotência (RESOLVED-5): segundo POST após 1º consumir → 410. Cliente UI
  * deve desactivar botão após primeiro click (single source of truth).
  *
+ * At-most-once (CodeRabbit Iter 1): a entry é apagada ANTES do reverse loop
+ * (passo 4.5). Se o delete falhar antes do reverse, devolve 503 sem executar
+ * nenhum reverse — o cliente pode tentar de novo sem risco de duplicação.
+ * Isto fecha a janela em que um retry pelo cliente (ou Edge replay) podia
+ * fazer cada `tool.reverse()` correr duas vezes caso o delete final falhasse.
+ *
  * NÃO chama `markRunReverted`: é client-side Dexie (Story 1.9 cliente faz
  * isso após receber 200). RESOLVED-2 da Story 1.5 estabelece que executor
  * é stateless server-side e Dexie corre no client.
@@ -190,13 +196,47 @@ export async function POST(req: Request): Promise<Response> {
   if (entry.expiresAt < Date.now()) {
     // Limpa a entry vencida que escapou ao Upstash TTL — evita estado
     // inconsistente em retry. del() em chave inexistente é no-op.
-    await deleteUndoEntry(runId, kvClient);
+    // try/catch defensivo: se o cleanup falhar (KV down), mantém o 410
+    // (semântica do utilizador é "expirou") em vez de mascarar como 503.
+    try {
+      await deleteUndoEntry(runId, kvClient);
+    } catch (e) {
+      undoLogger.error('Failed to cleanup expired undo entry', {
+        runId,
+        error: errorMessageString(e),
+      });
+    }
     return jsonResponse(
       {
         error: 'undo_window_expired',
         message: 'Janela de undo (30s) expirou',
       },
       410
+    );
+  }
+
+  // 4.5. Consume entry BEFORE reverse loop (at-most-once invariant —
+  // CodeRabbit Iter 1 fix Story 1.7). Se um retry ocorrer (cliente, network,
+  // Edge replay), a entry já foi removida — 2º POST cai em `entry === null`
+  // e devolve 410, garantindo que cada `tool.reverse()` corre no máximo uma vez.
+  //
+  // Se o delete falhar ANTES do reverse, abortamos com 503 — ainda não
+  // executámos nenhum reverse, logo o cliente pode tentar de novo sem risco
+  // de duplicação. RESOLVED-5 fica preservado: a regra "2º POST → 410"
+  // depende de a entry ser consumida antes de qualquer side-effect.
+  try {
+    await deleteUndoEntry(runId, kvClient);
+  } catch (e) {
+    undoLogger.error('Failed to consume undo entry before reverse', {
+      runId,
+      error: errorMessageString(e),
+    });
+    return jsonResponse(
+      {
+        error: 'undo_cleanup_failed',
+        message: 'Falha ao preparar operação de undo — tenta novamente',
+      },
+      503
     );
   }
 
@@ -257,12 +297,11 @@ export async function POST(req: Request): Promise<Response> {
     }
   }
 
-  // 6. Apaga entry KV — sempre, mesmo com erros parciais.
+  // 6. Entry já foi consumida no passo 4.5 (consume-before-reverse).
   // RESOLVED-5: 2º POST com mesmo runId encontra entry inexistente → 410.
   // Cliente UI (Story 1.9) deve desactivar botão após 1º click para evitar
-  // 2º POST por design.
-  await deleteUndoEntry(runId, kvClient);
-
+  // 2º POST por design — o servidor garante at-most-once mesmo se o cliente
+  // não desactivar (ex: race condition num browser que faz retry transparente).
   return jsonResponse(
     {
       reverted: entry.toolCalls.length,
