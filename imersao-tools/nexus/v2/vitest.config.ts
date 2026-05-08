@@ -7,7 +7,7 @@ import { resolve } from 'path';
  *
  * Environment jsdom para testes de componentes.
  * `fake-indexeddb/auto` carregado em `tests/setup.ts`.
- * Coverage gate 60% APENAS em `lib/agent/`, `lib/db/`, `lib/shared/` (architecture §5.4).
+ * Coverage gate 60% em `lib/agent/`, `lib/db/`, `lib/shared/`, `app/api/agent/` (architecture §5.4).
  */
 
 export default defineConfig({
@@ -21,7 +21,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['lib/agent/**', 'lib/db/**', 'lib/shared/**'],
+      include: [
+        'lib/agent/**',
+        'lib/db/**',
+        'lib/shared/**',
+        'app/api/agent/**',
+      ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)
       thresholds: {
