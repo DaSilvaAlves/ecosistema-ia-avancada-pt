@@ -60,6 +60,22 @@ describe('UndoToast', () => {
     expect(screen.getByText(/1 acção criada/i)).toBeInTheDocument();
   });
 
+  // Story 1.9 Iter 2 — Minor #6 — pluralização aria-label
+  it('AC9 — aria-label do botão "Anular" pluraliza correctamente', () => {
+    const { rerender } = render(
+      <UndoToast runId={RUN_ID} undoableToolCount={1} expiresAt={expiresAtIn(30)} />
+    );
+    // Singular: "Anular 1 acção" (não "acções")
+    const btnSingular = screen.getByRole('button', { name: /anular 1 acç(ão|ões)/i });
+    expect(btnSingular.getAttribute('aria-label')).toBe('Anular 1 acção');
+
+    rerender(
+      <UndoToast runId={RUN_ID} undoableToolCount={3} expiresAt={expiresAtIn(30)} />
+    );
+    const btnPlural = screen.getByRole('button', { name: /anular 3 acções/i });
+    expect(btnPlural.getAttribute('aria-label')).toBe('Anular 3 acções');
+  });
+
   it('AC9 — progress bar com aria-valuenow/max canónicos', () => {
     render(
       <UndoToast runId={RUN_ID} undoableToolCount={2} expiresAt={expiresAtIn(30)} />
@@ -117,7 +133,7 @@ describe('UndoToast', () => {
     render(
       <UndoToast runId={RUN_ID} undoableToolCount={1} expiresAt={expiresAtIn(30)} />
     );
-    fireEvent.click(screen.getByRole('button', { name: /anular 1 acções/i }));
+    fireEvent.click(screen.getByRole('button', { name: /anular 1 acç(ão|ões)/i }));
 
     await waitFor(() =>
       expect(screen.getByText(/já não é possível anular/i)).toBeInTheDocument()
@@ -138,7 +154,7 @@ describe('UndoToast', () => {
     render(
       <UndoToast runId={RUN_ID} undoableToolCount={1} expiresAt={expiresAtIn(30)} />
     );
-    fireEvent.click(screen.getByRole('button', { name: /anular 1 acções/i }));
+    fireEvent.click(screen.getByRole('button', { name: /anular 1 acç(ão|ões)/i }));
 
     await waitFor(() =>
       expect(screen.getByText(/erro ao anular/i)).toBeInTheDocument()

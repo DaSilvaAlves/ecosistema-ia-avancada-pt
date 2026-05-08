@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
-import { MessageList } from './MessageList';
-import { InputBox, type InputBoxStreamingState } from './InputBox';
-import { UndoToast } from './UndoToast';
+import { MessageList } from '@/components/chat/MessageList';
+import { InputBox, type InputBoxStreamingState } from '@/components/chat/InputBox';
+import { UndoToast } from '@/components/chat/UndoToast';
 import { useAgentStream } from '@/hooks/useAgentStream';
 import { useConversationMessages } from '@/hooks/useChatMessages';
 
@@ -41,12 +41,46 @@ interface ActiveUndoToast {
   expiresAt: number;
 }
 
+interface PreviewError {
+  runId: string;
+  toolName: string;
+  message: string;
+}
+
 export function ChatPanel(): ReactElement {
   const stream = useAgentStream();
   const persistedMessages = useConversationMessages();
 
   const [pendingPreview, setPendingPreview] = useState<PendingPreview | null>(null);
   const [undoToasts, setUndoToasts] = useState<ActiveUndoToast[]>([]);
+  // Story 1.9 Iter 2 — Minor #4 — surface erro do POST /api/agent/confirm
+  // em vez de silenciar 4xx/5xx. UX agora vê toast/banner e pode reagir.
+  const [previewError, setPreviewError] = useState<PreviewError | null>(null);
+
+  /**
+   * Story 1.9 Iter 2 — Major #1 — dedup stream/persisted.
+   *
+   * O `useAgentStream` persiste a `ChatMessage` do agente em Dexie quando
+   * recebe `done` com status `success`/`partial`. Mas `stream.events`
+   * permanece populado (o text_delta acumulado mantém-se como live bubble)
+   * até o caller chamar `reset()`. Isto causaria render duplicado: a mensagem
+   * persistida já lá está + o live bubble construído a partir dos events.
+   *
+   * Solução: filtrar `persistedMessages` removendo qualquer message cujo
+   * `agentRunId` corresponda à `currentRunId` ENQUANTO `stream.events` ainda
+   * contém eventos para esse run. Quando `currentRunId === null` (reset
+   * chamado ou nunca houve submit), todas as persistidas aparecem.
+   *
+   * Nota: a UX preferível é ler primeiro do live (porque é a UI activa);
+   * persistidas só aparecem após reset ou nova run.
+   */
+  const dedupedMessages = useMemo(() => {
+    if (persistedMessages === undefined) return undefined;
+    if (stream.currentRunId === null) return persistedMessages;
+    return persistedMessages.filter(
+      (m) => m.agentRunId !== stream.currentRunId
+    );
+  }, [persistedMessages, stream.currentRunId]);
 
   // Detectar `preview_request` na stream → marcar input como preview-pending
   useEffect(() => {
@@ -94,17 +128,37 @@ export function ChatPanel(): ReactElement {
     [stream]
   );
 
+  // Story 1.9 Iter 2 — Minor #4 — não silenciar 4xx/5xx do confirm endpoint.
+  // Antes: catch silencioso + setPendingPreview(null) sempre → UX pensa que
+  // foi confirmado mesmo quando o servidor rejeitou. Agora: erro fica visível
+  // e `pendingPreview` mantém-se até resolução.
   const handleConfirmPreview = useCallback(
     async (runId: string, toolName: string) => {
       try {
-        await fetch('/api/agent/confirm', {
+        const res = await fetch('/api/agent/confirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ runId, toolName, action: 'confirm' }),
         });
+        if (!res.ok) {
+          const detail = await res.text().catch(() => '');
+          console.error('[ChatPanel] confirm preview falhou', res.status, detail);
+          setPreviewError({
+            runId,
+            toolName,
+            message: `Erro ao confirmar acção (HTTP ${res.status}). Tenta de novo.`,
+          });
+          return; // NÃO limpa pendingPreview — utilizador pode tentar de novo
+        }
+        setPreviewError(null);
         setPendingPreview(null);
       } catch (e) {
         console.error('[ChatPanel] confirm preview falhou', e);
+        setPreviewError({
+          runId,
+          toolName,
+          message: 'Erro de rede ao confirmar acção. Tenta de novo.',
+        });
       }
     },
     []
@@ -113,14 +167,30 @@ export function ChatPanel(): ReactElement {
   const handleCancelPreview = useCallback(
     async (runId: string, toolName: string) => {
       try {
-        await fetch('/api/agent/confirm', {
+        const res = await fetch('/api/agent/confirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ runId, toolName, action: 'cancel' }),
         });
+        if (!res.ok) {
+          const detail = await res.text().catch(() => '');
+          console.error('[ChatPanel] cancel preview falhou', res.status, detail);
+          setPreviewError({
+            runId,
+            toolName,
+            message: `Erro ao cancelar acção (HTTP ${res.status}). Tenta de novo.`,
+          });
+          return; // NÃO limpa pendingPreview
+        }
+        setPreviewError(null);
         setPendingPreview(null);
       } catch (e) {
         console.error('[ChatPanel] cancel preview falhou', e);
+        setPreviewError({
+          runId,
+          toolName,
+          message: 'Erro de rede ao cancelar acção. Tenta de novo.',
+        });
       }
     },
     []
@@ -148,7 +218,7 @@ export function ChatPanel(): ReactElement {
       }}
     >
       <MessageList
-        messages={persistedMessages}
+        messages={dedupedMessages}
         events={stream.events}
         isStreaming={stream.isStreaming}
         onConfirmPreview={handleConfirmPreview}
@@ -170,6 +240,25 @@ export function ChatPanel(): ReactElement {
           }}
         >
           {stream.error}
+        </div>
+      )}
+
+      {previewError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          style={{
+            margin: '0 24px 8px',
+            padding: '8px 12px',
+            background: 'rgba(255,0,110,0.08)',
+            border: '1px solid rgba(255,0,110,0.4)',
+            borderRadius: 8,
+            color: '#FF006E',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.85rem',
+          }}
+        >
+          {previewError.message}
         </div>
       )}
 

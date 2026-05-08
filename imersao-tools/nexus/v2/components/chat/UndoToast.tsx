@@ -80,6 +80,12 @@ export function UndoToast(props: UndoToastProps): ReactElement | null {
   pausedRef.current = paused;
   dismissedRef.current = dismissed;
 
+  // Story 1.9 Iter 2 — Nitpick N1 — `onDismissRef` para o useEffect não
+  // depender da identidade de `onDismiss` (parent re-render reiniciava o
+  // timer porque a callback era nova). Pattern já usado para `pausedRef`.
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
   // Countdown interval
   useEffect(() => {
     if (feedback !== null) return; // feedback toast tem timer próprio
@@ -91,12 +97,12 @@ export function UndoToast(props: UndoToastProps): ReactElement | null {
       setRemainingMs(left);
       if (left === 0) {
         setDismissed(true);
-        onDismiss?.();
+        onDismissRef.current?.();
       }
     }, TICK_MS);
 
     return () => clearInterval(interval);
-  }, [expiresAt, dismissed, feedback, onDismiss]);
+  }, [expiresAt, dismissed, feedback]);
 
   // Feedback toast auto-dismiss
   useEffect(() => {
@@ -104,10 +110,10 @@ export function UndoToast(props: UndoToastProps): ReactElement | null {
     const timeout = setTimeout(() => {
       setFeedback(null);
       setDismissed(true);
-      onDismiss?.();
+      onDismissRef.current?.();
     }, FEEDBACK_TIMEOUT_MS);
     return () => clearTimeout(timeout);
-  }, [feedback, onDismiss]);
+  }, [feedback]);
 
   async function handleUndo(): Promise<void> {
     if (busy || dismissed) return;
@@ -250,7 +256,9 @@ export function UndoToast(props: UndoToastProps): ReactElement | null {
             type="button"
             onClick={handleUndo}
             disabled={busy}
-            aria-label={`Anular ${undoableToolCount} acções`}
+            aria-label={`Anular ${undoableToolCount} ${
+              undoableToolCount === 1 ? 'acção' : 'acções'
+            }`}
             style={{
               background: 'transparent',
               color: '#00F5FF',
