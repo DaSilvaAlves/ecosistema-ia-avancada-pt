@@ -9,6 +9,8 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 
 | Ficheiro | De | Para | Data | Próxima acção |
 |---------|-----|------|------|--------------|
+| [RETOMA-20260509-hotfix-classifier-fences-pronto-para-devops-push.md](RETOMA-20260509-hotfix-classifier-fences-pronto-para-devops-push.md) | `@dev` | `@devops` | 09/05/2026 | Gage (`@devops`) — push branch `fix/nexus-v2-classifier-strip-markdown-fences` (commit `765e422c`) + abrir PR contra `main`. Hotfix produção (sem story): classifier rejeitava JSON envolvido em markdown fences. 325/325 tests PASS, lint+typecheck clean |
+| [RETOMA-20260509-bug-classifier-json-markdown-fences.md](RETOMA-20260509-bug-classifier-json-markdown-fences.md) | Claude Code | `@dev` | 09/05/2026 | CONSUMIDO — Dex (`@dev`) implementou hotfix em `765e422c` e criou handoff de saída para `@devops`. Mover para archive após @devops fazer push |
 | [RETOMA-20260508-story-1.10-drafted-aguarda-po-validate.md](RETOMA-20260508-story-1.10-drafted-aguarda-po-validate.md) | `@sm` | `@po` | 08/05/2026 | `@po *validate-story-draft 1.10` — última story do Epic 1. Draft criada com 4 DECISIONS-NEEDED (D1: mock vs real API, D2: pass rate threshold, D3: CI integration, D4: performance budget). Epic 1: 9/10 Done + 1 Draft |
 
 ---
