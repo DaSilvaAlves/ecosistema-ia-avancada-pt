@@ -418,7 +418,7 @@ function PersistedBubbleView({ message }: { message: ChatMessage }): ReactElemen
             Nexus
           </div>
         )}
-        <div>{message.content}</div>
+        <div data-testid={isUser ? undefined : 'assistant-message-text'}>{message.content}</div>
       </div>
     </div>
   );
@@ -500,7 +500,7 @@ function LiveAgentBubbleView({
         )}
 
         {/* Texto streaming */}
-        {bubble.text.length > 0 && <div>{bubble.text}</div>}
+        {bubble.text.length > 0 && <div data-testid="assistant-message-text">{bubble.text}</div>}
 
         {/* Indicador subtil de streaming activo (sem text/tool ainda mas há run) */}
         {isStreaming && bubble.toolCardEntries.length === 0 && bubble.text.length === 0 && (

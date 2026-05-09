@@ -141,6 +141,7 @@ export function InputBox({
 
         <textarea
           ref={textareaRef}
+          data-testid="chat-composer-input"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}

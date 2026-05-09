@@ -216,6 +216,7 @@ export function UndoToast(props: UndoToastProps): ReactElement | null {
     <div
       role="alert"
       aria-live="polite"
+      data-testid="undo-toast"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       style={{
