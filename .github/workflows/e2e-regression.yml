@@ -1,0 +1,101 @@
+name: Nexus v2 — E2E Regression (Story 1.10)
+
+# Story 1.10 — Quality gate final do Epic 1.
+# Corre 50 prompts PT-PT contra o pipeline completo (UI → /api/agent/prompt → SSE → Dexie).
+# Bloqueante no PR para `main`. Determinístico (MSW via Playwright route() — D1 Opção C).
+# Em paralelo a lint/typecheck/test/build (não os substitui — D3).
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'imersao-tools/nexus/v2/**'
+      - '.github/workflows/e2e-regression.yml'
+  workflow_dispatch:
+    inputs:
+      use_real_api:
+        description: 'Run @real-api subset against real Anthropic (staging only)'
+        type: boolean
+        default: false
+
+jobs:
+  e2e-regression:
+    name: 50-prompt regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: imersao-tools/nexus/v2
+    env:
+      # Mock determinístico em CI (D1 Opção C). Para staging staging real,
+      # usar workflow_dispatch com use_real_api=true + secret ANTHROPIC_API_KEY.
+      ANTHROPIC_API_KEY: sk-ant-test-fake-not-real
+      # bcrypt hash de "nexus-test-password" — gerado para CI (test-only).
+      # F-CONCERNS-2 (Story 1.10): hash placeholder de zeros falhava bcrypt.compare.
+      # Sem KV configurado, getSession() em dev mode aceita qualquer cookie não-vazio
+      # (lib/auth/session.ts:80-83) — login com password correcta gera cookie válido.
+      NEXUS_PASSWORD_HASH: '$2a$10$uibDFC5hXxc63B3pqCF4EufSXUsKMmkCKywf8pQ/hNeBSEAJic19K'
+      SESSION_SECRET: '0000000000000000000000000000000000000000000000000000000000000000'
+      TEST_PASSWORD: nexus-test-password
+      USE_REAL_API: ${{ inputs.use_real_api == true && 'true' || 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: imersao-tools/nexus/v2/package-lock.json
+
+      - run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build app
+        run: npm run build
+
+      - name: Run 50-prompt regression suite
+        run: npx playwright test tests/e2e/regression/regression.spec.ts --reporter=github
+
+      - name: Validate report against thresholds
+        if: always()
+        run: |
+          if [ ! -f tests/e2e/regression/report/report.json ]; then
+            echo "::error::report.json not generated — suite did not complete"
+            exit 1
+          fi
+          node -e "
+            const r = require('./tests/e2e/regression/report/report.json');
+            console.log('Pass:', r.passed + '/' + r.totalPrompts, '(threshold ≥' + r.passRateThreshold + ')');
+            console.log('P95:', r.p95DurationMs + 'ms (budget <' + r.p95Threshold + 'ms)');
+            console.log('Canonical all PASS:', r.canonicalPromptsAllPassed);
+            if (!r.thresholdMet) {
+              console.error('::error::Pass rate below threshold');
+              process.exit(1);
+            }
+            if (!r.canonicalPromptsAllPassed) {
+              console.error('::error::Canonical prompts (ac1/ac2/ac4-epic1) failed');
+              process.exit(1);
+            }
+            if (!r.p95Met) {
+              console.error('::error::P95 latency exceeds budget');
+              process.exit(1);
+            }
+          "
+
+      - name: Upload regression report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nexus-v2-regression-report
+          path: imersao-tools/nexus/v2/tests/e2e/regression/report/
+          retention-days: 30
+
+      - name: Upload Playwright HTML report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nexus-v2-regression-playwright
+          path: imersao-tools/nexus/v2/playwright-report/
+          retention-days: 7
