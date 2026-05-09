@@ -391,3 +391,4 @@ outputs/minds/
 # Member projects with own git repos — preserved physically, not tracked here
 # (see workspace-governance.md). DevOps decides if any should become submodules.
 membros/telmo/03-codigo/
+.backup-pre-*

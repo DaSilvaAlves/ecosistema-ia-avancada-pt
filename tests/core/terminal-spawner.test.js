@@ -350,8 +350,11 @@ describe('TerminalSpawner', () => {
 
 // ============================================
 // pm.sh Script Tests (Task 6.2)
+// Skipped on Windows: bash invocation via execSync returns code 127 (command not found)
+// because cmd.exe does not have bash in PATH by default. WSL/Linux/macOS run these.
 // ============================================
-describe('pm.sh Script', () => {
+const describePmSh = process.platform === 'win32' ? describe.skip : describe;
+describePmSh('pm.sh Script', () => {
   const { execSync } = require('child_process');
   const scriptPath = TerminalSpawner.getScriptPath();
 
