@@ -113,18 +113,21 @@ function restoreFile(relativePath, kind) {
 }
 
 function commandRestore() {
-  if (!fs.existsSync(BACKUP_DIR)) {
-    warn(`backup directory not found: ${BACKUP_DIR}`);
-    warn('cannot restore capabilities — manual intervention required');
-    process.exit(1);
-  }
-
+  // Check missing first — if everything is present, no backup is needed
+  // (e.g. fresh CI install, where .aiox-core comes from npm with all canonical capabilities)
   const missing = checkMissing();
   const total = missing.tasks.length + missing.agents.length;
 
   if (total === 0) {
     log('all 39 canonical capabilities present — nothing to restore');
     return;
+  }
+
+  // Capabilities are missing AND we need the backup — fail clearly
+  if (!fs.existsSync(BACKUP_DIR)) {
+    warn(`backup directory not found: ${BACKUP_DIR}`);
+    warn(`${total} capabilities missing but no backup available — manual intervention required`);
+    process.exit(1);
   }
 
   log(`restoring ${missing.tasks.length} tasks + ${missing.agents.length} agents from backup...`);
