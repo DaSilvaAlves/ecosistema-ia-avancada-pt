@@ -53,11 +53,15 @@ const results: PromptResult[] = [];
 test.describe.configure({ mode: 'serial' });
 
 test.describe('E2E Regression — 50 prompts PT-PT', () => {
-  test.beforeAll(async ({ request }) => {
-    await loginViaApi(request);
-  });
-
   test.beforeEach(async ({ page }) => {
+    // Login DEVE acontecer antes de qualquer page.goto e antes de instalar mocks
+    // de rota — `page.request` partilha cookies com o BrowserContext da page,
+    // garantindo que o cookie `nexus_session` chega à navegação subsequente
+    // (caso contrário middleware.ts redirecciona `/` → `/login`).
+    // Iter 2 fix CI PR #14 (10/05/2026): `loginViaApi(request)` em `beforeAll`
+    // não funciona porque `APIRequestContext` é independente do `BrowserContext`.
+    await loginViaApi(page);
+
     if (!useRealApi) {
       await installMockRoute(page, { fixturePrompts: fixture.prompts });
     }
