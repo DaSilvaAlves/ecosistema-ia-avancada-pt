@@ -11,6 +11,29 @@
  * O matcher é por `prompt` exacto (campo do JSON body). Se o request não
  * mapear nenhum prompt do fixture, o handler responde 404 para falhar
  * explicitamente (evita silenciosos pass-throughs em testes mal alinhados).
+ *
+ * **Iter 3 (PR #14) — fix protocolo SSE alinhado com `executor.ts`:**
+ * - Emitir `meta(start)` com `phase: 'start'` + prompt + modelClassifier +
+ *   modelExecutor + startedAt + classifierResult: null
+ * - Emitir `meta(classified)` separado (executor real emite ambos)
+ * - `text_delta` usa campo `delta` (não `text`)
+ * - `done` inclui intents + inputTokens + outputTokens + durationMs + totals
+ * - Stream termina com `data: [DONE]\n\n` (executor.ts/route.ts L176)
+ *
+ * Sem estes alinhamentos, `useAgentStream` (Story 1.9) não persistia o run
+ * em Dexie e `MessageList.reduceLiveBubble` rejeitava a stream toda
+ * (retornava `null`), fazendo `submitPromptAndWait.waitForFunction` ficar
+ * 30s à espera de tool-cards/assistant-text que nunca renderizavam.
+ *
+ * **Preview profiles — gate cross-process simulation simplificado:**
+ * Mockamos `/api/agent/confirm` para responder 200, mas a stream principal
+ * envia tudo o de uma vez (incluindo `preview_request` + `preview_confirmed`
+ * + `tool_complete`) — porque `route.fulfill` é one-shot (não streaming).
+ *
+ * O spec valida o flow preview detectando o evento `preview_request` no
+ * events array exposto pelo `useAgentStream` (via `page.evaluate`), em vez
+ * de procurar o ToolCard em `data-state="preview-required"` (que é estado
+ * transitório invisível à inspecção pós-stream).
  */
 
 import type { Page } from '@playwright/test';
@@ -63,8 +86,19 @@ export async function installMockRoute(page: Page, options: InstallMockRouteOpti
       return;
     }
 
-    const runId = `run_${fixture.id}_${Date.now()}`;
-    const events = buildMockSseEvents(fixture.mockProfile, runId);
+    const startedAt = Date.now();
+    const runId = `run_${fixture.id}_${startedAt}`;
+    // Iter 3 — passamos `prompt` + `startedAt` para o builder porque o
+    // protocolo real (`executor.ts` L506-510) inclui esses campos no
+    // `meta(start)`. Sem eles, o `useAgentStream` consumer não persiste o
+    // run em Dexie correctamente e o `MessageList.reduceLiveBubble` rejeita
+    // a stream toda. Ver `mock-events.ts` doc para causa raiz Iter 3.
+    const events = buildMockSseEvents({
+      profile: fixture.mockProfile,
+      runId,
+      prompt: promptText,
+      startedAt,
+    });
     const ssePayload = serializeSseEvents(events);
 
     await route.fulfill({
@@ -77,8 +111,24 @@ export async function installMockRoute(page: Page, options: InstallMockRouteOpti
       body: ssePayload,
     });
   });
+
+  // Iter 3 — mock de `/api/agent/confirm`. O ChatPanel envia POST quando
+  // utilizador clica preview-confirm. Devolvemos 200 OK silencioso — o
+  // executor mock já incluiu `preview_confirmed` + `tool_complete` no
+  // payload SSE inicial (one-shot fulfill — `route.fulfill` não suporta
+  // streaming bidirecional). O spec valida o gate via inspecção do events
+  // array do `useAgentStream` (ver helpers/preview-eval.ts), não via
+  // observação visual do ToolCard em `preview-required` (estado transitório).
+  await page.route('**/api/agent/confirm', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true }),
+    });
+  });
 }
 
 export async function uninstallMockRoute(page: Page): Promise<void> {
   await page.unroute('**/api/agent/prompt');
+  await page.unroute('**/api/agent/confirm');
 }

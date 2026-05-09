@@ -10,6 +10,19 @@
  *
  * Para a categoria `abort-mid-stream`, o caller pode invocar `page.goto('/')`
  * ou similar antes do stream terminar para simular interrupção.
+ *
+ * **Iter 3 (PR #14) — onboarding bypass:**
+ * Em CI fresh page, `localStorage` está vazio e o `OnboardingModal` (Story 0.7,
+ * `components/chat/OnboardingModal.tsx`) abre automaticamente cobrindo o
+ * ChatPanel com overlay `position: fixed; inset: 0; z-index: 60`. O composer
+ * fica acessível ao Playwright (que dispara eventos directos no DOM ignorando
+ * z-index), mas o overlay obscurece o LiveAgentBubble visualmente — e os
+ * tests de preview confirmam (`[data-testid="preview-confirm"]`) podem ser
+ * interceptados pelo modal antes de chegarem ao ToolCard correcto.
+ *
+ * Solução: pre-set da flag `nexus:onboarding:done` em `localStorage` antes
+ * de qualquer interacção. Idempotente — não altera comportamento se já estava
+ * set. Ver `helpers/auth.ts` para chamada complementar pós-login.
  */
 
 import type { Page } from '@playwright/test';
@@ -23,12 +36,37 @@ export interface SubmitPromptResult {
   inputReEnabled: boolean;
 }
 
+/**
+ * Iter 3 — bypass do OnboardingModal (Story 0.7) em CI. O modal lê
+ * `localStorage.getItem('nexus:onboarding:done')` no mount e abre se ausente.
+ * Pre-setamos a flag para garantir que a UI fica em estado idle limpo.
+ *
+ * Idempotente, safe-to-call-multiple-times. Falha silenciosa se localStorage
+ * não estiver disponível (ex: page ainda em about:blank).
+ */
+export async function dismissOnboardingModal(page: Page): Promise<void> {
+  await page
+    .evaluate(() => {
+      try {
+        window.localStorage.setItem('nexus:onboarding:done', 'true');
+      } catch {
+        // localStorage indisponível (cross-origin, modo incógnito restritivo) — ignora.
+      }
+    })
+    .catch(() => undefined);
+}
+
 export async function submitPromptAndWait(
   page: Page,
   prompt: string,
   timeoutMs: number = DEFAULT_TIMEOUT_MS
 ): Promise<SubmitPromptResult> {
   const start = Date.now();
+
+  // Iter 3 — garantir que o OnboardingModal não está aberto antes de tentar
+  // interagir com o composer. Tipicamente já foi feito em `beforeEach`, mas
+  // a chamada aqui é defensiva e idempotente.
+  await dismissOnboardingModal(page);
 
   const composer = page.locator('[data-testid="chat-composer-input"]').first();
   if (await composer.count() === 0) {
