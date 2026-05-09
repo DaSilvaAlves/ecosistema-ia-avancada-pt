@@ -9,7 +9,7 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 
 | Ficheiro | De | Para | Data | Próxima acção |
 |---------|-----|------|------|--------------|
-| [RETOMA-20260508-story-1.9-merged-pronto-story-1.10.md](RETOMA-20260508-story-1.9-merged-pronto-story-1.10.md) | `@devops` | `@sm` | 08/05/2026 | `@sm *draft 1.10` — última story do Epic 1 (50 prompts regression test exercitando pipeline completo via UI). PR #12 merged squash `2eecb5fd`. Epic 1: 9/10 Done |
+| [RETOMA-20260508-story-1.10-drafted-aguarda-po-validate.md](RETOMA-20260508-story-1.10-drafted-aguarda-po-validate.md) | `@sm` | `@po` | 08/05/2026 | `@po *validate-story-draft 1.10` — última story do Epic 1. Draft criada com 4 DECISIONS-NEEDED (D1: mock vs real API, D2: pass rate threshold, D3: CI integration, D4: performance budget). Epic 1: 9/10 Done + 1 Draft |
 
 ---
 
@@ -23,6 +23,7 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 | [RETOMA-20260508-story-1.9-ready-for-review-aguarda-devops-push.md](archive/RETOMA-20260508-story-1.9-ready-for-review-aguarda-devops-push.md) | `@dev` | `@devops` | 08/05/2026 | Gage (@devops) — push'ed `fb4ed57f`, PR #12 aberto, CR Iter 1 CHANGES_REQUESTED |
 | [RETOMA-20260508-story-1.9-validated-pronto-dev.md](archive/RETOMA-20260508-story-1.9-validated-pronto-dev.md) | `@po` | `@dev` | 08/05/2026 | Dex (@dev) — Story 1.9 implementada · 5/5 quality gates PASS |
 | [RETOMA-20260508-story-1.9-drafted-aguarda-po-validate.md](archive/RETOMA-20260508-story-1.9-drafted-aguarda-po-validate.md) | `@sm` | `@po` | 08/05/2026 | Pax (@po) — GO 10/10, Story 1.9 Ready |
+| [RETOMA-20260508-story-1.9-merged-pronto-story-1.10.md](archive/RETOMA-20260508-story-1.9-merged-pronto-story-1.10.md) | `@devops` | `@sm` | 08/05/2026 | River (@sm) — Story 1.10 Draft criada 08/05/2026 |
 | [RETOMA-20260508-story-1.8-merged-pronto-story-1.9.md](archive/RETOMA-20260508-story-1.8-merged-pronto-story-1.9.md) | `@devops` | `@sm` | 08/05/2026 | River (@sm) — Story 1.9 Draft criada |
 | [RETOMA-20260508-story-1.8-pr-11-iter2-status-success-aguarda-decisao-eurico-merge.md](archive/RETOMA-20260508-story-1.8-pr-11-iter2-status-success-aguarda-decisao-eurico-merge.md) | `@devops` | Eurico | — | — |
 | [RETOMA-20260508-story-1.8-pr-11-iter2-fixes-aplicados-aguarda-cr-iter2.md](archive/RETOMA-20260508-story-1.8-pr-11-iter2-fixes-aplicados-aguarda-cr-iter2.md) | `@dev` | `@devops` | — | — |
