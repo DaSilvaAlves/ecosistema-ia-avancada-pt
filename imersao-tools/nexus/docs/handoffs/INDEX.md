@@ -9,7 +9,7 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 
 | Ficheiro | De | Para | Data | Próxima acção |
 |---------|-----|------|------|--------------|
-| [RETOMA-20260509-story-1.10-pr-14-ci-vermelho-aguarda-dev-fix-auth-401.md](RETOMA-20260509-story-1.10-pr-14-ci-vermelho-aguarda-dev-fix-auth-401.md) | `@aiox-master` | `@dev` | 09/05/2026 | PR #14 abriu OK mas CI VERMELHO em 2 jobs (`50-prompt regression` + `Playwright E2E + bundle key check`) com root cause única: 401 `loginViaApi` em todos os 50 prompts. Hash bate localmente (`bcryptjs.compareSync` true) e env está hardcoded no workflow + visível nos CI logs — server retorna 401 e não 500, logo env chega ao server mas comparação falha. `@dev` investiga env propagation step→`npm run dev`→`route.ts` (suspeita-se dollar-sign expansion ou newline trailing). Fix recomendado: mover hash para `gh secret set NEXUS_PASSWORD_HASH`. PR: https://github.com/DaSilvaAlves/ecosistema-ia-avancada-pt/pull/14 |
+| [RETOMA-20260510-story-1.10-pr-14-fix-iter2-aguarda-devops-push.md](RETOMA-20260510-story-1.10-pr-14-fix-iter2-aguarda-devops-push.md) | `@dev` | `@devops` | 10/05/2026 | Iter 2 fix Story 1.10 commitado em `d8b7435b`. Real causa do CI vermelho era Playwright cookie sharing entre `APIRequestContext` e `BrowserContext` (não 401 bcrypt como o handoff anterior assumia). Fix em `auth.ts` (`page.request.post()`) + `regression.spec.ts` (`beforeAll` → `beforeEach`). Validação local 321/321 PASS. Aguarda `@devops *push` para CI rerun. Sequência: push → CI verde → `@po *close-story 1.10` → Epic 1 fecha 10/10 → Epic 2 desbloqueia. PR: https://github.com/DaSilvaAlves/ecosistema-ia-avancada-pt/pull/14 |
 
 ---
 
@@ -17,6 +17,7 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 
 | Ficheiro | De | Para | Consumido | Por |
 |---------|-----|------|----------|-----|
+| [RETOMA-20260509-story-1.10-pr-14-ci-vermelho-aguarda-dev-fix-auth-401-CONSUMIDO.md](archive/RETOMA-20260509-story-1.10-pr-14-ci-vermelho-aguarda-dev-fix-auth-401-CONSUMIDO.md) | `@aiox-master` | `@dev` | 10/05/2026 | Dex (@dev) — diagnóstico re-feito (descartou hipótese 401 bcrypt do handoff original; real causa identificada como Playwright cookie sharing `APIRequestContext` vs `BrowserContext`); fix aplicado em `auth.ts` + `regression.spec.ts`; commit `d8b7435b` |
 | [RETOMA-20260509-story-1.10-pr-14-aguarda-ci-verde-close-story-OBSOLETO.md](archive/RETOMA-20260509-story-1.10-pr-14-aguarda-ci-verde-close-story-OBSOLETO.md) | `@devops` | Eurico → `@po` | 09/05/2026 | `@aiox-master` (Orion) — handoff arquivado por ficar obsoleto: assumia CI verde mas CI ficou vermelho; substituído por `RETOMA-20260509-story-1.10-pr-14-ci-vermelho-aguarda-dev-fix-auth-401.md` |
 | [RETOMA-20260509-story-1.10-po-validation-decisions-ready.md](archive/RETOMA-20260509-story-1.10-po-validation-decisions-ready.md) | `@po` (sessão A) | `@po` (sessão B) | 09/05/2026 | Pax (@po) — escreveu PO-VALIDATION-STORY-1.10.md (GO conditional 8/10) com D1–D4 resolvidos e 5 fixes F1–F5 listados |
 | [RETOMA-20260508-story-1.10-drafted-aguarda-po-validate.md](archive/RETOMA-20260508-story-1.10-drafted-aguarda-po-validate.md) | `@sm` | `@po` | 09/05/2026 | Pax (@po) — validate-story-draft executado; 4 DECISIONS-NEEDED resolvidos via fundamentação canónica PRD+Architecture; CONCERNS resolvido em cascade @sm→@qa→@architect→@dev→@qa→@architect→@dev→@devops |
