@@ -59,8 +59,38 @@ module.exports = [
       '.aiox-core/hooks/**',
       // Pro module - legacy code
       'pro/**',
+      // Squad expansions - independent extensions with their own configs
+      'squads/**',
       // Glue scripts
       'scripts/glue/**',
+      // Legacy AIOS framework snapshots (precursor of AIOX, frozen Feb 2026)
+      'imersao/**',
+      'imersao-build/**',
+      'aios-imersao/**',
+      // Sandbox/test projects (not for lint)
+      'meu-projeto/**',
+      'my-project/**',
+      'portal-imersao-ai/**',
+      'ai-velocity-project/**',
+      // Generic legacy AIOS namespace (any nested .aios-core/ or .aios/ snapshot)
+      '**/.aios-core/**',
+      '**/.aios/**',
+      // Backup pre-upgrade (gitignored, not for lint)
+      '.backup-pre-*/**',
+      // Other sandboxes / experimental
+      'mega-brain/**',
+      // get-shit-done CLI extension (separate codebase)
+      '**/get-shit-done/**',
+      // Member projects have their own git/lint config (workspace-governance.md)
+      'membros/**',
+      // IDE-specific config dirs (Gemini, Antigravity, Cursor)
+      '.gemini/**',
+      '.antigravity/**',
+      // Cursor rules are MD with custom syntax, not JS
+      '.cursor/rules/**',
+      // imersao-tools/* are independent npm projects with their own lint configs
+      // (Next.js apps, Vite tools, etc.) — they run lint in their own CI
+      'imersao-tools/**',
     ],
   },
 

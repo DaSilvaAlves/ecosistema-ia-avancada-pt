@@ -92,6 +92,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@aiox-squads/core": "5.1.15",
     "@clack/prompts": "^0.11.0",
     "@kayvan/markdown-tree-parser": "^1.5.0",
     "ajv": "^8.17.1",

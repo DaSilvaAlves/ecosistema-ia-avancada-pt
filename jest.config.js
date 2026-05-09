@@ -59,6 +59,21 @@ module.exports = {
     'tests/license/',
     // Workflow intelligence tests - assertion count mismatches (pre-existing)
     '.aiox-core/workflow-intelligence/__tests__/',
+    // Legacy AIOS framework snapshots (frozen Feb 2026, not for current jest)
+    '/imersao/',
+    '/imersao-build/',
+    '/aios-imersao/',
+    '/meu-projeto/',
+    '/my-project/',
+    '/portal-imersao-ai/',
+    '/mega-brain/',
+    // Member projects have their own jest configs (workspace-governance.md)
+    '/membros/',
+    // Squad expansions and imersao-tools subprojects have own configs
+    '/squads/',
+    '/imersao-tools/',
+    // Backups (gitignored)
+    '/.backup-pre-',
   ],
 
   // Coverage collection (Story TD-3: Updated paths)
