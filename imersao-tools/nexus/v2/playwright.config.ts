@@ -7,9 +7,16 @@ import { defineConfig, devices } from '@playwright/test';
  * Em CI, retries 2 + arranca o app antes via `webServer`.
  *
  * Issue nice-to-have Pax: `webServer` config adicionado para CI auto-start.
+ *
+ * testIgnore excluí a regression suite do default `playwright test` — essa
+ * suite tem o seu próprio workflow dedicado (`e2e-regression.yml`) com env
+ * vars específicas (NEXUS_PASSWORD_HASH válido, TEST_PASSWORD). Workflows
+ * regulares (nexus-v2-ci.yml) correm só auth/smoke (não precisam de login).
+ * Para correr regression localmente: `npx playwright test tests/e2e/regression/regression.spec.ts`.
  */
 export default defineConfig({
   testDir: './tests/e2e',
+  testIgnore: ['**/regression/**'],
   timeout: 30_000,
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
