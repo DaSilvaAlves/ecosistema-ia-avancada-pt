@@ -247,6 +247,7 @@ export function ToolCard(props: ToolCardProps): ReactElement {
       role="article"
       aria-label={`Tool ${toolName} — estado ${state}`}
       data-testid="tool-card"
+      data-state={state}
       data-animation={animationValue}
       style={cardStyle}
     >
@@ -333,6 +334,7 @@ export function ToolCard(props: ToolCardProps): ReactElement {
           <button
             type="button"
             ref={confirmButtonRef}
+            data-testid="preview-confirm"
             onClick={onConfirm}
             aria-label="Confirmar e gravar acção"
             style={PRIMARY_BUTTON_STYLE}

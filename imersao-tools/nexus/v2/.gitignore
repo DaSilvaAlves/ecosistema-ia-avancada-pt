@@ -39,6 +39,9 @@ test-results/
 playwright-report/
 playwright/.cache/
 
+# Story 1.10 — regression report output (CI artefact apenas)
+tests/e2e/regression/report/
+
 # vitest
 .vitest-cache/
 

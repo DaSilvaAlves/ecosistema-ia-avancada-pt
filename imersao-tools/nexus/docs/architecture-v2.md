@@ -17,15 +17,18 @@
 
 Este documento resolve os gaps técnicos G3 e G4 identificados pela validação PO, e estabelece o blueprint completo de architecture para o Nexus v2. **Não reabre decisões já tomadas pelo Eurico** (Stack Next.js 15, Sonnet 4.6+Haiku 4.5, Web Push, Web Speech, Vercel KV, Telegram Bot, etc.).
 
-### Top-5 Decisões Architecturais (ADR-style resumido)
+### Decisões Architecturais — Sumário (ADR-style)
 
 | # | Decisão | Justificação | Trade-off aceite |
 |---|---------|--------------|------------------|
 | ADR-1 | **Edge Runtime** para `/api/anthropic/proxy`, `/api/agent/prompt`, `/api/telegram/webhook`. **Node Runtime** para `/api/auth/*`, `/api/google/*`, `/api/ocr/receipt`, `/api/push/*` | Edge para latência baixa em chat/streaming + globalDistribution. Node para SDKs que precisam de Node APIs (`googleapis`, `web-push`, `crypto.createHmac` para Telegram, base64 ops grandes em OCR) | Edge tem cold-start menor mas limita SDKs. Aceitável: split por endpoint |
 | ADR-2 | **Persistência: IndexedDB via Dexie 4 desde dia 1**, com migration `localStorage v1 → IndexedDB`. localStorage só para `auth.session`, `ui.theme`, `chat.draft` (< 100KB combinado) | Dataset estimado 6 meses ≈ 3MB chega ao limite localStorage (5MB). FRs analíticos (FR21 projecção 30d, FR26 heatmap, FR45/53 full-text) precisam de queries/índices que localStorage não tem. Dexie é 24KB gzip, type-safe, suporta schema versioning | Aprendizagem Dexie (1-2h). Vale: PRD evita refactor mid-project (Risco #3 do PRD) |
 | ADR-3 | **Markdown editor: Tiptap 2.x** (não lexical). Headless, baseado em ProseMirror, 30+ extensions oficiais. Suporta tasks/lists/code/links nativamente | Lexical (Meta) é mais novo e tem menos extensões prontas para markdown PT-PT. Tiptap tem track-record em apps de produtividade (Notion-like). Bundle: ~110KB gzip vs Lexical ~80KB — diferença não-crítica | Bundle ligeiramente maior (~30KB) |
-| ADR-4 | **Testing: Vitest 1.x + Playwright 1.x + MSW 2 (Mock Service Worker)** para mocks Anthropic/Google/Telegram. Cobertura 60% packages core (cérebro/tarefas/finanças) | MSW intercepta a nível de fetch — funciona em Vitest E em Playwright sem duplicar mocks. Anthropic/Google têm SDKs que não permitem injectar fetch facilmente — MSW resolve | Setup MSW (~2h). Vale: mesmo mock para unit+E2E |
+| ADR-4 | **Testing: Vitest 1.x + Playwright 1.x + MSW 2 (Mock Service Worker)** para mocks Anthropic/Google/Telegram. Cobertura 60% packages core (cérebro/tarefas/finanças) | MSW intercepta a nível de fetch em Vitest Node. Para Playwright (browser real) ver ADR-8 (`page.route()` em endpoint interno) — MSW Node não intercepta browser context | Setup MSW (~2h) + estratégia dupla unit/E2E (ADR-8) |
 | ADR-5 | **Tool Registry pattern**: registo declarativo central (`/lib/agent/tools/registry.ts`) onde cada Epic adiciona as suas tools. Discovery por domínio. Schema Zod para args/returns | PRD §6.1 lista 17+ intents distribuídos por 8 epics. Sem registry central, cada Epic acaba a tocar no executor. Registry permite que cada Epic só toque no seu próprio domínio | Boilerplate inicial (~1 story em Epic 1). ROI alto a partir do Epic 2 |
+| ADR-6 | **KV namespacing independente para Undo vs ConfirmationProvider**: `nexus:undo:run:*` (Story 1.7) vs `nexus:agent:confirm:*` (Story 1.8). Partilham cliente `kv` mas namespaces distintos | Evita acoplamento entre módulos com TTLs diferentes (Undo 30s, Confirm 60s). Permite evolução independente | Detalhe vive in-story (`stories/active/1.7.story.md`) |
+| ADR-7 | **Cross-process ConfirmationProvider via KV polling** (`KvConfirmationProvider`): Edge process A emite `preview_request` → escreve em KV → Edge process B (rota `/api/agent/confirm`) escreve confirmação → A faz polling KV até resolver | Permite que `runAgent` (Edge stateless) coordene confirmação UI sem partilhar memória entre processos | Polling adiciona latência (~100ms). Detalhe in-story (`stories/active/1.8.story.md`) e em `lib/agent/kv-confirmation-provider.ts` |
+| ADR-8 | **Mocking E2E via Playwright `page.route()` em endpoint INTERNO** (`/api/agent/prompt`) — não em `api.anthropic.com`. Cobre Story 1.10 regression suite (50 prompts PT-PT) | MSW Node não intercepta browser fetch (Playwright). `page.route()` em endpoint interno é a fronteira natural do Nexus, evita coupling com SDK Anthropic, e permite modo staging real (`USE_REAL_API=true`) | Mocks têm de manter fidelidade ao protocolo `ExecutorSSEEvent`. Detalhe em §5.5 abaixo |
 
 ---
 
@@ -331,7 +334,7 @@ export async function migrateV1ToV2(): Promise<MigrationResult> {
 
 ### 5.2 Mock Service Worker (MSW) handlers
 
-**Decisão:** MSW corre em Vitest (`setupFiles`) e em Playwright (via `page.route` se necessário, mas preferencialmente como server-side handlers em ambiente test). Mesmos handlers, dois consumidores.
+**Decisão:** MSW corre **apenas em Vitest** (`setupFiles`). Para Playwright (browser real), Story 1.10 estabeleceu **ADR-8** (ver §5.5) — interceptar o endpoint INTERNO `POST /api/agent/prompt` via `page.route()`, em vez de tentar reutilizar handlers MSW Node (que não interceptam browser fetch).
 
 ```ts
 // tests/mocks/handlers/anthropic.ts
@@ -382,6 +385,56 @@ Story 1.10 (PRD) cria conjunto fixo de 50 prompts em `tests/fixtures/prompts-pt-
 - **Coverage gate de 60%** APENAS em `lib/agent/`, `lib/db/`, `lib/shared/` — não na UI (uso pessoal, não justifica)
 - Vercel preview build NÃO é bloqueado por cobertura (apenas tests passing). PR para `main` exige cobertura.
 - E2E Playwright corre apenas no GitHub Actions pre-merge — não em cada `npm run dev`.
+
+### 5.5 ADR-8 — Mocking E2E Strategy (Playwright `page.route()` em endpoint interno)
+
+**Status:** Accepted (Story 1.10, 09/05/2026)
+
+**Context.** Story 1.10 introduz a E2E regression suite (50 prompts PT-PT) executada via Playwright em browser real (Chromium). Os MSW handlers existentes (`tests/mocks/handlers/anthropic.ts`) servem **apenas Vitest Node** — não são interceptados pelo Playwright porque correm em runtime diferente do dev server Next.js. Esta restrição não estava documentada no ADR-4 original (que assumia "mesmos handlers, dois consumidores") e foi descoberta empiricamente durante a implementação da Story 1.10.
+
+**Decision.** Para testes E2E que exercitam o pipeline de chat completo, usar **Playwright `page.route()`** para interceptar o endpoint **INTERNO** `POST /api/agent/prompt` (em vez de `https://api.anthropic.com/v1/messages`).
+
+Implementação canónica:
+
+| Ficheiro | Linhas | Responsabilidade |
+|----------|--------|------------------|
+| `tests/e2e/regression/helpers/route-handler.ts` | ~75 | `installMockRoute(page, fixturePrompts)` regista `page.route('**/api/agent/prompt', ...)`; matching por `prompt` exacto via `Map`; 404 explícito em mismatches |
+| `tests/e2e/regression/helpers/mock-events.ts` | ~310 | 21 `mockProfile` builders que produzem sequências de `ExecutorSSEEvent` (`meta`, `tool_start`, `tool_complete`, `tool_error`, `text_delta`, `preview_request`, `done`) consistentes com `lib/agent/executor.ts:185-209` |
+| `tests/fixtures/prompts-pt-pt.json` | ~520 | 50 prompts PT-PT em 11 categorias, cada um com `mockProfile` declarativo |
+
+**Vantagens:**
+
+- Endpoint interno é a **fronteira natural** do Nexus (entry point único do pipeline) — mocking aqui é semanticamente mais limpo que mockar a SDK Anthropic
+- Mock determinístico replicável (mesma sequência SSE em qualquer máquina)
+- Sem coupling com SDK Anthropic interno (changes no SDK não quebram suite E2E)
+- Permite testes de comportamento da UI (ToolCards, UndoToast, preview gates) sem latência LLM
+- Modo staging (`USE_REAL_API=true`) **desactiva** o `page.route()` — request vai ao server real para o subset de prompts taggeados `@real-api` (5 prompts canónicos)
+
+**Desvantagens:**
+
+- Não valida o pipeline server-side `runAgent` em CI (já coberto por unit tests Story 1.5)
+- Mocks têm de manter fidelidade ao protocolo `ExecutorSSEEvent` (validado em type-check via `helpers/types.ts`)
+
+**Performance Budgets (sub-decisão consolidada):**
+
+| Ambiente | Target p95 | Origem |
+|----------|------------|--------|
+| **CI** (`page.route()` mock) | `< 2s` | Inferência operacional — sem latência LLM real |
+| **Staging** (`USE_REAL_API=true`, subset `@real-api`) | `< 6s` | PRD §10 AC5 (linha 428) + NFR1 (linha 274) |
+
+**Alternativas consideradas e rejeitadas:**
+
+1. **Reutilizar MSW Node server para Playwright** — Não funciona; MSW Node não intercepta browser fetch
+2. **Configurar MSW browser worker** (service worker) — Adiciona complexidade infraestrutural; service worker em CI requer extra setup
+3. **Mockar `https://api.anthropic.com` directamente em Playwright** — Acoplamento ao SDK; quebra a abstração do endpoint interno
+4. **Configurar dev server com `MOCK_MODE=true`** — Invasivo (modifica produção code para teste); rejeitado
+
+**Trace:**
+
+- Story 1.10 — implementação (`tests/e2e/regression/`)
+- PO Validation 09/05/2026 — Should-Fix SF1 originalmente pedia ADR formal (numerado erradamente como ADR-7 — corrigido aqui para ADR-8 porque ADR-7 já existe — Story 1.8 KV polling)
+- QA Gate 09/05/2026 — F-CONCERNS-3 (este ADR)
+- Workflow CI: `.github/workflows/e2e-regression.yml` (bloqueante no PR para `main`)
 
 ---
 
