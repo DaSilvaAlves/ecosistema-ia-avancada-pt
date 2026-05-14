@@ -39,6 +39,29 @@ const DEFAULT_EXECUTOR_MAX_TOKENS = 4096;
 export { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL };
 
 /**
+ * Remove markdown code fences que a Haiku ocasionalmente envolve à volta do
+ * JSON apesar do system prompt pedir "APENAS JSON válido, sem markdown".
+ *
+ * Padrão observado em produção (2026-05-09):
+ *   "```json\n{...}\n```"  ou  "```\n{...}\n```"
+ *
+ * Trim conservador — só remove fences se o pattern bater no início E no fim.
+ * Caso contrário devolve a string intacta para o parse falhar com mensagem
+ * útil (preserva debuggability — `Error.message` no catch ainda mostra o
+ * `rawResponse` original via slice).
+ */
+function stripJsonMarkdownFences(raw: string): string {
+  const trimmed = raw.trim();
+  // Match abertura ```json ou ``` (case-insensitive na language tag)
+  const fenceOpenMatch = trimmed.match(/^```(?:json)?\s*\n?/i);
+  const fenceCloseMatch = trimmed.match(/\n?\s*```$/);
+  if (fenceOpenMatch && fenceCloseMatch) {
+    return trimmed.slice(fenceOpenMatch[0].length, trimmed.length - fenceCloseMatch[0].length).trim();
+  }
+  return trimmed;
+}
+
+/**
  * Erro sentinela que sinaliza ao outer catch do `execute()` que o evento
  * `error` já foi emitido pelo handler interno (e.g., parse de
  * `input_json_delta` falhou). Evita double-emission.
@@ -123,11 +146,16 @@ export class AnthropicClassifier implements ClassifierProvider {
       );
     }
     const rawResponse = textBlock.text;
+    // Hotfix 2026-05-09: Haiku ocasionalmente envolve o JSON em markdown
+    // fences apesar do system prompt pedir "APENAS JSON". Strip antes do
+    // parse mas preservar `rawResponse` original (com fences) downstream
+    // para debug/PII redaction. Ver `stripJsonMarkdownFences()` JSDoc.
+    const cleanedResponse = stripJsonMarkdownFences(rawResponse);
 
     // Parse JSON do prompt da Story 1.4 — { intents: string[], confidence: Record<string, number> }
     let parsed: { intents?: unknown; confidence?: unknown };
     try {
-      parsed = JSON.parse(rawResponse) as { intents?: unknown; confidence?: unknown };
+      parsed = JSON.parse(cleanedResponse) as { intents?: unknown; confidence?: unknown };
     } catch {
       throw new Error(
         `Classifier: resposta da API não é JSON válido — recebido: ${rawResponse.slice(0, 200)}`

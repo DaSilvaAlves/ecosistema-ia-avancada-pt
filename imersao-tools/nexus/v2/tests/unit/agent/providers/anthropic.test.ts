@@ -158,6 +158,121 @@ describe('AnthropicClassifier (AC2, AC7)', () => {
   });
 });
 
+/**
+ * Hotfix 2026-05-09 — Classifier robustez a markdown fences (BUG-CLASSIFIER-FENCES).
+ *
+ * Bug em produção: a Haiku 4.5 ocasionalmente envolve o JSON em ```json … ```
+ * apesar do system prompt dizer "APENAS JSON válido, sem markdown". Resultado:
+ * `JSON.parse` falhava e o classifier emitia `executor — interrompida`.
+ *
+ * Fix em `lib/agent/providers/anthropic.ts`: helper `stripJsonMarkdownFences()`
+ * normaliza o input para `JSON.parse` mantendo `rawResponse` original (com fences)
+ * downstream para debug/PII redaction.
+ *
+ * Estes tests sobrescrevem o handler global via `server.use` e devolvem responses
+ * que reproduzem o output observado em produção.
+ */
+describe('AnthropicClassifier — markdown fences hotfix (2026-05-09)', () => {
+  /** Helper: monta resposta canónica do classifier com `text` arbitrário. */
+  function classifierTextResponse(model: string, text: string) {
+    return HttpResponse.json({
+      id: 'msg_classifier_fences',
+      type: 'message',
+      role: 'assistant',
+      model,
+      content: [{ type: 'text', text }],
+      stop_reason: 'end_turn',
+      usage: { input_tokens: 80, output_tokens: 40 },
+    });
+  }
+
+  it('parseia JSON envolvido em ```json … ``` (Haiku output observado em prod)', async () => {
+    server.use(
+      http.post('https://api.anthropic.com/v1/messages', async ({ request }) => {
+        const body = (await request.json()) as { model: string };
+        return classifierTextResponse(
+          body.model,
+          '```json\n{"intents":["calendar"],"confidence":{"calendar":0.91}}\n```'
+        );
+      })
+    );
+
+    const classifier = new AnthropicClassifier(MOCK_API_KEY);
+    const result = await classifier.classify(
+      'system prompt qualquer',
+      'qualquer prompt'
+    );
+    expect(result.intents).toEqual(['calendar']);
+    expect(result.confidence).toEqual({ calendar: 0.91 });
+    // rawResponse PRESERVA fences originais — debuggability + PII redaction
+    expect(result.rawResponse).toContain('```json');
+    expect(result.rawResponse).toContain('```');
+  });
+
+  it('parseia JSON envolvido em ``` … ``` sem language tag', async () => {
+    server.use(
+      http.post('https://api.anthropic.com/v1/messages', async ({ request }) => {
+        const body = (await request.json()) as { model: string };
+        return classifierTextResponse(
+          body.model,
+          '```\n{"intents":[],"confidence":{}}\n```'
+        );
+      })
+    );
+
+    const classifier = new AnthropicClassifier(MOCK_API_KEY);
+    const result = await classifier.classify(
+      'system prompt qualquer',
+      'oi'
+    );
+    expect(result.intents).toEqual([]);
+    expect(result.confidence).toEqual({});
+    expect(result.rawResponse).toContain('```');
+  });
+
+  it('regressão — JSON puro continua a parsear sem alterações de comportamento', async () => {
+    server.use(
+      http.post('https://api.anthropic.com/v1/messages', async ({ request }) => {
+        const body = (await request.json()) as { model: string };
+        return classifierTextResponse(
+          body.model,
+          '{"intents":["tasks"],"confidence":{"tasks":0.88}}'
+        );
+      })
+    );
+
+    const classifier = new AnthropicClassifier(MOCK_API_KEY);
+    const result = await classifier.classify(
+      'system prompt qualquer',
+      'lembra-me de comprar pão'
+    );
+    expect(result.intents).toEqual(['tasks']);
+    expect(result.confidence).toEqual({ tasks: 0.88 });
+    // rawResponse intacto (sem fences porque o input não os tinha)
+    expect(result.rawResponse).not.toContain('```');
+  });
+
+  it('parseia JSON com whitespace extra à volta dos fences', async () => {
+    server.use(
+      http.post('https://api.anthropic.com/v1/messages', async ({ request }) => {
+        const body = (await request.json()) as { model: string };
+        return classifierTextResponse(
+          body.model,
+          '  ```json  \n  {"intents":["finance"],"confidence":{"finance":0.77}}  \n  ```  '
+        );
+      })
+    );
+
+    const classifier = new AnthropicClassifier(MOCK_API_KEY);
+    const result = await classifier.classify(
+      'system prompt qualquer',
+      'paguei 50 euros'
+    );
+    expect(result.intents).toEqual(['finance']);
+    expect(result.confidence).toEqual({ finance: 0.77 });
+  });
+});
+
 describe('AnthropicExecutor — basic streaming (AC2, AC8)', () => {
   const messages: LLMMessage[] = [{ role: 'user', content: 'Olá' }];
   const opts = { runId: '11111111-2222-3333-4444-555555555555' };
