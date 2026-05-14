@@ -21,6 +21,7 @@ agent_config:
     - Dev Notes
     - Testing
     - Change Log
+    - Not-Tested Evidence Gate
 
 sections:
   - id: community-origin
@@ -326,10 +327,50 @@ sections:
     title: Change Log
     type: table
     columns: [Date, Version, Description, Author]
-    instruction: Track changes made to this story document
+    instruction: |
+      Track changes made to this story document.
+
+      GATE (Retrospectiva Epic 1 — A2): se algum commit desta story usar o trailer
+      `Not-tested:` num commit que toca paths bloqueadores (CI config, test-runner
+      config, build config, segurança), preencher OBRIGATORIAMENTE a secção
+      "Not-Tested Evidence Gate" abaixo. Ver `.claude/rules/not-tested-trailer-rules.md`.
     owner: scrum-master
     editors: [scrum-master, dev-agent, qa-agent]
-    
+
+  - id: not-tested-evidence
+    title: Not-Tested Evidence Gate
+    type: optional
+    instruction: |
+      **GATE — preencher SÓ se algum commit desta story usar o trailer `Not-tested:`
+      num commit que toca paths bloqueadores. Caso contrário, deixar "N/A".**
+
+      Origem: Retrospectiva Epic 1 Nexus v2, acção A2. Incidente: commit `887e6c2f`
+      alterou `playwright.config.ts` com `Not-tested: regression CI run` sem evidência
+      local — o `testIgnore` quebrou a discovery do Playwright e custou 1 iteração extra.
+
+      Paths bloqueadores (classificação completa em `.claude/rules/not-tested-trailer-rules.md`):
+      - `.github/workflows/**`
+      - `playwright.config.ts`, `vitest.config.ts`, `jest.config.js`
+      - `package.json` (campo `scripts`), `tsconfig*.json`
+      - `*.config.ts`, `*.config.js`, `vite.config.ts`
+      - Auth, RLS, gestão de secrets, middleware de sessão
+
+      Nestes contextos `Not-tested:` NÃO é waiver válido — é red flag bloqueador.
+      O commit só avança com **evidência local prévia** que prove o efeito real da
+      alteração (output de `--list`, dry-run, ou execução local). Se não for possível
+      obter evidência localmente, o commit NÃO avança — escalar a @devops ou @architect.
+    template: |
+      **Commit afectado**: {{commit_sha}} — {{commit_subject}}
+      **Path(s) bloqueador(es) tocado(s)**: {{blocking_paths}}
+      **Razão do `Not-tested:`**: {{not_tested_reason}}
+      **Evidência local prévia** (output `--list` / dry-run / execução local):
+      ```
+      {{local_evidence_output}}
+      ```
+      **Verificado por**: @{{verifier}}
+    owner: scrum-master
+    editors: [scrum-master, dev-agent, qa-agent]
+
   - id: dev-agent-record
     title: Dev Agent Record
     instruction: This section is populated by the development agent during implementation
