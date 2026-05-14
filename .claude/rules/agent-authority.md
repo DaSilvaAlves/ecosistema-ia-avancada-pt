@@ -103,3 +103,7 @@ ANY agent → @devops *push
 2. Quality gate fails → Return to @dev with specific feedback
 3. Constitutional violation detected → BLOCK, require fix before proceed
 4. Agent boundary conflict → @aiox-master mediates
+
+## Separation of Roles — executor != quality_gate
+
+Quem executa uma unidade de trabalho não pode ser quem assina o seu quality gate. Quando o executor natural do gate é o próprio executor do trabalho (ex: `@qa` que escreveu fixtures), o gate sobe um nível. Matriz de escalação completa e regras em `.claude/rules/separation-of-roles.md`.

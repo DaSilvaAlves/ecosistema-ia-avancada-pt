@@ -8,7 +8,7 @@
 # - File types for categorization
 #
 version: 5.0.7
-generated_at: "2026-05-09T02:59:13.313Z"
+generated_at: "2026-05-14T22:25:12.168Z"
 generator: scripts/generate-install-manifest.js
 file_count: 1142
 files:
@@ -4181,9 +4181,9 @@ files:
     type: template
     size: 1800
   - path: product/templates/story-tmpl.yaml
-    hash: sha256:0b64b49e5332cbce7d36da1ff40495628cb6ce650855b752dc82372706d41e13
+    hash: sha256:0e35a2bec81f7f97d926f27a32bfb8a7d8a5e5d80c55f3ddc96273878af2f713
     type: template
-    size: 13769
+    size: 15869
   - path: product/templates/story.hbs
     hash: sha256:3f0ac8b39907634a2b53f43079afc33663eee76f46e680d318ff253e0befc2c4
     type: template

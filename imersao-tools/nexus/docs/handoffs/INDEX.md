@@ -9,7 +9,7 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 
 | Ficheiro | De | Para | Data | Próxima acção |
 |---------|-----|------|------|--------------|
-| [RETOMA-20260512-pr-14-merged-epic-1-in-main.md](RETOMA-20260512-pr-14-merged-epic-1-in-main.md) | `@devops` | `@po` | 12/05/2026 | Pax (`@po`) — PR #14 squash-merged em main (merge commit `5514b310`, branch eliminada). Epic 1 (Cérebro Multi-Intent) **10/10 COMPLETO em main**. Próxima acção recomendada: `@po *retrospective epic-1` (5 iter de Story 1.10 têm lições importantes: mock vs real protocol, testIgnore Playwright, cookie sharing E2E). |
+| [RETOMA-20260514-epic-2-created-ready-for-sm-draft.md](RETOMA-20260514-epic-2-created-ready-for-sm-draft.md) | `@pm` | `@sm` | 14/05/2026 | Epic 2 (Tarefas v2 + Projectos) documentado em `imersao-tools/nexus/docs/EPIC-2.md` — 10 stories planeadas (2.1-2.10), ancorado no PRD §10 + arquitectura + Retrospectiva Epic 1. **Próxima acção:** `@sm *draft 2.1` (Schema tarefas/projectos). |
 
 ---
 
@@ -17,6 +17,8 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 
 | Ficheiro | De | Para | Consumido | Por |
 |---------|-----|------|----------|-----|
+| [RETOMA-20260512-epic-1-retrospective-complete.md](archive/RETOMA-20260512-epic-1-retrospective-complete.md) | `@po` | any | 14/05/2026 | Orion (`@aiox-master`) — A10 executado: memória `project_nexus_v2_producao.md` actualizada (Epic 1 fechado 10/10, top 3 lições, ref retrospectiva) + `MEMORY.md` sincronizado. Acções A1/A3/A6 (regras de governança), A2 (gate no `story-tmpl.yaml`) e Epic 2 criadas nesta sessão. |
+| [RETOMA-20260512-pr-14-merged-epic-1-in-main.md](RETOMA-20260512-pr-14-merged-epic-1-in-main.md) | `@devops` | `@po` | 12/05/2026 | Pax (`@po`) — retrospectiva Epic 1 criada em `imersao-tools/nexus/docs/retrospectives/EPIC-1-retrospective.md`. Handoff de saída `RETOMA-20260512-epic-1-retrospective-complete.md` criado com 10 acções accionáveis (A1-A10), owners atribuídos. |
 | [RETOMA-20260512-story-1.10-closed-epic-1-completed.md](archive/RETOMA-20260512-story-1.10-closed-epic-1-completed.md) | `@po` | any | 12/05/2026 | Gage (`@devops`) — PR #14 squash-merged (commit `5514b310`), branch eliminada, origin/main actualizado. Closure commit `ee6d3a70` (rename `active/` → `completed/` + Status Done + Change Log v1.0) push'ed antes do merge. CI no head SHA `ee6d3a70` 7/7 essential checks SUCCESS. Handoff de saída `RETOMA-20260512-pr-14-merged-epic-1-in-main.md` criado para `@po *retrospective epic-1`. |
 | [RETOMA-20260512-story-1.10-iter5-pushed-ci-watch.md](archive/RETOMA-20260512-story-1.10-iter5-pushed-ci-watch.md) | `@devops` | `@po` | 12/05/2026 | Pax (`@po`) — CI verde validado (15/15 jobs SUCCESS, `50-prompt regression` PASS 3m28s, run `25734110978`). Story 1.10 marcada Done (v1.0 Change Log), Tasks 6+8 checked, story movida `active/` → `completed/`. Epic 1 fecha 10/10. Handoff de saída `RETOMA-20260512-story-1.10-closed-epic-1-completed.md` criado para Eurico decidir próximo passo. |
 | [RETOMA-20260511-story-1.10-iter5-fix-ready-for-push.md](archive/RETOMA-20260511-story-1.10-iter5-fix-ready-for-push.md) | `@dev` | `@devops` | 12/05/2026 | Gage (`@devops`) — re-check gates críticos PASS (regression 50 tests, test:e2e 6 tests), CR local SKIPPED (incompat WSL+linked-worktree Windows), push'ed `c2978465..7ba0e781`, tip remoto `7ba0e781a0231555991d02b08e05a755846ea43b`. Handoff de saída para `@po` criado para watch CI + `*close-story 1.10`. |
