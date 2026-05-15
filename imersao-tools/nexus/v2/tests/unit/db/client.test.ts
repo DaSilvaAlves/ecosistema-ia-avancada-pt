@@ -96,11 +96,14 @@ describe('migrateV1ToV2', () => {
   });
 
   it('migra tarefas v1 para v2 quando flag ausente', async () => {
+    // Story 2.2 — `createTask` valida `TaskSchema` (id deve ser UUID).
+    // V1Tasks com id não-UUID vão para `skipped` (AC6). Aqui usamos UUID
+    // válido para cobrir o caminho de migration bem-sucedida.
     localStorage.setItem(
       'nexus_tasks',
       JSON.stringify([
         {
-          id: 't1',
+          id: crypto.randomUUID(),
           text: 'tarefa v1',
           done: false,
           priority: 'high',
@@ -116,6 +119,7 @@ describe('migrateV1ToV2', () => {
     const result = await migrateV1ToV2();
     expect(result.status).toBe('success');
     expect(result.migrated).toBe(1);
+    expect(result.skipped).toBe(0);
     expect(localStorage.getItem('nexus_v1_migrated_to_v2')).toBe('true');
   });
 });
