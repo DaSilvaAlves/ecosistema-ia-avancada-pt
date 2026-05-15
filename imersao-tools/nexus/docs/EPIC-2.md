@@ -2,7 +2,7 @@
 
 > **Projecto:** Nexus v2 (`imersao-tools/nexus/`)
 > **Criado por:** Morgan (`@pm`) em 14/05/2026
-> **Estado:** Ready for story drafting (`@sm`)
+> **Estado:** Em curso — 1/10 stories Done (Story 2.1 CLOSED 15/05/2026, aguarda push)
 > **Fonte da verdade:** `PRD-NEXUS-V2.md` §6.2, §6.5, §9, §10 (Epic 2) — Constitution Artigo IV (No Invention): cada story e AC abaixo traça ao PRD
 > **Arquitectura:** `architecture-v2.md` (5 ADRs — não reabrir, ver `project_nexus_v2_architecture.md`)
 > **Lições aplicadas:** Retrospectiva Epic 1 (`retrospectives/EPIC-1-retrospective.md`) — acções A1, A2, A6
@@ -49,18 +49,20 @@ Ordem PRD §9: `0 → 1 → (2 || 3) → 4 → 5 → 6 → 7 → 8`.
 
 ## 5. Stories (10) — trace PRD §10
 
-| # | Story | Descrição | FR | Executor previsto | Quality gate previsto |
-|---|-------|-----------|-----|-------------------|------------------------|
-| 2.1 | Schema tarefas/projectos | Schema Dexie `tasks`, `task_recurrences`, `tags`, `task_tags`, `projects` — estende schema Story 1.1 conforme `architecture-v2.md` | FR9, FR10, FR30 | `@data-engineer` | `@dev` |
-| 2.2 | Migration v1 → v2 | Migrar dados de tarefas do `localStorage` v1 (`nexus_tasks`) para o schema Dexie v2 | FR9 | `@dev` | `@data-engineer` |
-| 2.3 | Vista lista | Refactor da vista lista v1; secção dedicada de atrasadas | FR9, FR11, FR13 | `@ux-design-expert` | `@dev` |
-| 2.4 | Vista Kanban | Colunas customizáveis + drag-and-drop com `dnd-kit` | FR11, FR12 | `@ux-design-expert` | `@dev` |
-| 2.5 | Vista calendário semanal | Calendário semanal com drag entre dias | FR11, FR12 | `@ux-design-expert` | `@dev` |
-| 2.6 | Sistema de tags global | Criar, listar, filtrar tags partilhadas | FR14 | `@dev` | `@qa` |
-| 2.7 | Geração de instâncias recorrentes | Motor de recorrência client-side (`requestIdleCallback`/`setInterval`) — horizonte 90 dias | FR10 | `@dev` | `@architect` |
-| 2.8 | CRUD projectos | Criar, editar, listar, arquivar projectos | FR29, FR30 | `@dev` | `@qa` |
-| 2.9 | Vista projecto | Tarefas vinculadas em vista lista + Kanban filtrado | FR31 | `@ux-design-expert` | `@dev` |
-| 2.10 | Tools cérebro tarefas/projectos | Registar 7 tools no Tool Registry: `criar_tarefa`, `completar_tarefa`, `listar_tarefas`, `listar_atrasadas`, `vincular_tarefa_projecto`, `criar_projecto`, `consultar_projecto` | FR15, FR32 | `@dev` | `@architect` |
+> **Progresso:** 1/10 Done · 9/10 Pending. Story 2.1 CLOSED 15/05/2026 (commit local `c1f15a2b`, aguarda `@devops *push`).
+
+| # | Story | Descrição | FR | Executor previsto | Quality gate previsto | Estado |
+|---|-------|-----------|-----|-------------------|------------------------|--------|
+| 2.1 | Schema tarefas/projectos | Schema Dexie `tasks`, `task_recurrences`, `tags`, `task_tags`, `projects` — estende schema Story 1.1 conforme `architecture-v2.md` | FR9, FR10, FR30 | `@data-engineer` | `@dev` (gate real: `@qa` Quinn) | **Done** (CLOSED 15/05) |
+| 2.2 | Migration v1 → v2 | Migrar dados de tarefas do `localStorage` v1 (`nexus_tasks`) para o schema Dexie v2 | FR9 | `@dev` | `@data-engineer` | Pending (próxima) |
+| 2.3 | Vista lista | Refactor da vista lista v1; secção dedicada de atrasadas | FR9, FR11, FR13 | `@ux-design-expert` | `@dev` | Pending |
+| 2.4 | Vista Kanban | Colunas customizáveis + drag-and-drop com `dnd-kit` | FR11, FR12 | `@ux-design-expert` | `@dev` | Pending |
+| 2.5 | Vista calendário semanal | Calendário semanal com drag entre dias | FR11, FR12 | `@ux-design-expert` | `@dev` | Pending |
+| 2.6 | Sistema de tags global | Criar, listar, filtrar tags partilhadas | FR14 | `@dev` | `@qa` | Pending |
+| 2.7 | Geração de instâncias recorrentes | Motor de recorrência client-side (`requestIdleCallback`/`setInterval`) — horizonte 90 dias | FR10 | `@dev` | `@architect` | Pending |
+| 2.8 | CRUD projectos | Criar, editar, listar, arquivar projectos | FR29, FR30 | `@dev` | `@qa` | Pending |
+| 2.9 | Vista projecto | Tarefas vinculadas em vista lista + Kanban filtrado | FR31 | `@ux-design-expert` | `@dev` | Pending |
+| 2.10 | Tools cérebro tarefas/projectos | Registar 7 tools no Tool Registry: `criar_tarefa`, `completar_tarefa`, `listar_tarefas`, `listar_atrasadas`, `vincular_tarefa_projecto`, `criar_projecto`, `consultar_projecto` | FR15, FR32 | `@dev` | `@architect` | Pending |
 
 > Os pares executor/quality-gate são **previsões** (Quality-First Planning) e respeitam `executor != quality_gate` (regra A6). `@sm` finaliza a atribuição em cada story draft, `@po` valida.
 
@@ -106,14 +108,18 @@ Trace PRD §10 Epic 2: "Epic 1 + manual UX validation".
 
 ## 10. Próximo passo
 
-`@sm *draft` para a Story 2.1 (Schema tarefas/projectos). Sequência por story:
+**Story 2.1 CLOSED 15/05/2026** — aguarda `@devops *push` (branch `feature/2.1-schema-tarefas-projectos`, commit `c1f15a2b`). Após merge em `main`:
 
 ```
-@sm *draft 2.1 → @po *validate-story-draft 2.1 → @dev *develop 2.1 → @qa *qa-gate 2.1 → @devops *push
+@sm *draft 2.2 → @po *validate-story-draft 2.2 → @dev *develop 2.2 → @data-engineer *qa-gate 2.2 → @devops *push
 ```
 
-Stories 2.1 → 2.2 são sequenciais (schema antes de migration). 2.3-2.9 podem paralelizar parcialmente após 2.1. 2.10 (tools cérebro) depende de 2.1 + 2.8 (precisa de tasks e projects persistidos).
+Sequência herdada:
+- Stories 2.1 → 2.2 são sequenciais (schema antes de migration) — 2.2 só draftar após merge da 2.1.
+- 2.3-2.9 podem paralelizar parcialmente após 2.1 estar em `main`.
+- 2.10 (tools cérebro) depende de 2.1 + 2.8 (precisa de tasks e projects persistidos).
 
 ---
 
-*Epic 2 preparado por Morgan (`@pm`) em 14/05/2026. Ancorado em `PRD-NEXUS-V2.md` §10, `architecture-v2.md` (5 ADRs), e Retrospectiva Epic 1 (A1/A2/A6). Pronto para `@sm *draft`.*
+*Epic 2 preparado por Morgan (`@pm`) em 14/05/2026. Ancorado em `PRD-NEXUS-V2.md` §10, `architecture-v2.md` (5 ADRs), e Retrospectiva Epic 1 (A1/A2/A6).*
+*Story 2.1 CLOSED por Pax (`@po`) em 15/05/2026 — 1/10 Done.*
