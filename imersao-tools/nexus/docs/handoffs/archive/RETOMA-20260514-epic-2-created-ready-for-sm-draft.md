@@ -2,10 +2,14 @@
 from_agent: pm
 to_agent: sm
 created: 2026-05-14T20:06:24Z
-status: pending
+consumed: true
+consumed_at: 2026-05-15T00:00:00Z
+consumed_by: sm
+status: consumed
 project: nexus-v2
 epic: 2
 next_action: draft_story_2.1
+result: Story 2.1 drafted em imersao-tools/nexus/docs/stories/2.1.story.md (status Draft). Handoff de saída sm → po criado.
 ---
 
 > ATENÇÃO — ESTE HANDOFF SEGUE A REGRA OBRIGATÓRIA `handoff-location.md`.

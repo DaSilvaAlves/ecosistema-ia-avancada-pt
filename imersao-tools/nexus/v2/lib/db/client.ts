@@ -2,6 +2,8 @@ import Dexie, { type Table } from 'dexie';
 import type {
   Task,
   Project,
+  Recurrence,
+  Tag,
   Transaction,
   Habit,
   HabitLog,
@@ -16,19 +18,22 @@ import type {
 } from '@/types/db';
 
 /**
- * Nexus v2 — Dexie 4 client (Story 0.3)
+ * Nexus v2 — Dexie 4 client (Story 0.3 + Story 2.1)
  *
  * Schema version 1 — fonte canónica architecture-v2.md §4.2.
  * Constitution Article IV — não inventar tabelas/campos.
  *
- * Epic 2 incrementa para version 2 (adiciona installments, accounts, cards).
- * Epic 3 incrementa para version 3 (categorias, etc.). Cada Epic adiciona
- * `this.version(N+1).stores({...})` sem reescrever o anterior.
+ * Epic 2 incrementa para version 2 (adiciona `recurrences` genérica
+ * partilhada entre Epics 2/3/4 — architecture §16 L1128 — e `tags` globais).
+ * Epic 3 incrementa para version 3 (accounts, cards, installments, categories).
+ * Cada Epic adiciona `this.version(N+1).stores({...})` sem reescrever o anterior.
  */
 
 export class NexusDB extends Dexie {
   tasks!: Table<Task, string>;
   projects!: Table<Project, string>;
+  recurrences!: Table<Recurrence, string>;
+  tags!: Table<Tag, string>;
   transactions!: Table<Transaction, string>;
   habits!: Table<Habit, string>;
   habit_logs!: Table<HabitLog, string>;
@@ -57,6 +62,20 @@ export class NexusDB extends Dexie {
       knowledge_notes: 'id, notebookId, *tags, updatedAt',
       agent_runs: 'id, timestamp, [timestamp+status]',
       chat_messages: 'id, conversationId, timestamp, [conversationId+timestamp]',
+    });
+    // Story 2.1 — Epic 2 schema increment.
+    // Aditivo: Dexie preserva tasks/projects + restantes 11 tabelas de version(1).
+    // Apenas as 2 tabelas novas (recurrences, tags) são adicionadas.
+    // - recurrences: tabela genérica reutilizada por tasks/transactions/habits/reminders
+    //   (architecture §6.2 L512-519, §16 L1128). Índice composto [ownerType+ownerId]
+    //   serve `getRecurrenceByOwner` — padrão consistente com [habitId+date] / [conversationId+timestamp].
+    // - tags: definições globais (id, name, color). Vínculo tarefa↔tag vive em
+    //   Task.tags: string[] denormalizado + índice multi-entry *tags em `tasks`
+    //   (Story 0.3, version(1)). PO Q1 — `Task.tags` guarda IDs, não nomes.
+    //   PO Q2 — sem &name; unicidade case-insensitive verificada no repo.
+    this.version(2).stores({
+      recurrences: 'id, ownerType, ownerId, [ownerType+ownerId]',
+      tags: 'id, name',
     });
   }
 }
