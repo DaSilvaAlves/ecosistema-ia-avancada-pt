@@ -2,7 +2,7 @@
 
 > **Projecto:** Nexus v2 (`imersao-tools/nexus/`)
 > **Criado por:** Morgan (`@pm`) em 14/05/2026
-> **Estado:** Em curso — 1/10 stories Done (Story 2.1 CLOSED 15/05/2026, aguarda push)
+> **Estado:** Em curso — 2/10 stories Done (Stories 2.1 + 2.2 CLOSED 15/05/2026; 2.2 aguarda push)
 > **Fonte da verdade:** `PRD-NEXUS-V2.md` §6.2, §6.5, §9, §10 (Epic 2) — Constitution Artigo IV (No Invention): cada story e AC abaixo traça ao PRD
 > **Arquitectura:** `architecture-v2.md` (5 ADRs — não reabrir, ver `project_nexus_v2_architecture.md`)
 > **Lições aplicadas:** Retrospectiva Epic 1 (`retrospectives/EPIC-1-retrospective.md`) — acções A1, A2, A6
@@ -49,13 +49,13 @@ Ordem PRD §9: `0 → 1 → (2 || 3) → 4 → 5 → 6 → 7 → 8`.
 
 ## 5. Stories (10) — trace PRD §10
 
-> **Progresso:** 1/10 Done · 9/10 Pending. Story 2.1 CLOSED 15/05/2026 (commit local `c1f15a2b`, aguarda `@devops *push`).
+> **Progresso:** 2/10 Done · 8/10 Pending. Stories 2.1 + 2.2 CLOSED 15/05/2026. Story 2.1 mergeada em `main` (squash `86ddb6a6` PR #18). Story 2.2 commit local `dd6dc0d8` aguarda `@devops *push`.
 
 | # | Story | Descrição | FR | Executor previsto | Quality gate previsto | Estado |
 |---|-------|-----------|-----|-------------------|------------------------|--------|
 | 2.1 | Schema tarefas/projectos | Schema Dexie `tasks`, `task_recurrences`, `tags`, `task_tags`, `projects` — estende schema Story 1.1 conforme `architecture-v2.md` | FR9, FR10, FR30 | `@data-engineer` | `@dev` (gate real: `@qa` Quinn) | **Done** (CLOSED 15/05) |
-| 2.2 | Migration v1 → v2 | Migrar dados de tarefas do `localStorage` v1 (`nexus_tasks`) para o schema Dexie v2 | FR9 | `@dev` | `@data-engineer` | Pending (próxima) |
-| 2.3 | Vista lista | Refactor da vista lista v1; secção dedicada de atrasadas | FR9, FR11, FR13 | `@ux-design-expert` | `@dev` | Pending |
+| 2.2 | Migration v1 → v2 | Migrar dados de tarefas do `localStorage` v1 (`nexus_tasks`) para o schema Dexie v2 | FR9 | `@dev` | `@data-engineer` | **Done** (CLOSED 15/05) |
+| 2.3 | Vista lista | Refactor da vista lista v1; secção dedicada de atrasadas | FR9, FR11, FR13 | `@ux-design-expert` | `@dev` | Ready for draft (próxima) |
 | 2.4 | Vista Kanban | Colunas customizáveis + drag-and-drop com `dnd-kit` | FR11, FR12 | `@ux-design-expert` | `@dev` | Pending |
 | 2.5 | Vista calendário semanal | Calendário semanal com drag entre dias | FR11, FR12 | `@ux-design-expert` | `@dev` | Pending |
 | 2.6 | Sistema de tags global | Criar, listar, filtrar tags partilhadas | FR14 | `@dev` | `@qa` | Pending |
@@ -108,18 +108,25 @@ Trace PRD §10 Epic 2: "Epic 1 + manual UX validation".
 
 ## 10. Próximo passo
 
-**Story 2.1 CLOSED 15/05/2026** — aguarda `@devops *push` (branch `feature/2.1-schema-tarefas-projectos`, commit `c1f15a2b`). Após merge em `main`:
+**Story 2.2 CLOSED 15/05/2026** — aguarda `@devops *push` (branch `feature/2.2-migration-refactor`, commit local `dd6dc0d8`). Após merge em `main`:
 
 ```
-@sm *draft 2.2 → @po *validate-story-draft 2.2 → @dev *develop 2.2 → @data-engineer *qa-gate 2.2 → @devops *push
+@sm *draft 2.3 → @po *validate-story-draft 2.3 → @ux-design-expert *develop 2.3 → @dev *qa-gate 2.3 → @devops *push
 ```
 
 Sequência herdada:
-- Stories 2.1 → 2.2 são sequenciais (schema antes de migration) — 2.2 só draftar após merge da 2.1.
-- 2.3-2.9 podem paralelizar parcialmente após 2.1 estar em `main`.
+- Stories 2.1 → 2.2 são sequenciais (schema antes de migration) — ambas concluídas.
+- 2.3-2.9 podem paralelizar parcialmente agora que 2.1 (schema) está em `main` e 2.2 (migration) está pronta para push.
 - 2.10 (tools cérebro) depende de 2.1 + 2.8 (precisa de tasks e projects persistidos).
+
+### Débito não-bloqueador registado para retrospectiva Epic 2
+
+| # | Item | Origem | Prioridade |
+|---|------|--------|------------|
+| D1 | Teste de cenário "JSON malformado em `localStorage.nexus_tasks` → migration retorna `no-data` graciosamente" | Cobre linhas 72-74 (`catch { v1Tasks = []; }`) de `v1-to-v2.ts` — pré-existente Story 0.3 (`git blame c362b171`), aceito como débito. Coverage agregada de `v1-to-v2.ts` é 96.22% > 80% alvo AC11 sem este teste. | Baixa — pode ser absorvido na Story 8.10 (Epic 8 cleanup) ou criado como story de débito técnico no fecho do Epic 2 |
 
 ---
 
 *Epic 2 preparado por Morgan (`@pm`) em 14/05/2026. Ancorado em `PRD-NEXUS-V2.md` §10, `architecture-v2.md` (5 ADRs), e Retrospectiva Epic 1 (A1/A2/A6).*
 *Story 2.1 CLOSED por Pax (`@po`) em 15/05/2026 — 1/10 Done.*
+*Story 2.2 CLOSED por Pax (`@po`) em 15/05/2026 — 2/10 Done.*
