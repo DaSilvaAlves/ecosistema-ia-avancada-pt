@@ -2,7 +2,10 @@
 from_agent: po
 to_agent: devops
 created: 2026-05-15T18:00:00Z
-status: pending
+status: consumed
+consumed: true
+consumed_at: 2026-05-15T10:56:02Z
+consumed_by: devops
 project: nexus-v2
 epic: 2
 story: 2.1
@@ -10,6 +13,8 @@ next_action: push_branch_open_pr
 branch: feature/2.1-schema-tarefas-projectos
 commit_local: c1f15a2b
 target_branch: main
+merged_commit: 86ddb6a6
+pr: 18
 ---
 
 # RETOMA — Story 2.1 CLOSED, pronto para `@devops *push`
