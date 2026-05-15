@@ -35,6 +35,14 @@ export default defineConfig({
         // ChatPanel (Major #1 dedup, Minor #4 error handling)
         'components/chat/MessageList.tsx',
         'components/chat/ChatPanel.tsx',
+        // Story 2.3 — Vista lista de tarefas (precedente Story 1.9 — apenas
+        // adiciona paths à allowlist do report; thresholds globais inalterados).
+        'app/(app)/tarefas/**',
+        'components/tarefas/**',
+        'lib/tarefas/**',
+        'hooks/useTasks.ts',
+        'hooks/useProjects.ts',
+        'hooks/useDebounced.ts',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)
