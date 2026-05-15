@@ -33,13 +33,33 @@ export function startOfToday(referenceTs: number = Date.now()): number {
  *
  * Outros formatos (ISO completo com timezone) são parseados directamente.
  *
+ * Validação (A4 — CR Iter 1 fix):
+ * - Range guard antes do constructor (mês 1-12, dia 1-31).
+ * - Pós-construção verifica que o constructor `Date` não normalizou silenciosamente
+ *   (ex: `new Date(2026, 1, 29)` → 2026-03-01 em ano não-bissexto).
  * Devolve NaN se inválido (caller verifica).
+ *
+ * Exportado (named) para reutilização em `formatDueDate` (Uma — A3).
  */
-function parseDueDateMs(dueDate: string): number {
+export function parseDueDateMs(dueDate: string): number {
   const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dueDate);
   if (isoMatch) {
-    const [, y, m, d] = isoMatch;
-    return new Date(Number(y), Number(m) - 1, Number(d), 0, 0, 0, 0).getTime();
+    const [, yStr, mStr, dStr] = isoMatch;
+    const y = Number(yStr);
+    const m = Number(mStr);
+    const d = Number(dStr);
+    // Range guard antes do constructor
+    if (m < 1 || m > 12 || d < 1 || d > 31) return NaN;
+    const date = new Date(y, m - 1, d, 0, 0, 0, 0);
+    // Detectar normalização silenciosa (ex: 2026-02-29 → 2026-03-01 em ano não-bissexto)
+    if (
+      date.getFullYear() !== y ||
+      date.getMonth() !== m - 1 ||
+      date.getDate() !== d
+    ) {
+      return NaN;
+    }
+    return date.getTime();
   }
   return new Date(dueDate).getTime();
 }
@@ -59,10 +79,14 @@ export function isOverdue(task: Task, referenceTs: number = Date.now()): boolean
 /**
  * Devolve o número de dias completos de atraso (>= 1) ou 0 se não atrasada.
  * Util para mostrar "(3d)" na secção atrasadas.
+ *
+ * A5 — CR Iter 1 fix: `Math.round` em vez de `Math.floor` para absorver
+ * drift de ±1h em transições DST locais (último domingo Mar/Out em PT —
+ * a diferença em ms entre dois startOfToday() locais pode ser 23h ou 25h).
  */
 export function daysOverdue(task: Task, referenceTs: number = Date.now()): number {
   if (!isOverdue(task, referenceTs)) return 0;
   const dueMs = parseDueDateMs(task.dueDate as string);
   const diff = startOfToday(referenceTs) - dueMs;
-  return Math.floor(diff / (24 * 60 * 60 * 1000));
+  return Math.round(diff / (24 * 60 * 60 * 1000));
 }

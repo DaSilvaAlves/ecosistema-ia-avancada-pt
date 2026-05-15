@@ -117,7 +117,7 @@ Trace PRD §10 Epic 2: "Epic 1 + manual UX validation".
 
 Sequência sugerida:
 
-```
+```text
 @devops *push (feature/2.2-migration-refactor) → CR Iter 1 → merge squash → main
   → @devops rebase feature/2.3-vista-lista contra main actualizado
   → @devops *push (feature/2.3-vista-lista) → CR Iter 1 → merge squash → main
