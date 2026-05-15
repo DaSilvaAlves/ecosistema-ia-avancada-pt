@@ -17,8 +17,15 @@ import { createTag } from '@/lib/db/repos/tags';
  * Mock de `next/navigation` (router.back); restantes APIs via DB real (fake-indexeddb).
  */
 
+// Mock partilhado de useRouter — back/push capturáveis nos testes via mocks.routerBack.
+// `vi.hoisted` corre antes do `vi.mock` (factory hoisting do Vitest).
+const mocks = vi.hoisted(() => ({
+  routerBack: vi.fn(),
+  routerPush: vi.fn(),
+}));
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ back: vi.fn(), push: vi.fn() }),
+  useRouter: () => ({ back: mocks.routerBack, push: mocks.routerPush }),
 }));
 
 function makeTask(overrides: Partial<Task> = {}): Task {
@@ -52,6 +59,8 @@ describe('TarefasPage (Story 2.3 / AC10)', () => {
   beforeEach(async () => {
     await clearAll();
     vi.restoreAllMocks();
+    mocks.routerBack.mockClear();
+    mocks.routerPush.mockClear();
   });
 
   afterEach(() => {
@@ -320,5 +329,89 @@ describe('TarefasPage (Story 2.3 / AC10)', () => {
 
     // Kebab menu trigger
     expect(screen.getByLabelText(/Acções para a tarefa "Tarefa Acessível"/)).toBeInTheDocument();
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // T11 — Escape navigation (Nit1 CR Iter 1)
+  // ─────────────────────────────────────────────────────────────────
+  it('T11 — Escape global: dispara router.back uma vez', async () => {
+    await createTask(makeTask({ title: 'Tarefa para Escape' }));
+
+    render(<TarefasPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Tarefa para Escape')).toBeInTheDocument();
+    });
+
+    // Dispatch Escape ao nível do window (page.tsx adiciona listener em window).
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    expect(mocks.routerBack).toHaveBeenCalledTimes(1);
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // T12 — Mutation error: setTaskStatus rejeita → window.alert PT-PT (A1 CR Iter 1)
+  // ─────────────────────────────────────────────────────────────────
+  it('T12 — setTaskStatus rejeita: console.error + window.alert PT-PT chamados', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(tasksRepo, 'setTaskStatus').mockRejectedValue(new Error('DB write fail'));
+
+    const task = makeTask({ title: 'Tarefa toggle fail', status: 'todo' });
+    await createTask(task);
+
+    render(<TarefasPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Tarefa toggle fail')).toBeInTheDocument();
+    });
+
+    const checkbox = screen.getByLabelText(/Marcar tarefa "Tarefa toggle fail" como feita/);
+    fireEvent.click(checkbox);
+
+    await waitFor(() => {
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Falha ao actualizar estado da tarefa',
+        expect.any(Error)
+      );
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Não foi possível actualizar o estado da tarefa. Tenta novamente.'
+      );
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // T13 — Mutation error: deleteTask rejeita → window.alert PT-PT (A1 CR Iter 1)
+  // ─────────────────────────────────────────────────────────────────
+  it('T13 — deleteTask rejeita: console.error + window.alert PT-PT chamados', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(tasksRepo, 'deleteTask').mockRejectedValue(new Error('DB delete fail'));
+
+    const task = makeTask({ title: 'Tarefa delete fail' });
+    await createTask(task);
+
+    render(<TarefasPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Tarefa delete fail')).toBeInTheDocument();
+    });
+
+    // Abrir kebab menu + clicar Apagar.
+    const kebab = screen.getByLabelText(/Acções para a tarefa "Tarefa delete fail"/);
+    fireEvent.click(kebab);
+    const apagarBtn = screen.getByRole('menuitem', { name: 'Apagar' });
+    fireEvent.click(apagarBtn);
+
+    await waitFor(() => {
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Falha ao apagar tarefa',
+        expect.any(Error)
+      );
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Não foi possível apagar a tarefa. Tenta novamente.'
+      );
+    });
   });
 });

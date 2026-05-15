@@ -3,6 +3,7 @@
 import { memo } from 'react';
 import type { Task, Project, Tag } from '@/types/db';
 import { TaskKebabMenu } from '@/components/tarefas/TaskKebabMenu';
+import { formatDueDate } from '@/lib/tarefas/isOverdue';
 
 /**
  * Nexus v2 — TaskRow (Story 2.3 / AC5)
@@ -52,16 +53,6 @@ interface TaskRowProps {
   overdue: boolean;
   onToggleDone: (checked: boolean) => void;
   onDelete: () => void;
-}
-
-function formatDueDate(dueDate: string | null): string {
-  if (dueDate === null) return '—';
-  const d = new Date(dueDate);
-  if (Number.isNaN(d.getTime())) return '—';
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
 }
 
 function badgeStyle(palette: { bg: string; border: string; text: string }): React.CSSProperties {

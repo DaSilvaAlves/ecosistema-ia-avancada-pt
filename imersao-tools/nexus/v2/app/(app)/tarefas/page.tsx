@@ -83,7 +83,12 @@ export default function TarefasPage(): React.ReactElement {
     try {
       await setTaskStatus(taskId, checked ? 'done' : 'todo');
     } catch (error) {
+      // A1 — CR Iter 1 fix: feedback user-visible (window.alert PT-PT).
+      // Consistente com window.confirm em TaskKebabMenu (D4) — Story 2.3 não
+      // tem sistema de toast/snackbar; alert é aceitável aqui. Story futura
+      // pode unificar tudo num toast system (PA registado retrospectiva Epic 2).
       console.error('Falha ao actualizar estado da tarefa', error);
+      window.alert('Não foi possível actualizar o estado da tarefa. Tenta novamente.');
     }
   }
 
@@ -91,7 +96,9 @@ export default function TarefasPage(): React.ReactElement {
     try {
       await deleteTask(taskId);
     } catch (error) {
+      // A1 — CR Iter 1 fix: feedback user-visible (window.alert PT-PT).
       console.error('Falha ao apagar tarefa', error);
+      window.alert('Não foi possível apagar a tarefa. Tenta novamente.');
     }
   }
 

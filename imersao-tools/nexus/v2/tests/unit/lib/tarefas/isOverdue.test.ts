@@ -4,6 +4,7 @@ import {
   daysOverdue,
   startOfToday,
   parseDueDateMs,
+  formatDueDate,
 } from '@/lib/tarefas/isOverdue';
 import type { Task } from '@/types/db';
 
@@ -184,5 +185,63 @@ describe('daysOverdue — DST boundary (A5)', () => {
     // Math.floor(23/24) = 0 (BUG); Math.round(23/24) = 1 ✓
     const refDST = new Date('2026-03-29T12:00:00').getTime();
     expect(daysOverdue(makeTask({ dueDate: '2026-03-28' }), refDST)).toBe(1);
+  });
+});
+
+/**
+ * A3 — formatDueDate (CR Iter 1 fix Uma).
+ *
+ * Consolidado em `isOverdue.ts` (em vez de inline em TaskRow.tsx) — garante
+ * coerência operacional com D3 e reusa `parseDueDateMs` (local-date + range
+ * validation). Tests confirmam:
+ *   - Formato output `DD/MM/YYYY` (convenção PT-PT)
+ *   - Null/undefined/string vazia → `'—'`
+ *   - Out-of-range (mês > 12, dia inválido, Feb 29 não-bissexto) → `'—'`
+ *     (graças à validação A4 do Dex em parseDueDateMs)
+ *   - Local date interpretation (não UTC) — coerente com D3
+ */
+describe('formatDueDate (A3)', () => {
+  it('ISO válida YYYY-MM-DD → DD/MM/YYYY', () => {
+    expect(formatDueDate('2026-05-20')).toBe('20/05/2026');
+  });
+
+  it('null → "—"', () => {
+    expect(formatDueDate(null)).toBe('—');
+  });
+
+  it('undefined → "—"', () => {
+    expect(formatDueDate(undefined)).toBe('—');
+  });
+
+  it('string vazia → "—"', () => {
+    expect(formatDueDate('')).toBe('—');
+  });
+
+  it('ISO out-of-range (mês 13) → "—" (graças a A4)', () => {
+    expect(formatDueDate('2026-13-45')).toBe('—');
+  });
+
+  it('Feb 29 em ano não-bissexto → "—" (normalização silenciosa detectada por A4)', () => {
+    expect(formatDueDate('2026-02-29')).toBe('—');
+  });
+
+  it('Feb 29 em ano bissexto (2024) → "29/02/2024"', () => {
+    expect(formatDueDate('2024-02-29')).toBe('29/02/2024');
+  });
+
+  it('string completamente inválida → "—"', () => {
+    expect(formatDueDate('invalid')).toBe('—');
+  });
+
+  it('zero-padding de dia e mês (dia 5, mês 3) → "05/03/2026"', () => {
+    expect(formatDueDate('2026-03-05')).toBe('05/03/2026');
+  });
+
+  it('interpretação local-date — não UTC (evita off-by-one)', () => {
+    // parseDueDateMs interpreta `2026-05-20` como 00:00 local time.
+    // O output formatado é o mesmo dia independente do offset do runtime
+    // (não usa toISOString que converteria para UTC).
+    const out = formatDueDate('2026-05-20');
+    expect(out).toBe('20/05/2026');
   });
 });

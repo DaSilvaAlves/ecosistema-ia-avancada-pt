@@ -90,3 +90,34 @@ export function daysOverdue(task: Task, referenceTs: number = Date.now()): numbe
   const diff = startOfToday(referenceTs) - dueMs;
   return Math.round(diff / (24 * 60 * 60 * 1000));
 }
+
+/**
+ * Formata uma due date ISO `YYYY-MM-DD` como `DD/MM/YYYY` (convenção PT-PT).
+ *
+ * A3 — CR Iter 1 fix (Uma): consolidado em `isOverdue.ts` (em vez de inline
+ * em `TaskRow.tsx`) para reutilizar `parseDueDateMs`, garantindo coerência
+ * operacional com D3 e `isOverdue`:
+ *   - Mesma interpretação local-date (não UTC) → evita off-by-one em
+ *     timezones com offset (Portugal BST = +1h).
+ *   - Mesma validação A4 (range guard + cross-check) — inputs inválidos
+ *     retornam `'—'` (em-dash U+2014), em vez de strings tipo `'NaN/NaN/NaN'`.
+ *
+ * Tratamento:
+ *   - `null` / `undefined` / string vazia → `'—'`
+ *   - ISO `YYYY-MM-DD` válida → `DD/MM/YYYY`
+ *   - ISO out-of-range (mês > 12, dia inválido, Feb 29 não-bissexto) → `'—'`
+ *   - String não-ISO inválida → `'—'`
+ *
+ * Sem deps externas (date-fns evitado) — padding manual via `padStart(2, '0')`
+ * é determinista e leve.
+ */
+export function formatDueDate(dueDate: string | null | undefined): string {
+  if (dueDate === null || dueDate === undefined || dueDate === '') return '—';
+  const ms = parseDueDateMs(dueDate);
+  if (Number.isNaN(ms)) return '—';
+  const date = new Date(ms);
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
