@@ -274,9 +274,9 @@ describe('TarefasPage (Story 2.3 / AC10)', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────
-  // T9 — Tabs disabled (Kanban + Calendário)
+  // T9 — Tabs strip (Story 2.4 amendment: Kanban activado, Cal mantém disabled)
   // ─────────────────────────────────────────────────────────────────
-  it('T9 — Tabs Kanban/Calendário: aria-disabled="true", click não muda estado', async () => {
+  it('T9 — Story 2.4 amendment: Kanban ACTIVO, Calendário mantém disabled', async () => {
     await createTask(makeTask({ title: 'Tarefa X' }));
 
     render(<TarefasPage />);
@@ -285,17 +285,20 @@ describe('TarefasPage (Story 2.3 / AC10)', () => {
       expect(screen.getByText('Tarefa X')).toBeInTheDocument();
     });
 
-    const kanbanTab = screen.getByRole('tab', { name: /Kanban — Em construção · Story 2.4/ });
-    const calTab = screen.getByRole('tab', { name: /Calendário — Em construção · Story 2.5/ });
+    // Kanban agora está ACTIVO (AC1 da Story 2.4)
+    const kanbanTab = screen.getByRole('tab', { name: /Ver tarefas em vista kanban/ });
+    expect(kanbanTab).not.toBeDisabled();
+    expect(kanbanTab).toHaveAttribute('aria-disabled', 'false');
 
-    expect(kanbanTab).toHaveAttribute('aria-disabled', 'true');
+    // Calendário mantém-se disabled (Story 2.5 ainda não implementada)
+    const calTab = screen.getByRole('tab', { name: /Calendário — Em construção · Story 2.5/ });
     expect(calTab).toHaveAttribute('aria-disabled', 'true');
-    expect(kanbanTab).toBeDisabled();
     expect(calTab).toBeDisabled();
 
-    // Tab Lista é a activa
+    // Tab Lista permanece a activa por defeito
     const listaTab = screen.getByRole('tab', { name: /Ver tarefas em vista lista/ });
     expect(listaTab).toHaveAttribute('aria-selected', 'true');
+    expect(kanbanTab).toHaveAttribute('aria-selected', 'false');
   });
 
   // ─────────────────────────────────────────────────────────────────
