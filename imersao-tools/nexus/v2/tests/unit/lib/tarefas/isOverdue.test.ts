@@ -189,6 +189,87 @@ describe('daysOverdue — DST boundary (A5)', () => {
 });
 
 /**
+ * A6 — Fallback timestamp truncation em parseDueDateMs (CR Iter 3 fix Dex).
+ *
+ * Inputs que não fazem match no regex strict `YYYY-MM-DD` caem no fallback
+ * `Date.parse`. Antes desta correcção, o fallback preservava a hora-de-dia,
+ * fazendo com que `daysOverdue` arredondasse para 0 quando um consumidor
+ * passasse um ISO completo (ex: `'2026-05-14T14:30:00'`). A semântica D3
+ * exige que `dueDate` seja sempre interpretada como dia inteiro do
+ * calendário, pelo que o fallback agora trunca para midnight local.
+ */
+describe('parseDueDateMs — A6 fallback timestamp truncation', () => {
+  it('ISO timestamp sem timezone é truncado para midnight local do mesmo dia', () => {
+    const ts = parseDueDateMs('2026-05-15T14:30:00');
+    const d = new Date(ts);
+    expect(d.getFullYear()).toBe(2026);
+    expect(d.getMonth()).toBe(4); // Maio
+    expect(d.getDate()).toBe(15);
+    expect(d.getHours()).toBe(0);
+    expect(d.getMinutes()).toBe(0);
+    expect(d.getSeconds()).toBe(0);
+    expect(d.getMilliseconds()).toBe(0);
+  });
+
+  it('ISO timestamp à meia-noite local é truncado para o próprio midnight (idempotente)', () => {
+    const ts = parseDueDateMs('2026-05-15T00:00:00');
+    const expected = new Date(2026, 4, 15, 0, 0, 0, 0).getTime();
+    expect(ts).toBe(expected);
+  });
+
+  it('ISO timestamp 23:59:59 do mesmo dia é truncado para midnight local desse dia (não dia seguinte)', () => {
+    const ts = parseDueDateMs('2026-05-15T23:59:59');
+    const d = new Date(ts);
+    expect(d.getDate()).toBe(15);
+    expect(d.getHours()).toBe(0);
+  });
+
+  it('ISO timestamp com sufixo Z (UTC) é truncado para midnight do dia LOCAL correspondente', () => {
+    // `2026-05-15T12:00:00Z` em qualquer timezone próximo de UTC ou +offset
+    // resulta em 15/05 local (entre UTC-12 e UTC+12 ainda fica no dia 15).
+    const ts = parseDueDateMs('2026-05-15T12:00:00Z');
+    const d = new Date(ts);
+    expect(d.getDate()).toBe(15);
+    expect(d.getMonth()).toBe(4);
+    expect(d.getFullYear()).toBe(2026);
+    expect(d.getHours()).toBe(0);
+  });
+
+  it('daysOverdue com ISO timestamp tarde do dia anterior devolve 1 (não 0) — bug A6 reproduzido', () => {
+    // Antes do fix A6: `2026-05-14T14:30:00` parseado preservando hora.
+    // `startOfToday(REF=2026-05-15T14:30)` = 2026-05-15 00:00 local.
+    // Diff = 9.5h = 0.4 dias → Math.round = 0 (BUG).
+    // Depois do fix A6: truncado para 2026-05-14 00:00 local. Diff = 24h → Math.round = 1.
+    expect(
+      daysOverdue(makeTask({ dueDate: '2026-05-14T14:30:00' }), REF),
+    ).toBe(1);
+  });
+
+  it('isOverdue com ISO timestamp tarde do dia anterior é true (consistente com daysOverdue=1)', () => {
+    expect(
+      isOverdue(makeTask({ dueDate: '2026-05-14T14:30:00' }), REF),
+    ).toBe(true);
+  });
+
+  it('daysOverdue com ISO timestamp tarde de hoje continua a ser 0 (due today != overdue, D3)', () => {
+    // `2026-05-15T23:59:59` truncado para `2026-05-15 00:00` local = startOfToday(REF).
+    // Não é < startOfToday — não está atrasado. isOverdue=false → daysOverdue=0.
+    expect(
+      daysOverdue(makeTask({ dueDate: '2026-05-15T23:59:59' }), REF),
+    ).toBe(0);
+    expect(
+      isOverdue(makeTask({ dueDate: '2026-05-15T23:59:59' }), REF),
+    ).toBe(false);
+  });
+
+  it('fallback inválido (não parseable) devolve NaN', () => {
+    // Já coberto em A4 ("string completamente inválida"), mas reconfirma após fix:
+    // o ramo de truncagem só corre se `Date.parse` retornar válido.
+    expect(Number.isNaN(parseDueDateMs('not-a-date'))).toBe(true);
+  });
+});
+
+/**
  * A3 — formatDueDate (CR Iter 1 fix Uma).
  *
  * Consolidado em `isOverdue.ts` (em vez de inline em TaskRow.tsx) — garante

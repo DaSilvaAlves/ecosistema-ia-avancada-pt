@@ -31,7 +31,14 @@ export function startOfToday(referenceTs: number = Date.now()): number {
  * não um momento exacto UTC. Evita off-by-one quando o utilizador está em
  * timezone diferente de UTC (Portugal = UTC+1 BST a maior parte do ano).
  *
- * Outros formatos (ISO completo com timezone) são parseados directamente.
+ * Outros formatos (ISO completo com timezone) são parseados via `Date.parse` e
+ * depois **truncados para midnight local** do dia em que caiem. Razão (A6 — CR
+ * Iter 3 fix): `dueDate` é semanticamente "dia inteiro do calendário" (D3).
+ * Preservar a hora-de-dia de um timestamp completo (ex: `2026-05-14T14:30:00`)
+ * causa `daysOverdue` a retornar 0 quando deveria retornar 1 — a diferença
+ * entre `startOfToday()` e um timestamp da tarde do dia anterior é <24h, e
+ * `Math.round(diff/24h) = 0`. Normalizar para midnight local repõe a semântica
+ * D3 sem rejeitar inputs vindos de consumidores que escrevam ISO completo.
  *
  * Validação (A4 — CR Iter 1 fix):
  * - Range guard antes do constructor (mês 1-12, dia 1-31).
@@ -61,7 +68,26 @@ export function parseDueDateMs(dueDate: string): number {
     }
     return date.getTime();
   }
-  return new Date(dueDate).getTime();
+  // Fallback: ISO timestamp completo (ex: "2026-05-14T14:30:00", "2026-05-14T14:30:00Z").
+  // A6 — CR Iter 3 fix: trunca para midnight local do dia em que cai, preservando
+  // a semântica D3 (dueDate = dia inteiro do calendário). Sem esta truncagem,
+  // `daysOverdue` arredondava para 0 quando o input tinha hora-de-dia <24h
+  // antes de startOfToday(). Para inputs com sufixo `Z` ou offset, a interpretação
+  // segue o timezone do runtime — pode resultar em dia local diferente do dia UTC
+  // (ex: `2026-05-14T23:30:00Z` em PT BST = `2026-05-15T00:30:00 local` → midnight
+  // local de 2026-05-15). Comportamento documentado e testado.
+  const parsed = Date.parse(dueDate);
+  if (Number.isNaN(parsed)) return NaN;
+  const dt = new Date(parsed);
+  return new Date(
+    dt.getFullYear(),
+    dt.getMonth(),
+    dt.getDate(),
+    0,
+    0,
+    0,
+    0,
+  ).getTime();
 }
 
 /**
