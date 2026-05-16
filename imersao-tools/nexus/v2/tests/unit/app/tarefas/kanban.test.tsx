@@ -273,6 +273,7 @@ describe('KanbanBoard (Story 2.4 / AC10)', () => {
     const handler = createKanbanDragEndHandler({
       tasks,
       overridesRef: { current: {} },
+      inFlightByTaskRef: { current: {} },
       setOverrides: setOverridesFn as React.Dispatch<React.SetStateAction<Record<string, TaskStatus>>>,
       persistStatus,
       setErrorMessage: setErrorMessageFn as React.Dispatch<React.SetStateAction<string | null>>,
@@ -299,6 +300,7 @@ describe('KanbanBoard (Story 2.4 / AC10)', () => {
     const handler = createKanbanDragEndHandler({
       tasks,
       overridesRef: { current: {} },
+      inFlightByTaskRef: { current: {} },
       setOverrides: vi.fn() as React.Dispatch<React.SetStateAction<Record<string, TaskStatus>>>,
       persistStatus,
       setErrorMessage: vi.fn() as React.Dispatch<React.SetStateAction<string | null>>,
@@ -320,6 +322,7 @@ describe('KanbanBoard (Story 2.4 / AC10)', () => {
     const handler = createKanbanDragEndHandler({
       tasks,
       overridesRef: { current: {} },
+      inFlightByTaskRef: { current: {} },
       setOverrides: vi.fn() as React.Dispatch<React.SetStateAction<Record<string, TaskStatus>>>,
       persistStatus,
       setErrorMessage: vi.fn() as React.Dispatch<React.SetStateAction<string | null>>,
@@ -331,6 +334,33 @@ describe('KanbanBoard (Story 2.4 / AC10)', () => {
     } as unknown as DragEndEvent);
 
     expect(persistStatus).not.toHaveBeenCalled();
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // T7d — onDragEnd: drop sobre card existente (over.id = task UUID)
+  // CR Iter 1 Minor (kanban.test.tsx:334 fix) — cobertura do path resolveby-card.
+  // ─────────────────────────────────────────────────────────────────
+  it('T7d — onDragEnd: drop sobre card existente resolve para status desse card', async () => {
+    const taskA: Task = makeTask({ id: 'task-a', title: 'A', status: 'todo' });
+    const taskB: Task = makeTask({ id: 'task-b', title: 'B', status: 'in-progress' });
+    const persistStatus = vi.fn().mockResolvedValue(undefined);
+
+    const handler = createKanbanDragEndHandler({
+      tasks: [taskA, taskB],
+      overridesRef: { current: {} },
+      inFlightByTaskRef: { current: {} },
+      setOverrides: vi.fn() as React.Dispatch<React.SetStateAction<Record<string, TaskStatus>>>,
+      persistStatus,
+      setErrorMessage: vi.fn() as React.Dispatch<React.SetStateAction<string | null>>,
+    });
+
+    await handler({
+      active: { id: 'task-a' },
+      over: { id: 'task-b' }, // drop sobre task-b → resolve para status do over task ('in-progress')
+    } as DragEndEvent);
+
+    expect(persistStatus).toHaveBeenCalledTimes(1);
+    expect(persistStatus).toHaveBeenCalledWith('task-a', 'in-progress');
   });
 
   // ─────────────────────────────────────────────────────────────────
@@ -349,6 +379,7 @@ describe('KanbanBoard (Story 2.4 / AC10)', () => {
     const handler = createKanbanDragEndHandler({
       tasks,
       overridesRef: { current: {} },
+      inFlightByTaskRef: { current: {} },
       setOverrides: ((updater: unknown) => {
         setOverridesCalls.push(updater);
       }) as React.Dispatch<React.SetStateAction<Record<string, TaskStatus>>>,
@@ -429,5 +460,71 @@ describe('KanbanBoard (Story 2.4 / AC10)', () => {
 
     // Board container present
     expect(screen.getByTestId('kanban-board')).toBeInTheDocument();
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // T11 — Stale completion (CR Iter 2 Major fix — race condition guard)
+  // ─────────────────────────────────────────────────────────────────
+  it('T11 — Stale completion: 2º drag override prevalece, 1º completion não rollback', async () => {
+    const taskId = 'task-rapid';
+    const inFlightByTaskRef = { current: {} as Record<string, number> };
+    const setOverridesCalls: unknown[] = [];
+    const setErrorMessageCalls: unknown[] = [];
+
+    // Primeiro persist: pendente até resolveFirst() ser chamado.
+    // Segundo persist: resolve imediatamente.
+    let resolveFirst!: () => void;
+    const persistStatus = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveFirst = resolve;
+          })
+      )
+      .mockResolvedValueOnce(undefined);
+
+    const handler = createKanbanDragEndHandler({
+      tasks: [makeTask({ id: taskId, title: 'Rapid Drag', status: 'todo' })],
+      overridesRef: { current: {} },
+      inFlightByTaskRef,
+      setOverrides: ((updater: unknown) => {
+        setOverridesCalls.push(updater);
+      }) as React.Dispatch<React.SetStateAction<Record<string, TaskStatus>>>,
+      persistStatus,
+      setErrorMessage: ((value: unknown) => {
+        setErrorMessageCalls.push(value);
+      }) as React.Dispatch<React.SetStateAction<string | null>>,
+    });
+
+    // Primeiro drag (todo → in-progress) — fica pending.
+    const first = handler({
+      active: { id: taskId },
+      over: { id: 'in-progress' },
+    } as DragEndEvent);
+
+    // Mutation token deve ser 1 após primeiro drag iniciado.
+    expect(inFlightByTaskRef.current[taskId]).toBe(1);
+
+    // Segundo drag (in-progress → done) — incrementa mutation token e resolve imediato.
+    // Nota: como overridesRef.current[taskId] permanece undefined nos mocks (setOverrides
+    // não actualiza o ref real), o 2º handler usa `task.status` ('todo') como current; o
+    // novoStatus 'done' difere → prossegue. Token incrementado para 2.
+    await handler({
+      active: { id: taskId },
+      over: { id: 'done' },
+    } as DragEndEvent);
+
+    expect(inFlightByTaskRef.current[taskId]).toBe(2);
+
+    // Agora resolve a primeira promise — deveria ser ignorada (stale completion).
+    resolveFirst!();
+    await first;
+
+    expect(persistStatus).toHaveBeenCalledTimes(2);
+    // Token mantém-se em 2 — primeiro completion não interferiu.
+    expect(inFlightByTaskRef.current[taskId]).toBe(2);
+    // setErrorMessage NÃO foi chamada (primeiro completion stale-ignored, segundo success).
+    expect(setErrorMessageCalls).toHaveLength(0);
   });
 });

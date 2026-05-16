@@ -84,6 +84,16 @@ function isColumnId(value: unknown): value is ColumnId {
 export interface DragEndHandlerDeps {
   tasks: Task[];
   overridesRef: { current: Record<string, TaskStatus> };
+  /**
+   * Mutation token por task-id — incrementa antes de cada `persistStatus` e captura local; após
+   * `await`, se o valor actual em `inFlightByTaskRef.current[taskId]` divergir do capturado, esta
+   * é uma stale completion/failure (chegou tarde após uma mutação mais recente) e deve ser ignorada.
+   *
+   * Story 2.4 Iter 2 (CR Major race condition fix): drag rápido do mesmo card pode disparar duas
+   * writes assíncronas para o mesmo `taskId`; se a primeira resolver/rejeitar depois da segunda,
+   * sem este token o rollback ou error toast aplica-se a um estado já obsoleto.
+   */
+  inFlightByTaskRef: { current: Record<string, number> };
   setOverrides: React.Dispatch<React.SetStateAction<Record<string, TaskStatus>>>;
   persistStatus: (id: string, status: TaskStatus) => Promise<void>;
   setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
@@ -96,7 +106,7 @@ export function createKanbanDragEndHandler(deps: DragEndHandlerDeps): (event: Dr
     const taskId = String(active.id);
     const overId = String(over.id);
 
-    const { tasks, overridesRef, setOverrides, persistStatus, setErrorMessage } = deps;
+    const { tasks, overridesRef, inFlightByTaskRef, setOverrides, persistStatus, setErrorMessage } = deps;
 
     function findTask(id: string): Task | undefined {
       return tasks.find((t) => t.id === id);
@@ -122,12 +132,21 @@ export function createKanbanDragEndHandler(deps: DragEndHandlerDeps): (event: Dr
     const currentEffectiveStatus = overridesRef.current[taskId] ?? task.status;
     if (currentEffectiveStatus === novoStatus) return;
 
+    // Mutation token: incrementar + capturar antes de iniciar a write
+    const mutationId = (inFlightByTaskRef.current[taskId] ?? 0) + 1;
+    inFlightByTaskRef.current[taskId] = mutationId;
+
     // Optimistic UI
     setOverrides((prev) => ({ ...prev, [taskId]: novoStatus! }));
 
     try {
       await persistStatus(taskId, novoStatus);
+      // Stale completion guard — se entretanto houve nova mutação para este task,
+      // ignorar; o cleanup useEffect tratará da convergência de estado.
+      if (inFlightByTaskRef.current[taskId] !== mutationId) return;
     } catch (error) {
+      // Stale failure guard — mesmo princípio: não fazer rollback de um estado já obsoleto.
+      if (inFlightByTaskRef.current[taskId] !== mutationId) return;
       console.error('Erro ao mover tarefa', error);
       setOverrides((prev) => {
         const next = { ...prev };
@@ -264,11 +283,17 @@ export function KanbanBoard({
     overridesRef.current = overrides;
   }, [overrides]);
 
+  // Mutation token por task-id (Iter 2 fix — race condition em drag rápido).
+  // Cada drag incrementa o token do `taskId` antes de chamar `persistStatus`. Após o `await`,
+  // o handler ignora completion/failure se o token entretanto mudou (stale).
+  const inFlightByTaskRef = useRef<Record<string, number>>({});
+
   const handleDragEnd = useMemo(
     () =>
       createKanbanDragEndHandler({
         tasks: tasks ?? [],
         overridesRef,
+        inFlightByTaskRef,
         setOverrides,
         persistStatus,
         setErrorMessage,
