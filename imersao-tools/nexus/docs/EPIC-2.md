@@ -2,7 +2,7 @@
 
 > **Projecto:** Nexus v2 (`imersao-tools/nexus/`)
 > **Criado por:** Morgan (`@pm`) em 14/05/2026
-> **Estado:** Em curso — 3/10 stories Done em main (Stories 2.1 + 2.2 + 2.3 MERGED 15-16/05/2026 via PRs #18 / #19 / #20)
+> **Estado:** Em curso — 3/10 stories Done em main + 1/10 CLOSED aguarda push (Stories 2.1 + 2.2 + 2.3 MERGED 15-16/05/2026 via PRs #18 / #19 / #20; Story 2.4 CLOSED 16/05 aguarda `@devops *push feature/2.4-vista-kanban`)
 > **Fonte da verdade:** `PRD-NEXUS-V2.md` §6.2, §6.5, §9, §10 (Epic 2) — Constitution Artigo IV (No Invention): cada story e AC abaixo traça ao PRD
 > **Arquitectura:** `architecture-v2.md` (5 ADRs — não reabrir, ver `project_nexus_v2_architecture.md`)
 > **Lições aplicadas:** Retrospectiva Epic 1 (`retrospectives/EPIC-1-retrospective.md`) — acções A1, A2, A6
@@ -49,14 +49,14 @@ Ordem PRD §9: `0 → 1 → (2 || 3) → 4 → 5 → 6 → 7 → 8`.
 
 ## 5. Stories (10) — trace PRD §10
 
-> **Progresso:** 3/10 Done · 7/10 Pending. Stories 2.1 + 2.2 + 2.3 CLOSED 15/05/2026. Story 2.1 mergeada em `main` (squash `86ddb6a6` PR #18). Stories 2.2 (commit local `dd6dc0d8`) e 2.3 (commit local `7b0c201a`, branch `feature/2.3-vista-lista` 3 ahead) aguardam `@devops *push`. Sequência sugerida: push 2.2 → merge → rebase 2.3 → push 2.3 → merge.
+> **Progresso:** 3/10 Done em main + 1/10 CLOSED aguarda push · 6/10 Pending. Stories 2.1+2.2+2.3 MERGED em main (PRs #18/#19/#20 squash). Story 2.4 CLOSED 16/05/2026 — commits locais `245f63b1` (feat 14 files +2750/-53) + `bc7473ab` (docs handoff qa-PASS) + closure deste close — aguarda `@devops *push feature/2.4-vista-kanban`.
 
 | # | Story | Descrição | FR | Executor previsto | Quality gate previsto | Estado |
 |---|-------|-----------|-----|-------------------|------------------------|--------|
 | 2.1 | Schema tarefas/projectos | Schema Dexie `tasks`, `task_recurrences`, `tags`, `task_tags`, `projects` — estende schema Story 1.1 conforme `architecture-v2.md` | FR9, FR10, FR30 | `@data-engineer` | `@dev` (gate real: `@qa` Quinn) | **Done** (CLOSED 15/05) |
 | 2.2 | Migration v1 → v2 | Migrar dados de tarefas do `localStorage` v1 (`nexus_tasks`) para o schema Dexie v2 | FR9 | `@dev` | `@data-engineer` | **Done** (CLOSED 15/05) |
 | 2.3 | Vista lista | Refactor da vista lista v1; secção dedicada de atrasadas | FR9, FR11, FR13 | `@ux-design-expert` | `@dev` | **Done (CLOSED 15/05)** — aguarda `@devops *push` |
-| 2.4 | Vista Kanban | Colunas customizáveis + drag-and-drop com `dnd-kit` | FR11, FR12 | `@ux-design-expert` | `@dev` | Pending |
+| 2.4 | Vista Kanban | Colunas customizáveis + drag-and-drop com `dnd-kit` | FR11, FR12 | `@ux-design-expert` | `@dev` | **Done (CLOSED 16/05)** — aguarda `@devops *push` |
 | 2.5 | Vista calendário semanal | Calendário semanal com drag entre dias | FR11, FR12 | `@ux-design-expert` | `@dev` | Pending |
 | 2.6 | Sistema de tags global | Criar, listar, filtrar tags partilhadas | FR14 | `@dev` | `@qa` | Pending |
 | 2.7 | Geração de instâncias recorrentes | Motor de recorrência client-side (`requestIdleCallback`/`setInterval`) — horizonte 90 dias | FR10 | `@dev` | `@architect` | Pending |
@@ -108,27 +108,29 @@ Trace PRD §10 Epic 2: "Epic 1 + manual UX validation".
 
 ## 10. Próximo passo
 
-**Stories 2.2 + 2.3 CLOSED 15/05/2026** — ambas aguardam `@devops *push`.
+**Story 2.4 CLOSED 16/05/2026** — aguarda `@devops *push`.
 
-| Story | Branch | Commit local | Estado |
-|-------|--------|---------------|--------|
-| 2.2 | `feature/2.2-migration-refactor` | `dd6dc0d8` + closure `ff86773c` | CLOSED, push pendente |
-| 2.3 | `feature/2.3-vista-lista` | `7b0c201a` (inclui 2.2 no histórico — rebase pós-merge limpa) | CLOSED, push pendente após merge 2.2 |
+| Story | Branch | Commits locais | Estado |
+|-------|--------|----------------|--------|
+| 2.4 | `feature/2.4-vista-kanban` | `245f63b1` (feat 14 files +2750/-53) + `bc7473ab` (docs handoff qa-PASS) + closure deste close | CLOSED, push pendente |
 
 Sequência sugerida:
 
 ```text
-@devops *push (feature/2.2-migration-refactor) → CR Iter 1 → merge squash → main
-  → @devops rebase feature/2.3-vista-lista contra main actualizado
-  → @devops *push (feature/2.3-vista-lista) → CR Iter 1 → merge squash → main
-  → Epic 2 fica 3/10 Done em main
-  → @sm *draft 2.4 (Vista Kanban — desbloqueada por 2.3 que entregou scaffold de header com tabs)
+@devops *push (feature/2.4-vista-kanban) → CR Iter 1 → merge squash → main
+  → Epic 2 fica 4/10 Done em main
+  → @sm *draft 2.5 (Vista calendário semanal — reaproveita scaffold tabs Story 2.3) ou paralelizar
+  → @sm *draft 2.6 (Sistema de tags global — independente)
 ```
 
 Sequência herdada:
-- Stories 2.1 → 2.2 → 2.3 são sequenciais (schema antes de migration antes de UI consumer) — todas concluídas.
-- 2.4-2.9 podem paralelizar parcialmente agora que 2.3 entregou o scaffold de header com tabs Lista|Kanban|Calendário.
-- 2.4 (Kanban) reaproveita layout 2.3 + adiciona drag-and-drop (FR12). 2.5 (Calendário) reaproveita scaffold tabs.
+- Stories 2.1 → 2.2 → 2.3 → 2.4 são sequenciais (schema → migration → UI Lista → UI Kanban) — todas concluídas (3 em main, 1 aguarda push).
+- 2.5-2.9 podem paralelizar parcialmente:
+  - 2.5 (Calendário) reaproveita scaffold tabs Story 2.3 + dnd-kit Story 2.4.
+  - 2.6 (Tags global) independente.
+  - 2.7 (Motor de recorrência) independente.
+  - 2.8 (CRUD projectos) independente.
+  - 2.9 (Vista projecto) depende de 2.8.
 - 2.10 (tools cérebro) depende de 2.1 + 2.8 (precisa de tasks e projects persistidos).
 
 ### Débito não-bloqueador registado para retrospectiva Epic 2
@@ -136,6 +138,10 @@ Sequência herdada:
 | # | Item | Origem | Prioridade |
 |---|------|--------|------------|
 | D1 | Teste de cenário "JSON malformado em `localStorage.nexus_tasks` → migration retorna `no-data` graciosamente" | Cobre linhas 72-74 (`catch { v1Tasks = []; }`) de `v1-to-v2.ts` — pré-existente Story 0.3 (`git blame c362b171`), aceito como débito. Coverage agregada de `v1-to-v2.ts` é 96.22% > 80% alvo AC11 sem este teste. | Baixa — pode ser absorvido na Story 8.10 (Epic 8 cleanup) ou criado como story de débito técnico no fecho do Epic 2 |
+| D2 | `@dnd-kit/utilities` usado em `KanbanCard.tsx` mas não declarado explicitamente em `package.json` (transitiva via `@dnd-kit/sortable`) | Story 2.4 — PA1/F1 do QA Gate. Funciona em build + dev. | Baixa — registar dep explícita na Story 2.5 (Calendar) se for usada lá; senão, retrospectiva Epic 2 |
+| D3 | `PRIORITY_COLORS` duplicado entre `TaskRow.tsx` (Story 2.3) e `KanbanCard.tsx` (Story 2.4) | Story 2.4 — PA2/F2 do QA Gate. Duplicação ≤2 instâncias (limite YAGNI). | Baixa — refactor para `lib/tarefas/colors.ts` quando 3+ componentes precisarem (provavelmente Story 2.6 tags ou 2.9 vista projecto) |
+| D4 | Toast de erro primitivo (`setTimeout` 4s, sem biblioteca) no `KanbanBoard.tsx` | Story 2.4 — PA3/F3 do QA Gate. Pattern alinha com `window.alert` da Story 2.3, a11y `role="status"` + `aria-live="assertive"` OK. | Baixa — sistema toast unificado futuro (sem prioridade definida) |
+| D5 | E2E Playwright para drag manual ponta-a-ponta (Kanban) | Story 2.4 — PA4/F4 do QA Gate. Pax aceitou na PO Validation #2 (15/05). 12 testes Vitest cobrem handler factory. | Baixa — registar na retrospectiva Epic 2 quando volume de UI features justifica E2E suite |
 
 ---
 
@@ -143,3 +149,4 @@ Sequência herdada:
 *Story 2.1 CLOSED por Pax (`@po`) em 15/05/2026 — 1/10 Done.*
 *Story 2.2 CLOSED por Pax (`@po`) em 15/05/2026 — 2/10 Done.*
 *Story 2.3 CLOSED por Pax (`@po`) em 15/05/2026 — 3/10 Done. Primeira UI Epic 2 entregue (página `/tarefas` + 6 componentes + 2 helpers + 20 testes). Lições L1-L5 registadas para retrospectiva Epic 2. PA1-PA4 ratificados como não-bloqueadores (2 → retrospectiva, 2 → backlog Stories 2.4+2.6).*
+*Story 2.4 CLOSED por Pax (`@po`) em 16/05/2026 — 4/10 Done (3 em main + 1 aguarda push). Vista Kanban entregue (3 componentes novos KanbanBoard+Column+Card + 12 testes Vitest + refactor cirúrgico `createKanbanDragEndHandler` factory pura). 5/5 quality gates locais PASS à primeira (lint, typecheck, test:unit 466/466, build, coverage 85.71%/83.84%/100%/87.4%). QA Gate Dex PASS à primeira (0/2 qa-loop-fix). DoD 15/15 PASS. 5/5 [AUTO-DECISION] A1-A5 ratificadas. 4 PAs/F1-F4 ratificados não-bloqueadores: D2 (`@dnd-kit/utilities` dep transitiva) + D3 (`PRIORITY_COLORS` duplicado refactor futuro) + D4 (toast primitivo) + D5 (E2E Playwright drag manual). Padrão consolidado: 8 stories consecutivas QA Gate PASS à primeira pós-PO Validation GO (1.5/1.6/1.7/1.8/1.9/2.1/2.3/2.4).*
