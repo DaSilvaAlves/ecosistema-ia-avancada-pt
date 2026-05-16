@@ -8,7 +8,10 @@
 **Para:** Dex (`@dev`) — quality gate (separação A6)
 **Data:** 2026-05-16
 **Projecto:** Nexus v2 — Epic 2 (Tarefas v2 + Projectos)
-**Estado:** PENDING (consumir ao invocar `@dev *qa-gate 2.4`)
+**Estado:** CONSUMED 2026-05-16 por Dex (`@dev`) — quality gate executado em iteração única, 0/2 qa-loop-fix consumidas.
+**Consumido em:** 2026-05-16
+**Consumido por:** Dex (`@dev`)
+**Resultado:** Veredicto **PASS**. 12/12 ACs honrados, 5/5 [AUTO-DECISION] A1-A5 ratificadas, 6/6 anti-padrões livres, 7/7 DoD checks PASS, 10/10 pontos focais Uma→Dex auditados, 5/5 quality gates locais reproduzidos byte-a-byte. Story `Ready for Review → Done`. Commit `245f63b1` em `feature/2.4-vista-kanban` (14 files, +2750/-53). QA Gate report criado: `QA-GATE-STORY-2.4.md`. 4 follow-ups não-bloqueadores registados (F1-F4). Handoff de saída `RETOMA-20260516-story-2.4-qa-PASS.md` criado para Pax `*close-story 2.4`.
 
 ---
 
