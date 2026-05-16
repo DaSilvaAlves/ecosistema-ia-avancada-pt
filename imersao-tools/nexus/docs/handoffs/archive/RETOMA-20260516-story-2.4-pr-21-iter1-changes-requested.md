@@ -8,7 +8,10 @@
 **Para:** Dex (`@dev`) — qualquer terminal, qualquer sessão
 **Data:** 2026-05-16
 **Projecto:** Nexus v2 — Epic 2 (Tarefas v2 + Projectos)
-**Estado:** PENDING (consumir ao invocar `@dev *develop 2.4 iter2` ou `*qa-loop-fix 2.4`)
+**Estado:** CONSUMED 2026-05-16 por Dex (`@dev`) — Iter 2 fix loop focado executado em iteração única.
+**Consumido em:** 2026-05-16
+**Consumido por:** Dex (`@dev`)
+**Resultado:** Fix 1 (Major race condition KanbanBoard.tsx:138) implementado via per-task mutation token em `inFlightByTaskRef`. Fix 2 (Minor cobertura kanban.test.tsx:334) adicionado T7d drop-over-card. Bónus T11 stale completion validation. 4 testes existentes (T7/T7b/T7c/T8) actualizados com `inFlightByTaskRef: { current: {} }` deps. Quality gates locais Iter 2 5/5 PASS à primeira: typecheck 0, lint 0 errors, test:unit 468/468 (+2), build 0, coverage agregado 87.54% (+0.14pp). Commit `93399bd5` (6 files, +545/-3) em `feature/2.4-vista-kanban`. 5 Major em handoffs arquivados + 3 Minor MD nits NÃO tocados (waivers acordados Eurico). Handoff de saída `RETOMA-20260516-story-2.4-iter2-fix-pronto-para-push.md` criado para Gage push Iter 2 + PR comment waivers.
 **PR:** https://github.com/DaSilvaAlves/ecosistema-ia-avancada-pt/pull/21
 
 ---
