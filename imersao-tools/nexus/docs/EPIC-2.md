@@ -2,7 +2,7 @@
 
 > **Projecto:** Nexus v2 (`imersao-tools/nexus/`)
 > **Criado por:** Morgan (`@pm`) em 14/05/2026
-> **Estado:** Em curso — 3/10 stories Done (Stories 2.1 + 2.2 + 2.3 CLOSED 15/05/2026; 2.2 + 2.3 aguardam push)
+> **Estado:** Em curso — 3/10 stories Done em main (Stories 2.1 + 2.2 + 2.3 MERGED 15-16/05/2026 via PRs #18 / #19 / #20)
 > **Fonte da verdade:** `PRD-NEXUS-V2.md` §6.2, §6.5, §9, §10 (Epic 2) — Constitution Artigo IV (No Invention): cada story e AC abaixo traça ao PRD
 > **Arquitectura:** `architecture-v2.md` (5 ADRs — não reabrir, ver `project_nexus_v2_architecture.md`)
 > **Lições aplicadas:** Retrospectiva Epic 1 (`retrospectives/EPIC-1-retrospective.md`) — acções A1, A2, A6
