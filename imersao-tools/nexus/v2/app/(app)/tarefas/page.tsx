@@ -9,31 +9,39 @@ import { listTags } from '@/lib/db/repos/tags';
 import { setTaskStatus, deleteTask } from '@/lib/db/repos/tasks';
 import { isOverdue } from '@/lib/tarefas/isOverdue';
 import { useDebounced } from '@/hooks/useDebounced';
-import { TasksHeader } from '@/components/tarefas/TasksHeader';
+import { TasksHeader, type ActiveTab } from '@/components/tarefas/TasksHeader';
 import { OverdueSection } from '@/components/tarefas/OverdueSection';
 import { TasksFilters, type StatusFilter, type PriorityFilter } from '@/components/tarefas/TasksFilters';
 import { TasksTable } from '@/components/tarefas/TasksTable';
+import { KanbanBoard } from '@/components/tarefas/KanbanBoard';
+import type { Tag } from '@/types/db';
 
 /**
- * Nexus v2 — Vista lista de tarefas (Story 2.3 / AC1)
+ * Nexus v2 — Página /tarefas (Story 2.3 lista + Story 2.4 Kanban)
  *
  * Rota: /tarefas — App Router page com 'use client' (Dexie via useLiveQuery
  * exige client component).
  *
  * Composição:
- *   1. <TasksHeader> — título + tab strip (Lista activa; Kanban/Calendar disabled D2)
+ *   1. <TasksHeader> — título + tab strip (Lista|Kanban activos, Calendário disabled)
  *   2. <OverdueSection> — secção FR13 (só renderiza se há atrasadas)
- *   3. <TasksFilters> — 4 selects + pesquisa (debounce 200ms)
- *   4. Loading skeleton (5 linhas) | Empty state | <TasksTable>
+ *   3. <TasksFilters> — 4 selects + pesquisa (debounce 200ms) — mode-aware
+ *   4. Vista condicional por activeTab:
+ *      - 'lista'  → Loading skeleton | Empty state | <TasksTable>
+ *      - 'kanban' → <KanbanBoard> (Story 2.4 — drag-and-drop entre colunas)
  *
  * APIs consumidas (Story 2.1): useTasks, useProjects, listTags, setTaskStatus, deleteTask.
- * Helper D3: isOverdue (lib/tarefas).
+ * Helper D3 (Story 2.3 Iter 1 Uma A3): isOverdue (lib/tarefas).
  *
- * 4 [AUTO-DECISION] ratificadas pela @po: D1 sem drag, D2 tabs placeholder, D3 overdue=startOfToday, D4 kebab "Editar" disabled.
+ * 4 [AUTO-DECISION] ratificadas pela @po: D1 sem drag em Lista, D2 tabs placeholder Cal, D3 overdue=startOfToday, D4 kebab "Editar" disabled.
+ * Story 2.4 ratificações: A1 sem drag intra-coluna; A2 sem arquivamento auto FEITAS; A3 filtro status oculta colunas; A4 "+Nova" mantém disabled; A5 KeyboardSensor dnd-kit.
  */
 
 export default function TarefasPage(): React.ReactElement {
   const router = useRouter();
+
+  // Vista activa (Story 2.4 AC1)
+  const [activeTab, setActiveTab] = useState<ActiveTab>('lista');
 
   // Filtros server-side (Dexie via repos)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(undefined);
@@ -47,10 +55,21 @@ export default function TarefasPage(): React.ReactElement {
   const [overdueOnly, setOverdueOnly] = useState(false);
 
   // Reads reactivos
-  const tasks = useTasks({ status: statusFilter, projectId: projectFilter, tag: tagFilter });
+  // Em modo Kanban (Story 2.4 A3): filtro Status NÃO é aplicado a useTasks — todas as
+  // tarefas são carregadas e o filtro Status oculta colunas em vez de remover cards.
+  // Em modo Lista: filtro Status é aplicado normalmente via repo Dexie.
+  const effectiveStatusForQuery = activeTab === 'kanban' ? undefined : statusFilter;
+  const tasks = useTasks({ status: effectiveStatusForQuery, projectId: projectFilter, tag: tagFilter });
   const projects = useProjects();
   // useTags hook ainda não existe (Story 2.6) — useLiveQuery inline via repo
   const tags = useLiveQuery(() => listTags(), []);
+
+  // Tags lookup para acesso O(1) em cards (Story 2.4) e linhas (Story 2.3)
+  const tagsLookup = useMemo<Map<string, Tag>>(() => {
+    const map = new Map<string, Tag>();
+    (tags ?? []).forEach((t) => map.set(t.id, t));
+    return map;
+  }, [tags]);
 
   // Filtros client-side aplicados via useMemo (priority + search + overdue)
   const visibleTasks = useMemo(() => {
@@ -70,6 +89,14 @@ export default function TarefasPage(): React.ReactElement {
     return tasks.filter((t) => isOverdue(t));
   }, [tasks]);
 
+  // Hidden columns para modo Kanban (Story 2.4 A3)
+  // Quando filtro Status está activo em Kanban, oculta as outras 3 colunas.
+  const hiddenColumns = useMemo<ReadonlySet<string>>(() => {
+    if (activeTab !== 'kanban' || statusFilter === undefined) return new Set();
+    const all = ['todo', 'in-progress', 'blocked', 'done'] as const;
+    return new Set(all.filter((s) => s !== statusFilter));
+  }, [activeTab, statusFilter]);
+
   // Escape key → router.back (AC8)
   useEffect(() => {
     function handleEscape(e: KeyboardEvent): void {
@@ -83,10 +110,6 @@ export default function TarefasPage(): React.ReactElement {
     try {
       await setTaskStatus(taskId, checked ? 'done' : 'todo');
     } catch (error) {
-      // A1 — CR Iter 1 fix: feedback user-visible (window.alert PT-PT).
-      // Consistente com window.confirm em TaskKebabMenu (D4) — Story 2.3 não
-      // tem sistema de toast/snackbar; alert é aceitável aqui. Story futura
-      // pode unificar tudo num toast system (PA registado retrospectiva Epic 2).
       console.error('Falha ao actualizar estado da tarefa', error);
       window.alert('Não foi possível actualizar o estado da tarefa. Tenta novamente.');
     }
@@ -96,7 +119,6 @@ export default function TarefasPage(): React.ReactElement {
     try {
       await deleteTask(taskId);
     } catch (error) {
-      // A1 — CR Iter 1 fix: feedback user-visible (window.alert PT-PT).
       console.error('Falha ao apagar tarefa', error);
       window.alert('Não foi possível apagar a tarefa. Tenta novamente.');
     }
@@ -104,7 +126,7 @@ export default function TarefasPage(): React.ReactElement {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <TasksHeader activeTab="lista" />
+      <TasksHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
       <OverdueSection
         overdueTasks={overdueTasks}
@@ -161,17 +183,29 @@ export default function TarefasPage(): React.ReactElement {
         </div>
       )}
 
-      {visibleTasks === undefined ? (
-        <LoadingSkeleton />
-      ) : visibleTasks.length === 0 ? (
-        <EmptyState hasFilters={hasActiveFilters({ statusFilter, projectFilter, tagFilter, priorityFilter, search, overdueOnly })} />
+      {activeTab === 'lista' ? (
+        visibleTasks === undefined ? (
+          <LoadingSkeleton />
+        ) : visibleTasks.length === 0 ? (
+          <EmptyState
+            hasFilters={hasActiveFilters({ statusFilter, projectFilter, tagFilter, priorityFilter, search, overdueOnly })}
+          />
+        ) : (
+          <TasksTable
+            tasks={visibleTasks}
+            projects={projects}
+            tags={tags}
+            onToggleDone={handleToggleDone}
+            onDelete={handleDelete}
+          />
+        )
       ) : (
-        <TasksTable
+        <KanbanBoard
           tasks={visibleTasks}
           projects={projects}
-          tags={tags}
-          onToggleDone={handleToggleDone}
-          onDelete={handleDelete}
+          tagsLookup={tagsLookup}
+          overdueTasks={overdueTasks}
+          hiddenColumns={hiddenColumns}
         />
       )}
     </div>
