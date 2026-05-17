@@ -43,6 +43,11 @@ export default defineConfig({
         'hooks/useTasks.ts',
         'hooks/useProjects.ts',
         'hooks/useDebounced.ts',
+        // Story 2.8 — CRUD projectos (precedente Story 2.3 — apenas adiciona
+        // paths à allowlist do report; thresholds globais e exclusões inalterados,
+        // sem alteração comportamental do test runner).
+        'app/(app)/projectos/**',
+        'components/projectos/**',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)
