@@ -290,15 +290,16 @@ describe('TarefasPage (Story 2.3 / AC10)', () => {
     expect(kanbanTab).not.toBeDisabled();
     expect(kanbanTab).toHaveAttribute('aria-disabled', 'false');
 
-    // Calendário mantém-se disabled (Story 2.5 ainda não implementada)
-    const calTab = screen.getByRole('tab', { name: /Calendário — Em construção · Story 2.5/ });
-    expect(calTab).toHaveAttribute('aria-disabled', 'true');
-    expect(calTab).toBeDisabled();
+    // Calendário agora está ACTIVO (Story 2.5 AC1 — tab activado)
+    const calTab = screen.getByRole('tab', { name: /Ver tarefas em vista calendário/ });
+    expect(calTab).not.toBeDisabled();
+    expect(calTab).toHaveAttribute('aria-disabled', 'false');
 
     // Tab Lista permanece a activa por defeito
     const listaTab = screen.getByRole('tab', { name: /Ver tarefas em vista lista/ });
     expect(listaTab).toHaveAttribute('aria-selected', 'true');
     expect(kanbanTab).toHaveAttribute('aria-selected', 'false');
+    expect(calTab).toHaveAttribute('aria-selected', 'false');
   });
 
   // ─────────────────────────────────────────────────────────────────

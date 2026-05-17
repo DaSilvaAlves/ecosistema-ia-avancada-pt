@@ -14,7 +14,9 @@ import { OverdueSection } from '@/components/tarefas/OverdueSection';
 import { TasksFilters, type StatusFilter, type PriorityFilter } from '@/components/tarefas/TasksFilters';
 import { TasksTable } from '@/components/tarefas/TasksTable';
 import { KanbanBoard } from '@/components/tarefas/KanbanBoard';
+import { CalendarBoard } from '@/components/tarefas/CalendarBoard';
 import type { Tag } from '@/types/db';
+import type { TaskStatus } from '@/lib/db/schemas';
 
 /**
  * Nexus v2 — Página /tarefas (Story 2.3 lista + Story 2.4 Kanban)
@@ -55,10 +57,12 @@ export default function TarefasPage(): React.ReactElement {
   const [overdueOnly, setOverdueOnly] = useState(false);
 
   // Reads reactivos
-  // Em modo Kanban (Story 2.4 A3): filtro Status NÃO é aplicado a useTasks — todas as
-  // tarefas são carregadas e o filtro Status oculta colunas em vez de remover cards.
+  // Em modo Kanban (Story 2.4 A3) e Calendário (Story 2.5 A3): filtro Status NÃO é
+  // aplicado a useTasks — todas as tarefas são carregadas e o filtro Status oculta
+  // colunas (Kanban) ou chips (Calendário), mantendo a estrutura visual estável.
   // Em modo Lista: filtro Status é aplicado normalmente via repo Dexie.
-  const effectiveStatusForQuery = activeTab === 'kanban' ? undefined : statusFilter;
+  const effectiveStatusForQuery =
+    activeTab === 'kanban' || activeTab === 'calendario' ? undefined : statusFilter;
   const tasks = useTasks({ status: effectiveStatusForQuery, projectId: projectFilter, tag: tagFilter });
   const projects = useProjects();
   // useTags hook ainda não existe (Story 2.6) — useLiveQuery inline via repo
@@ -94,6 +98,15 @@ export default function TarefasPage(): React.ReactElement {
   const hiddenColumns = useMemo<ReadonlySet<string>>(() => {
     if (activeTab !== 'kanban' || statusFilter === undefined) return new Set();
     const all = ['todo', 'in-progress', 'blocked', 'done'] as const;
+    return new Set(all.filter((s) => s !== statusFilter));
+  }, [activeTab, statusFilter]);
+
+  // Hidden statuses para modo Calendário (Story 2.5 A3)
+  // Quando filtro Status está activo em Calendário, oculta chips fora desse status;
+  // os 7 dias mantêm-se visíveis (calendário tem sempre 7 dias por definição UX).
+  const hiddenStatuses = useMemo<ReadonlySet<TaskStatus>>(() => {
+    if (activeTab !== 'calendario' || statusFilter === undefined) return new Set();
+    const all: TaskStatus[] = ['todo', 'in-progress', 'blocked', 'done'];
     return new Set(all.filter((s) => s !== statusFilter));
   }, [activeTab, statusFilter]);
 
@@ -183,7 +196,7 @@ export default function TarefasPage(): React.ReactElement {
         </div>
       )}
 
-      {activeTab === 'lista' ? (
+      {activeTab === 'lista' && (
         visibleTasks === undefined ? (
           <LoadingSkeleton />
         ) : visibleTasks.length === 0 ? (
@@ -199,13 +212,24 @@ export default function TarefasPage(): React.ReactElement {
             onDelete={handleDelete}
           />
         )
-      ) : (
+      )}
+
+      {activeTab === 'kanban' && (
         <KanbanBoard
           tasks={visibleTasks}
           projects={projects}
           tagsLookup={tagsLookup}
           overdueTasks={overdueTasks}
           hiddenColumns={hiddenColumns}
+        />
+      )}
+
+      {activeTab === 'calendario' && (
+        <CalendarBoard
+          tasks={visibleTasks}
+          projects={projects}
+          tagsLookup={tagsLookup}
+          hiddenStatuses={hiddenStatuses}
         />
       )}
     </div>
