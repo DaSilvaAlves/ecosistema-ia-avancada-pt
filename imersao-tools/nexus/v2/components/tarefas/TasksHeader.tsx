@@ -9,7 +9,8 @@ import { useRouter } from 'next/navigation';
  * Header sticky com título "Tarefas" + tab strip [Lista | Kanban | Calendário]
  * + botão "Esc — Voltar" (router.back).
  *
- * Story 2.4 (AC1) — tab Kanban activado. Calendário mantém-se placeholder (Story 2.5).
+ * Story 2.4 (AC1) — tab Kanban activado.
+ * Story 2.5 (AC1) — tab Calendário activado (tooltip "Em construção" removido).
  * Story 2.4 (PA4 da Story 2.3 closure) — arrow-key navigation entre tabs activos
  * (WAI-ARIA Tabs Authoring Practices): ← / → navega entre tabs não-disabled e foca
  * o próximo; Home/End vão para primeiro/último activo.
@@ -35,7 +36,7 @@ interface TabDescriptor {
 const TABS: TabDescriptor[] = [
   { id: 'lista', label: 'Lista', disabled: false },
   { id: 'kanban', label: 'Kanban', disabled: false },
-  { id: 'calendario', label: 'Calendário', disabled: true, tooltip: 'Em construção · Story 2.5' },
+  { id: 'calendario', label: 'Calendário', disabled: false },
 ];
 
 export function TasksHeader({ activeTab, onTabChange }: TasksHeaderProps): React.ReactElement {
