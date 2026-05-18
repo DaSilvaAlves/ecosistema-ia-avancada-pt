@@ -271,6 +271,86 @@ describe('AnthropicClassifier — markdown fences hotfix (2026-05-09)', () => {
     expect(result.intents).toEqual(['finance']);
     expect(result.confidence).toEqual({ finance: 0.77 });
   });
+
+  /**
+   * Hotfix 2026-05-18 — Bug observado em produção (https://imersao.ia.expressia.pt).
+   *
+   * Quando o prompt do utilizador é vago (ex: "avança"), o Haiku 4.5 ocasionalmente
+   * devolve JSON em fences seguido de prosa explicativa em PT-PT na mesma resposta:
+   *
+   *   ```json
+   *   {"intents":[],"confidence":{}}
+   *   ```
+   *   O prompt "avança" é demasiado vago e não contém contexto suficiente...
+   *
+   * O fix anterior (15de4f74) só removia fences se o fence de fecho ``` estivesse
+   * exactamente no fim da string. Com prosa a seguir o fence de fecho, o regex
+   * fenceCloseMatch (com `$`) não matcheia → `stripJsonMarkdownFences` devolve
+   * a string intacta → `JSON.parse` parte → classifier emite "executor — interrompida".
+   *
+   * Estes tests reproduzem o output literal observado em produção.
+   */
+  it('parseia JSON em ```json … ``` seguido de prosa explicativa (bug prod 2026-05-18)', async () => {
+    server.use(
+      http.post('https://api.anthropic.com/v1/messages', async ({ request }) => {
+        const body = (await request.json()) as { model: string };
+        return classifierTextResponse(
+          body.model,
+          '```json\n{"intents":[],"confidence":{}}\n```\nO prompt "avança" é demasiado vago e não contém contexto suficiente para identificar um domínio funcional específico. Pode significar várias coisas (avançar uma tarefa, avançar no calendário, etc).'
+        );
+      })
+    );
+
+    const classifier = new AnthropicClassifier(MOCK_API_KEY);
+    const result = await classifier.classify(
+      'system prompt qualquer',
+      'avança'
+    );
+    expect(result.intents).toEqual([]);
+    expect(result.confidence).toEqual({});
+    // rawResponse preserva prosa original para debug downstream
+    expect(result.rawResponse).toContain('demasiado vago');
+  });
+
+  it('parseia JSON em ``` … ``` (sem language tag) seguido de prosa', async () => {
+    server.use(
+      http.post('https://api.anthropic.com/v1/messages', async ({ request }) => {
+        const body = (await request.json()) as { model: string };
+        return classifierTextResponse(
+          body.model,
+          '```\n{"intents":["tasks"],"confidence":{"tasks":0.6}}\n```\n\nNota: o utilizador pode estar a referir-se a uma tarefa que mencionou anteriormente.'
+        );
+      })
+    );
+
+    const classifier = new AnthropicClassifier(MOCK_API_KEY);
+    const result = await classifier.classify(
+      'system prompt qualquer',
+      'continua'
+    );
+    expect(result.intents).toEqual(['tasks']);
+    expect(result.confidence).toEqual({ tasks: 0.6 });
+  });
+
+  it('parseia JSON quando há prosa explicativa ANTES do fence ```json', async () => {
+    server.use(
+      http.post('https://api.anthropic.com/v1/messages', async ({ request }) => {
+        const body = (await request.json()) as { model: string };
+        return classifierTextResponse(
+          body.model,
+          'Análise do prompt:\n\n```json\n{"intents":["calendar"],"confidence":{"calendar":0.85}}\n```'
+        );
+      })
+    );
+
+    const classifier = new AnthropicClassifier(MOCK_API_KEY);
+    const result = await classifier.classify(
+      'system prompt qualquer',
+      'marca reunião amanhã'
+    );
+    expect(result.intents).toEqual(['calendar']);
+    expect(result.confidence).toEqual({ calendar: 0.85 });
+  });
 });
 
 describe('AnthropicExecutor — basic streaming (AC2, AC8)', () => {
