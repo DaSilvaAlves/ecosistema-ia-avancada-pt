@@ -166,6 +166,14 @@ export default function ProjectosPage(): React.ReactElement {
     }
   }, []);
 
+  // Story 2.9 (AC10) — navegação para vista detalhada `/projectos/[id]`.
+  const handleView = useCallback(
+    (id: string): void => {
+      router.push(`/projectos/${id}`);
+    },
+    [router],
+  );
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <ProjectsHeader
@@ -183,6 +191,7 @@ export default function ProjectosPage(): React.ReactElement {
         onReactivate={handleReactivate}
         onMarkDone={handleMarkDone}
         onNewProject={handleNewProject}
+        onView={handleView}
       />
 
       {modal !== null && (

@@ -44,6 +44,12 @@ interface ProjectCardProps {
   onArchive: (id: string) => void;
   onReactivate: (id: string) => void;
   onMarkDone: (id: string) => void;
+  /**
+   * Callback opcional para navegar para a vista detalhada do projecto
+   * (`/projectos/[id]`). Story 2.9 (A8) — invocado por click em qualquer área
+   * do card EXCEPTO no menu kebab (que faz swallow do click via `stopPropagation`).
+   */
+  onView?: (id: string) => void;
 }
 
 function formatCount(n: number, singular: string, plural: string): string {
@@ -65,6 +71,7 @@ function ProjectCardImpl({
   onArchive,
   onReactivate,
   onMarkDone,
+  onView,
 }: ProjectCardProps): React.ReactElement {
   const accentColor = STATUS_COLOR[project.status];
   const activeLabel = formatCount(counts.active, 'tarefa activa', 'tarefas activas');
@@ -81,7 +88,39 @@ function ProjectCardImpl({
     padding: '1rem',
     backdropFilter: 'blur(12px)',
     transition: 'border-color 0.2s',
+    cursor: onView !== undefined ? 'pointer' : 'default',
   };
+
+  // Story 2.9 (AC10) — click handler para navegação. NÃO dispara se o click
+  // vier do menu kebab (este já tem `stopPropagation` implícito via event no
+  // botão? Não — o button não pára propagação. Por isso filtramos pelo target
+  // estar dentro do menu kebab — see handleCardClick).
+  function handleCardClick(e: React.MouseEvent<HTMLElement>): void {
+    if (onView === undefined) return;
+    // Se o click veio do menu kebab (ou menu item ou button trigger), ignorar.
+    const target = e.target as Element;
+    if (target.closest('[data-kebab-menu="true"]')) return;
+    onView(project.id);
+  }
+
+  function handleCardKeyDown(e: React.KeyboardEvent<HTMLElement>): void {
+    if (onView === undefined) return;
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const target = e.target as Element;
+    if (target.closest('[data-kebab-menu="true"]')) return;
+    if (target.tagName === 'BUTTON' || target.tagName === 'INPUT') return;
+    e.preventDefault();
+    onView(project.id);
+  }
+
+  const interactiveProps =
+    onView !== undefined
+      ? {
+          onClick: handleCardClick,
+          onKeyDown: handleCardKeyDown,
+          tabIndex: 0,
+        }
+      : {};
 
   return (
     <article
@@ -90,6 +129,7 @@ function ProjectCardImpl({
       data-testid={`project-card-${project.id}`}
       data-status={project.status}
       style={cardStyle}
+      {...interactiveProps}
     >
       <div
         aria-hidden="true"
@@ -280,14 +320,18 @@ function KebabMenu({ project, onEdit, onArchive, onReactivate, onMarkDone }: Keb
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }} data-kebab-menu="true">
       <button
         ref={triggerRef}
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`Acções do projecto ${project.name}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={(e) => {
+          // Story 2.9 — não propagar para o card (que tem `onView`).
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
         style={{
           fontFamily: 'Inter, sans-serif',
           fontSize: '1.1rem',

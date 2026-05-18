@@ -27,6 +27,12 @@ interface ProjectsGridProps {
   onReactivate: (id: string) => void;
   onMarkDone: (id: string) => void;
   onNewProject: () => void;
+  /**
+   * Story 2.9 (AC10) — callback para navegar para `/projectos/[id]`.
+   * Opcional para preservar compatibilidade com qualquer consumidor que
+   * ainda não tenha a vista detalhada activa.
+   */
+  onView?: (id: string) => void;
 }
 
 export function ProjectsGrid({
@@ -38,6 +44,7 @@ export function ProjectsGrid({
   onReactivate,
   onMarkDone,
   onNewProject,
+  onView,
 }: ProjectsGridProps): React.ReactElement {
   if (projects === undefined) {
     return <LoadingSkeleton />;
@@ -66,6 +73,7 @@ export function ProjectsGrid({
           onArchive={onArchive}
           onReactivate={onReactivate}
           onMarkDone={onMarkDone}
+          onView={onView}
         />
       ))}
     </div>
