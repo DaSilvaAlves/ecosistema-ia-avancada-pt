@@ -7,7 +7,9 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 
 ## Pending
 
-*(Nenhum handoff pending — hotfix produção fechado em 19/05/2026 via squash `755375a0`. Decisão Eurico sobre próxima story Epic 2 — 2.6/2.7/2.10 ou retrospectiva intermédia — em aberto.)*
+| Ficheiro | De | Para | Data | Próxima acção |
+|---------|-----|------|------|--------------|
+| [RETOMA-20260519-hotfix-executor-fechado-validado-decisao-epic-2.md](RETOMA-20260519-hotfix-executor-fechado-validado-decisao-epic-2.md) | Gage (`@devops`) — sessão SOP Hotfix Passo 3 completa + validação manual pós-merge | any (Eurico decide próxima acção) | 19/05/2026 | **Hotfix produção FECHADO ponta-a-ponta + validação manual PASS em produção.** PR #26 squash-merged `755375a0` em main 19/05/2026 01:52:24Z, closure commit `c044def4` em `origin/main`, branch eliminada server+local. Vercel production deploys SUCCESS. Validação manual em janela anónima: 3 turnos PASS (`cria tarefa: comprar pão amanhã` → tarefa criada PT-PT com follow-up; `15 horas` isolado → AC8 exemplar pedindo contexto sem listas genéricas; `cria tarefa: comprar pão amanhã 15 horas` → parsing 15h00 correcto). Hipótese A confirmada (turno problemático pré-refresh era histórico IndexedDB pré-deploy). Decisões em aberto: (5.1) próxima story Epic 2 — 2.6/2.7/2.10 paralelizáveis OU retrospectiva intermédia OU pausa para outro projecto; (5.2) follow-up cosmético baixa prioridade — nit CR waived (`tests/unit/agent/providers/anthropic.executor.system.test.ts:3` absolute import, 1 linha). Padrão "first-iter PASS sem waiver" mantido (12ª operação Nexus v2 consecutiva). Mock-protocol-fidelity validada via T3. Working tree pré-existente preservado (150+ untracked + submódulos pré-existentes, fora-scope). |
 
 ---
 
