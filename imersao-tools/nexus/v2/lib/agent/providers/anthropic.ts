@@ -4,6 +4,7 @@ import {
   LLMStreamEventSchema,
 } from '@/lib/agent/schemas';
 import { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL } from '@/lib/agent/models';
+import { EXECUTOR_SYSTEM_PROMPT } from '@/lib/agent/prompts/executor-system';
 import { toolsToAnthropicShape } from '@/lib/agent/tools/registry';
 import type {
   ClassifierProvider,
@@ -348,6 +349,7 @@ export class AnthropicExecutor implements ExecutorProvider {
     const stream = this.client.messages.stream({
       model: opts.model ?? DEFAULT_EXECUTOR_MODEL,
       max_tokens: opts.maxTokens ?? DEFAULT_EXECUTOR_MAX_TOKENS,
+      system: EXECUTOR_SYSTEM_PROMPT,
       messages: anthropicMessages as Anthropic.MessageParam[],
       tools: anthropicTools.length > 0 ? anthropicTools : undefined,
     });

@@ -718,10 +718,13 @@ export const anthropicHandlers = [
       // no system prompt. Mantém detecção implícita por keyword "comprar pão"
       // para preservar tests pré-existentes da Iter 1.
       //
-      // Story 1.5: novas magic strings `MOCK_EXECUTOR_*` detectadas no
-      // userMsgText (executor não constrói system prompt — Story 1.5 AC2
-      // passa apenas `[{ role: 'user', content }]` ao SDK). Avaliadas
-      // ANTES das Story 1.2 magic strings para evitar conflito.
+      // Story 1.5 + hotfix 18/05/2026: executor agora passa
+      // EXECUTOR_SYSTEM_PROMPT (PT-PT) — root cause do bug PT-BR em produção
+      // fica resolvido. Magic strings `MOCK_EXECUTOR_*` continuam detectadas
+      // no userMsgText (não no system) por backward-compat dos testes Story
+      // 1.5. Discriminator canónico executor vs classifier permanece
+      // `body.stream === true`. Avaliadas ANTES das Story 1.2 magic strings
+      // para evitar conflito.
 
       // Story 1.5 — turn-aware: Story 1.5 magic strings só se aplicam à
       // PRIMEIRA invocação do executor (turn 1). Em turn 2+ (depois de tool_use
