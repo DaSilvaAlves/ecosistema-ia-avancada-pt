@@ -1,36 +1,27 @@
 import type { AberturaContent } from './types';
 
 export const aberturaFR: AberturaContent = {
-  metaTitle: "Pedro, c'est pour vous · Frusoal InovCitrus",
+  metaTitle: "Frusoal InovCitrus — travail préparé · [IA]AVANÇADA PT",
   metaDescription:
-    "Travail préparé par Eurico Alves pour Pedro Madeira au sujet de Frusoal InovCitrus — sans brief, sans proposition, juste une étude sérieuse. Accès intégral au site, PDF, feuille de route et sources.",
+    "Travail préparé par Eurico Alves pour Frusoal InovCitrus — sans brief, sans proposition, juste une étude sérieuse. Accès intégral au site, PDF, feuille de route et sources.",
 
   hero: {
-    greeting: 'Pedro,',
-    message: "c'est pour vous.",
-    context:
-      "Une curiosité de ma part qui a pris corps. Sans brief, sans proposition, sans contrat. Juste un travail sérieux sur Frusoal — pour vous le montrer."
+    greeting: 'Une curiosité de ma part',
+    message: 'qui a pris corps.',
+    context: 'Sans brief, sans proposition, sans contrat.'
   },
 
   beats: [
     {
       number: 1,
-      heading: "Nous nous connaissons depuis trop longtemps pour que je vous donne un CV.",
+      heading: 'Le propos est simple.',
       paragraphs: [
-        "Mais il y a une partie de ce que je fais qui ne vous est probablement pas parvenue. Il y a quelques années, je me suis consacré sérieusement à l'intelligence artificielle — pas à en lire, à l'appliquer. J'ai construit des outils, formé une communauté, et j'aide des entreprises portugaises à introduire l'IA dans leurs processus.",
-        "C'est cette partie qui manque entre ce que vous savez de moi et ce que vous lisez ici."
-      ]
-    },
-    {
-      number: 2,
-      heading: "Ce que je fais s'appelle [IA]AVANÇADA PT.",
-      paragraphs: [
-        "Le propos est simple : aider des entreprises portugaises avec tradition et dimension à intégrer l'intelligence artificielle dans leurs processus — de manière progressive, pluriannuelle, sans disruption opérationnelle.",
+        "Aider des entreprises portugaises avec tradition et dimension à intégrer l'intelligence artificielle dans leurs processus — de manière progressive, pluriannuelle, sans disruption opérationnelle.",
         "Je ne vends pas d'outils. Je ne vends pas de formations. Je travaille côte à côte avec ceux qui décident : j'étudie le secteur, je cartographie l'existant, je dessine où l'IA peut entrer, et j'accompagne la mise en œuvre. C'est du conseil. Ce n'est pas de la vente."
       ]
     },
     {
-      number: 3,
+      number: 2,
       heading: "Pour comprendre jusqu'où je pouvais aller, j'ai choisi trois échelles d'entreprise.",
       paragraphs: [
         "Petite, moyenne, grande. Pour chacune, j'ai fait une recherche de marché interne — pas pour vendre à ces entreprises, pour me mesurer moi-même. Pour comprendre si ce que je fais tient face à des entreprises petites, moyennes et grandes — ou s'il y a un plafond.",
@@ -38,7 +29,7 @@ export const aberturaFR: AberturaContent = {
       ]
     },
     {
-      number: 4,
+      number: 3,
       heading: 'Frusoal est entrée dans la recherche comme la "règle dure".',
       paragraphs: [
         "Plus grande Organisation de Producteurs d'Agrumes du Portugal. Plus de 150 employés. Mille cinq cents hectares cultivés. Quarante mille tonnes par an. Trente-cinq années opérationnelles. Certifications solides — GlobalG.A.P., GRASP, IGP Citrinos do Algarve. Et, surtout, une entreprise qui défend des causes que je respecte : traçabilité, qualité, durabilité du Sotavento.",
@@ -46,24 +37,18 @@ export const aberturaFR: AberturaContent = {
       ]
     },
     {
-      number: 5,
+      number: 4,
       heading: "Quand j'ai commencé à étudier Frusoal, la chose a grandi.",
       paragraphs: [
         "J'ai trouvé l'InovCitrus que vous venez de lancer — le projet triennal sur Scirtothrips aurantii, le partenariat avec InnovPlantProtect, la conception scientifique, la vision à 36 mois. J'ai imaginé comment l'IA pouvait s'intégrer à ce processus — sans disruption, en horizon pluriannuel, alignée à la conception scientifique que vous avez déjà.",
         "J'ai commencé à dessiner. Et ce qui était une étude de cas est devenu un matériel d'une certaine consistance : site institutionnel en quatre langues, fiches techniques, feuille de route à 36 mois, kit presse, seize sources documentées.",
-        "Tout est en bas, sur cette page. Regardez quand vous voudrez."
-      ]
-    },
-    {
-      number: 6,
-      heading: "Et me voici à vous raconter cela.",
-      paragraphs: [
-        "Je dois être honnête avec vous, Pedro : vous ne m'avez rien demandé de tout cela. Personne de Frusoal ne m'a contacté. Je n'ai pas de brief, pas de mandat, pas de proposition à présenter.",
+        "Tout est en bas, sur cette page. Regardez quand vous voudrez.",
+        "Je dois être honnête : personne ne m'a rien demandé de tout cela. Personne de Frusoal ne m'a contacté. Je n'ai pas de brief, pas de mandat, pas de proposition à présenter.",
         "C'était ma curiosité. J'ai voulu comprendre jusqu'où nous pouvions aller en étudiant une entreprise comme la vôtre. Et quand j'ai vu ce que j'avais en main, j'ai pensé que cela avait du sens de vous le montrer."
       ]
     },
     {
-      number: 7,
+      number: 5,
       heading: "Ce que je demande est simple — regardez.",
       paragraphs: [
         "Regardez ce qui concerne Frusoal et ce qui ne la concerne pas. Regardez si cela a du sens. Si vous voyez du potentiel dans quelque chose, on en parle.",
@@ -125,7 +110,7 @@ export const aberturaFR: AberturaContent = {
 
   footer: {
     signature:
-      'Cette page a été préparée pour Pedro Madeira par Eurico Alves — [IA]AVANÇADA PT · 26 avril 2026.',
+      'Cette page a été préparée pour Frusoal par Eurico Alves — [IA]AVANÇADA PT · 19 mai 2026.',
     disclaimer:
       'Aucune donnée de Frusoal n\'a été recueillie par des moyens non publics. Toute l\'information utilisée est documentée dans des sources publiques vérifiables (F01–F16).'
   }
