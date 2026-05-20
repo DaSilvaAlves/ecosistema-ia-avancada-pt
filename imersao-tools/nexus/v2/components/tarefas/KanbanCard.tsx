@@ -50,6 +50,18 @@ const PRIORITY_COLORS = {
   low: { bg: 'rgba(136, 146, 164, 0.12)', border: 'rgba(136, 146, 164, 0.3)', text: '#8892A4' },
 } as const;
 
+// Story 2.7 AC8 — paletes dos badges de recorrência. Task-mãe → Cyan; instância → Grey.
+const RECURRENCE_BADGE = {
+  bg: 'rgba(0, 245, 255, 0.08)',
+  border: 'rgba(0, 245, 255, 0.2)',
+  text: '#00F5FF',
+} as const;
+const INSTANCE_BADGE = {
+  bg: 'rgba(136, 146, 164, 0.08)',
+  border: 'rgba(136, 146, 164, 0.2)',
+  text: '#8892A4',
+} as const;
+
 const MAX_VISIBLE_TAGS = 2;
 
 interface KanbanCardProps {
@@ -83,6 +95,10 @@ function KanbanCardImpl({ task, projectName, tagsLookup, overdue }: KanbanCardPr
 
   const visibleTags = task.tags.slice(0, MAX_VISIBLE_TAGS);
   const overflowCount = task.tags.length - MAX_VISIBLE_TAGS;
+
+  // Story 2.7 AC8 — task-mãe recorrente vs instância filha.
+  const isRecurrenceMother = task.recurrenceId !== null && task.parentTaskId === null;
+  const isRecurrenceInstance = task.parentTaskId !== null;
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -148,6 +164,16 @@ function KanbanCardImpl({ task, projectName, tagsLookup, overdue }: KanbanCardPr
         >
           {formatDueDate(task.dueDate)}
         </span>
+        {isRecurrenceMother && (
+          <span style={badgeStyle(RECURRENCE_BADGE)} aria-label="Tarefa recorrente">
+            Recorrente
+          </span>
+        )}
+        {isRecurrenceInstance && (
+          <span style={badgeStyle(INSTANCE_BADGE)} aria-label="Instância recorrente">
+            Instância
+          </span>
+        )}
       </div>
 
       {projectName !== undefined && projectName !== null && (

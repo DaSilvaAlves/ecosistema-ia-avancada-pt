@@ -72,6 +72,18 @@ function badgeStyle(palette: { bg: string; border: string; text: string }): Reac
   };
 }
 
+// Story 2.7 AC8 — paletes dos badges de recorrência. Task-mãe → Cyan; instância → Grey.
+const RECURRENCE_BADGE = {
+  bg: 'rgba(0, 245, 255, 0.08)',
+  border: 'rgba(0, 245, 255, 0.2)',
+  text: '#00F5FF',
+} as const;
+const INSTANCE_BADGE = {
+  bg: 'rgba(136, 146, 164, 0.08)',
+  border: 'rgba(136, 146, 164, 0.2)',
+  text: '#8892A4',
+} as const;
+
 function TaskRowImpl({
   task,
   project,
@@ -83,6 +95,10 @@ function TaskRowImpl({
   const isDone = task.status === 'done';
   const visibleTags = task.tags.slice(0, MAX_VISIBLE_TAGS);
   const overflowCount = task.tags.length - MAX_VISIBLE_TAGS;
+
+  // Story 2.7 AC8 — task-mãe recorrente vs instância filha.
+  const isRecurrenceMother = task.recurrenceId !== null && task.parentTaskId === null;
+  const isRecurrenceInstance = task.parentTaskId !== null;
 
   const rowBg = overdue ? 'rgba(255, 0, 110, 0.05)' : 'transparent';
   const cellStyle: React.CSSProperties = {
@@ -118,7 +134,19 @@ function TaskRowImpl({
           opacity: isDone ? 0.6 : 1,
         }}
       >
-        {task.title}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <span>{task.title}</span>
+          {isRecurrenceMother && (
+            <span style={badgeStyle(RECURRENCE_BADGE)} aria-label="Tarefa recorrente">
+              Recorrente
+            </span>
+          )}
+          {isRecurrenceInstance && (
+            <span style={badgeStyle(INSTANCE_BADGE)} aria-label="Instância recorrente">
+              Instância
+            </span>
+          )}
+        </span>
       </td>
       <td style={cellStyle}>
         <span style={badgeStyle(PRIORITY_COLORS[task.priority])}>{PRIORITY_LABELS[task.priority]}</span>
