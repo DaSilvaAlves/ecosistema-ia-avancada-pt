@@ -4,6 +4,13 @@ import { KvConfirmationProvider } from '@/lib/agent/kv-confirmation-provider';
 import { PromptRequestSchema } from '@/lib/agent/schemas';
 import { getSession } from '@/lib/auth/session';
 import type { Logger, VercelKV } from '@/lib/agent/tools/types';
+// Story 2.10 (FR15 + FR32) — side-effect import que regista as 7 tools do
+// Epic 2 (tarefas + projectos) no `toolRegistry` singleton. DEVE preceder
+// qualquer `runAgent(...)` — o executor invoca `toolRegistry.byDomain(...)`
+// e sem este import o registry estaria vazio. Edge-safe (ADR-1): o barrel e
+// os módulos `tasks.ts`/`projects.ts` só fazem `import type` de Dexie e usam
+// `ctx.db` injectado — zero import do singleton `@/lib/db/client`.
+import '@/lib/agent/tools';
 
 /**
  * Nexus v2 — Agent prompt endpoint (Story 1.8)
