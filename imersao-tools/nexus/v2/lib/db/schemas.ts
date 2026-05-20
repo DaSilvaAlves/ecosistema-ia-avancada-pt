@@ -95,3 +95,83 @@ export const TagSchema = z.object({
   name: z.string().min(1, 'Nome da tag é obrigatório'),
   color: z.string().min(1, 'Cor da tag é obrigatória'),
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Epic 3 — Finanças (Story 3.1)
+//
+// Espelho fiel de types/db.ts:98-142. Montantes SEMPRE em cêntimos
+// (inteiros, nunca float) — `z.number().int()`. `Transaction.amount`
+// aceita ambos os sinais (negativo = saída, positivo = entrada,
+// types/db.ts:117).
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── Account ───
+
+export const AccountTypeSchema = z.enum(['checking', 'savings', 'cash']);
+
+export const AccountSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  name: z.string().min(1, 'Nome da conta é obrigatório'),
+  type: AccountTypeSchema,
+  balance: z.number().int('Saldo deve ser inteiro em cêntimos'),
+  createdAt: z.number().int().positive('createdAt deve ser epoch ms positivo'),
+});
+
+export type AccountType = z.infer<typeof AccountTypeSchema>;
+
+// ─── Card ───
+
+export const CardSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  name: z.string().min(1, 'Nome do cartão é obrigatório'),
+  accountId: z.string().min(1, 'accountId é obrigatório'),
+  closingDay: z
+    .number()
+    .int('Dia de fecho deve ser inteiro')
+    .min(1, 'Dia de fecho deve estar entre 1 e 31')
+    .max(31, 'Dia de fecho deve estar entre 1 e 31'),
+  dueDay: z
+    .number()
+    .int('Dia de vencimento deve ser inteiro')
+    .min(1, 'Dia de vencimento deve estar entre 1 e 31')
+    .max(31, 'Dia de vencimento deve estar entre 1 e 31'),
+  limit: z.number().int('Limite deve ser inteiro em cêntimos').nullable(),
+});
+
+// ─── Transaction ───
+
+export const TransactionSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  amount: z.number().int('Montante deve ser inteiro em cêntimos (sem casas decimais)'),
+  category: z.string().min(1, 'Categoria é obrigatória'),
+  description: z.string(),
+  date: z.string().min(1, 'Data é obrigatória'),
+  accountId: z.string().nullable(),
+  cardId: z.string().nullable(),
+  recurrenceId: z.string().nullable(),
+  installmentId: z.string().nullable(),
+  createdAt: z.number().int().positive('createdAt deve ser epoch ms positivo'),
+});
+
+// ─── Installment ───
+
+export const InstallmentSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  cardId: z.string().min(1, 'cardId é obrigatório'),
+  totalAmount: z.number().int('Montante total deve ser inteiro em cêntimos'),
+  installments: z
+    .number()
+    .int('Número de prestações deve ser inteiro')
+    .positive('Número de prestações deve ser maior que zero'),
+  startDate: z.string().min(1, 'Data de início é obrigatória'),
+  description: z.string(),
+});
+
+// ─── Category ───
+
+export const CategorySchema = z.object({
+  name: z.string().min(1, 'Nome da categoria é obrigatório'),
+  color: z.string().min(1, 'Cor da categoria é obrigatória'),
+  icon: z.string().min(1, 'Ícone da categoria é obrigatório'),
+  isDefault: z.boolean(),
+});

@@ -4,10 +4,15 @@ import {
   ProjectSchema,
   RecurrenceSchema,
   TagSchema,
+  AccountSchema,
+  CardSchema,
+  TransactionSchema,
+  InstallmentSchema,
+  CategorySchema,
 } from '@/lib/db/schemas';
 
 /**
- * Nexus v2 — DB schemas Zod tests (Story 2.1 / AC12)
+ * Nexus v2 — DB schemas Zod tests (Story 2.1 / AC12 + Story 3.1 / AC14)
  *
  * Casos negativos focados — happy-path está coberto pelos repo tests.
  */
@@ -161,5 +166,172 @@ describe('TagSchema', () => {
   it('rejeita Tag com id que não é UUID', () => {
     const invalid = { ...validTag(), id: 'tag-1' };
     expect(() => TagSchema.parse(invalid)).toThrow(/UUID/);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Epic 3 — Finanças (Story 3.1 / AC14)
+// ═══════════════════════════════════════════════════════════════════
+
+function validAccount() {
+  return {
+    id: crypto.randomUUID(),
+    name: 'Conta à ordem',
+    type: 'checking' as const,
+    balance: 100000,
+    createdAt: Date.now(),
+  };
+}
+
+function validCard() {
+  return {
+    id: crypto.randomUUID(),
+    name: 'Cartão Crédito',
+    accountId: crypto.randomUUID(),
+    closingDay: 25,
+    dueDay: 10,
+    limit: 500000,
+  };
+}
+
+function validTransaction() {
+  return {
+    id: crypto.randomUUID(),
+    amount: -1500,
+    category: 'Mercearia',
+    description: 'Compra',
+    date: '2026-05-15',
+    accountId: null,
+    cardId: null,
+    recurrenceId: null,
+    installmentId: null,
+    createdAt: Date.now(),
+  };
+}
+
+function validInstallment() {
+  return {
+    id: crypto.randomUUID(),
+    cardId: crypto.randomUUID(),
+    totalAmount: 120000,
+    installments: 12,
+    startDate: '2026-05-15',
+    description: 'Compra parcelada',
+  };
+}
+
+function validCategory() {
+  return {
+    name: 'Mercearia',
+    color: '#39FF14',
+    icon: 'shopping-cart',
+    isDefault: true,
+  };
+}
+
+describe('AccountSchema', () => {
+  it('aceita Account válida', () => {
+    expect(() => AccountSchema.parse(validAccount())).not.toThrow();
+  });
+
+  it('rejeita Account sem name', () => {
+    const invalid = { ...validAccount(), name: '' };
+    expect(() => AccountSchema.parse(invalid)).toThrow(/Nome da conta é obrigatório/);
+  });
+
+  it('rejeita Account com type fora do enum', () => {
+    const invalid = { ...validAccount(), type: 'investimento' };
+    expect(() => AccountSchema.parse(invalid)).toThrow();
+  });
+
+  it('rejeita Account com balance decimal (cêntimos devem ser inteiros)', () => {
+    const invalid = { ...validAccount(), balance: 100.5 };
+    expect(() => AccountSchema.parse(invalid)).toThrow(/inteiro em cêntimos/);
+  });
+});
+
+describe('CardSchema', () => {
+  it('aceita Card válido', () => {
+    expect(() => CardSchema.parse(validCard())).not.toThrow();
+  });
+
+  it('aceita Card com limit null', () => {
+    expect(() => CardSchema.parse({ ...validCard(), limit: null })).not.toThrow();
+  });
+
+  it('rejeita Card sem accountId', () => {
+    const invalid = { ...validCard(), accountId: '' };
+    expect(() => CardSchema.parse(invalid)).toThrow(/accountId é obrigatório/);
+  });
+
+  it('rejeita Card com closingDay fora do intervalo 1-31', () => {
+    expect(() => CardSchema.parse({ ...validCard(), closingDay: 0 })).toThrow(/Dia de fecho/);
+    expect(() => CardSchema.parse({ ...validCard(), closingDay: 32 })).toThrow(/Dia de fecho/);
+  });
+});
+
+describe('TransactionSchema', () => {
+  it('aceita Transaction válida (amount negativo = saída)', () => {
+    expect(() => TransactionSchema.parse(validTransaction())).not.toThrow();
+  });
+
+  it('aceita Transaction com amount positivo (entrada)', () => {
+    expect(() => TransactionSchema.parse({ ...validTransaction(), amount: 50000 })).not.toThrow();
+  });
+
+  it('rejeita Transaction com amount decimal (cêntimos devem ser inteiros)', () => {
+    const invalid = { ...validTransaction(), amount: 15.99 };
+    expect(() => TransactionSchema.parse(invalid)).toThrow(/inteiro em cêntimos/);
+  });
+
+  it('rejeita Transaction sem category', () => {
+    const invalid = { ...validTransaction(), category: '' };
+    expect(() => TransactionSchema.parse(invalid)).toThrow(/Categoria é obrigatória/);
+  });
+});
+
+describe('InstallmentSchema', () => {
+  it('aceita Installment válido', () => {
+    expect(() => InstallmentSchema.parse(validInstallment())).not.toThrow();
+  });
+
+  it('rejeita Installment sem cardId', () => {
+    const invalid = { ...validInstallment(), cardId: '' };
+    expect(() => InstallmentSchema.parse(invalid)).toThrow(/cardId é obrigatório/);
+  });
+
+  it('rejeita Installment com installments <= 0', () => {
+    expect(() => InstallmentSchema.parse({ ...validInstallment(), installments: 0 })).toThrow(
+      /maior que zero/,
+    );
+    expect(() => InstallmentSchema.parse({ ...validInstallment(), installments: -3 })).toThrow(
+      /maior que zero/,
+    );
+  });
+
+  it('rejeita Installment com installments decimal', () => {
+    const invalid = { ...validInstallment(), installments: 12.5 };
+    expect(() => InstallmentSchema.parse(invalid)).toThrow();
+  });
+});
+
+describe('CategorySchema', () => {
+  it('aceita Category válida', () => {
+    expect(() => CategorySchema.parse(validCategory())).not.toThrow();
+  });
+
+  it('rejeita Category sem name', () => {
+    const invalid = { ...validCategory(), name: '' };
+    expect(() => CategorySchema.parse(invalid)).toThrow(/Nome da categoria é obrigatório/);
+  });
+
+  it('rejeita Category sem color', () => {
+    const invalid = { ...validCategory(), color: '' };
+    expect(() => CategorySchema.parse(invalid)).toThrow(/Cor da categoria é obrigatória/);
+  });
+
+  it('rejeita Category com isDefault não-booleano', () => {
+    const invalid = { ...validCategory(), isDefault: 'sim' };
+    expect(() => CategorySchema.parse(invalid)).toThrow();
   });
 });
