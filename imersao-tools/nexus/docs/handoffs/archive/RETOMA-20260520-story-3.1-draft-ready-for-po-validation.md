@@ -8,8 +8,13 @@
 **Para:** Pax (`@po`) — `*validate-story-draft 3.1` · `@devops` (Gage) — push do commit de draft
 **Data:** 2026-05-20
 **Projecto:** Nexus v2 — Epic 3 (Finanças Completas)
-**Estado:** `status: pending`
+**Estado:** `status: consumed`
+**consumed:** true
+**consumed_at:** 2026-05-21
+**consumed_by:** po (Pax)
 **Branch:** `main`
+
+> **CONSUMIDO por Pax (`@po`) em 21/05/2026** — `*validate-story-draft 3.1` executado. Veredicto **GO** — score 9,5/10, Implementation Readiness 10/10, Confidence High. 14/14 claims anti-hallucination confirmados em código. [GAP-3.1] resolvido definitivamente (verificação independente). [AUTO-DECISIONS] A1/A2/A3 ratificadas. F1 (erro aritmético Dev Notes L256) corrigido inline. Story 3.1 `Draft → Approved`. PO-VALIDATION criado em `PO-VALIDATION-STORY-3.1.md`. EPIC-3.md actualizado. Handoff de saída `RETOMA-20260521-story-3.1-approved-ready-for-data-engineer-develop.md` criado para `@data-engineer *develop 3.1`.
 
 ---
 
