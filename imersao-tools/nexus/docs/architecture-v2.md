@@ -1120,7 +1120,7 @@ Mantém ordem do PRD (0→1→2→3→4→5→6→7→8) mas explicita pontos cr
 ### Epic 2 — Pontos críticos arch
 - Story 2.1 schema vai para Dexie version 2 (incremento ao schema base)
 - Story 2.2 migration localStorage→IndexedDB corre uma vez (idempotente, §4.4)
-- Story 2.7 instâncias recorrentes geradas por **ServiceWorker** (não setInterval do tab) usando Background Sync ou no `activate` event do SW
+- Story 2.7 instâncias recorrentes geradas pelo **motor client-side** `lib/shared/recurrence.ts`, activado via `useEffect` one-shot no mount da page `/tarefas` (cron client-side, alinhado com PRD §10 L446 + EPIC-2 §7). O motor é **agnóstico ao mecanismo de activação** — função pura sobre Dexie. Decisão formal: **GAP-1 resolvido — ver `docs/stories/active/2.7.story.md` ADR-2.7-1**. A activação via ServiceWorker/Background Sync foi rejeitada para o Epic 2 (KISS + uso pessoal com tab sempre aberto); fica como migração condicional para o Epic 4 se o Background Sync de lembretes a justificar.
 
 ### Epic 3 — Pontos críticos arch
 - **Cêntimos como integers** (`amount: number` em cêntimos). Format PT-PT só na UI. Evita float arithmetic.
