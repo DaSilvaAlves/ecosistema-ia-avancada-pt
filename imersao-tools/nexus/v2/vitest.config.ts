@@ -55,6 +55,10 @@ export default defineConfig({
         'components/tags/**',
         'lib/tags/**',
         'hooks/useTags.ts',
+        // Story 2.10 — Tools cérebro tarefas/projectos (precedente Stories
+        // 2.3/2.6/2.8 — adiciona path à allowlist do report; thresholds
+        // globais inalterados; sem alteração comportamental do test runner).
+        'lib/agent/tools/**',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)
