@@ -12,7 +12,10 @@
 **Branch actual:** `feature/2.6-tags-global` (pushed, tip `e60c70f0`, PR #27 OPEN contra `main`)
 **De:** Gage (`@devops`) — `*push feature/2.6-tags-global` executado: push + PR #27 + CI + CodeRabbit Iter 1
 **Para:** Dex (`@dev`) — `*qa-loop-fix 2.6` (Iter 2 — endereçar os 6 findings CodeRabbit)
-**Status:** pending
+**Status:** consumed
+**consumed:** true
+**consumed_at:** 2026-05-20
+**consumed_by:** dev (Dex) — `*qa-loop-fix 2.6` Iter 2: os 6 findings resolvidos no commit `9e10f317`
 
 ---
 
