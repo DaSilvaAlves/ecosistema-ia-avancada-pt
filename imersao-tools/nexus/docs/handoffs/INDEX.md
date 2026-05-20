@@ -9,7 +9,7 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 
 | Ficheiro | De | Para | Data | Próxima acção |
 |---------|-----|------|------|--------------|
-| _(vazio)_ | — | — | — | — |
+| [RETOMA-20260520-story-2.7-ready-for-qa-gate.md](RETOMA-20260520-story-2.7-ready-for-qa-gate.md) | Dex (`@dev`) — `*develop 2.7` modo YOLO em iteração única, motor de recorrência FR10, commit `ccfd545e` em `feature/2.7-motor-recorrencia` | Aria (`@architect`) — quality gate da Story 2.7 (`EPIC-2.md` §5 + `separation-of-roles.md` A6) | 20/05/2026 | Aria (`@architect`) — quality gate de implementação: reproduzir 5 gates locais (lint exit 0 +1 warn herdado, typecheck 0 nos ficheiros 2.7, test:unit **616/616**, build `/tarefas` 23.5 kB, coverage `recurrence.ts` 98.58% / `RecurrenceFieldset.tsx` 98.38% / `lib/tarefas` 100% / all-files 90.09%), validar PA-1 a PA-4 e a decisão A11 (AC7 parcial — não há formulário de tarefa onde injectar `RecurrenceFieldset`; entregue standalone). 14/15 AC plenamente cumpridos. 31 testes Vitest novos (T1-T24 + variantes). Após gate PASS → Gage (`@devops`) `*push feature/2.7-motor-recorrencia` + PR contra main. |
 
 ---
 
