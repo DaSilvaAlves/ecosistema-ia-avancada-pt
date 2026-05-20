@@ -8,8 +8,10 @@
 **Para:** Gage (`@devops`) — `*push` do commit de fix para PR #29
 **Data:** 2026-05-20
 **Projecto:** Nexus v2 — Epic 2 (Tarefas v2 + Projectos)
-**Estado:** PENDING (aguarda push `@devops`)
-**Branch:** `feature/2.10-tools-cerebro` — PR #29 OPEN
+**Estado:** CONSUMED — Gage (`@devops`) executou push `5d312786..389eb65f` (force-with-lease, pós-rebase sobre `origin/main` que incorporou a Story 2.7 `d977ade1`), CodeRabbit Iter 2 verde (0 findings actionable novos), PR #29 squash-merged `fbc337cb` em 2026-05-20T21:35:03Z
+**Consumido em:** 2026-05-20
+**Consumido por:** `@devops` (Gage)
+**Branch:** `feature/2.10-tools-cerebro` — PR #29 MERGED (squash `fbc337cb`), branch eliminada
 **PR:** https://github.com/DaSilvaAlves/ecosistema-ia-avancada-pt/pull/29
 
 ---
