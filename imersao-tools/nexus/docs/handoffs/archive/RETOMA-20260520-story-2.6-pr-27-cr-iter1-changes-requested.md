@@ -68,7 +68,7 @@ Todos confirmados directamente no código. Nenhum é stale, nenhum é doc-nit pu
 
 ### 3.1 Activação
 
-```
+```text
 @dev
 ```
 

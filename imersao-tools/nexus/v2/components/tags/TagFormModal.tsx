@@ -59,6 +59,11 @@ export function TagFormModal({
   const titleId = 'tags-modal-title';
   const isCreate = mode === 'create';
 
+  // Índice da cor corrente dentro da `TAG_PALETTE`. `-1` quando `form.color`
+  // está fora da paleta (path de dados legacy) — usado para o roving tabindex
+  // e para a navegação por setas.
+  const selectedPaletteIndex = TAG_PALETTE.findIndex((p) => p.hex === form.color);
+
   // Focus trap + Escape (WAI-ARIA Modal Authoring Practices) — padrão ProjectFormModal
   useEffect(() => {
     firstInputRef.current?.focus();
@@ -116,10 +121,10 @@ export function TagFormModal({
   // `tabIndex={0}`, o foco ficava preso no botão original e os presses seguintes
   // usavam contexto stale (a navegação parava após 1 movimento).
   function handleColorKeyDown(e: KeyboardEvent<HTMLButtonElement>): void {
-    const idx = TAG_PALETTE.findIndex((p) => p.hex === form.color);
     // Se a cor corrente não estiver na paleta (tag pré-existente fora da paleta),
-    // qualquer seta inicia a navegação a partir do primeiro item.
-    const baseIdx = idx === -1 ? 0 : idx;
+    // qualquer seta inicia a navegação a partir do primeiro item — coerente com
+    // o roving tabindex de fallback (index 0 é o radio focável nesse path).
+    const baseIdx = selectedPaletteIndex === -1 ? 0 : selectedPaletteIndex;
 
     let nextIdx = baseIdx;
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -272,8 +277,14 @@ export function TagFormModal({
                 borderRadius: 6,
               }}
             >
-              {TAG_PALETTE.map((entry) => {
+              {TAG_PALETTE.map((entry, index) => {
                 const selected = form.color === entry.hex;
+                // Roving tabindex: exactamente UM radio recebe tabIndex={0}.
+                // Quando `form.color` pertence à paleta, é o radio seleccionado.
+                // Quando NÃO pertence (dados legacy fora da paleta), o primeiro
+                // radio (index 0) é o tabbable de fallback — garante que o
+                // radiogroup é sempre alcançável por teclado (Tab).
+                const tabbable = selectedPaletteIndex === -1 ? index === 0 : selected;
                 return (
                   <button
                     key={entry.hex}
@@ -282,7 +293,7 @@ export function TagFormModal({
                     data-color={entry.hex}
                     aria-checked={selected}
                     aria-label={entry.label}
-                    tabIndex={selected ? 0 : -1}
+                    tabIndex={tabbable ? 0 : -1}
                     onClick={() => setField('color', entry.hex)}
                     onKeyDown={handleColorKeyDown}
                     style={{

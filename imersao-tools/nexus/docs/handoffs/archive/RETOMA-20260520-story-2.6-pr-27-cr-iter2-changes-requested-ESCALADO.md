@@ -12,7 +12,11 @@
 **Branch actual:** `feature/2.6-tags-global` (commits Iter 2 `9e10f317` + `2745b93b` pushed — tip remoto `2745b93b`)
 **De:** Gage (`@devops`) — `*push feature/2.6-tags-global` executado + CodeRabbit Iter 2 avaliado
 **Para:** Eurico — decisão entre `@architect` ou merge waived
-**Status:** pending
+**Status:** consumed
+**consumed:** true
+**consumed_at:** 2026-05-20T15:20:00Z
+**consumed_by:** dev (Dex)
+**Decisão Eurico:** Opção C — Iter 3 excepcional autorizada (decisão directa do utilizador). Dex (`@dev`) corrigiu A1 (Major a11y) + A2 (Minor test) + N1 (MD040) + N3 (teste branch falha) num commit focado. 4/4 quality gates locais PASS (test:unit 557/557). Handoff de saída `RETOMA-20260520-story-2.6-iter3-fixes-pronto-para-devops-push.md` criado para Gage `*push` da Iter 3.
 
 ---
 

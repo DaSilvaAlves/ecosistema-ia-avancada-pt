@@ -296,11 +296,52 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Eliminar tag Trabalho/i }));
     await flush();
 
-    // Aguarda alguma micro-task para garantir que se algo fosse chamado já teria sido
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 30));
-    });
+    // Sem trabalho assíncrono quando confirm=false; o `flush()` acima já drena
+    // os updates pendentes — se `deleteTag` fosse chamado, já teria ocorrido.
     expect(deleteSpy).not.toHaveBeenCalled();
+  });
+
+  // ────────────────────────────────────────────────────────────────
+  // T10b — countTasksForTag falha → copy fallback sem número (CR Iter 2 / N3)
+  // ────────────────────────────────────────────────────────────────
+  it('T10b — Eliminar com countTasksForTag a falhar: confirm usa copy fallback "Também será removida..."', async () => {
+    const tag = makeTag({ name: 'Trabalho' });
+    await tagsRepo.createTag(tag);
+
+    // O `useLiveQuery` do `taskCountsMap` (page.tsx:57-63) também invoca
+    // `countTasksForTag` no render — sem try/catch próprio. Para isolar o branch
+    // de falha do handler `handleDelete` (page.tsx:136-142), o mock resolve `0`
+    // no render inicial e só passa a rejeitar quando o teste o activa, já depois
+    // do render estabilizar.
+    let shouldFail = false;
+    const countSpy = vi
+      .spyOn(tagsRepo, 'countTasksForTag')
+      .mockImplementation(async () =>
+        shouldFail ? Promise.reject(new Error('count falhou')) : 0,
+      );
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    render(<TagsPage />);
+    await waitFor(() => {
+      expect(screen.getByText('Trabalho')).toBeInTheDocument();
+    });
+    // Aguarda o useLiveQuery do taskCountsMap resolver com sucesso (count 0).
+    await waitFor(() => {
+      expect(countSpy).toHaveBeenCalled();
+    });
+
+    // A partir daqui, `countTasksForTag` falha — exercita o catch de handleDelete.
+    shouldFail = true;
+    fireEvent.click(screen.getByRole('button', { name: /Eliminar tag Trabalho/i }));
+    await flush();
+
+    await waitFor(() => {
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+    });
+    // Copy fallback: omite o número, não cita contagem específica.
+    expect(confirmSpy.mock.calls[0][0]).toMatch(
+      /Eliminar a tag «Trabalho»\? Também será removida das tarefas vinculadas\./,
+    );
   });
 
   // ────────────────────────────────────────────────────────────────
