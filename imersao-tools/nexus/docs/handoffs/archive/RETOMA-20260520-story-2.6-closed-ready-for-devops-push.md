@@ -12,7 +12,12 @@
 **Branch actual:** `feature/2.6-tags-global` (tip local `5c0a93e4` + closure commit Pax, commit código `647baa58`, base `main@40ea2351`)
 **De:** Pax (`@po`) — `*close-story 2.6` executado em iteração única
 **Para:** Gage (`@devops`) — `*push feature/2.6-tags-global` (push + PR contra `main` + CodeRabbit + merge)
-**Status:** pending
+**Status:** consumed
+**consumed:** true
+**consumed_at:** 2026-05-20T10:35:00Z
+**consumed_by:** devops
+
+> CONSUMIDO por Gage (`@devops`) em 20/05/2026. `*push feature/2.6-tags-global` executado: push da branch para `origin`, PR #27 aberto contra `main`, pre-push gate 4/4 PASS, CI essencial 100% verde. CodeRabbit Iter 1 = CHANGES_REQUESTED (6 findings actionable — 2 Major + 4 Minor). Merge NÃO procede — fix loop Iter 2 delegado ao `@dev` via `RETOMA-20260520-story-2.6-pr-27-cr-iter1-changes-requested.md`.
 
 ---
 
