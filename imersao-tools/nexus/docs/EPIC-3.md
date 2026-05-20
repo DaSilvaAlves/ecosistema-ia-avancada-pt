@@ -51,11 +51,11 @@ Trace directo a `PRD-NEXUS-V2.md` §6.3. Todos os 8 FRs de Finanças (FR16-FR23)
 
 ## 5. Stories (11) — trace PRD §10 Epic 3
 
-> **Progresso:** **0/11 Done** — Epic 3 PLANEADO. As 11 stories abaixo são a decomposição directa das "Stories sugeridas" do PRD §10 Epic 3 (3.1 a 3.11) — nenhuma story foi inventada nem omitida face ao PRD. `@sm` (River) finaliza a atribuição executor/quality-gate em cada story draft; `@po` (Pax) valida.
+> **Progresso:** **0/11 Done** — Epic 3 PLANEADO. As 11 stories abaixo são a decomposição directa das "Stories sugeridas" do PRD §10 Epic 3 (3.1 a 3.11) — nenhuma story foi inventada nem omitida face ao PRD. `@sm` (River) finaliza a atribuição executor/quality-gate em cada story draft; `@po` (Pax) valida. Story 3.1 em Draft (20/05/2026) — [GAP-3.1] resolvido: tabela `recurrences` reutilizável com `ownerType: 'transaction'`.
 
 | # | Story | Descrição | FR | Executor previsto | Quality gate previsto | Estado |
 |---|-------|-----------|-----|-------------------|------------------------|--------|
-| 3.1 | Schema finanças | Schema Dexie `accounts`, `cards`, `transactions`, `recurrences`, `installments`, `categories` — estende o schema das Stories 1.1 e 2.1 conforme `architecture-v2.md` | FR16, FR17, FR18, FR19 | `@data-engineer` | `@architect` | **Pending** |
+| 3.1 | Schema finanças | Schema Dexie `accounts`, `cards`, `transactions`, `recurrences`, `installments`, `categories` — estende o schema das Stories 1.1 e 2.1 conforme `architecture-v2.md` | FR16, FR17, FR18, FR19 | `@data-engineer` | `@architect` | **Draft** |
 | 3.2 | Categorias default PT | Semear as 10 categorias default PT (FR22) — Mercearia, Restauração, Combustível, Saúde, Habitação, Educação, Lazer, Subscrições, Serviços, Outros | FR22 | `@dev` | `@qa` | **Pending** |
 | 3.3 | CRUD transações variáveis | CRUD de transações variáveis — UI + persistência (valor EUR formato PT-PT, categoria, data, descrição, conta/cartão opcional) | FR16 | `@ux-design-expert` | `@dev` | **Pending** |
 | 3.4 | CRUD recorrências | CRUD de finanças recorrentes (renda, internet, assinaturas) reutilizando a estrutura de recorrência das tarefas (Story 2.7) | FR17 | `@dev` | `@qa` | **Pending** |
