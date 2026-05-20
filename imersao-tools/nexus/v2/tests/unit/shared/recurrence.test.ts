@@ -105,6 +105,37 @@ describe('recurrence engine — Story 2.7', () => {
     ).toThrow('Tipo de recorrência inválido: yearly');
   });
 
+  // T2b (CR Iter 2 #6) — 'weekly' sem weekday lança erro descritivo
+  it('T2b — buildRecurrenceConfig "weekly" sem weekday lança erro PT-PT', () => {
+    expect(() => buildRecurrenceConfig('weekly', { startDate: '2026-06-01' })).toThrow(
+      /Recorrência semanal exige um dia da semana válido/,
+    );
+  });
+
+  // T2c (CR Iter 2 #6) — 'weekly' com weekday fora de 0-6 lança erro
+  it('T2c — buildRecurrenceConfig "weekly" com weekday inválido lança erro PT-PT', () => {
+    expect(() =>
+      buildRecurrenceConfig('weekly', { startDate: '2026-06-01', weekday: 9 }),
+    ).toThrow(/Recorrência semanal exige um dia da semana válido/);
+  });
+
+  // T2d (CR Iter 2 #6) — 'monthly' sem monthday lança erro descritivo
+  it('T2d — buildRecurrenceConfig "monthly" sem monthday lança erro PT-PT', () => {
+    expect(() => buildRecurrenceConfig('monthly', { startDate: '2026-06-01' })).toThrow(
+      /Recorrência mensal exige um dia do mês válido/,
+    );
+  });
+
+  // T2e (CR Iter 2 #6) — 'monthly-specific-day' com monthday fora de 1-31 lança erro
+  it('T2e — buildRecurrenceConfig "monthly-specific-day" com monthday inválido lança erro', () => {
+    expect(() =>
+      buildRecurrenceConfig('monthly-specific-day', {
+        startDate: '2026-06-01',
+        monthday: 0,
+      }),
+    ).toThrow(/Recorrência mensal exige um dia do mês válido/);
+  });
+
   // T3 — diária horizonte 90 dias
   it('T3 — generateTaskInstances diária gera ~90 instâncias no horizonte de 90 dias', async () => {
     const mother = makeMotherTask();
@@ -305,5 +336,45 @@ describe('recurrence engine — Story 2.7', () => {
 
     expect(result.errors).toBe(1);
     expect(result.created).toBeGreaterThan(0); // a recorrência válida foi processada
+  });
+
+  // T11b (CR Iter 2 #7) — janela normalizada apanha a ocorrência de hoje
+  // independentemente da hora a que o motor corre.
+  it('T11b — gera a ocorrência de hoje ao correr a meio do dia (janela normalizada)', async () => {
+    const mother = makeMotherTask();
+    await db.tasks.add(mother);
+    // Recorrência diária a começar exactamente hoje (2026-06-01).
+    const rec = makeRecurrence('daily', mother.id, { startDate: '2026-06-01' });
+    await db.recurrences.add(rec);
+
+    // Motor corre às 09:00 — antes do fix, a ocorrência de hoje (à meia-noite)
+    // ficava fora da janela `from`.
+    const midday = new Date('2026-06-01T09:00:00.000Z').getTime();
+    await generateTaskInstances(rec, 3, midday);
+
+    const dueDates = (await db.tasks.filter((t) => t.parentTaskId === mother.id).toArray())
+      .map((t) => t.dueDate)
+      .sort();
+    // Horizonte de 3 dias inclui hoje e os 2 dias seguintes.
+    expect(dueDates).toEqual(['2026-06-01', '2026-06-02', '2026-06-03']);
+  });
+
+  // T11c (CR Iter 2 #7) — correr ao início e a meio do mesmo dia é idempotente
+  // (a janela normalizada impede duplicação por `between(..., true)` inclusivo).
+  it('T11c — correr o motor à meia-noite e a meio do mesmo dia não duplica', async () => {
+    const mother = makeMotherTask();
+    await db.tasks.add(mother);
+    const rec = makeRecurrence('daily', mother.id, { startDate: '2026-06-01' });
+    await db.recurrences.add(rec);
+
+    const midnight = new Date('2026-06-01T00:00:00.000Z').getTime();
+    const evening = new Date('2026-06-01T23:30:00.000Z').getTime();
+
+    const first = await generateTaskInstances(rec, 5, midnight);
+    const second = await generateTaskInstances(rec, 5, evening);
+
+    expect(first.created).toBe(5);
+    expect(second.created).toBe(0);
+    expect(second.skipped).toBe(5);
   });
 });

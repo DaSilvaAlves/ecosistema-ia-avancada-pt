@@ -105,4 +105,76 @@ describe('RecurrenceFieldset — Story 2.7', () => {
     fireEvent.click(screen.getByLabelText('Tarefa recorrente'));
     expect(onChange).toHaveBeenCalledWith(null);
   });
+
+  // T19d (CR Iter 2 #5) — 'weekly' sem `weekday` é inválido
+  it('T19d — tipo Semanal sem dia da semana produz mensagem PT-PT', () => {
+    const value = {
+      type: 'weekly',
+      startDate: '2026-06-01',
+      endDate: null,
+    } as RecurrenceFieldValue;
+    expect(validateRecurrenceValue(value)).toBe(
+      'Dia da semana deve estar entre Segunda e Domingo',
+    );
+  });
+
+  // T19e (CR Iter 2 #5) — 'weekly' com `weekday` fora de 0-6 é inválido
+  it('T19e — tipo Semanal com dia da semana fora de 0-6 é inválido', () => {
+    const value: RecurrenceFieldValue = {
+      type: 'weekly',
+      startDate: '2026-06-01',
+      endDate: null,
+      weekday: 7,
+    };
+    expect(validateRecurrenceValue(value)).toBe(
+      'Dia da semana deve estar entre Segunda e Domingo',
+    );
+  });
+
+  // T19f (CR Iter 2 #5) — 'monthly' sem `monthday` é inválido
+  it('T19f — tipo Mensal sem dia do mês produz mensagem PT-PT', () => {
+    const value = {
+      type: 'monthly',
+      startDate: '2026-06-01',
+      endDate: null,
+    } as RecurrenceFieldValue;
+    expect(validateRecurrenceValue(value)).toBe('Dia do mês deve estar entre 1 e 31');
+  });
+
+  // T19g (CR Iter 2 #5) — 'monthly-specific-day' com `monthday` fora de 1-31 é inválido
+  it('T19g — Dia específico do mês com dia fora de 1-31 é inválido', () => {
+    const value: RecurrenceFieldValue = {
+      type: 'monthly-specific-day',
+      startDate: '2026-06-01',
+      endDate: null,
+      monthday: 32,
+    };
+    expect(validateRecurrenceValue(value)).toBe('Dia do mês deve estar entre 1 e 31');
+  });
+
+  // T19h (CR Iter 2 #5) — mudar para 'weekly' materializa o default weekday=0
+  it('T19h — mudar o tipo para Semanal preenche weekday com o default 0', () => {
+    const onChange = vi.fn();
+    const value: RecurrenceFieldValue = { type: 'daily', startDate: '2026-06-01', endDate: null };
+    render(<RecurrenceFieldset value={value} onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText('Tipo de recorrência'), {
+      target: { value: 'weekly' },
+    });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'weekly', weekday: 0 }),
+    );
+  });
+
+  // T19i (CR Iter 2 #5) — mudar para 'monthly' materializa o default monthday=1
+  it('T19i — mudar o tipo para Mensal preenche monthday com o default 1', () => {
+    const onChange = vi.fn();
+    const value: RecurrenceFieldValue = { type: 'daily', startDate: '2026-06-01', endDate: null };
+    render(<RecurrenceFieldset value={value} onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText('Tipo de recorrência'), {
+      target: { value: 'monthly' },
+    });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'monthly', monthday: 1 }),
+    );
+  });
 });

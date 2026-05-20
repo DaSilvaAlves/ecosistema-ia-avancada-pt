@@ -37,4 +37,25 @@ describe('useRecurrenceEngine — Story 2.7', () => {
     rerender();
     expect(runRecurrenceEngineMock).toHaveBeenCalledTimes(1);
   });
+
+  // T22c (CR Iter 2 #9) — rejeição do engine é apanhada e não propaga
+  it('T22c — uma rejeição de runRecurrenceEngine é capturada (não quebra o mount)', async () => {
+    const engineError = new Error('Falha simulada do motor de recorrência');
+    runRecurrenceEngineMock.mockRejectedValueOnce(engineError);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { useRecurrenceEngine } = await import('@/hooks/useRecurrenceEngine');
+
+    // O mount não deve lançar mesmo que o engine rejeite.
+    expect(() => renderHook(() => useRecurrenceEngine())).not.toThrow();
+    expect(runRecurrenceEngineMock).toHaveBeenCalledTimes(1);
+
+    // O hook converte a rejeição num `console.error` (catch interno).
+    await vi.waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Falha ao executar o motor de recorrência',
+        engineError,
+      );
+    });
+  });
 });

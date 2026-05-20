@@ -136,15 +136,41 @@ export function buildRecurrenceConfig(
   switch (type) {
     case 'daily':
       return { ...base, freq: 'DAILY' };
-    case 'weekly':
-      return { ...base, freq: 'WEEKLY', byweekday: [opts.weekday ?? 0] };
+    case 'weekly': {
+      // CR Iter 2 (#6): falhar com erro descritivo se `weekday` ausente ou
+      // fora do intervalo 0-6 — um default silencioso (→0=Segunda) geraria
+      // recorrências no dia errado sem o utilizador perceber.
+      if (
+        !Number.isInteger(opts.weekday) ||
+        opts.weekday! < 0 ||
+        opts.weekday! > 6
+      ) {
+        throw new Error(
+          `Recorrência semanal exige um dia da semana válido (0=Segunda..6=Domingo); recebido: ${String(opts.weekday)}`,
+        );
+      }
+      return { ...base, freq: 'WEEKLY', byweekday: [opts.weekday!] };
+    }
     case 'weekdays':
       return { ...base, freq: 'WEEKLY', byweekday: [0, 1, 2, 3, 4] };
     case 'weekends':
       return { ...base, freq: 'WEEKLY', byweekday: [5, 6] };
     case 'monthly':
-    case 'monthly-specific-day':
-      return { ...base, freq: 'MONTHLY', bymonthday: [opts.monthday ?? 1] };
+    case 'monthly-specific-day': {
+      // CR Iter 2 (#6): falhar com erro descritivo se `monthday` ausente ou
+      // fora do intervalo 1-31 — um default silencioso (→1) geraria a
+      // recorrência no dia errado do mês.
+      if (
+        !Number.isInteger(opts.monthday) ||
+        opts.monthday! < 1 ||
+        opts.monthday! > 31
+      ) {
+        throw new Error(
+          `Recorrência mensal exige um dia do mês válido (1-31); recebido: ${String(opts.monthday)}`,
+        );
+      }
+      return { ...base, freq: 'MONTHLY', bymonthday: [opts.monthday!] };
+    }
     default: {
       // Exhaustiveness — tipo desconhecido lança erro PT-PT.
       const unknown: string = type;
@@ -156,6 +182,30 @@ export function buildRecurrenceConfig(
 /** Converte um `Date` (em UTC) para string ISO `YYYY-MM-DD`. */
 function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Normaliza um instante para o início do dia em UTC (00:00:00.000Z).
+ *
+ * CR Iter 2 (#7): a janela do horizonte tem de assentar em fronteiras de dia
+ * inteiro. As ocorrências do `rrule` têm `dtstart` à meia-noite UTC; se a
+ * janela `from` for um instante a meio do dia, `between` perde a ocorrência
+ * de hoje. Normalizar `from` ao início do dia e `to` ao fim do dia torna a
+ * geração idempotente independentemente da hora a que o motor corre.
+ */
+function startOfUtcDay(ms: number): Date {
+  const d = new Date(ms);
+  return new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0),
+  );
+}
+
+/** Normaliza um instante para o fim do dia em UTC (23:59:59.999Z). */
+function endOfUtcDay(ms: number): Date {
+  const d = new Date(ms);
+  return new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999),
+  );
 }
 
 /**
@@ -191,8 +241,12 @@ export async function generateTaskInstances(
   }
 
   const now = nowMs;
-  const from = new Date(now);
-  const to = new Date(now + horizonDays * MS_PER_DAY);
+  // CR Iter 2 (#7): janela normalizada a fronteiras de dia inteiro em UTC.
+  // `from` = início do dia de hoje; `to` = fim do dia de hoje + (horizonte-1).
+  // Garante que a ocorrência de hoje é sempre apanhada e que correr o motor
+  // duas vezes no mesmo dia (ou à meia-noite) não duplica nem salta instâncias.
+  const from = startOfUtcDay(now);
+  const to = endOfUtcDay(now + (horizonDays - 1) * MS_PER_DAY);
   const occurrences = occurrencesBetween(rule, from, to);
 
   // endDate da recorrência: não gerar instâncias após esta data (AC2).

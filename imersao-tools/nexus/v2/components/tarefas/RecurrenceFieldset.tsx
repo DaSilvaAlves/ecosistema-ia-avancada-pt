@@ -61,6 +61,18 @@ export function validateRecurrenceValue(value: RecurrenceFieldValue): string | n
   if (value.endDate && value.endDate < value.startDate) {
     return 'Data de fim deve ser posterior à data de início';
   }
+  // CR Iter 2 (#5): o tipo 'weekly' exige `weekday` no intervalo 0-6 (Seg-Dom).
+  if (value.type === 'weekly') {
+    if (!Number.isInteger(value.weekday) || value.weekday! < 0 || value.weekday! > 6) {
+      return 'Dia da semana deve estar entre Segunda e Domingo';
+    }
+  }
+  // CR Iter 2 (#5): 'monthly' e 'monthly-specific-day' exigem `monthday` 1-31.
+  if (value.type === 'monthly' || value.type === 'monthly-specific-day') {
+    if (!Number.isInteger(value.monthday) || value.monthday! < 1 || value.monthday! > 31) {
+      return 'Dia do mês deve estar entre 1 e 31';
+    }
+  }
   return null;
 }
 
@@ -108,6 +120,28 @@ export function RecurrenceFieldset({ value, onChange }: RecurrenceFieldsetProps)
     onChange({ ...value, ...partial });
   }
 
+  /**
+   * Muda o tipo de recorrência materializando os campos condicionais com os
+   * defaults dos pickers (CR Iter 2 #5): 'weekly' → `weekday: 0`,
+   * 'monthly'/'monthly-specific-day' → `monthday: 1`. Sem isto, mudar de tipo
+   * sem tocar no picker deixaria `weekday`/`monthday` `undefined` e a validação
+   * `validateRecurrenceValue` falharia sobre um estado que a UI já mostra válido.
+   */
+  function handleTypeChange(type: RecurrenceType): void {
+    if (value === null) return;
+    const next: RecurrenceFieldValue = { ...value, type };
+    if (type === 'weekly' && next.weekday === undefined) {
+      next.weekday = 0;
+    }
+    if (
+      (type === 'monthly' || type === 'monthly-specific-day') &&
+      next.monthday === undefined
+    ) {
+      next.monthday = 1;
+    }
+    onChange(next);
+  }
+
   const showWeekday = value?.type === 'weekly';
   const showMonthday = value?.type === 'monthly' || value?.type === 'monthly-specific-day';
 
@@ -152,7 +186,7 @@ export function RecurrenceFieldset({ value, onChange }: RecurrenceFieldsetProps)
               id="recurrence-type"
               aria-label="Tipo de recorrência"
               value={value.type}
-              onChange={(e) => patch({ type: e.target.value as RecurrenceType })}
+              onChange={(e) => handleTypeChange(e.target.value as RecurrenceType)}
               style={inputStyle}
             >
               {TYPE_OPTIONS.map((opt) => (
