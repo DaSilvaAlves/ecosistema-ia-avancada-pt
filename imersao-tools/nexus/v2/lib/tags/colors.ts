@@ -19,15 +19,26 @@ export interface TagPaletteEntry {
   readonly label: string;
 }
 
-export const TAG_PALETTE: readonly TagPaletteEntry[] = [
-  { name: 'Cyan', hex: '#00F5FF', label: 'Cyan' },
-  { name: 'Gold', hex: '#FFB800', label: 'Gold' },
-  { name: 'Purple', hex: '#9D00FF', label: 'Purple' },
+/**
+ * Story 2.6 / Finding 3 CR Iter 1 — `as const satisfies` preserva os literais
+ * de `hex` (caso contrário a anotação `: readonly TagPaletteEntry[]` widenaria
+ * `hex` para `string`, colapsando `TagPaletteColor` numa string genérica e
+ * tornando `isPaletteColor()` um type guard inútil).
+ *
+ * Story 2.6 / Finding 4/5 CR Iter 1 — `label` traduzido para PT-PT (é reutilizado
+ * no `aria-label` do radio button — `language-standards.md` proíbe texto EN nos
+ * outputs de UI). `name` permanece em inglês (chave técnica estável usada em
+ * testes e debug). `Magenta` mantém-se — termo idêntico em PT-PT.
+ */
+export const TAG_PALETTE = [
+  { name: 'Cyan', hex: '#00F5FF', label: 'Ciano' },
+  { name: 'Gold', hex: '#FFB800', label: 'Ouro' },
+  { name: 'Purple', hex: '#9D00FF', label: 'Roxo' },
   { name: 'Magenta', hex: '#FF006E', label: 'Magenta' },
-  { name: 'Lime', hex: '#39FF14', label: 'Lime' },
+  { name: 'Lime', hex: '#39FF14', label: 'Lima' },
   { name: 'White', hex: '#F0F4FF', label: 'Branco' },
   { name: 'Grey', hex: '#8892A4', label: 'Cinzento' },
-] as const;
+] as const satisfies readonly TagPaletteEntry[];
 
 export type TagPaletteColor = (typeof TAG_PALETTE)[number]['hex'];
 

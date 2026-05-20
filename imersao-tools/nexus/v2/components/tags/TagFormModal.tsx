@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 
 import { ZodError } from 'zod';
 import { TagSchema } from '@/lib/db/schemas';
 import type { Tag } from '@/types/db';
-import { TAG_PALETTE, DEFAULT_TAG_COLOR, type TagPaletteColor } from '@/lib/tags/colors';
+import { TAG_PALETTE, DEFAULT_TAG_COLOR } from '@/lib/tags/colors';
 
 /**
  * Nexus v2 — TagFormModal (Story 2.6 / AC9 + A3 + A4)
@@ -108,18 +108,24 @@ export function TagFormModal({
   }
 
   // Arrow keys no radio group (WAI-ARIA Radio Group Authoring Practices)
-  function handleColorKeyDown(
-    e: KeyboardEvent<HTMLButtonElement>,
-    currentHex: TagPaletteColor,
-  ): void {
-    const idx = TAG_PALETTE.findIndex((p) => p.hex === currentHex);
-    if (idx === -1) return;
+  //
+  // Story 2.6 / Finding 2 CR Iter 1 — o índice corrente é derivado de `form.color`
+  // (estado autoritativo), NÃO de um `currentHex` passado per-button. Após mover
+  // a selecção, o foco é transferido explicitamente para o novo botão via
+  // `data-color` — caso contrário, como apenas o botão seleccionado tem
+  // `tabIndex={0}`, o foco ficava preso no botão original e os presses seguintes
+  // usavam contexto stale (a navegação parava após 1 movimento).
+  function handleColorKeyDown(e: KeyboardEvent<HTMLButtonElement>): void {
+    const idx = TAG_PALETTE.findIndex((p) => p.hex === form.color);
+    // Se a cor corrente não estiver na paleta (tag pré-existente fora da paleta),
+    // qualquer seta inicia a navegação a partir do primeiro item.
+    const baseIdx = idx === -1 ? 0 : idx;
 
-    let nextIdx = idx;
+    let nextIdx = baseIdx;
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      nextIdx = (idx + 1) % TAG_PALETTE.length;
+      nextIdx = (baseIdx + 1) % TAG_PALETTE.length;
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      nextIdx = (idx - 1 + TAG_PALETTE.length) % TAG_PALETTE.length;
+      nextIdx = (baseIdx - 1 + TAG_PALETTE.length) % TAG_PALETTE.length;
     } else if (e.key === 'Home') {
       nextIdx = 0;
     } else if (e.key === 'End') {
@@ -131,6 +137,10 @@ export function TagFormModal({
     e.preventDefault();
     const nextColor = TAG_PALETTE[nextIdx].hex;
     setField('color', nextColor);
+    // Move o foco para o novo botão seleccionado (roving tabindex).
+    modalRef.current
+      ?.querySelector<HTMLButtonElement>(`button[data-color="${nextColor}"]`)
+      ?.focus();
   }
 
   async function handleSubmit(e: FormEvent): Promise<void> {
@@ -269,11 +279,12 @@ export function TagFormModal({
                     key={entry.hex}
                     type="button"
                     role="radio"
+                    data-color={entry.hex}
                     aria-checked={selected}
                     aria-label={entry.label}
                     tabIndex={selected ? 0 : -1}
                     onClick={() => setField('color', entry.hex)}
-                    onKeyDown={(e) => handleColorKeyDown(e, entry.hex as TagPaletteColor)}
+                    onKeyDown={handleColorKeyDown}
                     style={{
                       width: 32,
                       height: 32,

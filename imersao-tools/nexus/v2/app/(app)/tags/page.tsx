@@ -126,16 +126,25 @@ export default function TagsPage(): React.ReactElement {
   }
 
   async function handleDelete(tag: Tag): Promise<void> {
-    // A6: confirm PT-PT com contagem prévia (cascata-aware)
-    let count = 0;
+    // A6: confirm PT-PT com contagem prévia (cascata-aware).
+    //
+    // Story 2.6 / Finding 1 CR Iter 1 — sentinela `null` quando a contagem falha.
+    // Antes, o `catch` vazio repunha `count = 0` e o confirm mostrava "removida de
+    // 0 tarefas vinculadas", o que é enganador (um `0` real e um `0` por falha
+    // ficavam indistinguíveis). Com `null`, a mensagem omite o número.
+    let count: number | null = null;
     try {
       count = await countTasksForTag(tag.id);
     } catch {
-      // Defensivo — se count falhar, continua com 0
+      // Defensivo — se a contagem falhar, `count` mantém-se `null` e a mensagem
+      // do confirm passa a não citar um número.
+      count = null;
     }
-    const confirmed = window.confirm(
-      `Eliminar a tag «${tag.name}»? Será removida de ${count} ${count === 1 ? 'tarefa vinculada' : 'tarefas vinculadas'}.`,
-    );
+    const scopeText =
+      count === null
+        ? 'Também será removida das tarefas vinculadas.'
+        : `Será removida de ${count} ${count === 1 ? 'tarefa vinculada' : 'tarefas vinculadas'}.`;
+    const confirmed = window.confirm(`Eliminar a tag «${tag.name}»? ${scopeText}`);
     if (!confirmed) return;
 
     try {

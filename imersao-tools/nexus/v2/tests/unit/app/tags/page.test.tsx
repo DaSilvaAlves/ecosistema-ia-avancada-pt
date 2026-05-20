@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup, act } from '@testing-library/react';
 import TagsPage from '@/app/(app)/tags/page';
 import * as tagsRepo from '@/lib/db/repos/tags';
 import { db } from '@/lib/db/client';
@@ -70,6 +70,21 @@ async function clearAll(): Promise<void> {
   await db.tasks.clear();
 }
 
+/**
+ * Story 2.6 / Finding 6 CR Iter 1 — flush dos updates de estado pendentes.
+ *
+ * `TagsPage` actualiza estado de forma assíncrona via `useLiveQuery` (Dexie),
+ * toast (`setTimeout`) e transições de modal. Sem flush, o React emitia
+ * `[warning] An update to TagsPage inside a test was not wrapped in act(...)`.
+ * Disparar interacções (`fireEvent`) seguidas de `await flush()` envolve os
+ * updates resultantes num `act()`, eliminando o warning.
+ */
+async function flush(): Promise<void> {
+  await act(async () => {
+    await Promise.resolve();
+  });
+}
+
 describe('TagsPage (Story 2.6 / AC13)', () => {
   beforeEach(async () => {
     await clearAll();
@@ -137,6 +152,7 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     // Click "+ Nova tag" no header
     const newButton = screen.getByRole('button', { name: /Criar nova tag/i });
     fireEvent.click(newButton);
+    await flush();
 
     // Modal abre
     await waitFor(() => {
@@ -147,10 +163,12 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     // Preenche nome
     const nameInput = screen.getByRole('textbox', { name: /Nome/i });
     fireEvent.change(nameInput, { target: { value: 'Estudo' } });
+    await flush();
 
     // Submit
     const submitButton = screen.getByRole('button', { name: 'Criar' });
     fireEvent.click(submitButton);
+    await flush();
 
     await waitFor(() => {
       expect(createSpy).toHaveBeenCalledTimes(1);
@@ -171,12 +189,15 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Criar nova tag/i }));
+    await flush();
     await waitFor(() => {
       expect(screen.getByTestId('tags-modal')).toBeInTheDocument();
     });
 
     fireEvent.change(screen.getByRole('textbox', { name: /Nome/i }), { target: { value: 'TRABALHO' } });
+    await flush();
     fireEvent.click(screen.getByRole('button', { name: 'Criar' }));
+    await flush();
 
     // Toast PT-PT aparece
     await waitFor(() => {
@@ -203,6 +224,7 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Editar tag Trabalho/i }));
+    await flush();
 
     await waitFor(() => {
       expect(screen.getByTestId('tags-modal')).toBeInTheDocument();
@@ -213,7 +235,9 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     expect(nameInput.value).toBe('Trabalho');
 
     fireEvent.change(nameInput, { target: { value: 'Profissional' } });
+    await flush();
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    await flush();
 
     await waitFor(() => {
       expect(updateSpy).toHaveBeenCalledTimes(1);
@@ -240,6 +264,7 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Eliminar tag Trabalho/i }));
+    await flush();
 
     await waitFor(() => {
       expect(confirmSpy).toHaveBeenCalledTimes(1);
@@ -269,9 +294,12 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Eliminar tag Trabalho/i }));
+    await flush();
 
     // Aguarda alguma micro-task para garantir que se algo fosse chamado já teria sido
-    await new Promise((r) => setTimeout(r, 30));
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
     expect(deleteSpy).not.toHaveBeenCalled();
   });
 
@@ -290,6 +318,7 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
 
     const searchInput = screen.getByLabelText(/Pesquisar tags pelo nome/i);
     fireEvent.change(searchInput, { target: { value: 'trab' } });
+    await flush();
 
     await waitFor(() => {
       expect(screen.queryByText('Pessoal')).not.toBeInTheDocument();
@@ -312,6 +341,7 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     fireEvent.change(screen.getByLabelText(/Pesquisar tags pelo nome/i), {
       target: { value: 'xyz123' },
     });
+    await flush();
 
     await waitFor(() => {
       expect(screen.getByText(/Nenhuma tag corresponde a «xyz123»/)).toBeInTheDocument();
@@ -328,11 +358,13 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Criar nova tag/i }));
+    await flush();
     await waitFor(() => {
       expect(screen.getByTestId('tags-modal')).toBeInTheDocument();
     });
 
     fireEvent.keyDown(document, { key: 'Escape' });
+    await flush();
 
     await waitFor(() => {
       expect(screen.queryByTestId('tags-modal')).not.toBeInTheDocument();
@@ -349,6 +381,7 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     });
 
     fireEvent.keyDown(window, { key: 'Escape' });
+    await flush();
 
     expect(mocks.routerBack).toHaveBeenCalledTimes(1);
   });
@@ -363,6 +396,7 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Criar nova tag/i }));
+    await flush();
     await waitFor(() => {
       expect(screen.getByTestId('tags-modal')).toBeInTheDocument();
     });
@@ -370,9 +404,9 @@ describe('TagsPage (Story 2.6 / AC13)', () => {
     const radios = screen.getAllByRole('radio');
     expect(radios).toHaveLength(7);
 
-    // aria-labels esperados
+    // aria-labels esperados — PT-PT (Story 2.6 / Finding 4/5 CR Iter 1)
     const labels = radios.map((r) => r.getAttribute('aria-label'));
-    expect(labels).toEqual(['Cyan', 'Gold', 'Purple', 'Magenta', 'Lime', 'Branco', 'Cinzento']);
+    expect(labels).toEqual(['Ciano', 'Ouro', 'Roxo', 'Magenta', 'Lima', 'Branco', 'Cinzento']);
   });
 
   // ────────────────────────────────────────────────────────────────
