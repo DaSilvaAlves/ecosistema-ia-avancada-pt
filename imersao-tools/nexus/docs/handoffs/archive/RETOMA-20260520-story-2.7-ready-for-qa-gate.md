@@ -8,7 +8,11 @@
 **Para:** Aria (`@architect`) — quality gate da Story 2.7 (`EPIC-2.md` §5: quality gate `@architect`; `separation-of-roles.md` A6 — Dex executou, Aria faz o gate)
 **Data:** 2026-05-20
 **Projecto:** Nexus v2 — Epic 2 (Tarefas v2 + Projectos)
-**Estado:** PENDING (aguarda quality gate `@architect` + push `@devops`)
+**Estado:** CONSUMED
+**consumed:** true
+**consumed_at:** 2026-05-20T18:45:00Z
+**consumed_by:** architect (Aria)
+**resultado:** Architect Gate de implementação **PASS** — 15/15 AC honrados, 5/5 quality gates reproduzidos em worktree limpo, A11 (AC7 parcial) ratificada, 31 testes 2.7 verdes. Story `Ready for Review` → `Done`. Handoff de saída `RETOMA-20260520-story-2.7-gate-PASS-ready-for-devops-push.md` criado para Gage `*push`.
 
 ---
 
