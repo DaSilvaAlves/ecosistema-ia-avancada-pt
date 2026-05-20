@@ -8,8 +8,12 @@
 **Para:** Dara (`@data-engineer`) — `*develop 3.1` · `@devops` (Gage) — push do commit de validação
 **Data:** 2026-05-21
 **Projecto:** Nexus v2 — Epic 3 (Finanças Completas)
-**Estado:** `status: pending`
+**Estado:** `status: consumed`
 **Branch:** `main`
+
+> **CONSUMIDO** — `consumed: true` · `consumed_at: 2026-05-21` · `consumed_by: data-engineer` (Dara).
+> A Story 3.1 foi implementada via `*develop 3.1` na branch `feature/3.1-schema-financas`
+> (commit `82b07ea4`). Handoff de saída para `@architect`: ver `RETOMA-20260521-story-3.1-ready-for-architect-gate.md`.
 
 ---
 
