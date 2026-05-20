@@ -9,7 +9,7 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 
 | Ficheiro | De | Para | Data | Próxima acção |
 |---------|-----|------|------|--------------|
-| _(vazio)_ | | | | |
+| [RETOMA-20260520-epic-2-completo-pronto-retrospectiva.md](RETOMA-20260520-epic-2-completo-pronto-retrospectiva.md) | Pax (`@po`) — `*close-story 2.7` + `*close-story 2.10`: as duas últimas stories do Epic 2 fechadas (DoD 15/15 PASS cada, Architect Gate de implementação PASS). Stories movidas `active/` → `completed/`. `EPIC-2.md` actualizado 8/10 → **10/10 Done — Epic 2 COMPLETO**. Débito D-2.7-1 registado em §10. Waiver rate final 0%. | Pax (`@po`) — `*retrospective epic-2` · OU Eurico — decisão de próximo epic (3 ou 4) | 20/05/2026 | `@po *retrospective epic-2` — retrospectiva de fecho do Epic 2 (10/10 Done, waiver rate 0%, 9 débitos acumulados D1-D7/M1/M2/D-2.7-1, ADR-2.7-1). Produzir `retrospectives/EPIC-2-retrospective.md`. Em paralelo, Eurico decide próximo epic (Epic 3 Finanças ou Epic 4 Hábitos/Metas/Lembretes — paralelizáveis, ordem PRD §9 `2 \|\| 3 → 4`). `@devops` faz push do commit de closure docs-only. |
 
 ---
 
