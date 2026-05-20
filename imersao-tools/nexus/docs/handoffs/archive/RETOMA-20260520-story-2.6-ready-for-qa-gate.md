@@ -1,5 +1,7 @@
 # RETOMA — Story 2.6 (Sistema de tags global, FR14) READY FOR REVIEW — aguarda `@qa *qa-gate 2.6`
 
+> **CONSUMIDO** — `status: consumed` · `consumed_at: 2026-05-20` · `consumed_by: qa` (Quinn). `*qa-gate 2.6` executado, veredicto **PASS**. Handoff de saída: `RETOMA-20260520-story-2.6-qa-PASS-ready-for-po-close.md`. Ficheiro movido para `archive/` via `git mv`.
+
 > ATENÇÃO — ESTE HANDOFF SEGUE A REGRA OBRIGATÓRIA `handoff-location.md`.
 > ANTES DE CRIAR OU MOVER QUALQUER HANDOFF, CONSULTAR `.claude/rules/handoff-location.md`.
 > HANDOFFS SÓ VIVEM DENTRO DA PASTA DO PROJECTO A QUE SE REFEREM.

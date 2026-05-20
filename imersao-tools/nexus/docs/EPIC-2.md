@@ -2,7 +2,7 @@
 
 > **Projecto:** Nexus v2 (`imersao-tools/nexus/`)
 > **Criado por:** Morgan (`@pm`) em 14/05/2026
-> **Estado:** Em curso — **7/10 stories Done em main** (Stories 2.1 + 2.2 + 2.3 + 2.4 + 2.5 + 2.8 + 2.9 MERGED 15-18/05/2026 via PRs #18 / #19 / #20 / #21 / #22 / #23 / #25)
+> **Estado:** Em curso — **8/10 stories Done** (Stories 2.1 + 2.2 + 2.3 + 2.4 + 2.5 + 2.8 + 2.9 MERGED em main 15-18/05/2026 via PRs #18 / #19 / #20 / #21 / #22 / #23 / #25; Story 2.6 CLOSED 20/05/2026 — aguarda `@devops *push feature/2.6-tags-global`)
 > **Fonte da verdade:** `PRD-NEXUS-V2.md` §6.2, §6.5, §9, §10 (Epic 2) — Constitution Artigo IV (No Invention): cada story e AC abaixo traça ao PRD
 > **Arquitectura:** `architecture-v2.md` (5 ADRs — não reabrir, ver `project_nexus_v2_architecture.md`)
 > **Lições aplicadas:** Retrospectiva Epic 1 (`retrospectives/EPIC-1-retrospective.md`) — acções A1, A2, A6
@@ -49,7 +49,7 @@ Ordem PRD §9: `0 → 1 → (2 || 3) → 4 → 5 → 6 → 7 → 8`.
 
 ## 5. Stories (10) — trace PRD §10
 
-> **Progresso:** **7/10 Done em main · 3/10 Pending**. Stories 2.1+2.2+2.3+2.4+2.5+2.8+2.9 MERGED em main (PRs #18/#19/#20/#21/#22/#23/#25 squash). Story 2.9 squash `d2acca51` em 18/05/2026 19:59:11Z (1ª iteração PASS sem waiver). Padrão consolidado: **11 stories consecutivas QA Gate PASS à primeira** pós-PO Validation GO (1.5/1.6/1.7/1.8/1.9/2.1/2.3/2.4/2.5/2.8/2.9). Waiver rate Epic 2 actual: **0%** (alvo <20% — abaixo do limite).
+> **Progresso:** **8/10 Done · 2/10 Pending**. Stories 2.1+2.2+2.3+2.4+2.5+2.8+2.9 MERGED em main (PRs #18/#19/#20/#21/#22/#23/#25 squash). Story 2.6 CLOSED por Pax 20/05/2026 (aguarda `@devops *push`). Story 2.9 squash `d2acca51` em 18/05/2026 19:59:11Z (1ª iteração PASS sem waiver). Padrão consolidado: **12 stories consecutivas QA Gate PASS à primeira** pós-PO Validation GO (1.5/1.6/1.7/1.8/1.9/2.1/2.3/2.4/2.5/2.8/2.9/2.6). Waiver rate Epic 2 actual: **0%** (alvo <20% — abaixo do limite).
 
 | # | Story | Descrição | FR | Executor previsto | Quality gate previsto | Estado |
 |---|-------|-----------|-----|-------------------|------------------------|--------|
@@ -58,7 +58,7 @@ Ordem PRD §9: `0 → 1 → (2 || 3) → 4 → 5 → 6 → 7 → 8`.
 | 2.3 | Vista lista | Refactor da vista lista v1; secção dedicada de atrasadas | FR9, FR11, FR13 | `@ux-design-expert` | `@dev` | **Done (CLOSED 15/05)** — aguarda `@devops *push` |
 | 2.4 | Vista Kanban | Colunas customizáveis + drag-and-drop com `dnd-kit` | FR11, FR12 | `@ux-design-expert` | `@dev` | **Done MERGED 16/05** (PR #21 squash `2a5f0dbd`) |
 | 2.5 | Vista calendário semanal | Calendário semanal com drag entre dias | FR11, FR12 | `@ux-design-expert` | `@dev` | **Done MERGED 17/05** (PR #22 squash `29e08106`) |
-| 2.6 | Sistema de tags global | Criar, listar, filtrar tags partilhadas | FR14 | `@dev` | `@qa` | **Approved** (drafted por River 19/05/2026, validada por Pax 19/05/2026 GO 10/10 sem F1, aguarda `@dev *develop 2.6`) |
+| 2.6 | Sistema de tags global | Criar, listar, filtrar tags partilhadas | FR14 | `@dev` | `@qa` | **Done** (CLOSED por Pax 20/05/2026 — commit código `647baa58`, QA Gate PASS first-iter, aguarda `@devops *push feature/2.6-tags-global`) |
 | 2.7 | Geração de instâncias recorrentes | Motor de recorrência client-side (`requestIdleCallback`/`setInterval`) — horizonte 90 dias | FR10 | `@dev` | `@architect` | Pending |
 | 2.8 | CRUD projectos | Criar, editar, listar, arquivar projectos | FR29, FR30 | `@dev` | `@qa` | **Done MERGED 17/05** (PR #23 squash `bebbd530`) |
 | 2.9 | Vista projecto | Tarefas vinculadas em vista lista + Kanban filtrado | FR31 | `@dev` (executor real, separação A6 mantida: gate Quinn `@qa`) | `@qa` | **Done MERGED 18/05** (PR #25 squash `d2acca51`) |
@@ -108,16 +108,15 @@ Trace PRD §10 Epic 2: "Epic 1 + manual UX validation".
 
 ## 10. Próximo passo
 
-**Story 2.6 APPROVED 19/05/2026** — Sistema de tags global (FR14) drafted v0.1 por River (`@sm`), validada por Pax (`@po`) com **GO 10/10 sem F1**. Story em `imersao-tools/nexus/docs/stories/2.6.story.md` v0.2 (Status: Approved). PO-VALIDATION em `imersao-tools/nexus/docs/PO-VALIDATION-STORY-2.6.md` (12/12 AUTO-DECISIONS A1-A12 ratificadas, 19 anti-hallucination claims verificados). Epic 2 mantém-se a **7/10 Done em main** + 1/10 Approved (Story 2.6) + 2/10 Pending (Stories 2.7, 2.10).
+**Story 2.6 CLOSED 20/05/2026** — Sistema de tags global (FR14) fechada por Pax (`@po`) após QA Gate PASS first-iter de Quinn (`@qa`). DoD 15/15 PASS. Story movida para `imersao-tools/nexus/docs/stories/completed/2.6.story.md` v0.5 (Status: Done). Epic 2 a **8/10 Done** + 2/10 Pending (Stories 2.7, 2.10).
 
 Sequência actual:
 
 ```text
-@dev *develop 2.6                (Dex — próximo passo OBRIGATÓRIO, modo YOLO)
-  → @qa *qa-gate 2.6              (Quinn — quality gate, separação A6)
-  → @devops *push feature/2.6-tags-global  (Gage — push + PR + CR + merge)
-  → @po *close-story 2.6          (Pax — DoD + EPIC-2 actualizado 8/10)
+@devops *push feature/2.6-tags-global  (Gage — push + PR + CR + merge — PRÓXIMO PASSO OBRIGATÓRIO)
 ```
+
+Após o merge da Story 2.6, restam 2 stories Pending:
 
 Sequência paralelizável (após Story 2.6 validada por Pax, ou em terminal separado):
 
@@ -162,5 +161,7 @@ Alternativa estratégica: `@po *retrospective epic-2-intermedia` (7/10 — retro
 *Story 2.6 APPROVED por Pax (`@po`) em 19/05/2026 — **7/10 Done em main + 1/10 Approved**. Sistema de tags global (FR14) validada com **GO 10/10 sem F1** após draft v0.1 de River. PO-VALIDATION-STORY-2.6.md cobre 11 dimensões (Template, Executor, FileStructure, UI/Frontend, AC, Validation/Testing, Security N/A, Tasks Sequence, CodeRabbit, AntiHallucination 19 claims, Implementation Readiness — todas PASS). 12/12 AUTO-DECISIONS A1-A12 ratificadas (paleta restrita 7 cores design system, cascata atómica transacção `'rw'`, `window.confirm` PT-PT pré-delete, `updateTag` self-rename, `tagsLookup` permanece nas pages, etc.). 2 observações minor C1+C2 não-bloqueantes registadas como contexto para Dex (C1 off-by-one linha 114→113; C2 botão Cancelar via reuse 100% ProjectFormModal). Status story `Draft → Approved` (v0.2). Aguarda `@dev *develop 2.6` em modo YOLO.*
 
 *Story 2.6 DRAFTED por River (`@sm`) em 19/05/2026 — **7/10 Done em main + 1/10 Draft**. Sistema de tags global (FR14) drafted v0.1 partindo de `main@40ea2351`. Scope verificado directamente em código: infraestrutura JÁ EXISTE (Stories 0.3 schema + 2.1 repo base + 2.3 wire-up `TasksFilters`). Story entrega apenas (1) extensão repo `tags.ts` (`updateTag` + cascata `deleteTag` atómica via transacção Dexie `'rw'`), (2) hook `useTags()`, (3) rota `/tags` CRUD UI (4 componentes novos `TagsHeader`/`TagsGrid`/`TagCard`/`TagFormModal`), (4) refactor cirúrgico `tarefas/page.tsx:68-69` + `projectos/[id]/page.tsx:~69` (`useLiveQuery(listTags, [])` → `useTags()`), (5) `lib/tags/colors.ts` com `TAG_PALETTE` 7 cores design system. 15 ACs + 12 [AUTO-DECISION] A1-A12 (rota dedicada, grid cards, reuse `ProjectFormModal`, paleta restrita inegociável, cascata atómica, `window.confirm` PT-PT pré-destrutivo, `updateTag` self-rename, contagem inline, empty state PT-PT, pesquisa client-side, ordenação alfabética pt-PT, `tagsLookup` permanece nas pages). ~16-18 testes Vitest planeados (T9 cascata real crítico, T18 smoke refactor não regrede). Anti-padrões 16 documentados. Aguarda `@po *validate-story-draft 2.6`.*
+
+*Story 2.6 CLOSED por Pax (`@po`) em 20/05/2026 — **8/10 Done**. Sistema de tags global entregue (FR14 — rota `/tags` CRUD UI + 4 componentes `Tags*` + extensão repo `tags.ts` com `updateTag` + cascata `deleteTag` atómica via transacção Dexie `'rw'` + hook `useTags()` + `lib/tags/colors.ts` paleta 7 cores design system + refactor cirúrgico `tarefas/page.tsx` + `projectos/[id]/page.tsx` `useLiveQuery` → `useTags()`). 14 ficheiros de código/teste (10 novos + 3 modificados cirurgicamente + 1 config `vitest.config.ts` allowlist) commit `647baa58` em `feature/2.6-tags-global`. 27 testes Vitest novos (T1-T18), full suite **556/556 PASS**. Quality gates locais 5/5 PASS à primeira (lint exit 0 + 1 warning herdado fora-scope, typecheck 0, test:unit 556/556, build rota `/tags` 5.81 kB / 152 kB First Load, coverage page 96.69% + components 89.87% + lib/tags 88.23% + repo 100% + all-files 88.71% — todos os alvos AC15). QA Gate Quinn PASS first-iter 0/2 qa-loop-fix (separação A6 — executor Dex, gate Quinn). 15/15 ACs honrados; 16/16 anti-padrões livres; 12/12 [AUTO-DECISION] A1-A12 verificadas em código. DoD 15/15 PASS. 2 observações minor Q1+Q2 (exclusivamente documentais) ratificadas e corrigidas no closure commit — Q1 path File List/Testing/tasks `tests/unit/lib/db/repos/` → `tests/unit/db/repos/` (caminho real verificado via `git show --stat 647baa58`); Q2 redacção D2 reformulada para descrever fluxo real (re-throw `page.tsx:124` → catch interno `TagFormModal.tsx:152-167`). Sem débito residual. Padrão consolidado: **12 stories consecutivas QA Gate PASS à primeira** pós-PO Validation GO (1.5/1.6/1.7/1.8/1.9/2.1/2.3/2.4/2.5/2.8/2.9/**2.6**). Waiver rate Epic 2: **0%** (alvo <20% mantido com folga). Aguarda `@devops *push feature/2.6-tags-global`.*
 
 *Story 2.9 CLOSED por Pax (`@po`) em 18/05/2026 — **7/10 Done em main**. Vista projecto entregue (FR31 — rota `/projectos/[id]` dinâmica + tabs Lista/Kanban WAI-ARIA + `ProjectFormModal` integração para Editar + progress bar Lime client-side + navegação a partir do `ProjectCard` via prop `onView`). 5 ficheiros novos (`/projectos/[id]/page.tsx` + `ProjectDetailHeader.tsx` + `ProjectTaskRow.tsx` + `lib/tarefas/colors.ts` + test file) + 3 modificados cirurgicamente (`ProjectCard.tsx` prop `onView` opcional + `ProjectsGrid.tsx` pass-through + `/projectos/page.tsx` `handleView`). 15 testes Vitest novos (T1-T13 com T7 expandido em T7a/T7b/T7c), full suite **529/529 PASS** (15 ficheiros novos + 514 anteriores). Quality gates locais 5/5 PASS à primeira (typecheck 0, lint 0+1 warning herdado fora-scope, test:unit 529/529, build 0 com rota `/projectos/[id]` 4.29 kB, coverage page **99.31%** lines + components/projectos/ **91.41%** + all-files **88.76%** + `ProjectTaskRow` **100%** + `lib/tarefas/colors.ts` **100%**). QA Gate Quinn PASS à primeira (separação A6 — executor Dex, gate Quinn). 15/15 ACs honrados; 12 [AUTO-DECISION] A1-A12 documentadas (A7 `ProjectTaskRow` novo justificado por 4 razões; A11 D3 parcialmente resolvida via extracção `colors.ts` consumida só pelo novo componente). CI no PR #25 todos PASS, squash merge `d2acca51` em main 18/05/2026 19:59:11Z sem waiver. Padrão consolidado: **11 stories consecutivas QA Gate PASS à primeira** pós-PO Validation GO (1.5/1.6/1.7/1.8/1.9/2.1/2.3/2.4/2.5/2.8/**2.9**). Waiver rate Epic 2: **0%** (alvo <20% mantido com folga). 1 débito novo registado em §10: **M2** (Divergência label "Feita" canónico vs "Concluídas" em AC/comments — Baixa, alinhamento no closure commit Epic 2). 6 CONCERNS Dex ratificados como Baixa não-bloqueantes (unhandled rejection T12, `ProjectCard` coverage 86.81% defensive branches, DnD Kanban sem E2E directo, single `db.projects.count()` justificado nas Dev Notes, D3 parcial deliberada, PT-PT validado).*
