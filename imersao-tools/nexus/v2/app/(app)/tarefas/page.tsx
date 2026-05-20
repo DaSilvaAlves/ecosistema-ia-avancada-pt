@@ -2,10 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useTasks } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
-import { listTags } from '@/lib/db/repos/tags';
+import { useTags } from '@/hooks/useTags';
 import { setTaskStatus, deleteTask } from '@/lib/db/repos/tasks';
 import { isOverdue } from '@/lib/tarefas/isOverdue';
 import { useDebounced } from '@/hooks/useDebounced';
@@ -32,7 +31,7 @@ import type { TaskStatus } from '@/lib/db/schemas';
  *      - 'lista'  → Loading skeleton | Empty state | <TasksTable>
  *      - 'kanban' → <KanbanBoard> (Story 2.4 — drag-and-drop entre colunas)
  *
- * APIs consumidas (Story 2.1): useTasks, useProjects, listTags, setTaskStatus, deleteTask.
+ * APIs consumidas: useTasks, useProjects, useTags (Story 2.6), setTaskStatus, deleteTask.
  * Helper D3 (Story 2.3 Iter 1 Uma A3): isOverdue (lib/tarefas).
  *
  * 4 [AUTO-DECISION] ratificadas pela @po: D1 sem drag em Lista, D2 tabs placeholder Cal, D3 overdue=startOfToday, D4 kebab "Editar" disabled.
@@ -65,8 +64,7 @@ export default function TarefasPage(): React.ReactElement {
     activeTab === 'kanban' || activeTab === 'calendario' ? undefined : statusFilter;
   const tasks = useTasks({ status: effectiveStatusForQuery, projectId: projectFilter, tag: tagFilter });
   const projects = useProjects();
-  // useTags hook ainda não existe (Story 2.6) — useLiveQuery inline via repo
-  const tags = useLiveQuery(() => listTags(), []);
+  const tags = useTags();
 
   // Tags lookup para acesso O(1) em cards (Story 2.4) e linhas (Story 2.3)
   const tagsLookup = useMemo<Map<string, Tag>>(() => {
