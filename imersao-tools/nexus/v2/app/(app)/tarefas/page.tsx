@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTasks } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { useTags } from '@/hooks/useTags';
+import { useRecurrenceEngine } from '@/hooks/useRecurrenceEngine';
 import { setTaskStatus, deleteTask } from '@/lib/db/repos/tasks';
 import { isOverdue } from '@/lib/tarefas/isOverdue';
 import { useDebounced } from '@/hooks/useDebounced';
@@ -40,6 +41,12 @@ import type { TaskStatus } from '@/lib/db/schemas';
 
 export default function TarefasPage(): React.ReactElement {
   const router = useRouter();
+
+  // Story 2.7 AC5 — motor de recorrência: gera as instâncias em falta (horizonte
+  // 90 dias) uma vez no mount da página. Activação via useEffect on-mount
+  // (ADR-2.7-1). Após correr, useTasks()/useLiveQuery reflectem as novas
+  // instâncias reactivamente sem reload.
+  useRecurrenceEngine();
 
   // Vista activa (Story 2.4 AC1)
   const [activeTab, setActiveTab] = useState<ActiveTab>('lista');
