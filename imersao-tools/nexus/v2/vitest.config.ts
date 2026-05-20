@@ -48,6 +48,13 @@ export default defineConfig({
         // sem alteração comportamental do test runner).
         'app/(app)/projectos/**',
         'components/projectos/**',
+        // Story 2.6 — Sistema de tags global (precedente Stories 2.3/2.5/2.8 —
+        // adiciona paths novos à allowlist do report; thresholds globais
+        // inalterados; sem alteração comportamental do test runner).
+        'app/(app)/tags/**',
+        'components/tags/**',
+        'lib/tags/**',
+        'hooks/useTags.ts',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)

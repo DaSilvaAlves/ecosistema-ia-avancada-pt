@@ -5,8 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db/client';
 import { getProject, updateProject } from '@/lib/db/repos/projects';
-import { listTags } from '@/lib/db/repos/tags';
 import { useTasks } from '@/hooks/useTasks';
+import { useTags } from '@/hooks/useTags';
 import { ProjectDetailHeader } from '@/components/projectos/ProjectDetailHeader';
 import { ProjectFormModal } from '@/components/projectos/ProjectFormModal';
 import { ProjectTaskRow } from '@/components/projectos/ProjectTaskRow';
@@ -63,7 +63,7 @@ export default function ProjectDetailPage(): React.ReactElement {
     [id],
   );
   const tasks = useTasks({ projectId: id });
-  const tags = useLiveQuery(() => listTags(), []);
+  const tags = useTags();
 
   // Tags lookup para KanbanBoard
   const tagsLookup = useMemo<Map<string, Tag>>(() => {
