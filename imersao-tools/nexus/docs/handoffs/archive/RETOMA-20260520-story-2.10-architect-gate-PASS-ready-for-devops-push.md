@@ -7,7 +7,10 @@
 **De:** Aria (`@architect`) — Architect Gate de implementação Story 2.10 concluído
 **Para:** Gage (`@devops`) — `*push feature/2.10-tools-cerebro` + PR contra `main`
 **Data:** 20/05/2026
-**Status:** pending
+**Status:** consumed
+**consumed_at:** 2026-05-20T22:00:00Z
+**consumed_by:** devops (Gage)
+**Nota de consumo:** push de `feature/2.10-tools-cerebro` (SHA `5d312786`) + PR #29 contra `main` executados. CodeRabbit Iter 1 escalado a `@dev` — ver `RETOMA-20260520-story-2.10-pr-29-cr-iter1-escalado-dev.md`.
 **Branch:** `feature/2.10-tools-cerebro` (commits `ac169e8f` feat + `56617145` handoff + commit do gate — ver abaixo)
 **Story:** `imersao-tools/nexus/docs/stories/active/2.10.story.md` (Status `Done`)
 

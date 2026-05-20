@@ -151,18 +151,32 @@ describe('criar_tarefa', () => {
     expect(await db.tasks.get(result.id)).toBeUndefined();
   });
 
-  it('T4 — com projecto e tags', async () => {
+  it('T4 — com projecto existente e tags', async () => {
     const t = tool('criar_tarefa');
-    const projectoId = crypto.randomUUID();
+    const project = makeProject();
+    await db.projects.add(project);
     const args = t.argsSchema.parse({
       titulo: 'Tarefa vinculada',
-      projecto: projectoId,
+      projecto: project.id,
       tags: ['id-a', 'id-b'],
     });
     const result = (await t.execute(args, ctx)) as { id: string };
     const persisted = await db.tasks.get(result.id);
-    expect(persisted?.projectId).toBe(projectoId);
+    expect(persisted?.projectId).toBe(project.id);
     expect(persisted?.tags).toEqual(['id-a', 'id-b']);
+  });
+
+  it('T4b — projecto inexistente lança Error PT-PT e não persiste', async () => {
+    const t = tool('criar_tarefa');
+    const projectoId = crypto.randomUUID();
+    const args = t.argsSchema.parse({
+      titulo: 'Tarefa órfã',
+      projecto: projectoId,
+    });
+    await expect(t.execute(args, ctx)).rejects.toThrow(
+      `Projecto "${projectoId}" não encontrado`
+    );
+    expect(await db.tasks.toArray()).toHaveLength(0);
   });
 });
 

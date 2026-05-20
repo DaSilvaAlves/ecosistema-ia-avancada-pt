@@ -191,6 +191,15 @@ registar(
     requiresPreview: false,
     reversible: true,
     execute: async (args, ctx) => {
+      // Integridade referencial: se um projecto for indicado, verificar que
+      // existe antes de o persistir em `task.projectId` — espelha a validação
+      // já feita em `vincular_tarefa_projecto` e evita `projectId` órfão.
+      if (args.projecto !== null) {
+        const proj = await ctx.db.projects.get(args.projecto);
+        if (proj === undefined) {
+          throw new Error(`Projecto "${args.projecto}" não encontrado`);
+        }
+      }
       const now = Date.now();
       const task: Task = {
         id: crypto.randomUUID(),
