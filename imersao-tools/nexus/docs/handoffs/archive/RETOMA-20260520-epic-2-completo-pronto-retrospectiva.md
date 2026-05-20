@@ -8,7 +8,10 @@
 **Para:** Pax (`@po`) — `*retrospective epic-2` · OU Eurico — decisão de próximo epic
 **Data:** 2026-05-20
 **Projecto:** Nexus v2 — Epic 2 (Tarefas v2 + Projectos)
-**Estado:** `status: pending`
+**Estado:** `status: consumed`
+**consumed:** `true`
+**consumed_at:** `2026-05-20T23:00:00Z`
+**consumed_by:** `po (Pax)`
 **Branch:** `main` (todas as 10 stories merged)
 
 ---
