@@ -7,7 +7,10 @@
 **De:** Dex (`@dev`) — `*develop 2.10` concluído (continuação de sessão anterior interrompida)
 **Para:** `@architect` (Aria) — quality gate; depois `@devops` (Gage) — push
 **Data:** 20/05/2026
-**Status:** pending
+**Status:** consumed
+**consumed:** true
+**consumed_at:** 2026-05-20T18:35:00Z
+**consumed_by:** architect (Aria)
 **Branch:** `feature/2.10-tools-cerebro` (commit `ac169e8f`, NÃO empurrada — push é exclusivo `@devops`)
 **Story:** `imersao-tools/nexus/docs/stories/active/2.10.story.md` (Status `Ready for Review`)
 
