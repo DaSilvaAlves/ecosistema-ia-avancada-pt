@@ -12,7 +12,10 @@
 **Branch actual:** `feature/2.6-tags-global` (commit Iter 2 local `9e10f317`, ainda não pushed)
 **De:** Dex (`@dev`) — `*qa-loop-fix 2.6` Iter 2 executado: 6 findings CodeRabbit resolvidos
 **Para:** Gage (`@devops`) — `*push feature/2.6-tags-global` (push incremental do commit Iter 2 no PR #27)
-**Status:** pending
+**Status:** consumed
+**Consumido em:** 2026-05-20T14:30:00Z
+**Consumido por:** devops (Gage)
+**Resultado:** Push Iter 2 executado (`a9615e04..2745b93b`). CodeRabbit Iter 2 = CHANGES_REQUESTED (2 actionable técnicos). Hard-stop EPIC-2 §8 atingido — escalado ao Eurico via `RETOMA-20260520-story-2.6-pr-27-cr-iter2-changes-requested-ESCALADO.md`.
 
 ---
 
