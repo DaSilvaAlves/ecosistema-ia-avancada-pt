@@ -8,8 +8,11 @@
 **Para:** Eurico — decisão do próximo epic · `@pm` (Morgan) — `*create-epic` · `@devops` (Gage) — push do commit de closure
 **Data:** 2026-05-20
 **Projecto:** Nexus v2 — Epic 2 (Tarefas v2 + Projectos)
-**Estado:** `status: pending`
+**Estado:** `status: consumed`
 **Branch:** `main`
+
+> **CONSUMIDO** em 2026-05-20 por Morgan (`@pm`) — `*create-epic 3`. Decisão do Eurico: arrancar o **Epic 3 (Finanças)**. `EPIC-3.md` criado em `imersao-tools/nexus/docs/EPIC-3.md` (11 stories 3.1-3.11, FR16-FR23, 5 Epic ACs). Acção A4 executada: decisão sobre D6/D7 registada na §10 do `EPIC-3.md` — ambos fora-de-scope do Epic 3 (D6 → story técnica dedicada / Epic 4; D7 → hotfix dedicado). Handoff de saída `RETOMA-20260520-epic-3-created-ready-for-sm-draft.md` criado para `@sm *draft 3.1`.
+> `consumed: true` · `consumed_at: 2026-05-20` · `consumed_by: pm`
 
 ---
 
