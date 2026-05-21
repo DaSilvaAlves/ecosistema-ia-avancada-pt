@@ -179,6 +179,11 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
     expect(db.verno).toBe(3);
 
     // 13 de version(1) + 2 de version(2) + 4 de version(3) = 19 tabelas.
+    // Story 3.1 Iter 2 (CodeRabbit #10) — asserção de contagem total: o título
+    // afirma "19 tabelas" e a verificação prova-o explicitamente.
+    expect(db.tables).toHaveLength(19);
+
+    // As 15 tabelas de version(2) (13 de version(1) + 2 de version(2)).
     expect(await db.tasks.count()).toBe(0);
     expect(await db.projects.count()).toBe(0);
     expect(await db.recurrences.count()).toBe(0);
@@ -194,6 +199,12 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
     expect(await db.knowledge_notes.count()).toBe(0);
     expect(await db.agent_runs.count()).toBe(0);
     expect(await db.chat_messages.count()).toBe(0);
+
+    // As 4 tabelas novas de version(3) — Story 3.1 (CodeRabbit #10).
+    expect(await db.accounts.count()).toBe(0);
+    expect(await db.cards.count()).toBe(0);
+    expect(await db.installments.count()).toBe(0);
+    expect(await db.categories.count()).toBe(0);
 
     db.close();
   });

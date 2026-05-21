@@ -26,14 +26,21 @@ function normalize(name: string): string {
 export async function createCategory(input: Category): Promise<Category> {
   CategorySchema.parse(input);
 
+  // Story 3.1 Iter 2 (CodeRabbit #3) — o duplicate-check case-insensitive e o
+  // insert correm na MESMA transacção Dexie `'rw'`. Sem isto, duas escritas
+  // concorrentes de nomes case-variant ("Lazer" / "lazer") podiam ambas passar
+  // o check antes de qualquer `add`, criando duplicados. A transacção serializa
+  // leitura+escrita e garante o invariante de unicidade case-insensitive.
   const target = normalize(input.name);
-  const existing = await db.categories.toArray();
-  const duplicate = existing.find((c) => normalize(c.name) === target);
-  if (duplicate) {
-    throw new Error(`Já existe uma categoria com o nome "${input.name}"`);
-  }
+  await db.transaction('rw', db.categories, async () => {
+    const existing = await db.categories.toArray();
+    const duplicate = existing.find((c) => normalize(c.name) === target);
+    if (duplicate) {
+      throw new Error(`Já existe uma categoria com o nome "${input.name}"`);
+    }
+    await db.categories.add(input);
+  });
 
-  await db.categories.add(input);
   return input;
 }
 

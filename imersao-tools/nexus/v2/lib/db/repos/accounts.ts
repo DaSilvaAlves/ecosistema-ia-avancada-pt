@@ -38,6 +38,10 @@ export async function updateAccount(
   id: string,
   patch: Partial<Account>,
 ): Promise<void> {
+  // Story 3.1 Iter 2 (CodeRabbit #1) — validar o patch parcial antes da escrita.
+  // `.partial()` torna todos os campos opcionais mas mantém as regras de cada
+  // campo presente (inteiro em cêntimos, enum de `type`, etc.).
+  AccountSchema.partial().parse(patch);
   const updated = await db.accounts.update(id, patch);
   if (updated === 0) {
     throw new Error(`Conta ${id} não encontrada — não foi possível actualizar`);
@@ -54,6 +58,13 @@ export async function updateAccount(
  * Lança `Error` PT-PT se a conta não existir.
  */
 export async function updateBalance(id: string, delta: number): Promise<void> {
+  // Story 3.1 Iter 2 (CodeRabbit #1) — `delta` é cêntimos: deve ser inteiro
+  // finito. Um delta decimal corromperia o invariante "saldo em cêntimos".
+  if (!Number.isInteger(delta)) {
+    throw new Error(
+      `Delta de saldo inválido (${delta}) — deve ser um inteiro em cêntimos`,
+    );
+  }
   await db.transaction('rw', db.accounts, async () => {
     const account = await db.accounts.get(id);
     if (account === undefined) {

@@ -52,9 +52,13 @@ describe('cards repo', () => {
     await expect(createCard(invalid)).rejects.toThrow();
   });
 
-  it('createCard rejeita accountId ausente com mensagem PT-PT', async () => {
+  it('createCard rejeita accountId não-UUID com mensagem PT-PT', async () => {
+    // Story 3.1 Iter 2 (CodeRabbit #7) — accountId é validado como UUID;
+    // uma string vazia ou não-UUID falha a validação.
     const invalid = makeCard({ accountId: '' });
-    await expect(createCard(invalid)).rejects.toThrow(/accountId é obrigatório/);
+    await expect(createCard(invalid)).rejects.toThrow(/accountId deve ser UUID válido/);
+    const notUuid = makeCard({ accountId: 'conta-1' });
+    await expect(createCard(notUuid)).rejects.toThrow(/accountId deve ser UUID válido/);
   });
 
   it('createCard rejeita closingDay fora do intervalo 1-31', async () => {
@@ -104,6 +108,28 @@ describe('cards repo', () => {
     await expect(
       updateCard('00000000-0000-0000-0000-000000000000', { name: 'X' }),
     ).rejects.toThrow(/não encontrado/i);
+  });
+
+  // Story 3.1 Iter 2 (CodeRabbit #2) — updateCard valida o patch parcial.
+  it('updateCard rejeita patch com closingDay fora do intervalo 1-31', async () => {
+    const card = makeCard();
+    await createCard(card);
+
+    await expect(updateCard(card.id, { closingDay: 0 })).rejects.toThrow(/Dia de fecho/);
+    await expect(updateCard(card.id, { closingDay: 32 })).rejects.toThrow(/Dia de fecho/);
+
+    // O cartão permanece intacto após as tentativas inválidas.
+    const unchanged = await getCard(card.id);
+    expect(unchanged?.closingDay).toBe(card.closingDay);
+  });
+
+  it('updateCard rejeita patch com accountId não-UUID', async () => {
+    const card = makeCard();
+    await createCard(card);
+
+    await expect(
+      updateCard(card.id, { accountId: 'conta-1' }),
+    ).rejects.toThrow(/accountId deve ser UUID válido/);
   });
 
   it('deleteCard remove o cartão', async () => {

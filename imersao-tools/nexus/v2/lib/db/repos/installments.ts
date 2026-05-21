@@ -41,6 +41,10 @@ export async function updateInstallment(
   id: string,
   patch: Partial<Installment>,
 ): Promise<void> {
+  // Story 3.1 Iter 2 (CodeRabbit #4) — validar o patch parcial antes da escrita.
+  // `.partial()` mantém as regras de cada campo presente (installments inteiro
+  // positivo, totalAmount inteiro em cêntimos, startDate ISO 8601).
+  InstallmentSchema.partial().parse(patch);
   const updated = await db.installments.update(id, patch);
   if (updated === 0) {
     throw new Error(

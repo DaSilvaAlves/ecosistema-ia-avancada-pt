@@ -119,6 +119,43 @@ describe('accounts repo', () => {
     ).rejects.toThrow(/Conta .* não encontrada/);
   });
 
+  // Story 3.1 Iter 2 (CodeRabbit #11) — `delta` é cêntimos: deve ser inteiro.
+  it('updateBalance rejeita delta não-inteiro (cêntimos devem ser inteiros)', async () => {
+    const account = makeAccount({ balance: 100000 });
+    await createAccount(account);
+
+    await expect(updateBalance(account.id, 1.5)).rejects.toThrow(
+      /inteiro em cêntimos/,
+    );
+    await expect(updateBalance(account.id, -0.5)).rejects.toThrow(
+      /inteiro em cêntimos/,
+    );
+
+    // O saldo permanece intacto após as tentativas inválidas.
+    const unchanged = await getAccount(account.id);
+    expect(unchanged?.balance).toBe(100000);
+  });
+
+  // Story 3.1 Iter 2 (CodeRabbit #1) — updateAccount valida o patch parcial.
+  it('updateAccount rejeita patch inválido (balance decimal)', async () => {
+    const account = makeAccount();
+    await createAccount(account);
+
+    await expect(
+      updateAccount(account.id, { balance: 99.99 }),
+    ).rejects.toThrow(/inteiro em cêntimos/);
+  });
+
+  it('updateAccount rejeita patch com type fora do enum', async () => {
+    const account = makeAccount();
+    await createAccount(account);
+
+    await expect(
+      // @ts-expect-error — type inválido testado em runtime
+      updateAccount(account.id, { type: 'investimento' }),
+    ).rejects.toThrow();
+  });
+
   it('deleteAccount remove a conta', async () => {
     const account = makeAccount();
     await createAccount(account);

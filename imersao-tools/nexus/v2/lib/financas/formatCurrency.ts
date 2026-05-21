@@ -42,12 +42,23 @@ function groupThousands(value: number): string {
  * Zero-safe: `formatCurrency(0) === '€0,00'`.
  * Negativo-safe: `formatCurrency(-100) === '-€1,00'` (o sinal precede o `€`).
  *
+ * Story 3.1 Iter 2 (CodeRabbit #9) — falha fast em input não-finito. `Math.trunc`
+ * propaga silenciosamente `NaN`/`Infinity` (`Math.trunc(NaN) → NaN`), o que
+ * produziria saídas absurdas como `€NaN,NaN`. O contrato é cêntimos-inteiro:
+ * `NaN`, `Infinity` e valores não-inteiros são rejeitados explicitamente.
+ *
  * @param cents - Montante inteiro em cêntimos (ex: 123456 → €1.234,56).
  * @returns String no formato `€1.234,56` (ou `-€1.234,56` para negativos).
+ * @throws {Error} Se `cents` não for um inteiro finito.
  */
 export function formatCurrency(cents: number): string {
+  if (!Number.isInteger(cents)) {
+    throw new Error(
+      `Montante inválido (${cents}) — formatCurrency exige um inteiro em cêntimos`,
+    );
+  }
   const negative = cents < 0;
-  const abs = Math.abs(Math.trunc(cents));
+  const abs = Math.abs(cents);
   const euros = Math.floor(abs / 100);
   const centavos = abs % 100;
   const formatted = groupThousands(euros) + ',' + String(centavos).padStart(2, '0');

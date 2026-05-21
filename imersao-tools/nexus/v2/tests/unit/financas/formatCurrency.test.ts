@@ -44,4 +44,19 @@ describe('formatCurrency', () => {
   it('formata cêntimos de um único dígito com zero à esquerda (5 → €0,05)', () => {
     expect(formatCurrency(5)).toBe('€0,05');
   });
+
+  // Story 3.1 Iter 2 (CodeRabbit N1) — fixar o contrato cents-inteiro:
+  // input não-finito ou decimal é rejeitado em vez de produzir `€NaN,NaN`.
+  it('rejeita input decimal (1.5) — cêntimos devem ser inteiros', () => {
+    expect(() => formatCurrency(1.5)).toThrow(/inteiro em cêntimos/);
+  });
+
+  it('rejeita NaN — falha fast em vez de produzir €NaN,NaN', () => {
+    expect(() => formatCurrency(NaN)).toThrow(/inteiro em cêntimos/);
+  });
+
+  it('rejeita Infinity e -Infinity', () => {
+    expect(() => formatCurrency(Infinity)).toThrow(/inteiro em cêntimos/);
+    expect(() => formatCurrency(-Infinity)).toThrow(/inteiro em cêntimos/);
+  });
 });

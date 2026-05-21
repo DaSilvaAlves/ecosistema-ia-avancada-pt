@@ -86,7 +86,7 @@ ESTE HANDOFF FOI CRIADO SEGUINDO A REGRA OBRIGATÓRIA `.claude/rules/handoff-loc
 
 - PROJECTO A QUE SE REFERE: `Nexus v2`
 - LOCALIZAÇÃO CORRECTA: `imersao-tools/nexus/docs/handoffs/`
-- LOCALIZAÇÃO ACTUAL: `imersao-tools/nexus/docs/handoffs/RETOMA-20260521-story-3.1-ready-for-architect-gate.md`
+- LOCALIZAÇÃO ACTUAL: `imersao-tools/nexus/docs/handoffs/archive/RETOMA-20260521-story-3.1-ready-for-architect-gate.md`
 - COINCIDEM? `SIM`
 
 AGENTE RESPONSÁVEL: `Dara (@data-engineer)`

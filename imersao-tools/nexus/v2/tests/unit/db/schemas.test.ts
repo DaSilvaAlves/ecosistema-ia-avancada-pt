@@ -259,9 +259,14 @@ describe('CardSchema', () => {
     expect(() => CardSchema.parse({ ...validCard(), limit: null })).not.toThrow();
   });
 
-  it('rejeita Card sem accountId', () => {
-    const invalid = { ...validCard(), accountId: '' };
-    expect(() => CardSchema.parse(invalid)).toThrow(/accountId é obrigatório/);
+  it('rejeita Card com accountId não-UUID', () => {
+    // Story 3.1 Iter 2 (CodeRabbit #7) — accountId validado como UUID.
+    expect(() => CardSchema.parse({ ...validCard(), accountId: '' })).toThrow(
+      /accountId deve ser UUID válido/,
+    );
+    expect(() => CardSchema.parse({ ...validCard(), accountId: 'conta-1' })).toThrow(
+      /accountId deve ser UUID válido/,
+    );
   });
 
   it('rejeita Card com closingDay fora do intervalo 1-31', () => {
@@ -288,6 +293,47 @@ describe('TransactionSchema', () => {
     const invalid = { ...validTransaction(), category: '' };
     expect(() => TransactionSchema.parse(invalid)).toThrow(/Categoria é obrigatória/);
   });
+
+  // Story 3.1 Iter 2 (CodeRabbit #7) — IDs de referência validados como UUID.
+  it('rejeita Transaction com accountId não-UUID', () => {
+    const invalid = { ...validTransaction(), accountId: 'conta-1' };
+    expect(() => TransactionSchema.parse(invalid)).toThrow(/accountId deve ser UUID válido/);
+  });
+
+  it('rejeita Transaction com cardId não-UUID', () => {
+    const invalid = { ...validTransaction(), cardId: 'cartao-1' };
+    expect(() => TransactionSchema.parse(invalid)).toThrow(/cardId deve ser UUID válido/);
+  });
+
+  it('aceita Transaction com IDs de referência null (campos opcionais)', () => {
+    expect(() => TransactionSchema.parse(validTransaction())).not.toThrow();
+  });
+
+  it('aceita Transaction com IDs de referência UUID válidos', () => {
+    const valid = {
+      ...validTransaction(),
+      accountId: crypto.randomUUID(),
+      cardId: crypto.randomUUID(),
+      recurrenceId: crypto.randomUUID(),
+      installmentId: crypto.randomUUID(),
+    };
+    expect(() => TransactionSchema.parse(valid)).not.toThrow();
+  });
+
+  // Story 3.1 Iter 2 (CodeRabbit #8) — date validada como ISO 8601 (índices Dexie).
+  it('rejeita Transaction com date em formato não-ISO', () => {
+    const invalid = { ...validTransaction(), date: '15/05/2026' };
+    expect(() => TransactionSchema.parse(invalid)).toThrow(/ISO 8601/);
+  });
+
+  it('aceita Transaction com date ISO 8601 (YYYY-MM-DD e com componente de tempo)', () => {
+    expect(() =>
+      TransactionSchema.parse({ ...validTransaction(), date: '2026-05-15' }),
+    ).not.toThrow();
+    expect(() =>
+      TransactionSchema.parse({ ...validTransaction(), date: '2026-05-15T10:30:00Z' }),
+    ).not.toThrow();
+  });
 });
 
 describe('InstallmentSchema', () => {
@@ -295,9 +341,14 @@ describe('InstallmentSchema', () => {
     expect(() => InstallmentSchema.parse(validInstallment())).not.toThrow();
   });
 
-  it('rejeita Installment sem cardId', () => {
-    const invalid = { ...validInstallment(), cardId: '' };
-    expect(() => InstallmentSchema.parse(invalid)).toThrow(/cardId é obrigatório/);
+  it('rejeita Installment com cardId não-UUID', () => {
+    // Story 3.1 Iter 2 (CodeRabbit #7) — cardId validado como UUID.
+    expect(() =>
+      InstallmentSchema.parse({ ...validInstallment(), cardId: '' }),
+    ).toThrow(/cardId deve ser UUID válido/);
+    expect(() =>
+      InstallmentSchema.parse({ ...validInstallment(), cardId: 'cartao-1' }),
+    ).toThrow(/cardId deve ser UUID válido/);
   });
 
   it('rejeita Installment com installments <= 0', () => {
@@ -312,6 +363,12 @@ describe('InstallmentSchema', () => {
   it('rejeita Installment com installments decimal', () => {
     const invalid = { ...validInstallment(), installments: 12.5 };
     expect(() => InstallmentSchema.parse(invalid)).toThrow();
+  });
+
+  // Story 3.1 Iter 2 (CodeRabbit #8) — startDate validada como ISO 8601.
+  it('rejeita Installment com startDate em formato não-ISO', () => {
+    const invalid = { ...validInstallment(), startDate: '15/05/2026' };
+    expect(() => InstallmentSchema.parse(invalid)).toThrow(/ISO 8601/);
   });
 });
 

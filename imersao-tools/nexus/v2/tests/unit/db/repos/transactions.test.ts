@@ -153,6 +153,37 @@ describe('transactions repo', () => {
     expect(result).toHaveLength(3);
   });
 
+  // Story 3.1 Iter 2 (CodeRabbit #5) — limit normalizado para inteiro não-negativo.
+  it('listTransactions normaliza limit decimal via Math.floor (3.9 → 3)', async () => {
+    for (let i = 0; i < 5; i++) {
+      await createTransaction(makeTransaction({ date: `2026-05-1${i}` }));
+    }
+    const result = await listTransactions({ limit: 3.9 });
+    expect(result).toHaveLength(3);
+  });
+
+  it('listTransactions trata limit negativo como o default (não devolve vazio)', async () => {
+    for (let i = 0; i < 5; i++) {
+      await createTransaction(makeTransaction({ date: `2026-05-1${i}` }));
+    }
+    const result = await listTransactions({ limit: -1 });
+    expect(result).toHaveLength(5);
+  });
+
+  it('listTransactions trata limit NaN como o default', async () => {
+    for (let i = 0; i < 5; i++) {
+      await createTransaction(makeTransaction({ date: `2026-05-1${i}` }));
+    }
+    const result = await listTransactions({ limit: NaN });
+    expect(result).toHaveLength(5);
+  });
+
+  it('listTransactions trata limit zero como zero resultados', async () => {
+    await createTransaction(makeTransaction());
+    const result = await listTransactions({ limit: 0 });
+    expect(result).toHaveLength(0);
+  });
+
   it('updateTransaction aplica patch parcial', async () => {
     const tx = makeTransaction({ amount: -1000 });
     await createTransaction(tx);
@@ -168,6 +199,38 @@ describe('transactions repo', () => {
     await expect(
       updateTransaction('00000000-0000-0000-0000-000000000000', { amount: 1 }),
     ).rejects.toThrow(/não encontrada/i);
+  });
+
+  // Story 3.1 Iter 2 (CodeRabbit #6) — updateTransaction valida o patch parcial.
+  it('updateTransaction rejeita patch com amount decimal', async () => {
+    const tx = makeTransaction();
+    await createTransaction(tx);
+
+    await expect(
+      updateTransaction(tx.id, { amount: 15.99 }),
+    ).rejects.toThrow(/inteiro em cêntimos/);
+
+    // A transação permanece intacta após a tentativa inválida.
+    const unchanged = await getTransaction(tx.id);
+    expect(unchanged?.amount).toBe(tx.amount);
+  });
+
+  it('updateTransaction rejeita patch com date em formato não-ISO', async () => {
+    const tx = makeTransaction();
+    await createTransaction(tx);
+
+    await expect(
+      updateTransaction(tx.id, { date: '15/05/2026' }),
+    ).rejects.toThrow(/ISO 8601/);
+  });
+
+  it('updateTransaction rejeita patch com cardId não-UUID', async () => {
+    const tx = makeTransaction();
+    await createTransaction(tx);
+
+    await expect(
+      updateTransaction(tx.id, { cardId: 'cartao-1' }),
+    ).rejects.toThrow(/cardId deve ser UUID válido/);
   });
 
   it('deleteTransaction remove a transação', async () => {

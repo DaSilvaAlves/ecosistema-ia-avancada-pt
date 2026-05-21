@@ -41,6 +41,10 @@ export async function listCardsByAccount(accountId: string): Promise<Card[]> {
 }
 
 export async function updateCard(id: string, patch: Partial<Card>): Promise<void> {
+  // Story 3.1 Iter 2 (CodeRabbit #2) — validar o patch parcial antes da escrita.
+  // `.partial()` mantém as regras de cada campo presente (closingDay/dueDay 1-31,
+  // accountId UUID, limit inteiro em cêntimos).
+  CardSchema.partial().parse(patch);
   const updated = await db.cards.update(id, patch);
   if (updated === 0) {
     throw new Error(`Cartão ${id} não encontrado — não foi possível actualizar`);

@@ -27,6 +27,20 @@ export interface ListTransactionsOptions {
 }
 
 const DEFAULT_LIMIT = 200;
+/** Tecto máximo de resultados — protege contra `limit` arbitrariamente grande. */
+const MAX_LIMIT = 1000;
+
+/**
+ * Story 3.1 Iter 2 (CodeRabbit #5) — normaliza o `limit` recebido do chamador
+ * para um inteiro não-negativo dentro de `[0, MAX_LIMIT]`. `Math.floor`
+ * descarta casas decimais; `NaN`/negativos caem no `DEFAULT_LIMIT`.
+ */
+function normalizeLimit(limit: number): number {
+  if (!Number.isFinite(limit)) return DEFAULT_LIMIT;
+  const floored = Math.floor(limit);
+  if (floored < 0) return DEFAULT_LIMIT;
+  return Math.min(floored, MAX_LIMIT);
+}
 
 export async function createTransaction(input: Transaction): Promise<Transaction> {
   TransactionSchema.parse(input);
@@ -62,6 +76,8 @@ export async function listTransactions(
     limit = DEFAULT_LIMIT,
   } = opts;
 
+  const effectiveLimit = normalizeLimit(limit);
+
   const all = await db.transactions.toArray();
 
   const filtered = all.filter((t) => {
@@ -75,13 +91,19 @@ export async function listTransactions(
     return true;
   });
 
-  return filtered.sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
+  return filtered
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, effectiveLimit);
 }
 
 export async function updateTransaction(
   id: string,
   patch: Partial<Transaction>,
 ): Promise<void> {
+  // Story 3.1 Iter 2 (CodeRabbit #6) — validar o patch parcial antes da escrita.
+  // `.partial()` mantém as regras de cada campo presente (amount inteiro em
+  // cêntimos, date ISO 8601, IDs de referência UUID).
+  TransactionSchema.partial().parse(patch);
   const updated = await db.transactions.update(id, patch);
   if (updated === 0) {
     throw new Error(`Transação ${id} não encontrada — não foi possível actualizar`);

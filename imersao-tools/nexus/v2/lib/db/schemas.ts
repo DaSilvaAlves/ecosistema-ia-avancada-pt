@@ -103,7 +103,24 @@ export const TagSchema = z.object({
 // (inteiros, nunca float) — `z.number().int()`. `Transaction.amount`
 // aceita ambos os sinais (negativo = saída, positivo = entrada,
 // types/db.ts:117).
+//
+// Story 3.1 Iter 2 (CodeRabbit) — endurecimento de validação:
+// - IDs de referência (`Card.accountId`, `Transaction.accountId/cardId/
+//   recurrenceId/installmentId`) validados como UUID — paridade com as PKs.
+// - Campos de data INDEXADOS (`Transaction.date`, `Installment.startDate`)
+//   validados como ISO 8601 via `ISO_DATE_REGEX`. O índice Dexie ordena
+//   lexicalmente; uma string não-ISO (ex: '15/05/2026') quebraria a
+//   ordenação dos índices `date` / `[accountId+date]` / `[cardId+date]` /
+//   `[cardId+startDate]`. A validação garante que só formatos
+//   lexicograficamente ordenáveis entram na DB.
 // ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Valida data ISO 8601: `YYYY-MM-DD` ou `YYYY-MM-DDTHH:MM:SS(.sss)(Z|±HH:MM)`.
+ * Apenas formatos com ordenação lexical correcta — exigência dos índices Dexie.
+ */
+const ISO_DATE_REGEX =
+  /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{1,3})?(Z|[+-]\d{2}:\d{2})?)?$/;
 
 // ─── Account ───
 
@@ -124,7 +141,7 @@ export type AccountType = z.infer<typeof AccountTypeSchema>;
 export const CardSchema = z.object({
   id: z.string().uuid('id deve ser UUID válido'),
   name: z.string().min(1, 'Nome do cartão é obrigatório'),
-  accountId: z.string().min(1, 'accountId é obrigatório'),
+  accountId: z.string().uuid('accountId deve ser UUID válido'),
   closingDay: z
     .number()
     .int('Dia de fecho deve ser inteiro')
@@ -145,11 +162,14 @@ export const TransactionSchema = z.object({
   amount: z.number().int('Montante deve ser inteiro em cêntimos (sem casas decimais)'),
   category: z.string().min(1, 'Categoria é obrigatória'),
   description: z.string(),
-  date: z.string().min(1, 'Data é obrigatória'),
-  accountId: z.string().nullable(),
-  cardId: z.string().nullable(),
-  recurrenceId: z.string().nullable(),
-  installmentId: z.string().nullable(),
+  date: z
+    .string()
+    .min(1, 'Data é obrigatória')
+    .regex(ISO_DATE_REGEX, 'Data deve estar em formato ISO 8601 (ex: 2026-05-15)'),
+  accountId: z.string().uuid('accountId deve ser UUID válido').nullable(),
+  cardId: z.string().uuid('cardId deve ser UUID válido').nullable(),
+  recurrenceId: z.string().uuid('recurrenceId deve ser UUID válido').nullable(),
+  installmentId: z.string().uuid('installmentId deve ser UUID válido').nullable(),
   createdAt: z.number().int().positive('createdAt deve ser epoch ms positivo'),
 });
 
@@ -157,13 +177,16 @@ export const TransactionSchema = z.object({
 
 export const InstallmentSchema = z.object({
   id: z.string().uuid('id deve ser UUID válido'),
-  cardId: z.string().min(1, 'cardId é obrigatório'),
+  cardId: z.string().uuid('cardId deve ser UUID válido'),
   totalAmount: z.number().int('Montante total deve ser inteiro em cêntimos'),
   installments: z
     .number()
     .int('Número de prestações deve ser inteiro')
     .positive('Número de prestações deve ser maior que zero'),
-  startDate: z.string().min(1, 'Data de início é obrigatória'),
+  startDate: z
+    .string()
+    .min(1, 'Data de início é obrigatória')
+    .regex(ISO_DATE_REGEX, 'Data de início deve estar em formato ISO 8601 (ex: 2026-05-15)'),
   description: z.string(),
 });
 
