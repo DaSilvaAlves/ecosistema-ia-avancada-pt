@@ -2,7 +2,7 @@
 
 > **Projecto:** Nexus v2 (`imersao-tools/nexus/`)
 > **Criado por:** Morgan (`@pm`) em 20/05/2026
-> **Estado:** EM CURSO — **1/11 stories Done** (Story 3.1 fechada 21/05/2026)
+> **Estado:** EM CURSO — **2/11 stories Done** (Stories 3.1 e 3.2 fechadas 21/05/2026)
 > **Fonte da verdade:** `PRD-NEXUS-V2.md` §6.3, §9, §10 (Epic 3) — Constitution Artigo IV (No Invention): cada story, FR e AC abaixo traça ao PRD
 > **Arquitectura:** `architecture-v2.md` (5 ADRs — não reabrir, ver `project_nexus_v2_architecture.md`)
 > **Lições aplicadas:** Retrospectiva Epic 1 (`retrospectives/EPIC-1-retrospective.md` — A1/A2/A6) + Retrospectiva Epic 2 (`retrospectives/EPIC-2-retrospective.md` — A1/A2/A4)
@@ -51,12 +51,12 @@ Trace directo a `PRD-NEXUS-V2.md` §6.3. Todos os 8 FRs de Finanças (FR16-FR23)
 
 ## 5. Stories (11) — trace PRD §10 Epic 3
 
-> **Progresso:** **1/11 Done** — Epic 3 EM CURSO. As 11 stories abaixo são a decomposição directa das "Stories sugeridas" do PRD §10 Epic 3 (3.1 a 3.11) — nenhuma story foi inventada nem omitida face ao PRD. `@sm` (River) finaliza a atribuição executor/quality-gate em cada story draft; `@po` (Pax) valida. Story 3.1 **Done** (`@po` `*close-story 3.1` 21/05/2026 — PR #30 merged em `main` squash `06e3cfb6`, CR Iter 3 APPROVED, Architect Gate PASS) — [GAP-3.1] resolvido e verificado independentemente: tabela `recurrences` reutilizável com `ownerType: 'transaction'`, risco R2 fechado.
+> **Progresso:** **2/11 Done** — Epic 3 EM CURSO. As 11 stories abaixo são a decomposição directa das "Stories sugeridas" do PRD §10 Epic 3 (3.1 a 3.11) — nenhuma story foi inventada nem omitida face ao PRD. `@sm` (River) finaliza a atribuição executor/quality-gate em cada story draft; `@po` (Pax) valida. Story 3.1 **Done** (`@po` `*close-story 3.1` 21/05/2026 — PR #30 merged em `main` squash `06e3cfb6`, CR Iter 3 APPROVED, Architect Gate PASS) — [GAP-3.1] resolvido e verificado independentemente: tabela `recurrences` reutilizável com `ownerType: 'transaction'`, risco R2 fechado. Story 3.2 **Done** (`@po` `*close-story 3.2` 21/05/2026 — PR #31 merged em `main` squash `25fce8a8`, CR Iter 1 APPROVED 0 findings, QA Gate PASS first-iter) — seed das 10 categorias default PT entregue, idempotente, coverage 100%; CONCERN-1 (coverage allowlist) registada como débito D-3.2-1 na §8.
 
 | # | Story | Descrição | FR | Executor previsto | Quality gate previsto | Estado |
 |---|-------|-----------|-----|-------------------|------------------------|--------|
 | 3.1 | Schema finanças | Schema Dexie `accounts`, `cards`, `transactions`, `recurrences`, `installments`, `categories` — estende o schema das Stories 1.1 e 2.1 conforme `architecture-v2.md` | FR16, FR17, FR18, FR19 | `@data-engineer` | `@architect` | **Done** |
-| 3.2 | Categorias default PT | Semear as 10 categorias default PT (FR22) — Mercearia, Restauração, Combustível, Saúde, Habitação, Educação, Lazer, Subscrições, Serviços, Outros | FR22 | `@dev` | `@qa` | **Pending** |
+| 3.2 | Categorias default PT | Semear as 10 categorias default PT (FR22) — Mercearia, Restauração, Combustível, Saúde, Habitação, Educação, Lazer, Subscrições, Serviços, Outros | FR22 | `@dev` | `@qa` | **Done** |
 | 3.3 | CRUD transações variáveis | CRUD de transações variáveis — UI + persistência (valor EUR formato PT-PT, categoria, data, descrição, conta/cartão opcional) | FR16 | `@ux-design-expert` | `@dev` | **Pending** |
 | 3.4 | CRUD recorrências | CRUD de finanças recorrentes (renda, internet, assinaturas) reutilizando a estrutura de recorrência das tarefas (Story 2.7) | FR17 | `@dev` | `@qa` | **Pending** |
 | 3.5 | CRUD cartões | CRUD de cartões de crédito com fecho de fatura + dia de vencimento; contas bancárias com saldo | FR18 | `@dev` | `@qa` | **Pending** |
@@ -104,6 +104,14 @@ Nenhum ADR base é reaberto. Qualquer divergência face à arquitectura é escal
 | Hard-stop QA loop | Máximo 2 iterações de `qa-loop-fix` por story — mantido 10/10 no Epic 1 e 9/10 no Epic 2 (Story 2.6 outlier com autorização Eurico). Manter no Epic 3. |
 | Revisão manual de cálculos | PRD §10 Epic 3 quality gate exige "revisão manual cálculos fatura/prestações" — as Stories 3.6 (parceladas) e 3.8 (vista cartões) exigem verificação manual dos cálculos de fecho de fatura e divisão de prestações. Ver §9. |
 
+### Débitos técnicos do Epic 3
+
+Débitos não-bloqueadores identificados durante a execução das stories, a absorver por stories futuras ou housekeeping. Precedente: débitos M1/M2/D6 do Epic 2 registados no respectivo epic.
+
+| # | Débito | Origem | Severidade | Recomendação |
+|---|--------|--------|------------|--------------|
+| D-3.2-1 | `vitest.config.ts` → `coverage.include` não inclui `lib/financas/**` — os ficheiros do domínio finanças (`seedCategories.ts`, `formatCurrency.ts`) não aparecem no report de `npm run test:coverage`. Coverage real confirmada (100%) via config Vitest temporário no QA Gate da Story 3.2. | Story 3.2 — CONCERN-1 do QA Gate (`@qa` Quinn) | Baixa — não-bloqueadora; cobertura garantida e verificada, apenas não visível no report global | Adicionar `'lib/financas/**'` ao `coverage.include` de `vitest.config.ts`. A absorver pela **Story 3.3** (que adiciona mais código a `lib/financas/`, sendo o veículo natural) ou por story técnica dedicada. `vitest.config.ts` é path bloqueador (Not-Tested Evidence Gate) — a story que o tocar deve incluir evidência local prévia. |
+
 ## 9. Quality gates do epic
 
 Trace PRD §10 Epic 3: "Epic 1 + revisão manual cálculos fatura/prestações".
@@ -118,11 +126,13 @@ Trace PRD §10 Epic 3: "Epic 1 + revisão manual cálculos fatura/prestações".
 
 ## 10. Próximo passo
 
-**Epic 3 EM CURSO — 1/11 stories Done.** A Story 3.1 (Schema finanças) está fechada (`@po *close-story 3.1`, 21/05/2026 — PR #30 merged em `main` squash `06e3cfb6`). As restantes 10 stories (3.2 a 3.11) estão decompostas a partir do PRD §10 Epic 3, cobrindo integralmente os 8 FRs de Finanças (FR16-FR23) e os 5 Epic ACs.
+**Epic 3 EM CURSO — 2/11 stories Done.** As Stories 3.1 (Schema finanças) e 3.2 (Categorias default PT) estão fechadas (`@po *close-story`, 21/05/2026 — PR #30 squash `06e3cfb6` e PR #31 squash `25fce8a8` merged em `main`). As restantes 9 stories (3.3 a 3.11) estão decompostas a partir do PRD §10 Epic 3, cobrindo integralmente os 8 FRs de Finanças (FR16-FR23) e os 5 Epic ACs.
 
-**Story 3.1 — fecho confirmado.** Schema Dexie `version(3)` aditivo entregue (4 tabelas novas: `accounts`, `cards`, `installments`, `categories` + re-declaração de `transactions` com índice `[cardId+date]`). `[GAP-3.1]` resolvido — `recurrences` reutilizada com `ownerType: 'transaction'`, não recriada. Helper partilhado `lib/financas/formatCurrency.ts` disponível para as vistas (3.3/3.7/3.8/3.9). 5 schemas Zod + 5 repos tipados + 2 hooks reactivos entregues. Nenhuma dependência pendurada para as Stories 3.2-3.11 — a fundação de persistência está completa.
+**Story 3.1 — fecho confirmado.** Schema Dexie `version(3)` aditivo entregue (4 tabelas novas: `accounts`, `cards`, `installments`, `categories` + re-declaração de `transactions` com índice `[cardId+date]`). `[GAP-3.1]` resolvido — `recurrences` reutilizada com `ownerType: 'transaction'`, não recriada. Helper partilhado `lib/financas/formatCurrency.ts` disponível para as vistas (3.3/3.7/3.8/3.9). 5 schemas Zod + 5 repos tipados + 2 hooks reactivos entregues.
 
-**Próximo passo recomendado:** `@sm *draft 3.2` — River cria o draft da Story 3.2 (Categorias default PT) ou da Story 3.3 (CRUD transações variáveis), ambas desbloqueadas pela 3.1. Depois: `@po *validate-story-draft {id}` → executor `*develop {id}` → quality gate → `@devops *push`.
+**Story 3.2 — fecho confirmado.** Seed das 10 categorias default PT (FR22) entregue: `lib/financas/seedCategories.ts` (`seedDefaultCategories()` idempotente — loop `createCategory` + `try/catch` por item) + hook `useFinancasInit` (activação one-shot, padrão `useRecurrenceEngine`). 10 testes Vitest, coverage 100%. QA Gate PASS first-iter, CR Iter 1 APPROVED 0 findings. CONCERN-1 (coverage allowlist) registada como débito D-3.2-1 (§8). Nenhuma dependência pendurada — as 10 categorias default desbloqueiam o pré-requisito de dados das Stories 3.3/3.7/3.11.
+
+**Próximo passo recomendado:** `@sm *draft 3.3` (CRUD transações variáveis) ou `@sm *draft 3.4` (CRUD recorrências) — ambas desbloqueadas pela 3.1. Depois: `@po *validate-story-draft {id}` → executor `*develop {id}` → quality gate → `@devops *push`.
 
 Sequência sugerida (não rígida — `@sm`/`@po` confirmam paralelizabilidade por story):
 - **3.1** (schema) → pré-requisito de todas. Bloqueante.
