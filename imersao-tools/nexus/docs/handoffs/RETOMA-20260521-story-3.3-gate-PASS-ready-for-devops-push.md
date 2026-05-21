@@ -8,7 +8,7 @@
 **Para:** Gage (`@devops`) — `*push feature/3.3-crud-transacoes-variaveis` + PR contra `main`
 **Data:** 2026-05-21
 **Projecto:** Nexus v2 — Epic 3 (Finanças Completas)
-**Estado:** PENDING (aguarda push `@devops`)
+**Estado:** CONSUMIDO 2026-05-21 por Gage (`@devops`) — `*push` executado, PR #32 aberto. CodeRabbit Iter 1 `CHANGES_REQUESTED` → fix loop escalado a `@ux-design-expert` (`RETOMA-20260521-story-3.3-pr-32-cr-iter1-escalado-ux.md`).
 
 ---
 
