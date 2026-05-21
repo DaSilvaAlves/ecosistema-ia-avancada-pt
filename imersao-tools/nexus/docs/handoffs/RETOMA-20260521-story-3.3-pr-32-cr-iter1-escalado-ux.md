@@ -8,7 +8,7 @@
 **Para:** Uma (`@ux-design-expert`) — `*qa-loop-fix 3.3` Iter 2 (executor original da Story 3.3)
 **Data:** 2026-05-21
 **Projecto:** Nexus v2 — Epic 3 (Finanças Completas)
-**Estado:** PENDING (aguarda fix Iter 2 do `@ux-design-expert`)
+**Estado:** CONSUMED — 21/05/2026 por Uma (`@ux-design-expert`). `*qa-loop-fix 3.3` Iter 2 executado: F1+F2+F4 resolvidos, commit `a737a27a`, gates locais 4/4 PASS. Handoff de saída `RETOMA-20260521-story-3.3-pr-32-cr-iter2-fix-aplicado.md` criado para `@devops *push`.
 
 ---
 
