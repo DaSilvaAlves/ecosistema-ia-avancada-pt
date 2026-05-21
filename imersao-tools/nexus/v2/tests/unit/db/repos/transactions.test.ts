@@ -184,6 +184,16 @@ describe('transactions repo', () => {
     expect(result).toHaveLength(0);
   });
 
+  // Story 3.1 Iter 3 (CodeRabbit #3) — limit acima de MAX_LIMIT é limitado ao tecto.
+  it('listTransactions limita limit > MAX_LIMIT ao tecto de 1000', async () => {
+    for (let i = 0; i < 1005; i++) {
+      await createTransaction(makeTransaction({ id: crypto.randomUUID() }));
+    }
+    const result = await listTransactions({ limit: 999999 });
+    expect(result.length).toBeLessThanOrEqual(1000);
+    expect(result).toHaveLength(1000);
+  });
+
   it('updateTransaction aplica patch parcial', async () => {
     const tx = makeTransaction({ amount: -1000 });
     await createTransaction(tx);

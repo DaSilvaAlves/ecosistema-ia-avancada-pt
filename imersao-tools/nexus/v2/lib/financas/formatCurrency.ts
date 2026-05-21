@@ -47,12 +47,18 @@ function groupThousands(value: number): string {
  * produziria saídas absurdas como `€NaN,NaN`. O contrato é cêntimos-inteiro:
  * `NaN`, `Infinity` e valores não-inteiros são rejeitados explicitamente.
  *
+ * Story 3.1 Iter 3 (CodeRabbit #2) — usa `Number.isSafeInteger`, não
+ * `Number.isInteger`. `Number.isInteger` retorna `true` para valores fora do
+ * intervalo seguro IEEE-754 (`> Number.MAX_SAFE_INTEGER`), onde a aritmética
+ * euro/cêntimo (`Math.floor`, `%`) perde precisão silenciosamente.
+ * `Number.isSafeInteger` rejeita esses valores, garantindo exactidão monetária.
+ *
  * @param cents - Montante inteiro em cêntimos (ex: 123456 → €1.234,56).
  * @returns String no formato `€1.234,56` (ou `-€1.234,56` para negativos).
- * @throws {Error} Se `cents` não for um inteiro finito.
+ * @throws {Error} Se `cents` não for um inteiro seguro finito.
  */
 export function formatCurrency(cents: number): string {
-  if (!Number.isInteger(cents)) {
+  if (!Number.isSafeInteger(cents)) {
     throw new Error(
       `Montante inválido (${cents}) — formatCurrency exige um inteiro em cêntimos`,
     );

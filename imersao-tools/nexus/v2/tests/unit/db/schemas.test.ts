@@ -305,6 +305,17 @@ describe('TransactionSchema', () => {
     expect(() => TransactionSchema.parse(invalid)).toThrow(/cardId deve ser UUID válido/);
   });
 
+  // Story 3.1 Iter 3 (CodeRabbit #4) — recurrenceId/installmentId validados como UUID.
+  it('rejeita Transaction com recurrenceId não-UUID', () => {
+    const invalid = { ...validTransaction(), recurrenceId: 'recorrencia-1' };
+    expect(() => TransactionSchema.parse(invalid)).toThrow(/recurrenceId deve ser UUID válido/);
+  });
+
+  it('rejeita Transaction com installmentId não-UUID', () => {
+    const invalid = { ...validTransaction(), installmentId: 'parcela-1' };
+    expect(() => TransactionSchema.parse(invalid)).toThrow(/installmentId deve ser UUID válido/);
+  });
+
   it('aceita Transaction com IDs de referência null (campos opcionais)', () => {
     expect(() => TransactionSchema.parse(validTransaction())).not.toThrow();
   });

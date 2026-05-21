@@ -41,11 +41,14 @@ export async function listCardsByAccount(accountId: string): Promise<Card[]> {
 }
 
 export async function updateCard(id: string, patch: Partial<Card>): Promise<void> {
-  // Story 3.1 Iter 2 (CodeRabbit #2) — validar o patch parcial antes da escrita.
-  // `.partial()` mantém as regras de cada campo presente (closingDay/dueDay 1-31,
-  // accountId UUID, limit inteiro em cêntimos).
-  CardSchema.partial().parse(patch);
-  const updated = await db.cards.update(id, patch);
+  // Story 3.1 Iter 2 (CodeRabbit #2) / Iter 3 (CodeRabbit #1) — validar o patch
+  // parcial antes da escrita e persistir o objecto SANEADO. `.partial()` mantém
+  // as regras de cada campo presente (closingDay/dueDay 1-31, accountId UUID,
+  // limit inteiro em cêntimos); `z.object` faz strip de chaves desconhecidas.
+  // Persistir `validatedPatch` (não o `patch` cru) garante que chaves extra ou
+  // inválidas nunca chegam ao Dexie.
+  const validatedPatch = CardSchema.partial().parse(patch);
+  const updated = await db.cards.update(id, validatedPatch);
   if (updated === 0) {
     throw new Error(`Cartão ${id} não encontrado — não foi possível actualizar`);
   }
