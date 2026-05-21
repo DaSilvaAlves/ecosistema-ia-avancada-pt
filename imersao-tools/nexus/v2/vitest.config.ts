@@ -59,6 +59,13 @@ export default defineConfig({
         // 2.3/2.6/2.8 — adiciona path à allowlist do report; thresholds
         // globais inalterados; sem alteração comportamental do test runner).
         'lib/agent/tools/**',
+        // Story 3.3 — CRUD transações variáveis. Absorve o débito D-3.2-1
+        // (EPIC-3 §8): o domínio `lib/financas/` (`formatCurrency.ts`,
+        // `seedCategories.ts`, `currencyInput.ts`) passa a ser medido no
+        // report de coverage. Precedente Stories 2.3/2.8/2.10 — apenas
+        // adiciona path à allowlist do report; thresholds globais inalterados;
+        // sem alteração comportamental do test runner.
+        'lib/financas/**',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)
