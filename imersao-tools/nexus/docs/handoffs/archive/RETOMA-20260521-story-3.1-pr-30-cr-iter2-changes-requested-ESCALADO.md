@@ -9,7 +9,10 @@
 | `from_agent` | Gage (`@devops`) |
 | `to_agent` | Eurico (decisão humana — hard-stop EPIC-3 §8) |
 | `created` | 21/05/2026 |
-| `status` | pending |
+| `status` | consumed |
+| `consumed` | true |
+| `consumed_at` | 2026-05-21T16:45:00Z |
+| `consumed_by` | data-engineer (Dara) |
 | `project` | Nexus v2 — Epic 3 (Finanças), Story 3.1 |
 | `branch` | `feature/3.1-schema-financas` |
 | `pr` | #30 — https://github.com/DaSilvaAlves/ecosistema-ia-avancada-pt/pull/30 |
@@ -125,8 +128,8 @@ CONSULTAR `.claude/rules/handoff-location.md`.
 ESTE HANDOFF FOI CRIADO SEGUINDO A REGRA OBRIGATÓRIA `.claude/rules/handoff-location.md`.
 
 - PROJECTO A QUE SE REFERE: `Nexus v2`
-- LOCALIZAÇÃO CORRECTA: `imersao-tools/nexus/docs/handoffs/`
-- LOCALIZAÇÃO ACTUAL: `imersao-tools/nexus/docs/handoffs/RETOMA-20260521-story-3.1-pr-30-cr-iter2-changes-requested-ESCALADO.md`
+- LOCALIZAÇÃO CORRECTA: `imersao-tools/nexus/docs/handoffs/archive/`
+- LOCALIZAÇÃO ACTUAL: `imersao-tools/nexus/docs/handoffs/archive/RETOMA-20260521-story-3.1-pr-30-cr-iter2-changes-requested-ESCALADO.md`
 - COINCIDEM? `SIM`
 
 AGENTE RESPONSÁVEL: `Gage (@devops)`
