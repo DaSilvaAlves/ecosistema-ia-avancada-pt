@@ -8,7 +8,9 @@
 **Para:** Gage (`@devops`) — `*push feature/3.1-schema-financas` Iter 2 (push incremental + acompanhar CI + CodeRabbit Iter 2)
 **Data:** 2026-05-21
 **Projecto:** Nexus v2 — Epic 3 (Finanças Completas)
-**Estado:** `status: pending`
+**Estado:** `status: consumed`
+**Consumido em:** 2026-05-21T15:30Z
+**Consumido por:** Gage (`@devops`)
 **Branch:** `feature/3.1-schema-financas` — head `40221e91` (commit Iter 2)
 **PR:** [#30](https://github.com/DaSilvaAlves/ecosistema-ia-avancada-pt/pull/30) — OPEN
 
