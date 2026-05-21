@@ -63,6 +63,21 @@ describe('parseCurrencyInput', () => {
   it('rejeita mais de duas casas decimais (1,234)', () => {
     expect(() => parseCurrencyInput('1,234')).toThrow(/Valor inválido/);
   });
+
+  it('rejeita montante grande demais — cêntimos acima de Number.MAX_SAFE_INTEGER', () => {
+    // 99.999.999.999.999,99 € → 9.999.999.999.999.999 cêntimos, acima de
+    // MAX_SAFE_INTEGER (9.007.199.254.740.991). Activa o overflow guard
+    // `!Number.isSafeInteger(cents)` de `parseCurrencyInput`.
+    expect(() => parseCurrencyInput('99.999.999.999.999,99')).toThrow(
+      /demasiado grande/,
+    );
+  });
+
+  it('aceita o maior montante ainda representável como inteiro seguro', () => {
+    // 90.071.992.547.409,90 € → 9.007.199.254.740.990 cêntimos, ainda dentro
+    // de MAX_SAFE_INTEGER — limite superior do overflow guard, não o ultrapassa.
+    expect(parseCurrencyInput('90.071.992.547.409,90')).toBe(9007199254740990);
+  });
 });
 
 describe('centsToInputValue', () => {
@@ -88,6 +103,22 @@ describe('centsToInputValue', () => {
 
   it('rejeita input não-inteiro', () => {
     expect(() => centsToInputValue(1.5)).toThrow(/Montante inválido/);
+  });
+
+  it('rejeita cêntimos grandes demais — acima de Number.MAX_SAFE_INTEGER', () => {
+    // MAX_SAFE_INTEGER + 1 deixa de ser inteiro seguro: activa o overflow
+    // guard `!Number.isSafeInteger(cents)` de `centsToInputValue`.
+    expect(() => centsToInputValue(Number.MAX_SAFE_INTEGER + 1)).toThrow(
+      /Montante inválido/,
+    );
+    expect(() => centsToInputValue(Number.POSITIVE_INFINITY)).toThrow(
+      /Montante inválido/,
+    );
+  });
+
+  it('aceita o maior valor de cêntimos ainda seguro (MAX_SAFE_INTEGER)', () => {
+    // Limite superior do guard — ainda seguro, não deve lançar.
+    expect(() => centsToInputValue(Number.MAX_SAFE_INTEGER)).not.toThrow();
   });
 });
 
@@ -119,6 +150,17 @@ describe('applyDirection', () => {
 
   it('rejeita cêntimos não-inteiros', () => {
     expect(() => applyDirection(1.5, 'entrada')).toThrow(/Cêntimos inválidos/);
+  });
+
+  it('rejeita cêntimos grandes demais — acima de Number.MAX_SAFE_INTEGER', () => {
+    // Mesmo overflow guard `!Number.isSafeInteger` — fixa o contrato para o
+    // limite superior, não só para o não-inteiro.
+    expect(() => applyDirection(Number.MAX_SAFE_INTEGER + 1, 'saida')).toThrow(
+      /Cêntimos inválidos/,
+    );
+    expect(() => applyDirection(Number.POSITIVE_INFINITY, 'entrada')).toThrow(
+      /Cêntimos inválidos/,
+    );
   });
 });
 

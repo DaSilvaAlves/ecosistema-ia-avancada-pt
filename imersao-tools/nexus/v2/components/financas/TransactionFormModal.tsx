@@ -193,8 +193,12 @@ export function TransactionFormModal({
         }
         setErrors(fieldErrors);
       } else {
-        // Erro do repo — propaga via toast no parent.
-        throw err;
+        // Erro do repo (não-Zod): o parent (`financas/page.tsx`) já o tratou —
+        // `console.error` + toast de erro. Não reescapamos: num handler `async`
+        // o `throw` viraria uma promise rejeitada não tratada e deixaria o modal
+        // num estado inconsistente. `return` mantém o modal aberto, com
+        // `submitting` já a `false`, para o utilizador poder tentar de novo.
+        return;
       }
     }
   }
