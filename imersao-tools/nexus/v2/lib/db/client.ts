@@ -5,6 +5,10 @@ import type {
   Recurrence,
   Tag,
   Transaction,
+  Account,
+  Card,
+  Installment,
+  Category,
   Habit,
   HabitLog,
   Goal,
@@ -18,7 +22,7 @@ import type {
 } from '@/types/db';
 
 /**
- * Nexus v2 — Dexie 4 client (Story 0.3 + Story 2.1)
+ * Nexus v2 — Dexie 4 client (Story 0.3 + Story 2.1 + Story 3.1)
  *
  * Schema version 1 — fonte canónica architecture-v2.md §4.2.
  * Constitution Article IV — não inventar tabelas/campos.
@@ -27,6 +31,20 @@ import type {
  * partilhada entre Epics 2/3/4 — architecture §16 L1128 — e `tags` globais).
  * Epic 3 incrementa para version 3 (accounts, cards, installments, categories).
  * Cada Epic adiciona `this.version(N+1).stores({...})` sem reescrever o anterior.
+ *
+ * Story 3.1 — version 3 (Epic 3 Finanças):
+ * - 4 tabelas novas: accounts, cards, installments, categories.
+ * - `transactions` JÁ EXISTE em version(1) — NÃO recriada. version(3)
+ *   re-declara `transactions` apenas para ADICIONAR o índice composto
+ *   `[cardId+date]` ([AUTO-DECISION] A4 — vista cartões da Story 3.8 filtra
+ *   por cartão + range de datas). Re-declarar uma tabela num version() posterior
+ *   é o mecanismo Dexie aditivo de alteração de índices — preserva os dados.
+ * - `recurrences` JÁ EXISTE em version(2) — NÃO recriada. Para finanças
+ *   recorrentes (FR17, Story 3.4) usar `ownerType: 'transaction'` no repo
+ *   existente. [GAP-3.1] RESOLVIDO: a tabela `recurrences` é genérica por
+ *   `ownerType` (types/db.ts:84) — sem extensão de schema necessária.
+ * - Interfaces Account/Card/Transaction/Installment/Category vivem em
+ *   types/db.ts:98-142 (Story 0.3) — version(3) só liga as tabelas.
  */
 
 export class NexusDB extends Dexie {
@@ -35,6 +53,10 @@ export class NexusDB extends Dexie {
   recurrences!: Table<Recurrence, string>;
   tags!: Table<Tag, string>;
   transactions!: Table<Transaction, string>;
+  accounts!: Table<Account, string>;
+  cards!: Table<Card, string>;
+  installments!: Table<Installment, string>;
+  categories!: Table<Category, string>;
   habits!: Table<Habit, string>;
   habit_logs!: Table<HabitLog, string>;
   goals!: Table<Goal, string>;
@@ -76,6 +98,29 @@ export class NexusDB extends Dexie {
     this.version(2).stores({
       recurrences: 'id, ownerType, ownerId, [ownerType+ownerId]',
       tags: 'id, name',
+    });
+    // Story 3.1 — Epic 3 schema increment (Finanças).
+    // Aditivo: Dexie preserva as 15 tabelas de version(2). Apenas as 4 tabelas
+    // novas (accounts, cards, installments, categories) são adicionadas → 19.
+    // - accounts: contas bancárias com saldo (FR18). `balance` em cêntimos.
+    // - cards: cartões de crédito (FR18). `closingDay`/`dueDay` para fatura.
+    // - installments: compras parceladas vinculadas a cartão (FR19). Índice
+    //   composto [cardId+startDate] serve `listInstallmentsByCard`.
+    // - categories: categorias de transações (FR16/FR22). PK é `name`
+    //   ([AUTO-DECISION] A3, ratificada @po) — `Transaction.category` referencia
+    //   o nome directamente (types/db.ts:118), evita join.
+    // - transactions: re-declarada apenas para adicionar o índice composto
+    //   [cardId+date] ([AUTO-DECISION] A4 — vista cartões Story 3.8). A tabela
+    //   e os dados são preservados; só o índice é adicionado. Os índices
+    //   anteriores de version(1) mantêm-se (Dexie aplica o conjunto declarado
+    //   na versão mais recente).
+    this.version(3).stores({
+      accounts: 'id, type, createdAt',
+      cards: 'id, accountId, closingDay, dueDay',
+      installments: 'id, cardId, startDate, [cardId+startDate]',
+      categories: 'name, isDefault',
+      transactions:
+        'id, accountId, cardId, category, date, recurrenceId, [accountId+date], [cardId+date]',
     });
   }
 }

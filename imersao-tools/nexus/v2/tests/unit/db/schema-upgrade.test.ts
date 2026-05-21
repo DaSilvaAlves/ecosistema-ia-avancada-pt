@@ -14,9 +14,10 @@ import type { Task, Project } from '@/types/db';
  * 1. Abrir a DB `nexus_v2` numa Dexie minimalista que SÓ conhece `version(1)`,
  *    espelhando o estado pré-Story 2.1 (era assim que existia em main antes deste push).
  * 2. Inserir dados (tarefa + projecto) e fechar.
- * 3. Reabrir como `NexusDB` (que conhece `version(1)` + `version(2)`). Dexie
- *    detecta a versão antiga, aplica o upgrade aditivo (recurrences + tags
- *    novas, vazias) e mantém todos os dados de `version(1)`.
+ * 3. Reabrir como `NexusDB` (Story 3.1: agora em `version(3)`). Dexie detecta
+ *    a versão antiga e aplica os upgrades aditivos encadeados (v1→v2 recurrences
+ *    + tags; v2→v3 accounts + cards + installments + categories), mantendo
+ *    todos os dados de `version(1)`.
  * 4. Verificar que os dados antigos sobrevivem e que as novas tabelas existem
  *    e estão vazias.
  *
@@ -108,10 +109,11 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
 
     oldDB.close();
 
-    // 2. Reabrir como NexusDB completa (v1 + v2) — Dexie detecta upgrade aditivo.
+    // 2. Reabrir como NexusDB completa — Dexie detecta upgrade aditivo desde v1.
+    //    Story 3.1: NexusDB está agora em version(3); o upgrade aplica v1→v2→v3.
     const newDB = new NexusDB();
     await newDB.open();
-    expect(newDB.verno).toBe(2);
+    expect(newDB.verno).toBe(3);
 
     // 3. Dados originais sobrevivem.
     expect(await newDB.tasks.count()).toBe(1);
@@ -171,12 +173,17 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
     newDB.close();
   });
 
-  it('NexusDB em base limpa abre directamente em version(2) com todas as 15 tabelas', async () => {
+  it('NexusDB em base limpa abre directamente em version(3) com todas as 19 tabelas', async () => {
     const db = new NexusDB();
     await db.open();
-    expect(db.verno).toBe(2);
+    expect(db.verno).toBe(3);
 
-    // 13 tabelas de version(1) + 2 novas de version(2).
+    // 13 de version(1) + 2 de version(2) + 4 de version(3) = 19 tabelas.
+    // Story 3.1 Iter 2 (CodeRabbit #10) — asserção de contagem total: o título
+    // afirma "19 tabelas" e a verificação prova-o explicitamente.
+    expect(db.tables).toHaveLength(19);
+
+    // As 15 tabelas de version(2) (13 de version(1) + 2 de version(2)).
     expect(await db.tasks.count()).toBe(0);
     expect(await db.projects.count()).toBe(0);
     expect(await db.recurrences.count()).toBe(0);
@@ -192,6 +199,12 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
     expect(await db.knowledge_notes.count()).toBe(0);
     expect(await db.agent_runs.count()).toBe(0);
     expect(await db.chat_messages.count()).toBe(0);
+
+    // As 4 tabelas novas de version(3) — Story 3.1 (CodeRabbit #10).
+    expect(await db.accounts.count()).toBe(0);
+    expect(await db.cards.count()).toBe(0);
+    expect(await db.installments.count()).toBe(0);
+    expect(await db.categories.count()).toBe(0);
 
     db.close();
   });
