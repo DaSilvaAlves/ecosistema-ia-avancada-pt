@@ -8,9 +8,14 @@
 **Para:** Dara (`@data-engineer`) — `*qa-loop-fix 3.1` Iter 2 (domínio schema/DDL — executor da Story 3.1)
 **Data:** 2026-05-21
 **Projecto:** Nexus v2 — Epic 3 (Finanças Completas)
-**Estado:** `status: pending`
+**Estado:** `status: consumed`
+**consumed:** `true`
+**consumed_at:** `2026-05-21T01:20:00Z`
+**consumed_by:** `data-engineer`
 **Branch:** `feature/3.1-schema-financas` — head `1e3f4a6d`
 **PR:** [#30](https://github.com/DaSilvaAlves/ecosistema-ia-avancada-pt/pull/30) — OPEN
+
+> **CONSUMIDO** — Dara (`@data-engineer`) executou `*qa-loop-fix 3.1` Iter 2. Os 13+1 findings do CodeRabbit Iter 1 foram TODOS resolvidos (zero recusas) no commit `40221e91`. Quality gates locais 4/4 PASS (lint, typecheck, test:unit 753/753, build). Handoff de saída `RETOMA-20260521-story-3.1-iter2-fix-pronto-para-devops-push.md` criado para Gage `*push` Iter 2.
 
 ---
 
