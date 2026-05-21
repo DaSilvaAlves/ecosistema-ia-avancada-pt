@@ -91,7 +91,7 @@ export function Header({ onToggleSidebar, showSidebarToggle }: HeaderProps): Rea
         }}
       >
         <NavLink href="/tasks">Tarefas</NavLink>
-        <NavLink href="/finance">Finanças</NavLink>
+        <NavLink href="/financas">Finanças</NavLink>
         <NavLink href="/habits">Hábitos</NavLink>
         <NavLink href="/journal">Diário</NavLink>
         <NavLink href="/knowledge">Conhecimento</NavLink>
