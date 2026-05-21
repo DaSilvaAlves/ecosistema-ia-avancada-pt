@@ -8,7 +8,10 @@
 **Para:** Gage (`@devops`) — `*push feature/3.1-schema-financas`
 **Data:** 2026-05-21
 **Projecto:** Nexus v2 — Epic 3 (Finanças Completas)
-**Estado:** `status: pending`
+**Estado:** `status: consumed`
+**consumed:** true
+**consumed_at:** 2026-05-21T00:30:00Z
+**consumed_by:** devops (Gage) — `*push feature/3.1-schema-financas` executado: push de `main` (3 commits docs-only `fa6d51a5..430f4c26`), pre-push gates 4/4 PASS, push da feature branch, PR #30 aberto, CI essencial 100% verde, CodeRabbit Iter 1 CHANGES_REQUESTED com 12 findings de código + 1 outside-diff Major + 1 nitpick. Merge NÃO procede (findings de código actionable, não doc-nits puros). Fix loop Iter 2 escalado ao `@data-engineer` via `RETOMA-20260521-story-3.1-pr-30-cr-iter1-escalado-data-engineer.md`.
 **Branch:** `feature/3.1-schema-financas` — commits `82b07ea4` (código) + `c3ccf397` (handoff bookkeeping) + commit do gate (este)
 
 ---
