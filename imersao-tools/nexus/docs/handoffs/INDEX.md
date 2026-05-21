@@ -9,7 +9,7 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 
 | Ficheiro | De | Para | Data | Próxima acção |
 |---------|-----|------|------|--------------|
-| _(vazio)_ | | | | |
+| [RETOMA-20260521-story-3.2-fechada-push-pendente-proximo-draft-3.3.md](RETOMA-20260521-story-3.2-fechada-push-pendente-proximo-draft-3.3.md) | Pax (`@po`) — `*close-story 3.2`: Story 3.2 (Categorias default PT) fechada, Epic 3 a 2/11 Done | Gage (`@devops`) — `*push` · depois River (`@sm`) — `*draft 3.3` | 21/05/2026 | **(1)** `@devops *push` do commit de fecho `6227f561` (`main`→`origin/main`, docs-only). **(2)** `@sm *draft 3.3` próxima story Epic 3 — nascer em feature branch (NÃO em `main`), ler `EPIC-3.md` para scope. Débito D-3.2-1 (`vitest.config.ts coverage.include` sem `lib/financas/**`) a absorver se a 3.3 tocar testes. |
 
 ---
 
