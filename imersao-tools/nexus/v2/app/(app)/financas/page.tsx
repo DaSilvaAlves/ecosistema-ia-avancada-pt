@@ -1,47 +1,83 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useCards } from '@/hooks/useCards';
+import { useFinanceRecurrences } from '@/hooks/useFinanceRecurrences';
+import { useFinanceRecurrenceEngine } from '@/hooks/useFinanceRecurrenceEngine';
 import {
   createTransaction,
   deleteTransaction,
   updateTransaction,
 } from '@/lib/db/repos/transactions';
-import type { Transaction } from '@/types/db';
+import {
+  createFinanceRecurrence,
+  deleteFinanceRecurrence,
+  updateFinanceRecurrence,
+} from '@/lib/db/repos/finance-recurrences';
+import {
+  createRecurrence,
+  deleteRecurrence,
+  getRecurrence,
+} from '@/lib/db/repos/recurrences';
+import { generateTransactionInstances } from '@/lib/shared/recurrence';
+import type { FinanceRecurrence, Recurrence, Transaction } from '@/types/db';
 import { TransactionFormModal } from '@/components/financas/TransactionFormModal';
 import { TransactionsList } from '@/components/financas/TransactionsList';
+import {
+  FinanceRecurrenceFormModal,
+  type FinanceRecurrenceSubmit,
+} from '@/components/financas/FinanceRecurrenceFormModal';
+import { FinanceRecurrencesList } from '@/components/financas/FinanceRecurrencesList';
 
 /**
- * Nexus v2 — Página /financas (Story 3.3 — CRUD transações variáveis, FR16)
+ * Nexus v2 — Página /financas (Story 3.3 — transações variáveis FR16;
+ * Story 3.4 — recorrências financeiras FR17)
  *
  * Rota: /financas — App Router page com 'use client' (Dexie via useLiveQuery
- * exige client component). Primeira rota de finanças do Epic 3; as Stories
- * 3.7/3.8/3.9 estendem-na com as vistas analíticas.
+ * exige client component).
  *
  * Composição:
- *   1. Cabeçalho — título "Finanças" + botão "+ Nova transação"
- *   2. Lista cronológica básica de transações (loading | empty | <TransactionsList>)
- *   3. <TransactionFormModal> condicional — criar/editar com Zod + focus trap
+ *   1. Cabeçalho — título "Finanças" + botão de criação contextual à tab
+ *   2. Tab strip — "Transações" | "Recorrências" ([AUTO-DECISION] A5 da 3.4)
+ *   3. Tab Transações — lista cronológica + <TransactionFormModal> (Story 3.3)
+ *   4. Tab Recorrências — lista + <FinanceRecurrenceFormModal> (Story 3.4)
  *
- * Repo isolation: zero `db.transactions.*` directos — apenas `createTransaction`,
- * `updateTransaction`, `deleteTransaction` do repo da Story 3.1.
- *
- * Os hooks reactivos vivem aqui (parent); o modal e a lista recebem os dados
- * por props — padrão herdado de `tarefas/page.tsx` e `projectos/page.tsx`.
+ * O motor de recorrência financeira (`useFinanceRecurrenceEngine`) corre uma vez
+ * no mount — gera as transações recorrentes em falta dentro do horizonte de 90
+ * dias. A Story 3.10 substitui este hook pela geração diária ("first load of
+ * the day"). Repo isolation: zero `db.*` directos — apenas funções dos repos.
  */
 
 type ModalState =
-  | { mode: 'create' }
-  | { mode: 'edit'; transaction: Transaction }
+  | { kind: 'transaction'; mode: 'create' }
+  | { kind: 'transaction'; mode: 'edit'; transaction: Transaction }
+  | { kind: 'recurrence'; mode: 'create' }
+  | {
+      kind: 'recurrence';
+      mode: 'edit';
+      recurrence: FinanceRecurrence & { recurrence: Recurrence };
+    }
   | null;
+
+type Tab = 'transactions' | 'recurrences';
+
+/** Recorrência financeira enriquecida com a `Recurrence` associada (RRULE). */
+interface FinanceRecurrenceWithRule extends FinanceRecurrence {
+  recurrence: Recurrence | undefined;
+}
 
 export default function FinancasPage(): React.ReactElement {
   const router = useRouter();
 
+  // Story 3.4 — activa o motor de recorrência financeira uma vez no mount.
+  useFinanceRecurrenceEngine();
+
+  const [tab, setTab] = useState<Tab>('transactions');
   const [modal, setModal] = useState<ModalState>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [openerEl, setOpenerEl] = useState<HTMLElement | null>(null);
@@ -51,9 +87,24 @@ export default function FinancasPage(): React.ReactElement {
   const categories = useCategories();
   const accounts = useAccounts();
   const cards = useCards();
+  const financeRecurrences = useFinanceRecurrences();
 
-  // Escape global → router.back (precedente projectos/page.tsx). Só dispara se
-  // o modal estiver fechado — o modal trata o seu próprio Escape.
+  // Junta cada FinanceRecurrence à sua Recurrence (RRULE + datas) — reactivo.
+  const recurrencesWithRule = useLiveQuery<
+    FinanceRecurrenceWithRule[] | undefined
+  >(async () => {
+    if (financeRecurrences === undefined) return undefined;
+    const enriched = await Promise.all(
+      financeRecurrences.map(async (fr) => ({
+        ...fr,
+        recurrence: await getRecurrence(fr.recurrenceId),
+      })),
+    );
+    return enriched;
+  }, [financeRecurrences]);
+
+  // Escape global → router.back (precedente Story 3.3). Só dispara se o modal
+  // estiver fechado — o modal trata o seu próprio Escape.
   useEffect(() => {
     function handleEscape(e: KeyboardEvent): void {
       if (modal !== null) return;
@@ -85,21 +136,23 @@ export default function FinancasPage(): React.ReactElement {
     }
   }
 
-  const handleNew = useCallback((): void => {
+  // ─── Transações (Story 3.3) ───
+
+  const handleNewTransaction = useCallback((): void => {
     rememberOpener();
-    setModal({ mode: 'create' });
+    setModal({ kind: 'transaction', mode: 'create' });
   }, []);
 
-  const handleEdit = useCallback((transaction: Transaction): void => {
+  const handleEditTransaction = useCallback((transaction: Transaction): void => {
     rememberOpener();
-    setModal({ mode: 'edit', transaction });
+    setModal({ kind: 'transaction', mode: 'edit', transaction });
   }, []);
 
-  async function handleSubmitModal(input: Transaction): Promise<void> {
+  async function handleSubmitTransaction(input: Transaction): Promise<void> {
     try {
-      if (modal?.mode === 'create') {
+      if (modal?.kind === 'transaction' && modal.mode === 'create') {
         await createTransaction(input);
-      } else if (modal?.mode === 'edit') {
+      } else if (modal?.kind === 'transaction' && modal.mode === 'edit') {
         const patch: Partial<Transaction> = {
           amount: input.amount,
           category: input.category,
@@ -117,7 +170,7 @@ export default function FinancasPage(): React.ReactElement {
     }
   }
 
-  const handleDelete = useCallback(async (id: string): Promise<void> => {
+  const handleDeleteTransaction = useCallback(async (id: string): Promise<void> => {
     const confirmed = window.confirm(
       'Apagar esta transação? Esta acção não pode ser anulada.',
     );
@@ -129,6 +182,111 @@ export default function FinancasPage(): React.ReactElement {
       setErrorMessage('Erro ao apagar transação — tenta novamente.');
     }
   }, []);
+
+  // ─── Recorrências financeiras (Story 3.4) ───
+
+  const handleNewRecurrence = useCallback((): void => {
+    rememberOpener();
+    setModal({ kind: 'recurrence', mode: 'create' });
+  }, []);
+
+  const handleEditRecurrence = useCallback(
+    (recurrence: FinanceRecurrenceWithRule): void => {
+      if (recurrence.recurrence === undefined) {
+        setErrorMessage('Recorrência sem regra associada — não é possível editar.');
+        return;
+      }
+      rememberOpener();
+      setModal({
+        kind: 'recurrence',
+        mode: 'edit',
+        recurrence: { ...recurrence, recurrence: recurrence.recurrence },
+      });
+    },
+    [],
+  );
+
+  async function handleSubmitRecurrence(input: FinanceRecurrenceSubmit): Promise<void> {
+    try {
+      if (modal?.kind === 'recurrence' && modal.mode === 'create') {
+        // AC9: criar Recurrence → criar FinanceRecurrence (com recurrenceId) →
+        // gerar transações imediatamente.
+        const recurrenceId = crypto.randomUUID();
+        const recurrence: Recurrence = {
+          id: recurrenceId,
+          rule: input.rule,
+          startDate: input.startDate,
+          endDate: input.endDate,
+          ownerType: 'transaction',
+          ownerId: '', // preenchido a seguir, quando o FinanceRecurrence.id existir
+        };
+        // Cria primeiro o template (gera o id) para preencher Recurrence.ownerId.
+        const financeRecurrence = await createFinanceRecurrence({
+          ...input.template,
+          recurrenceId,
+        });
+        await createRecurrence({
+          ...recurrence,
+          ownerId: financeRecurrence.id,
+        });
+        await generateTransactionInstances(financeRecurrence, {
+          ...recurrence,
+          ownerId: financeRecurrence.id,
+        });
+      } else if (modal?.kind === 'recurrence' && modal.mode === 'edit') {
+        // AC10: preserva id/createdAt do FinanceRecurrence; actualiza o template
+        // e recria a RRULE da Recurrence; gera novas transações (idempotente).
+        const existing = modal.recurrence;
+        await updateFinanceRecurrence(existing.id, {
+          amount: input.template.amount,
+          category: input.template.category,
+          description: input.template.description,
+          accountId: input.template.accountId,
+          cardId: input.template.cardId,
+        });
+        const updatedRecurrence: Recurrence = {
+          ...existing.recurrence,
+          rule: input.rule,
+          startDate: input.startDate,
+          endDate: input.endDate,
+        };
+        // A tabela `recurrences` não tem update no repo; recria via put-equivalente.
+        await deleteAndRecreateRecurrence(existing.recurrence.id, updatedRecurrence);
+        await generateTransactionInstances(
+          { ...existing, ...input.template, recurrenceId: existing.recurrenceId },
+          updatedRecurrence,
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao guardar recorrência financeira', error);
+      setErrorMessage('Erro ao guardar recorrência — tenta novamente.');
+      throw error;
+    }
+  }
+
+  const handleDeleteRecurrence = useCallback(async (id: string): Promise<void> => {
+    const confirmed = window.confirm(
+      'Apagar esta recorrência? As transações já geradas não serão eliminadas.',
+    );
+    if (!confirmed) return;
+    try {
+      await deleteFinanceRecurrence(id);
+    } catch (error) {
+      console.error('Erro ao apagar recorrência financeira', error);
+      setErrorMessage('Erro ao apagar recorrência — tenta novamente.');
+    }
+  }, []);
+
+  // ─── Cabeçalho contextual ───
+
+  const newButtonLabel =
+    tab === 'transactions' ? '+ Nova transação' : '+ Nova recorrência';
+  const handleNew = tab === 'transactions' ? handleNewTransaction : handleNewRecurrence;
+
+  const recurrencesForList = useMemo<FinanceRecurrenceWithRule[]>(
+    () => recurrencesWithRule ?? [],
+    [recurrencesWithRule],
+  );
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -168,24 +326,66 @@ export default function FinancasPage(): React.ReactElement {
             boxShadow: '0 0 20px rgba(0, 245, 255, 0.4)',
           }}
         >
-          + Nova transação
+          {newButtonLabel}
         </button>
       </header>
 
-      {transactions === undefined ? (
-        <LoadingSkeleton />
-      ) : transactions.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <TransactionsList
-          transactions={transactions}
-          categories={categories ?? []}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+      <div
+        role="tablist"
+        aria-label="Vistas de finanças"
+        style={{
+          display: 'flex',
+          gap: 4,
+          padding: '0 1.5rem 1rem',
+        }}
+      >
+        <TabButton
+          id="tab-transactions"
+          label="Transações"
+          selected={tab === 'transactions'}
+          onSelect={() => setTab('transactions')}
         />
+        <TabButton
+          id="tab-recurrences"
+          label="Recorrências"
+          selected={tab === 'recurrences'}
+          onSelect={() => setTab('recurrences')}
+        />
+      </div>
+
+      {tab === 'transactions' ? (
+        <div role="tabpanel" aria-labelledby="tab-transactions" style={{ flex: 1 }}>
+          {transactions === undefined ? (
+            <LoadingSkeleton label="A carregar transações" />
+          ) : transactions.length === 0 ? (
+            <EmptyState text='Sem transações. Regista a primeira no botão "+ Nova transação".' />
+          ) : (
+            <TransactionsList
+              transactions={transactions}
+              categories={categories ?? []}
+              onEdit={handleEditTransaction}
+              onDelete={handleDeleteTransaction}
+            />
+          )}
+        </div>
+      ) : (
+        <div role="tabpanel" aria-labelledby="tab-recurrences" style={{ flex: 1 }}>
+          {recurrencesWithRule === undefined ? (
+            <LoadingSkeleton label="A carregar recorrências" />
+          ) : recurrencesForList.length === 0 ? (
+            <EmptyState text='Sem recorrências. Regista a primeira no botão "+ Nova recorrência".' />
+          ) : (
+            <FinanceRecurrencesList
+              recurrences={recurrencesForList}
+              categories={categories ?? []}
+              onEdit={handleEditRecurrence}
+              onDelete={handleDeleteRecurrence}
+            />
+          )}
+        </div>
       )}
 
-      {modal !== null && (
+      {modal !== null && modal.kind === 'transaction' && (
         <TransactionFormModal
           mode={modal.mode}
           initialValue={modal.mode === 'edit' ? modal.transaction : undefined}
@@ -193,7 +393,19 @@ export default function FinancasPage(): React.ReactElement {
           accounts={accounts ?? []}
           cards={cards ?? []}
           onClose={closeModal}
-          onSubmit={handleSubmitModal}
+          onSubmit={handleSubmitTransaction}
+        />
+      )}
+
+      {modal !== null && modal.kind === 'recurrence' && (
+        <FinanceRecurrenceFormModal
+          mode={modal.mode}
+          initialValue={modal.mode === 'edit' ? modal.recurrence : undefined}
+          categories={categories ?? []}
+          accounts={accounts ?? []}
+          cards={cards ?? []}
+          onClose={closeModal}
+          onSubmit={handleSubmitRecurrence}
         />
       )}
 
@@ -226,11 +438,59 @@ export default function FinancasPage(): React.ReactElement {
   );
 }
 
-function LoadingSkeleton(): React.ReactElement {
+/**
+ * A tabela `recurrences` só tem `createRecurrence`/`deleteRecurrence` no repo
+ * (Story 2.1). Para editar uma `Recurrence` (modo edit de recorrência
+ * financeira) recria-se o registo com o mesmo `id` — delete + create. O `id`
+ * é preservado, por isso a `FinanceRecurrence.recurrenceId` continua válida.
+ */
+async function deleteAndRecreateRecurrence(
+  id: string,
+  next: Recurrence,
+): Promise<void> {
+  await deleteRecurrence(id);
+  await createRecurrence({ ...next, id });
+}
+
+interface TabButtonProps {
+  id: string;
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+function TabButton({ id, label, selected, onSelect }: TabButtonProps): React.ReactElement {
+  return (
+    <button
+      id={id}
+      role="tab"
+      type="button"
+      aria-selected={selected}
+      onClick={onSelect}
+      style={{
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: '0.68rem',
+        fontWeight: 700,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: selected ? '#04040A' : '#8892A4',
+        background: selected ? '#00F5FF' : 'rgba(255, 255, 255, 0.04)',
+        border: `1px solid ${selected ? '#00F5FF' : 'rgba(255, 255, 255, 0.1)'}`,
+        borderRadius: 6,
+        padding: '0.45rem 0.9rem',
+        cursor: 'pointer',
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function LoadingSkeleton({ label }: { label: string }): React.ReactElement {
   return (
     <div
       aria-busy="true"
-      aria-label="A carregar transações"
+      aria-label={label}
       style={{
         margin: '0 1.5rem 1.5rem',
         display: 'flex',
@@ -261,7 +521,7 @@ function LoadingSkeleton(): React.ReactElement {
   );
 }
 
-function EmptyState(): React.ReactElement {
+function EmptyState({ text }: { text: string }): React.ReactElement {
   return (
     <div
       style={{
@@ -281,7 +541,7 @@ function EmptyState(): React.ReactElement {
           color: '#F0F4FF',
         }}
       >
-        Sem transações. Regista a primeira no botão &quot;+ Nova transação&quot;.
+        {text}
       </p>
     </div>
   );

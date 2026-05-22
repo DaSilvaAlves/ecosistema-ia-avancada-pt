@@ -114,10 +114,10 @@ describe('schema upgrade v2 → v3 (Story 3.1, AC15)', () => {
 
     oldDB.close();
 
-    // 2. Reabrir como NexusDB completa (v1 + v2 + v3) — Dexie aplica upgrade aditivo.
+    // 2. Reabrir como NexusDB completa (v1 + v2 + v3 + v4) — Dexie aplica upgrade aditivo.
     const newDB = new NexusDB();
     await newDB.open();
-    expect(newDB.verno).toBe(3);
+    expect(newDB.verno).toBe(4);
 
     // 3. Dados de version(1) e version(2) sobrevivem intactos.
     expect(await newDB.transactions.count()).toBe(1);
@@ -201,7 +201,7 @@ describe('schema upgrade v2 → v3 (Story 3.1, AC15)', () => {
   it('o índice composto [cardId+date] adicionado a transactions em version(3) é funcional', async () => {
     const newDB = new NexusDB();
     await newDB.open();
-    expect(newDB.verno).toBe(3);
+    expect(newDB.verno).toBe(4);
 
     const cardId = crypto.randomUUID();
     await newDB.transactions.add(makeTransaction({ cardId, date: '2026-05-10' }));
@@ -219,13 +219,13 @@ describe('schema upgrade v2 → v3 (Story 3.1, AC15)', () => {
     newDB.close();
   });
 
-  it('NexusDB em base limpa abre directamente em version(3) com todas as 19 tabelas', async () => {
+  it('NexusDB em base limpa abre directamente em version(4) com todas as 20 tabelas', async () => {
     const db = new NexusDB();
     await db.open();
-    expect(db.verno).toBe(3);
+    expect(db.verno).toBe(4);
 
-    // 13 tabelas de version(1) + 2 de version(2) + 4 de version(3) = 19.
-    expect(db.tables).toHaveLength(19);
+    // 13 de version(1) + 2 de version(2) + 4 de version(3) + 1 de version(4) = 20.
+    expect(db.tables).toHaveLength(20);
 
     // As 15 tabelas de version(2).
     expect(await db.tasks.count()).toBe(0);
@@ -249,6 +249,9 @@ describe('schema upgrade v2 → v3 (Story 3.1, AC15)', () => {
     expect(await db.cards.count()).toBe(0);
     expect(await db.installments.count()).toBe(0);
     expect(await db.categories.count()).toBe(0);
+
+    // A tabela nova de version(4) — Story 3.4 (recorrências financeiras).
+    expect(await db.financeRecurrences.count()).toBe(0);
 
     db.close();
   });
