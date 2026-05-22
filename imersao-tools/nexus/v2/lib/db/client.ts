@@ -9,6 +9,7 @@ import type {
   Card,
   Installment,
   Category,
+  FinanceRecurrence,
   Habit,
   HabitLog,
   Goal,
@@ -29,7 +30,8 @@ import type {
  *
  * Epic 2 incrementa para version 2 (adiciona `recurrences` genérica
  * partilhada entre Epics 2/3/4 — architecture §16 L1128 — e `tags` globais).
- * Epic 3 incrementa para version 3 (accounts, cards, installments, categories).
+ * Epic 3 incrementa para version 3 (accounts, cards, installments, categories)
+ * e para version 4 (financeRecurrences — Story 3.4).
  * Cada Epic adiciona `this.version(N+1).stores({...})` sem reescrever o anterior.
  *
  * Story 3.1 — version 3 (Epic 3 Finanças):
@@ -45,6 +47,15 @@ import type {
  *   `ownerType` (types/db.ts:84) — sem extensão de schema necessária.
  * - Interfaces Account/Card/Transaction/Installment/Category vivem em
  *   types/db.ts:98-142 (Story 0.3) — version(3) só liga as tabelas.
+ *
+ * Story 3.4 — version 4 (Epic 3 Finanças recorrentes, FR17):
+ * - 1 tabela nova: financeRecurrences. Guarda o template financeiro de uma
+ *   recorrência (valor, categoria, conta/cartão). A RRULE + datas continuam
+ *   na tabela genérica `recurrences` com `ownerType: 'transaction'` e
+ *   `ownerId === financeRecurrence.id` ([AUTO-DECISION] A1). Índice
+ *   `recurrenceId` serve a navegação template → RRULE.
+ * - Aditivo: Dexie preserva as 19 tabelas de version(3) → 20.
+ * - Interface FinanceRecurrence vive em types/db.ts (Story 3.4).
  */
 
 export class NexusDB extends Dexie {
@@ -57,6 +68,7 @@ export class NexusDB extends Dexie {
   cards!: Table<Card, string>;
   installments!: Table<Installment, string>;
   categories!: Table<Category, string>;
+  financeRecurrences!: Table<FinanceRecurrence, string>;
   habits!: Table<Habit, string>;
   habit_logs!: Table<HabitLog, string>;
   goals!: Table<Goal, string>;
@@ -121,6 +133,17 @@ export class NexusDB extends Dexie {
       categories: 'name, isDefault',
       transactions:
         'id, accountId, cardId, category, date, recurrenceId, [accountId+date], [cardId+date]',
+    });
+    // Story 3.4 — Epic 3 schema increment (Finanças recorrentes, FR17).
+    // Aditivo: Dexie preserva as 19 tabelas de version(3). Apenas a tabela
+    // nova `financeRecurrences` é adicionada → 20.
+    // - financeRecurrences: template financeiro de uma recorrência (valor,
+    //   categoria, conta/cartão). A RRULE + datas vivem na tabela genérica
+    //   `recurrences` (`ownerType: 'transaction'`, `ownerId === fr.id`,
+    //   [AUTO-DECISION] A1). Índice `recurrenceId` serve a navegação
+    //   template → RRULE em `deleteFinanceRecurrence`.
+    this.version(4).stores({
+      financeRecurrences: 'id, recurrenceId',
     });
   }
 }

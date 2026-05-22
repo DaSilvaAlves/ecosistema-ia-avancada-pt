@@ -141,6 +141,28 @@ export interface Category {
   isDefault: boolean;
 }
 
+/**
+ * Recorrência financeira (FR17) — Story 3.4.
+ *
+ * Template de uma despesa/receita recorrente (renda, Netflix, seguro). A RRULE
+ * + datas vivem na tabela genérica `recurrences` (`ownerType: 'transaction'`,
+ * `ownerId === FinanceRecurrence.id`); esta interface guarda os campos de
+ * domínio financeiro que a tabela `recurrences` genérica não tem.
+ *
+ * `amount` em cêntimos inteiros com sinal — negativo = saída, positivo = entrada
+ * (mesma convenção de `Transaction.amount`, linha 117).
+ */
+export interface FinanceRecurrence {
+  id: string;
+  amount: number; // cêntimos inteiros, com sinal (negativo = saída, positivo = entrada)
+  category: string; // nome da categoria (FK lógica para categories.name)
+  description: string; // descrição template (pode ser vazia)
+  accountId: string | null;
+  cardId: string | null;
+  recurrenceId: string; // FK para recurrences.id (a RRULE + datas)
+  createdAt: number; // epoch ms
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // Epic 4 — Hábitos / Metas / Lembretes
 // ═══════════════════════════════════════════════════════════════════

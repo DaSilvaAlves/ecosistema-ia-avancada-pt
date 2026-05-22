@@ -1,7 +1,10 @@
 import { RRule, type Options } from 'rrule';
 import { db } from '@/lib/db/client';
 import { createTask } from '@/lib/db/repos/tasks';
-import type { Recurrence, Task } from '@/types/db';
+import { createTransaction, listTransactions } from '@/lib/db/repos/transactions';
+import { getRecurrence } from '@/lib/db/repos/recurrences';
+import { listFinanceRecurrences } from '@/lib/db/repos/finance-recurrences';
+import type { FinanceRecurrence, Recurrence, Task, Transaction } from '@/types/db';
 
 /**
  * Nexus v2 — Recurrence wrapper sobre `rrule`
@@ -339,6 +342,149 @@ export async function runRecurrenceEngine(nowMs: number = Date.now()): Promise<{
       errors += 1;
       console.error(
         `Falha ao gerar instâncias da recorrência ${recurrence.id}`,
+        error,
+      );
+    }
+  }
+
+  return { created, skipped, errors };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Story 3.4 (FR17) — Motor de recorrência para finanças
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Gera instâncias (transações) de uma recorrência financeira dentro de um
+ * horizonte. Análogo a `generateTaskInstances`, mas cria `Transaction` em vez
+ * de `Task` — extensão do motor da Story 2.7 para `ownerType: 'transaction'`
+ * ([AUTO-DECISION] A3 da Story 3.4; EPIC-3 §7).
+ *
+ * Idempotente (Story 3.4 A6 + AC6): antes de criar uma transação para uma data,
+ * verifica se já existe uma transação com `recurrenceId === recurrence.id` e
+ * `date === isoDate`. Se existir, incrementa `skipped` em vez de duplicar.
+ *
+ * A transação gerada herda `amount` (cêntimos + sinal), `category`,
+ * `description`, `accountId`, `cardId` do template `financeRecurrence`;
+ * `installmentId` começa sempre `null`.
+ *
+ * `recurrence.endDate !== null` → não gera ocorrências após essa data (AC4).
+ *
+ * `nowMs` (opcional) define o instante de referência do horizonte — por omissão
+ * `Date.now()`. Existe para testabilidade determinística sem fake timers
+ * (combinar fake timers com Dexie/IndexedDB quebra as operações async).
+ *
+ * Trace: Story 3.4 AC4 + A3 + A6; `EPIC-3.md` §7; `types/db.ts` `Transaction`.
+ */
+export async function generateTransactionInstances(
+  financeRecurrence: FinanceRecurrence,
+  recurrence: Recurrence,
+  horizonDays: number = HORIZON_DAYS_DEFAULT,
+  nowMs: number = Date.now(),
+): Promise<{ created: number; skipped: number }> {
+  // Parse da RRULE primeiro — uma `rule` corrompida deve ser detectada
+  // independentemente do estado do template (tolerância a erros do motor).
+  const rule = RRule.fromString(recurrence.rule);
+
+  const now = nowMs;
+  // Janela normalizada a fronteiras de dia inteiro em UTC — mesmo padrão de
+  // `generateTaskInstances` (CR Iter 2 #7 da Story 2.7): garante que a
+  // ocorrência de hoje é apanhada e que correr o motor duas vezes no mesmo dia
+  // não duplica nem salta instâncias.
+  const from = startOfUtcDay(now);
+  const to = endOfUtcDay(now + (horizonDays - 1) * MS_PER_DAY);
+  const occurrences = occurrencesBetween(rule, from, to);
+
+  // endDate da recorrência: não gerar instâncias após esta data (AC4).
+  const endLimit = recurrence.endDate ? `${recurrence.endDate}` : null;
+
+  // Idempotência — uma única leitura das transações existentes desta
+  // recorrência (AC6 / A6). `listTransactions` filtra por `recurrenceId` via
+  // o índice `recurrenceId` (client.ts version(1)).
+  const existing = await listTransactions({ recurrenceId: recurrence.id });
+  const existingDates = new Set(existing.map((t) => t.date));
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const occurrence of occurrences) {
+    const isoDate = toIsoDate(occurrence);
+    if (endLimit !== null && isoDate > endLimit) continue;
+
+    if (existingDates.has(isoDate)) {
+      skipped += 1;
+      continue;
+    }
+
+    const transaction: Transaction = {
+      id: crypto.randomUUID(),
+      amount: financeRecurrence.amount,
+      category: financeRecurrence.category,
+      description: financeRecurrence.description,
+      date: isoDate,
+      accountId: financeRecurrence.accountId,
+      cardId: financeRecurrence.cardId,
+      recurrenceId: recurrence.id,
+      installmentId: null,
+      createdAt: now,
+    };
+    await createTransaction(transaction);
+    existingDates.add(isoDate);
+    created += 1;
+  }
+
+  return { created, skipped };
+}
+
+/**
+ * Motor de recorrência financeira: itera todas as `FinanceRecurrence` e gera as
+ * transações em falta dentro do horizonte padrão (90 dias).
+ *
+ * Para cada template, obtém a `Recurrence` associada via `getRecurrence(
+ * fr.recurrenceId)` e chama `generateTransactionInstances`. Um template sem
+ * `Recurrence` correspondente (estado inconsistente) é contado como erro e
+ * saltado — o motor não interrompe.
+ *
+ * Tolerância a erros (AC5 + AC13): um erro num template (ex: `rule` corrompida,
+ * `Recurrence` em falta) não interrompe os restantes — é capturado, contado em
+ * `errors`, e o motor continua. Retorna contadores agregados.
+ *
+ * NÃO altera `runRecurrenceEngine` (Story 2.7, `ownerType: 'task'`) — as duas
+ * funções coexistem no mesmo módulo.
+ *
+ * `nowMs` (opcional) é repassado a `generateTransactionInstances`.
+ *
+ * Trace: Story 3.4 AC5 + [AUTO-DECISION] A4; `EPIC-3.md` §7.
+ */
+export async function runFinanceRecurrenceEngine(
+  nowMs: number = Date.now(),
+): Promise<{ created: number; skipped: number; errors: number }> {
+  const financeRecurrences = await listFinanceRecurrences();
+
+  let created = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (const fr of financeRecurrences) {
+    try {
+      const recurrence = await getRecurrence(fr.recurrenceId);
+      if (!recurrence) {
+        throw new Error(
+          `Recorrência ${fr.recurrenceId} não encontrada para o template financeiro ${fr.id}`,
+        );
+      }
+      const result = await generateTransactionInstances(
+        fr,
+        recurrence,
+        HORIZON_DAYS_DEFAULT,
+        nowMs,
+      );
+      created += result.created;
+      skipped += result.skipped;
+    } catch (error) {
+      errors += 1;
+      console.error(
+        `Falha ao gerar transações da recorrência financeira ${fr.id}`,
         error,
       );
     }

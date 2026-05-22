@@ -14,10 +14,10 @@ import type { Task, Project } from '@/types/db';
  * 1. Abrir a DB `nexus_v2` numa Dexie minimalista que SÓ conhece `version(1)`,
  *    espelhando o estado pré-Story 2.1 (era assim que existia em main antes deste push).
  * 2. Inserir dados (tarefa + projecto) e fechar.
- * 3. Reabrir como `NexusDB` (Story 3.1: agora em `version(3)`). Dexie detecta
+ * 3. Reabrir como `NexusDB` (Story 3.4: agora em `version(4)`). Dexie detecta
  *    a versão antiga e aplica os upgrades aditivos encadeados (v1→v2 recurrences
- *    + tags; v2→v3 accounts + cards + installments + categories), mantendo
- *    todos os dados de `version(1)`.
+ *    + tags; v2→v3 accounts + cards + installments + categories; v3→v4
+ *    financeRecurrences), mantendo todos os dados de `version(1)`.
  * 4. Verificar que os dados antigos sobrevivem e que as novas tabelas existem
  *    e estão vazias.
  *
@@ -110,10 +110,10 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
     oldDB.close();
 
     // 2. Reabrir como NexusDB completa — Dexie detecta upgrade aditivo desde v1.
-    //    Story 3.1: NexusDB está agora em version(3); o upgrade aplica v1→v2→v3.
+    //    Story 3.4: NexusDB está agora em version(4); o upgrade aplica v1→v2→v3→v4.
     const newDB = new NexusDB();
     await newDB.open();
-    expect(newDB.verno).toBe(3);
+    expect(newDB.verno).toBe(4);
 
     // 3. Dados originais sobrevivem.
     expect(await newDB.tasks.count()).toBe(1);
@@ -127,6 +127,7 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
     // 4. Novas tabelas existem e estão vazias.
     expect(await newDB.recurrences.count()).toBe(0);
     expect(await newDB.tags.count()).toBe(0);
+    expect(await newDB.financeRecurrences.count()).toBe(0);
 
     newDB.close();
   });
@@ -173,15 +174,15 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
     newDB.close();
   });
 
-  it('NexusDB em base limpa abre directamente em version(3) com todas as 19 tabelas', async () => {
+  it('NexusDB em base limpa abre directamente em version(4) com todas as 20 tabelas', async () => {
     const db = new NexusDB();
     await db.open();
-    expect(db.verno).toBe(3);
+    expect(db.verno).toBe(4);
 
-    // 13 de version(1) + 2 de version(2) + 4 de version(3) = 19 tabelas.
-    // Story 3.1 Iter 2 (CodeRabbit #10) — asserção de contagem total: o título
-    // afirma "19 tabelas" e a verificação prova-o explicitamente.
-    expect(db.tables).toHaveLength(19);
+    // 13 de version(1) + 2 de version(2) + 4 de version(3) + 1 de version(4)
+    // = 20 tabelas. Story 3.4 — asserção de contagem total: o título afirma
+    // "20 tabelas" e a verificação prova-o explicitamente.
+    expect(db.tables).toHaveLength(20);
 
     // As 15 tabelas de version(2) (13 de version(1) + 2 de version(2)).
     expect(await db.tasks.count()).toBe(0);
@@ -205,6 +206,9 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
     expect(await db.cards.count()).toBe(0);
     expect(await db.installments.count()).toBe(0);
     expect(await db.categories.count()).toBe(0);
+
+    // A tabela nova de version(4) — Story 3.4 (recorrências financeiras).
+    expect(await db.financeRecurrences.count()).toBe(0);
 
     db.close();
   });

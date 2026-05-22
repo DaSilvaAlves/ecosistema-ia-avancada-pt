@@ -198,3 +198,23 @@ export const CategorySchema = z.object({
   icon: z.string().min(1, 'Ícone da categoria é obrigatório'),
   isDefault: z.boolean(),
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Epic 3 — Recorrências financeiras (Story 3.4)
+//
+// Espelho fiel de types/db.ts `FinanceRecurrence`. `amount` em cêntimos
+// inteiros com sinal (negativo = saída, positivo = entrada) — mesma
+// convenção de `Transaction.amount`. `recurrenceId` referencia a tabela
+// genérica `recurrences` (a RRULE + datas).
+// ═══════════════════════════════════════════════════════════════════
+
+export const FinanceRecurrenceSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  amount: z.number().int('Montante deve ser inteiro em cêntimos (sem casas decimais)'),
+  category: z.string().min(1, 'Categoria é obrigatória'),
+  description: z.string(),
+  accountId: z.string().uuid('accountId deve ser UUID válido').nullable(),
+  cardId: z.string().uuid('cardId deve ser UUID válido').nullable(),
+  recurrenceId: z.string().uuid('recurrenceId deve ser UUID válido'),
+  createdAt: z.number().int().positive('createdAt deve ser epoch ms positivo'),
+});
