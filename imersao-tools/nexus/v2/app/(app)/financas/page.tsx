@@ -334,7 +334,15 @@ export default function FinancasPage(): React.ReactElement {
   // (`Card.accountId` é non-nullable; um cartão órfão seria schema-inválido).
   const handleDeleteAccount = useCallback(
     async (id: string): Promise<void> => {
-      const hasCards = (cards ?? []).some((c) => c.accountId === id);
+      // `cards` é `undefined` enquanto o `useLiveQuery` carrega. Tratar esse
+      // estado como lista vazia permitiria apagar uma conta cujos cartões
+      // ainda não foram lidos — falha de integridade referencial. Bloquear a
+      // operação até a lista de cartões estar efetivamente disponível.
+      if (cards === undefined) {
+        setErrorMessage('A carregar cartões — tenta novamente dentro de instantes.');
+        return;
+      }
+      const hasCards = cards.some((c) => c.accountId === id);
       if (hasCards) {
         setErrorMessage('Esta conta tem cartões associados. Apaga os cartões primeiro.');
         return;

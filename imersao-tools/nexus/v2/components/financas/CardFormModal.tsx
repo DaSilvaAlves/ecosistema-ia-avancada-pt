@@ -115,11 +115,18 @@ export function CardFormModal({
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]): void {
     setForm((prev) => ({ ...prev, [key]: value }));
-    const errorKey: keyof FieldErrors = key === 'limitInput' ? 'limitInput' : (key as keyof FieldErrors);
-    if (errors[errorKey]) {
+    // Editar `limitInput` deve limpar tanto o erro de parsing (`limitInput`)
+    // como o erro de validação Zod (`limit`) — ambos são mostrados no mesmo
+    // campo via `errors.limitInput ?? errors.limit`; deixar o erro Zod stale
+    // mantinha uma mensagem desactualizada visível enquanto o utilizador corrige.
+    const errorKeys: (keyof FieldErrors)[] =
+      key === 'limitInput' ? ['limitInput', 'limit'] : [key as keyof FieldErrors];
+    if (errorKeys.some((errorKey) => errors[errorKey])) {
       setErrors((prev) => {
         const next = { ...prev };
-        delete next[errorKey];
+        for (const errorKey of errorKeys) {
+          delete next[errorKey];
+        }
         return next;
       });
     }
