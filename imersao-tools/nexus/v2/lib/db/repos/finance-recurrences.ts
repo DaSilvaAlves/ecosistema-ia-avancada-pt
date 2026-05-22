@@ -56,8 +56,12 @@ export async function listFinanceRecurrences(): Promise<FinanceRecurrence[]> {
 
 /**
  * Actualiza parcialmente uma recorrência financeira. Valida o patch com
- * `FinanceRecurrenceSchema.partial()` — mantém as regras de cada campo presente
- * (amount inteiro em cêntimos, category não-vazia, IDs de referência UUID).
+ * `FinanceRecurrenceSchema.omit({ id, createdAt, recurrenceId }).partial().strict()`
+ * (CR Iter 1 #I2) — mantém as regras de cada campo mutável presente (amount
+ * inteiro em cêntimos, category não-vazia, accountId/cardId UUID ou null) e
+ * REJEITA explicitamente os campos imutáveis `id`/`createdAt` e a ligação
+ * `recurrenceId`: o `.strict()` faz `parse()` lançar `ZodError` se o patch os
+ * incluir, em vez de os deixar passar silenciosamente para `db.update`.
  *
  * Lança se o registo não existir — paridade com `updateTransaction` (Story 3.1).
  */
@@ -65,7 +69,10 @@ export async function updateFinanceRecurrence(
   id: string,
   patch: Partial<FinanceRecurrence>,
 ): Promise<void> {
-  FinanceRecurrenceSchema.partial().parse(patch);
+  FinanceRecurrenceSchema.omit({ id: true, createdAt: true, recurrenceId: true })
+    .partial()
+    .strict()
+    .parse(patch);
   const updated = await db.financeRecurrences.update(id, patch);
   if (updated === 0) {
     throw new Error(
@@ -81,12 +88,19 @@ export async function updateFinanceRecurrence(
  * `deleteRecurrence(fr.recurrenceId)` e o template `FinanceRecurrence`. As
  * `Transaction` já geradas com `recurrenceId === fr.recurrenceId` NÃO são
  * eliminadas — ficam como transações normais (AC12, padrão da Story 2.7 AC9).
+ *
+ * Os dois `delete` correm dentro de uma transacção Dexie `rw` (CR Iter 1 #I3):
+ * a eliminação é all-or-nothing — se o segundo `delete` falhar, o primeiro faz
+ * rollback, evitando o estado inconsistente "template órfão sem RRULE" (ou
+ * vice-versa).
  */
 export async function deleteFinanceRecurrence(id: string): Promise<void> {
   const fr = await getFinanceRecurrence(id);
   if (!fr) {
     throw new Error(`Recorrência financeira não encontrada: ${id}`);
   }
-  await deleteRecurrence(fr.recurrenceId);
-  await db.financeRecurrences.delete(id);
+  await db.transaction('rw', db.recurrences, db.financeRecurrences, async () => {
+    await deleteRecurrence(fr.recurrenceId);
+    await db.financeRecurrences.delete(id);
+  });
 }

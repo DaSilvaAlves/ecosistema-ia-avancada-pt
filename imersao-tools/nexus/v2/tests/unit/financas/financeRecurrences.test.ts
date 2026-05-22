@@ -9,6 +9,7 @@ import {
   deleteFinanceRecurrence,
 } from '@/lib/db/repos/finance-recurrences';
 import { createRecurrence, getRecurrence } from '@/lib/db/repos/recurrences';
+import { createTransaction, listTransactions } from '@/lib/db/repos/transactions';
 import type { FinanceRecurrence, Recurrence } from '@/types/db';
 
 /**
@@ -124,6 +125,31 @@ describe('finance-recurrences repo — Story 3.4', () => {
     ).rejects.toThrow(/não encontrada/);
   });
 
+  // T6b — updateFinanceRecurrence rejeita campos imutáveis (CR Iter 1 #I2)
+  it('T6b — updateFinanceRecurrence rejeita patch com campo imutável (id/createdAt/recurrenceId)', async () => {
+    const recurrence = await seedRecurrence();
+    const created = await createFinanceRecurrence(templateInput(recurrence.id));
+
+    // recurrenceId é uma ligação imutável — alterá-la via patch tem de falhar.
+    await expect(
+      updateFinanceRecurrence(created.id, {
+        recurrenceId: crypto.randomUUID(),
+      }),
+    ).rejects.toThrow(ZodError);
+
+    // id e createdAt também são imutáveis.
+    await expect(
+      updateFinanceRecurrence(created.id, { id: crypto.randomUUID() }),
+    ).rejects.toThrow(ZodError);
+    await expect(
+      updateFinanceRecurrence(created.id, { createdAt: Date.now() }),
+    ).rejects.toThrow(ZodError);
+
+    // O registo permanece intacto após as tentativas rejeitadas.
+    const fetched = await getFinanceRecurrence(created.id);
+    expect(fetched).toEqual(created);
+  });
+
   // T7 — deleteFinanceRecurrence elimina template + Recurrence (cascata AC3/AC12)
   it('T7 — deleteFinanceRecurrence elimina o template E a Recurrence associada', async () => {
     const recurrence = await seedRecurrence();
@@ -133,6 +159,36 @@ describe('finance-recurrences repo — Story 3.4', () => {
 
     expect(await getFinanceRecurrence(created.id)).toBeUndefined();
     expect(await getRecurrence(recurrence.id)).toBeUndefined();
+  });
+
+  // T7b — transações geradas SOBREVIVEM ao delete da recorrência (QA concern C1 / AC12)
+  it('T7b — deleteFinanceRecurrence não elimina as Transaction já geradas', async () => {
+    const recurrence = await seedRecurrence();
+    const created = await createFinanceRecurrence(templateInput(recurrence.id));
+
+    // Simula uma transação já gerada por esta recorrência.
+    await createTransaction({
+      id: crypto.randomUUID(),
+      amount: -65000,
+      category: 'Habitação',
+      description: 'Renda do apartamento',
+      date: '2026-06-08',
+      accountId: null,
+      cardId: null,
+      recurrenceId: recurrence.id,
+      installmentId: null,
+      createdAt: Date.now(),
+    });
+
+    await deleteFinanceRecurrence(created.id);
+
+    // AC12: o template e a Recurrence desaparecem...
+    expect(await getFinanceRecurrence(created.id)).toBeUndefined();
+    expect(await getRecurrence(recurrence.id)).toBeUndefined();
+    // ...mas a Transaction gerada fica como transação normal.
+    const survivors = await listTransactions({ recurrenceId: recurrence.id });
+    expect(survivors).toHaveLength(1);
+    expect(survivors[0].date).toBe('2026-06-08');
   });
 
   // T8 — deleteFinanceRecurrence lança para id inexistente

@@ -72,6 +72,44 @@ async function seedFinanceRecurrence(
   });
 }
 
+/**
+ * Cria um par CONSISTENTE `FinanceRecurrence` + `Recurrence` — a `Recurrence`
+ * fica com `ownerType: 'transaction'` e `ownerId === fr.id`, espelhando a ordem
+ * real de criação em `handleSubmitRecurrence` (page.tsx): pré-gera o
+ * `recurrenceId`, cria o template, depois cria a `Recurrence` com o `ownerId`
+ * preenchido. Necessário para `runFinanceRecurrenceEngine`, que valida o par
+ * owner antes de gerar transações (CR Iter 1 #I5).
+ */
+async function seedConsistentPair(
+  opts: {
+    type?: 'daily' | 'weekly' | 'monthly';
+    startDate?: string;
+    endDate?: string | null;
+    monthday?: number;
+    weekday?: number;
+  } = {},
+  overrides: Partial<Omit<FinanceRecurrence, 'id' | 'createdAt'>> = {},
+): Promise<{ fr: FinanceRecurrence; recurrence: Recurrence }> {
+  const recurrenceId = crypto.randomUUID();
+  const fr = await seedFinanceRecurrence(recurrenceId, overrides);
+  const config = buildRecurrenceConfig(opts.type ?? 'monthly', {
+    startDate: opts.startDate ?? '2026-06-01',
+    endDate: opts.endDate ?? null,
+    monthday: opts.monthday ?? 8,
+    weekday: opts.weekday,
+  });
+  const recurrence: Recurrence = {
+    id: recurrenceId,
+    rule: buildRRule(config).toString(),
+    startDate: config.startDate,
+    endDate: config.endDate ?? null,
+    ownerType: 'transaction',
+    ownerId: fr.id,
+  };
+  await createRecurrence(recurrence);
+  return { fr, recurrence };
+}
+
 describe('generateTransactionInstances — Story 3.4', () => {
   beforeEach(async () => {
     await db.financeRecurrences.clear();
@@ -209,13 +247,11 @@ describe('runFinanceRecurrenceEngine — Story 3.4', () => {
 
   // T8 — 2 recorrências activas → contadores agregados correctos
   it('T8 — processa todas as recorrências financeiras e agrega contadores', async () => {
-    const fr1Id = crypto.randomUUID();
-    const rec1 = await seedRecurrence(fr1Id, { type: 'monthly', monthday: 8 });
-    await seedFinanceRecurrence(rec1.id);
-
-    const fr2Id = crypto.randomUUID();
-    const rec2 = await seedRecurrence(fr2Id, { type: 'monthly', monthday: 1 });
-    await seedFinanceRecurrence(rec2.id, { category: 'Subscrições', amount: -1099 });
+    await seedConsistentPair({ type: 'monthly', monthday: 8 });
+    await seedConsistentPair(
+      { type: 'monthly', monthday: 1 },
+      { category: 'Subscrições', amount: -1099 },
+    );
 
     const result = await runFinanceRecurrenceEngine(NOW_MS);
 
@@ -232,23 +268,23 @@ describe('runFinanceRecurrenceEngine — Story 3.4', () => {
 
   // T9 — tolerância a erros: 1 recorrência corrompida → errors === 1, outra processada
   it('T9 — uma recorrência corrompida não interrompe as restantes', async () => {
-    // Recorrência válida.
-    const okId = crypto.randomUUID();
-    const recOk = await seedRecurrence(okId, { type: 'monthly', monthday: 8 });
-    await seedFinanceRecurrence(recOk.id);
+    // Recorrência válida (par owner consistente).
+    await seedConsistentPair({ type: 'monthly', monthday: 8 });
 
-    // Recorrência com RRULE corrompida — o engine deve contá-la como erro.
-    const badId = crypto.randomUUID();
+    // Recorrência com RRULE corrompida, mas par owner consistente — o engine
+    // deve contá-la como erro ao tentar gerar (parse da RRULE falha).
     const badRecurrenceId = crypto.randomUUID();
+    const badFr = await seedFinanceRecurrence(badRecurrenceId, {
+      category: 'Habitação',
+    });
     await db.recurrences.add({
       id: badRecurrenceId,
       rule: 'rrule-invalida',
       startDate: '2026-06-01',
       endDate: null,
       ownerType: 'transaction',
-      ownerId: badId,
+      ownerId: badFr.id,
     });
-    await seedFinanceRecurrence(badRecurrenceId, { category: 'Habitação' });
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const result = await runFinanceRecurrenceEngine(NOW_MS);
@@ -275,5 +311,42 @@ describe('runFinanceRecurrenceEngine — Story 3.4', () => {
   it('T11 — engine sem recorrências devolve contadores a zero', async () => {
     const result = await runFinanceRecurrenceEngine(NOW_MS);
     expect(result).toEqual({ created: 0, skipped: 0, errors: 0 });
+  });
+
+  // T12 — Recurrence cujo par owner não bate com o template → erro (CR Iter 1 #I5)
+  it('T12 — recorrência com owner inválido é contada como erro e não gera transações', async () => {
+    const recurrenceId = crypto.randomUUID();
+    const fr = await seedFinanceRecurrence(recurrenceId, { category: 'Habitação' });
+
+    // Recurrence com RRULE VÁLIDA mas `ownerId` que NÃO aponta para `fr.id` —
+    // simula um `recurrenceId` que liga a uma recorrência de outro dono (ex:
+    // uma tarefa, ou outro template financeiro).
+    const config = buildRecurrenceConfig('monthly', {
+      startDate: '2026-06-01',
+      endDate: null,
+      monthday: 8,
+    });
+    await createRecurrence({
+      id: recurrenceId,
+      rule: buildRRule(config).toString(),
+      startDate: '2026-06-01',
+      endDate: null,
+      ownerType: 'transaction',
+      ownerId: crypto.randomUUID(), // != fr.id — par owner inconsistente
+    });
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const result = await runFinanceRecurrenceEngine(NOW_MS);
+    consoleSpy.mockRestore();
+
+    expect(result.errors).toBe(1);
+    expect(result.created).toBe(0);
+
+    // Não-tautológico: sem a guarda #I5, a RRULE válida geraria transações.
+    const transactions = await listTransactions({ recurrenceId });
+    expect(transactions).toHaveLength(0);
+
+    // O nome `fr` é referido para manter a intenção do cenário explícita.
+    expect(fr.recurrenceId).toBe(recurrenceId);
   });
 });

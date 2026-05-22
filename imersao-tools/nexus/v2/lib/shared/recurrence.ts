@@ -382,6 +382,15 @@ export async function generateTransactionInstances(
   horizonDays: number = HORIZON_DAYS_DEFAULT,
   nowMs: number = Date.now(),
 ): Promise<{ created: number; skipped: number }> {
+  // Guarda de input (CR Iter 1 #I4): `horizonDays` tem de ser um inteiro >= 1.
+  // Fail-fast — um valor não-inteiro, NaN, Infinity ou < 1 produziria uma
+  // janela de horizonte invertida ou vazia em vez de um erro claro.
+  if (!Number.isInteger(horizonDays) || horizonDays < 1) {
+    throw new RangeError(
+      `horizonDays deve ser um inteiro >= 1 (recebido: ${horizonDays})`,
+    );
+  }
+
   // Parse da RRULE primeiro — uma `rule` corrompida deve ser detectada
   // independentemente do estado do template (tolerância a erros do motor).
   const rule = RRule.fromString(recurrence.rule);
@@ -471,6 +480,22 @@ export async function runFinanceRecurrenceEngine(
       if (!recurrence) {
         throw new Error(
           `Recorrência ${fr.recurrenceId} não encontrada para o template financeiro ${fr.id}`,
+        );
+      }
+      // Validação de integridade do par owner (CR Iter 1 #I5): a `Recurrence`
+      // obtida por `fr.recurrenceId` tem de pertencer a ESTE template — ou
+      // seja, `ownerType: 'transaction'` e `ownerId === fr.id`. Protege contra
+      // um `recurrenceId` que aponte para a recorrência de uma tarefa ou de
+      // outro template financeiro: sem esta guarda, o motor geraria transações
+      // a partir de uma RRULE estranha. O erro é capturado abaixo e contado em
+      // `errors` — o motor não interrompe os restantes templates.
+      if (
+        recurrence.ownerType !== 'transaction' ||
+        recurrence.ownerId !== fr.id
+      ) {
+        throw new Error(
+          `Recorrência ${recurrence.id} não pertence ao template financeiro ${fr.id} ` +
+            `(ownerType="${recurrence.ownerType}", ownerId="${recurrence.ownerId}")`,
         );
       }
       const result = await generateTransactionInstances(
