@@ -24,8 +24,20 @@ import {
   deleteRecurrence,
   getRecurrence,
 } from '@/lib/db/repos/recurrences';
+import {
+  createAccount,
+  deleteAccount,
+  updateAccount,
+} from '@/lib/db/repos/accounts';
+import { createCard, deleteCard, updateCard } from '@/lib/db/repos/cards';
 import { generateTransactionInstances } from '@/lib/shared/recurrence';
-import type { FinanceRecurrence, Recurrence, Transaction } from '@/types/db';
+import type {
+  Account,
+  Card,
+  FinanceRecurrence,
+  Recurrence,
+  Transaction,
+} from '@/types/db';
 import { TransactionFormModal } from '@/components/financas/TransactionFormModal';
 import { TransactionsList } from '@/components/financas/TransactionsList';
 import {
@@ -33,19 +45,25 @@ import {
   type FinanceRecurrenceSubmit,
 } from '@/components/financas/FinanceRecurrenceFormModal';
 import { FinanceRecurrencesList } from '@/components/financas/FinanceRecurrencesList';
+import { AccountFormModal } from '@/components/financas/AccountFormModal';
+import { AccountsList } from '@/components/financas/AccountsList';
+import { CardFormModal } from '@/components/financas/CardFormModal';
+import { CardsList } from '@/components/financas/CardsList';
 
 /**
  * Nexus v2 — Página /financas (Story 3.3 — transações variáveis FR16;
- * Story 3.4 — recorrências financeiras FR17)
+ * Story 3.4 — recorrências financeiras FR17; Story 3.5 — contas e cartões FR18)
  *
  * Rota: /financas — App Router page com 'use client' (Dexie via useLiveQuery
  * exige client component).
  *
  * Composição:
  *   1. Cabeçalho — título "Finanças" + botão de criação contextual à tab
- *   2. Tab strip — "Transações" | "Recorrências" ([AUTO-DECISION] A5 da 3.4)
+ *   2. Tab strip — "Transações" | "Recorrências" | "Contas" | "Cartões"
  *   3. Tab Transações — lista cronológica + <TransactionFormModal> (Story 3.3)
  *   4. Tab Recorrências — lista + <FinanceRecurrenceFormModal> (Story 3.4)
+ *   5. Tab Contas — lista + <AccountFormModal> (Story 3.5)
+ *   6. Tab Cartões — lista + <CardFormModal> (Story 3.5)
  *
  * O motor de recorrência financeira (`useFinanceRecurrenceEngine`) corre uma vez
  * no mount — gera as transações recorrentes em falta dentro do horizonte de 90
@@ -62,9 +80,13 @@ type ModalState =
       mode: 'edit';
       recurrence: FinanceRecurrence & { recurrence: Recurrence };
     }
+  | { kind: 'account'; mode: 'create' }
+  | { kind: 'account'; mode: 'edit'; account: Account }
+  | { kind: 'card'; mode: 'create' }
+  | { kind: 'card'; mode: 'edit'; card: Card }
   | null;
 
-type Tab = 'transactions' | 'recurrences';
+type Tab = 'transactions' | 'recurrences' | 'accounts' | 'cards';
 
 /** Recorrência financeira enriquecida com a `Recurrence` associada (RRULE). */
 interface FinanceRecurrenceWithRule extends FinanceRecurrence {
@@ -277,11 +299,126 @@ export default function FinancasPage(): React.ReactElement {
     }
   }, []);
 
+  // ─── Contas (Story 3.5) ───
+
+  const handleNewAccount = useCallback((): void => {
+    rememberOpener();
+    setModal({ kind: 'account', mode: 'create' });
+  }, []);
+
+  const handleEditAccount = useCallback((account: Account): void => {
+    rememberOpener();
+    setModal({ kind: 'account', mode: 'edit', account });
+  }, []);
+
+  async function handleSubmitAccount(input: Account): Promise<void> {
+    try {
+      if (modal?.kind === 'account' && modal.mode === 'create') {
+        await createAccount(input);
+      } else if (modal?.kind === 'account' && modal.mode === 'edit') {
+        const patch: Partial<Account> = {
+          name: input.name,
+          type: input.type,
+          balance: input.balance,
+        };
+        await updateAccount(input.id, patch);
+      }
+    } catch (error) {
+      console.error('Erro ao guardar conta', error);
+      setErrorMessage('Erro ao guardar conta — tenta novamente.');
+      throw error;
+    }
+  }
+
+  // AC9 — apagar conta é bloqueado se a conta tiver cartões associados
+  // (`Card.accountId` é non-nullable; um cartão órfão seria schema-inválido).
+  const handleDeleteAccount = useCallback(
+    async (id: string): Promise<void> => {
+      const hasCards = (cards ?? []).some((c) => c.accountId === id);
+      if (hasCards) {
+        setErrorMessage('Esta conta tem cartões associados. Apaga os cartões primeiro.');
+        return;
+      }
+      const confirmed = window.confirm(
+        'Apagar esta conta? As transações associadas mantêm a referência.',
+      );
+      if (!confirmed) return;
+      try {
+        await deleteAccount(id);
+      } catch (error) {
+        console.error('Erro ao apagar conta', error);
+        setErrorMessage('Erro ao apagar conta — tenta novamente.');
+      }
+    },
+    [cards],
+  );
+
+  // ─── Cartões (Story 3.5) ───
+
+  const handleNewCard = useCallback((): void => {
+    rememberOpener();
+    setModal({ kind: 'card', mode: 'create' });
+  }, []);
+
+  const handleEditCard = useCallback((card: Card): void => {
+    rememberOpener();
+    setModal({ kind: 'card', mode: 'edit', card });
+  }, []);
+
+  async function handleSubmitCard(input: Card): Promise<void> {
+    try {
+      if (modal?.kind === 'card' && modal.mode === 'create') {
+        await createCard(input);
+      } else if (modal?.kind === 'card' && modal.mode === 'edit') {
+        const patch: Partial<Card> = {
+          name: input.name,
+          accountId: input.accountId,
+          closingDay: input.closingDay,
+          dueDay: input.dueDay,
+          limit: input.limit,
+        };
+        await updateCard(input.id, patch);
+      }
+    } catch (error) {
+      console.error('Erro ao guardar cartão', error);
+      setErrorMessage('Erro ao guardar cartão — tenta novamente.');
+      throw error;
+    }
+  }
+
+  // AC10 — apagar cartão; as transações associadas mantêm `cardId` (órfão).
+  const handleDeleteCard = useCallback(async (id: string): Promise<void> => {
+    const confirmed = window.confirm(
+      'Apagar este cartão? As transações associadas mantêm a referência.',
+    );
+    if (!confirmed) return;
+    try {
+      await deleteCard(id);
+    } catch (error) {
+      console.error('Erro ao apagar cartão', error);
+      setErrorMessage('Erro ao apagar cartão — tenta novamente.');
+    }
+  }, []);
+
   // ─── Cabeçalho contextual ───
 
-  const newButtonLabel =
-    tab === 'transactions' ? '+ Nova transação' : '+ Nova recorrência';
-  const handleNew = tab === 'transactions' ? handleNewTransaction : handleNewRecurrence;
+  // AC5 — sem contas registadas, não é possível criar um cartão (FK obrigatória).
+  const noAccounts = (accounts ?? []).length === 0;
+  const newButtonDisabled = tab === 'cards' && noAccounts;
+
+  const newButtonLabel: string = {
+    transactions: '+ Nova transação',
+    recurrences: '+ Nova recorrência',
+    accounts: '+ Nova conta',
+    cards: '+ Novo cartão',
+  }[tab];
+
+  const handleNew: () => void = {
+    transactions: handleNewTransaction,
+    recurrences: handleNewRecurrence,
+    accounts: handleNewAccount,
+    cards: handleNewCard,
+  }[tab];
 
   const recurrencesForList = useMemo<FinanceRecurrenceWithRule[]>(
     () => recurrencesWithRule ?? [],
@@ -310,24 +447,40 @@ export default function FinancasPage(): React.ReactElement {
         >
           Finanças
         </h1>
-        <button
-          type="button"
-          onClick={handleNew}
-          style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.85rem',
-            fontWeight: 700,
-            color: '#04040A',
-            background: '#00F5FF',
-            border: 'none',
-            borderRadius: 6,
-            padding: '0.55rem 1.2rem',
-            cursor: 'pointer',
-            boxShadow: '0 0 20px rgba(0, 245, 255, 0.4)',
-          }}
-        >
-          {newButtonLabel}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {newButtonDisabled && (
+            <span
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.78rem',
+                color: '#8892A4',
+                fontStyle: 'italic',
+              }}
+            >
+              Cria uma conta primeiro
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleNew}
+            disabled={newButtonDisabled}
+            style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              color: '#04040A',
+              background: '#00F5FF',
+              border: 'none',
+              borderRadius: 6,
+              padding: '0.55rem 1.2rem',
+              cursor: newButtonDisabled ? 'not-allowed' : 'pointer',
+              boxShadow: newButtonDisabled ? 'none' : '0 0 20px rgba(0, 245, 255, 0.4)',
+              opacity: newButtonDisabled ? 0.5 : 1,
+            }}
+          >
+            {newButtonLabel}
+          </button>
+        </div>
       </header>
 
       <div
@@ -337,6 +490,7 @@ export default function FinancasPage(): React.ReactElement {
           display: 'flex',
           gap: 4,
           padding: '0 1.5rem 1rem',
+          flexWrap: 'wrap',
         }}
       >
         <TabButton
@@ -351,9 +505,21 @@ export default function FinancasPage(): React.ReactElement {
           selected={tab === 'recurrences'}
           onSelect={() => setTab('recurrences')}
         />
+        <TabButton
+          id="tab-accounts"
+          label="Contas"
+          selected={tab === 'accounts'}
+          onSelect={() => setTab('accounts')}
+        />
+        <TabButton
+          id="tab-cards"
+          label="Cartões"
+          selected={tab === 'cards'}
+          onSelect={() => setTab('cards')}
+        />
       </div>
 
-      {tab === 'transactions' ? (
+      {tab === 'transactions' && (
         <div role="tabpanel" aria-labelledby="tab-transactions" style={{ flex: 1 }}>
           {transactions === undefined ? (
             <LoadingSkeleton label="A carregar transações" />
@@ -368,7 +534,9 @@ export default function FinancasPage(): React.ReactElement {
             />
           )}
         </div>
-      ) : (
+      )}
+
+      {tab === 'recurrences' && (
         <div role="tabpanel" aria-labelledby="tab-recurrences" style={{ flex: 1 }}>
           {recurrencesWithRule === undefined ? (
             <LoadingSkeleton label="A carregar recorrências" />
@@ -380,6 +548,39 @@ export default function FinancasPage(): React.ReactElement {
               categories={categories ?? []}
               onEdit={handleEditRecurrence}
               onDelete={handleDeleteRecurrence}
+            />
+          )}
+        </div>
+      )}
+
+      {tab === 'accounts' && (
+        <div role="tabpanel" aria-labelledby="tab-accounts" style={{ flex: 1 }}>
+          {accounts === undefined ? (
+            <LoadingSkeleton label="A carregar contas" />
+          ) : accounts.length === 0 ? (
+            <EmptyState text='Sem contas. Regista a primeira no botão "+ Nova conta".' />
+          ) : (
+            <AccountsList
+              accounts={accounts}
+              onEdit={handleEditAccount}
+              onDelete={handleDeleteAccount}
+            />
+          )}
+        </div>
+      )}
+
+      {tab === 'cards' && (
+        <div role="tabpanel" aria-labelledby="tab-cards" style={{ flex: 1 }}>
+          {cards === undefined ? (
+            <LoadingSkeleton label="A carregar cartões" />
+          ) : cards.length === 0 ? (
+            <EmptyState text='Sem cartões. Regista o primeiro no botão "+ Novo cartão".' />
+          ) : (
+            <CardsList
+              cards={cards}
+              accounts={accounts ?? []}
+              onEdit={handleEditCard}
+              onDelete={handleDeleteCard}
             />
           )}
         </div>
@@ -406,6 +607,25 @@ export default function FinancasPage(): React.ReactElement {
           cards={cards ?? []}
           onClose={closeModal}
           onSubmit={handleSubmitRecurrence}
+        />
+      )}
+
+      {modal !== null && modal.kind === 'account' && (
+        <AccountFormModal
+          mode={modal.mode}
+          initialValue={modal.mode === 'edit' ? modal.account : undefined}
+          onClose={closeModal}
+          onSubmit={handleSubmitAccount}
+        />
+      )}
+
+      {modal !== null && modal.kind === 'card' && (
+        <CardFormModal
+          mode={modal.mode}
+          initialValue={modal.mode === 'edit' ? modal.card : undefined}
+          accounts={accounts ?? []}
+          onClose={closeModal}
+          onSubmit={handleSubmitCard}
         />
       )}
 
