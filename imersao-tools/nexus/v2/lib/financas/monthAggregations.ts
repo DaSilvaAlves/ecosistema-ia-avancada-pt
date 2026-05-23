@@ -109,7 +109,7 @@ export function getProjectionWindow(
     );
   }
   const start = reference;
-  const end = new Date(start.getTime() + days * MS_PER_DAY);
+  const end = new Date(start.getTime() + (days - 1) * MS_PER_DAY);
   return {
     startISO: format(start, ISO_DAY),
     endISO: format(end, ISO_DAY),

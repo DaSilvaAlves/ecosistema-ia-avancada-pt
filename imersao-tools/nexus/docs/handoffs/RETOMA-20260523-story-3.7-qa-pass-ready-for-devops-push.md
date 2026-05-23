@@ -22,7 +22,7 @@ Quality gate `@dev` (convenção Epic 3 §5 + `separation-of-roles.md` A6 — ex
 
 ## Estado real verificado
 
-```
+```text
 {commit QA results} docs(nexus-v2): Story 3.7 QA Results PASS first-iter + Change Log v1.3 [Story 3.7] [Epic 3]
 f0261e38 docs(nexus-v2): handoff Story 3.7 ready for @dev quality gate [Story 3.7] [Epic 3]
 75261180 feat(nexus-v2): Story 3.7 — Vista "Este mês" [Story 3.7] [Epic 3]

@@ -22,7 +22,7 @@ Story 3.7 (Vista "Este mês" — FR21) **implementada** end-to-end na branch `fe
 
 ## Estado real verificado
 
-```
+```text
 75261180 feat(nexus-v2): Story 3.7 — Vista "Este mês" [Story 3.7] [Epic 3]
 e985b0d0 docs(nexus-v2): fechar Story 3.6 + actualizar EPIC-3 (6/11 Done) [Story 3.6] [Epic 3]
 7be125f4 feat(nexus-v2): Story 3.6 — Compras parceladas vinculadas a cartão [Epic 3] (#35)
@@ -83,7 +83,7 @@ Determinismo: zero `new Date()` interno (excepto `getProjectionWindow` que receb
 
 Estrutura da page:
 
-```
+```text
 'use client'
 useFinanceRecurrenceEngine()  // AC2
 useState<Date>(startOfMonth(new Date()))

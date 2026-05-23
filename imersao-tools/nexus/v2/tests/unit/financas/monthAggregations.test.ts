@@ -92,31 +92,31 @@ describe('getMonthBounds', () => {
 });
 
 describe('getProjectionWindow', () => {
-  it('Default 30 dias', () => {
+  it('Default 30 dias (inclusiva — cobre exactamente 30 datas)', () => {
     expect(getProjectionWindow(new Date('2026-05-15'))).toEqual({
       startISO: '2026-05-15',
-      endISO: '2026-06-14',
+      endISO: '2026-06-13',
     });
   });
 
   it('Cavalo de ano (Dezembro → Janeiro)', () => {
     expect(getProjectionWindow(new Date('2026-12-20'), 30)).toEqual({
       startISO: '2026-12-20',
-      endISO: '2027-01-19',
+      endISO: '2027-01-18',
     });
   });
 
-  it('`days = 1` (janela de 24h)', () => {
+  it('`days = 1` (janela degenerada — start === end)', () => {
     expect(getProjectionWindow(new Date('2026-05-15'), 1)).toEqual({
       startISO: '2026-05-15',
-      endISO: '2026-05-16',
+      endISO: '2026-05-15',
     });
   });
 
-  it('`days = 60` (janela longa)', () => {
+  it('`days = 60` (janela longa — cobre exactamente 60 datas)', () => {
     expect(getProjectionWindow(new Date('2026-05-15'), 60)).toEqual({
       startISO: '2026-05-15',
-      endISO: '2026-07-14',
+      endISO: '2026-07-13',
     });
   });
 
