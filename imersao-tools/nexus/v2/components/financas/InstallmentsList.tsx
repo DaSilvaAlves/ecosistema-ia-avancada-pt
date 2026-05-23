@@ -76,16 +76,28 @@ function InstallmentRow({
 }: InstallmentRowProps): React.ReactElement {
   // Calcula o valor por parcela uma vez (split é puro e barato). Se a divisão
   // for exacta, todas as parcelas são iguais; senão, mostra a primeira (a maior).
-  const parcels = splitInstallmentAmount(
-    installment.totalAmount,
-    installment.installments,
-  );
-  const first = parcels[0];
-  const last = parcels[parcels.length - 1];
-  const parcelText =
-    first === last
-      ? `${installment.installments}× de ${formatCurrency(first)}`
-      : `${installment.installments}× de ${formatCurrency(last)} (1ª: ${formatCurrency(first)})`;
+  //
+  // CodeRabbit Iter 1 (Minor) — render-safety. O `InstallmentSchema` Zod já
+  // protege na escrita (`installments >= 1`, `totalAmount` inteiro `>= 0`),
+  // mas uma row malformada que sobreviva à validação (ex: estado inesperado,
+  // migração futura, dado externo via tool do cérebro) lançaria em render e
+  // mataria toda a tab "Parceladas". try/catch defensivo com fallback
+  // gracioso.
+  let parcelText: string;
+  try {
+    const parcels = splitInstallmentAmount(
+      installment.totalAmount,
+      installment.installments,
+    );
+    const first = parcels[0];
+    const last = parcels[parcels.length - 1];
+    parcelText =
+      first === last
+        ? `${installment.installments}× de ${formatCurrency(first)}`
+        : `${installment.installments}× de ${formatCurrency(last)} (1ª: ${formatCurrency(first)})`;
+  } catch {
+    parcelText = `${installment.installments}× — valor inválido`;
+  }
 
   const dateText = formatStartDatePT(installment.startDate);
 

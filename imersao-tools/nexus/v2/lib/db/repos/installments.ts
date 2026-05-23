@@ -120,6 +120,16 @@ export async function createInstallmentWithTransactions(
         `Transação ${t.id} tem installmentId divergente (esperado ${installment.id}, recebido ${t.installmentId}).`,
       );
     }
+    // CodeRabbit Iter 1 (Major) — paridade com o guard de installmentId.
+    // Embora o handler em `app/(app)/financas/page.tsx` estampe sempre
+    // `cardId: installment.cardId`, esta função é API pública do repo e
+    // poderia ser chamada de outro callsite com input divergente. Bloqueia
+    // estado persistido inconsistente.
+    if (t.cardId !== installment.cardId) {
+      throw new Error(
+        `Transação ${t.id} tem cardId divergente (esperado ${installment.cardId}, recebido ${t.cardId}).`,
+      );
+    }
   }
 
   await db.transaction('rw', db.installments, db.transactions, async () => {
