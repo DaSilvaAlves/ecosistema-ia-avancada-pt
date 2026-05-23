@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useTransactions } from '@/hooks/useTransactions';
@@ -553,6 +554,23 @@ export default function FinancasPage(): React.ReactElement {
           Finanças
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Story 3.7 / AC10 — link de descoberta para a vista mensal. */}
+          <Link
+            href="/financas/mes"
+            aria-label="Abrir vista do mês corrente"
+            style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              color: '#00F5FF',
+              textDecoration: 'none',
+              padding: '0.35rem 0.6rem',
+              borderRadius: 6,
+              transition: 'background 0.2s',
+            }}
+          >
+            Este mês →
+          </Link>
           {newButtonDisabled && newButtonHint !== null && (
             <span
               style={{
