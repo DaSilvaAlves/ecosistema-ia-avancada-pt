@@ -9,6 +9,7 @@ import { useAccounts } from '@/hooks/useAccounts';
 import { useCards } from '@/hooks/useCards';
 import { useFinanceRecurrences } from '@/hooks/useFinanceRecurrences';
 import { useFinanceRecurrenceEngine } from '@/hooks/useFinanceRecurrenceEngine';
+import { useInstallments } from '@/hooks/useInstallments';
 import {
   createTransaction,
   deleteTransaction,
@@ -30,7 +31,15 @@ import {
   updateAccount,
 } from '@/lib/db/repos/accounts';
 import { createCard, deleteCard, updateCard } from '@/lib/db/repos/cards';
+import {
+  createInstallmentWithTransactions,
+  deleteInstallmentCascade,
+} from '@/lib/db/repos/installments';
 import { generateTransactionInstances } from '@/lib/shared/recurrence';
+import {
+  installmentDates,
+  splitInstallmentAmount,
+} from '@/lib/financas/installmentSplit';
 import type {
   Account,
   Card,
@@ -49,6 +58,11 @@ import { AccountFormModal } from '@/components/financas/AccountFormModal';
 import { AccountsList } from '@/components/financas/AccountsList';
 import { CardFormModal } from '@/components/financas/CardFormModal';
 import { CardsList } from '@/components/financas/CardsList';
+import {
+  InstallmentFormModal,
+  type InstallmentSubmit,
+} from '@/components/financas/InstallmentFormModal';
+import { InstallmentsList } from '@/components/financas/InstallmentsList';
 
 /**
  * Nexus v2 — Página /financas (Story 3.3 — transações variáveis FR16;
@@ -59,11 +73,12 @@ import { CardsList } from '@/components/financas/CardsList';
  *
  * Composição:
  *   1. Cabeçalho — título "Finanças" + botão de criação contextual à tab
- *   2. Tab strip — "Transações" | "Recorrências" | "Contas" | "Cartões"
+ *   2. Tab strip — "Transações" | "Recorrências" | "Contas" | "Cartões" | "Parceladas"
  *   3. Tab Transações — lista cronológica + <TransactionFormModal> (Story 3.3)
  *   4. Tab Recorrências — lista + <FinanceRecurrenceFormModal> (Story 3.4)
  *   5. Tab Contas — lista + <AccountFormModal> (Story 3.5)
  *   6. Tab Cartões — lista + <CardFormModal> (Story 3.5)
+ *   7. Tab Parceladas — lista + <InstallmentFormModal> (Story 3.6)
  *
  * O motor de recorrência financeira (`useFinanceRecurrenceEngine`) corre uma vez
  * no mount — gera as transações recorrentes em falta dentro do horizonte de 90
@@ -84,9 +99,10 @@ type ModalState =
   | { kind: 'account'; mode: 'edit'; account: Account }
   | { kind: 'card'; mode: 'create' }
   | { kind: 'card'; mode: 'edit'; card: Card }
+  | { kind: 'installment'; mode: 'create' }
   | null;
 
-type Tab = 'transactions' | 'recurrences' | 'accounts' | 'cards';
+type Tab = 'transactions' | 'recurrences' | 'accounts' | 'cards' | 'installments';
 
 /** Recorrência financeira enriquecida com a `Recurrence` associada (RRULE). */
 interface FinanceRecurrenceWithRule extends FinanceRecurrence {
@@ -110,6 +126,7 @@ export default function FinancasPage(): React.ReactElement {
   const accounts = useAccounts();
   const cards = useCards();
   const financeRecurrences = useFinanceRecurrences();
+  const installments = useInstallments();
 
   // Junta cada FinanceRecurrence à sua Recurrence (RRULE + datas) — reactivo.
   const recurrencesWithRule = useLiveQuery<
@@ -408,17 +425,96 @@ export default function FinancasPage(): React.ReactElement {
     }
   }, []);
 
+  // ─── Compras parceladas (Story 3.6) ───
+
+  const handleNewInstallment = useCallback((): void => {
+    rememberOpener();
+    setModal({ kind: 'installment', mode: 'create' });
+  }, []);
+
+  /**
+   * AC6 — cria a compra parcelada E as N transações futuras atomicamente,
+   * via `createInstallmentWithTransactions` (`db.transaction('rw', ...)`).
+   *
+   * 1. Calcula `amounts = splitInstallmentAmount(totalAmount, N)` e
+   *    `dates = installmentDates(startDate, N)`.
+   * 2. Constrói N `Transaction` — `amount = -amounts[i]` (compra = saída,
+   *    [AUTO-DECISION] A3), `description = "{desc} ({i+1}/{N})"`,
+   *    `installmentId = installment.id`, `accountId/recurrenceId = null`.
+   * 3. Delega ao repo o write atómico (rollback all-or-nothing).
+   */
+  async function handleSubmitInstallment(input: InstallmentSubmit): Promise<void> {
+    try {
+      const { installment, category } = input;
+      const amounts = splitInstallmentAmount(
+        installment.totalAmount,
+        installment.installments,
+      );
+      const dates = installmentDates(installment.startDate, installment.installments);
+      const createdAt = Date.now();
+      const transactions: Transaction[] = amounts.map((cents, i) => ({
+        id: crypto.randomUUID(),
+        amount: -cents,
+        category,
+        description: `${installment.description} (${i + 1}/${installment.installments})`,
+        date: dates[i],
+        accountId: null,
+        cardId: installment.cardId,
+        recurrenceId: null,
+        installmentId: installment.id,
+        createdAt,
+      }));
+      await createInstallmentWithTransactions(installment, transactions);
+    } catch (error) {
+      console.error('Erro ao registar compra parcelada', error);
+      setErrorMessage('Erro ao registar compra parcelada — tenta novamente.');
+      throw error;
+    }
+  }
+
+  // AC9 — apagar uma parcelada elimina o registo E as N transações geradas.
+  // Diferente da Story 3.4 (transações sobrevivem ao delete da recorrência) —
+  // uma parcelada é uma compra única; apagá-la remove tudo.
+  const handleDeleteInstallment = useCallback(
+    async (id: string): Promise<void> => {
+      const installment = (installments ?? []).find((i) => i.id === id);
+      const count = installment?.installments ?? 0;
+      const confirmed = window.confirm(
+        `Apagar esta compra parcelada? As ${count} transações geradas serão também eliminadas.`,
+      );
+      if (!confirmed) return;
+      try {
+        await deleteInstallmentCascade(id);
+      } catch (error) {
+        console.error('Erro ao apagar compra parcelada', error);
+        setErrorMessage('Erro ao apagar compra parcelada — tenta novamente.');
+      }
+    },
+    [installments],
+  );
+
   // ─── Cabeçalho contextual ───
 
-  // AC5 — sem contas registadas, não é possível criar um cartão (FK obrigatória).
+  // AC5 (Story 3.5) — sem contas registadas, não é possível criar um cartão.
+  // AC7 (Story 3.6) — sem cartões registados, não é possível criar uma parcelada
+  // (FK `Installment.cardId` non-nullable).
   const noAccounts = (accounts ?? []).length === 0;
-  const newButtonDisabled = tab === 'cards' && noAccounts;
+  const noCards = (cards ?? []).length === 0;
+  const newButtonDisabled =
+    (tab === 'cards' && noAccounts) || (tab === 'installments' && noCards);
+
+  const newButtonHint: string | null = (() => {
+    if (tab === 'cards' && noAccounts) return 'Cria uma conta primeiro';
+    if (tab === 'installments' && noCards) return 'Cria um cartão primeiro';
+    return null;
+  })();
 
   const newButtonLabel: string = {
     transactions: '+ Nova transação',
     recurrences: '+ Nova recorrência',
     accounts: '+ Nova conta',
     cards: '+ Novo cartão',
+    installments: '+ Nova parcelada',
   }[tab];
 
   const handleNew: () => void = {
@@ -426,6 +522,7 @@ export default function FinancasPage(): React.ReactElement {
     recurrences: handleNewRecurrence,
     accounts: handleNewAccount,
     cards: handleNewCard,
+    installments: handleNewInstallment,
   }[tab];
 
   const recurrencesForList = useMemo<FinanceRecurrenceWithRule[]>(
@@ -456,7 +553,7 @@ export default function FinancasPage(): React.ReactElement {
           Finanças
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {newButtonDisabled && (
+          {newButtonDisabled && newButtonHint !== null && (
             <span
               style={{
                 fontFamily: 'Inter, sans-serif',
@@ -465,7 +562,7 @@ export default function FinancasPage(): React.ReactElement {
                 fontStyle: 'italic',
               }}
             >
-              Cria uma conta primeiro
+              {newButtonHint}
             </span>
           )}
           <button
@@ -524,6 +621,12 @@ export default function FinancasPage(): React.ReactElement {
           label="Cartões"
           selected={tab === 'cards'}
           onSelect={() => setTab('cards')}
+        />
+        <TabButton
+          id="tab-installments"
+          label="Parceladas"
+          selected={tab === 'installments'}
+          onSelect={() => setTab('installments')}
         />
       </div>
 
@@ -594,6 +697,22 @@ export default function FinancasPage(): React.ReactElement {
         </div>
       )}
 
+      {tab === 'installments' && (
+        <div role="tabpanel" aria-labelledby="tab-installments" style={{ flex: 1 }}>
+          {installments === undefined ? (
+            <LoadingSkeleton label="A carregar compras parceladas" />
+          ) : installments.length === 0 ? (
+            <EmptyState text='Sem compras parceladas. Regista a primeira no botão "+ Nova parcelada".' />
+          ) : (
+            <InstallmentsList
+              installments={installments}
+              cards={cards ?? []}
+              onDelete={handleDeleteInstallment}
+            />
+          )}
+        </div>
+      )}
+
       {modal !== null && modal.kind === 'transaction' && (
         <TransactionFormModal
           mode={modal.mode}
@@ -634,6 +753,15 @@ export default function FinancasPage(): React.ReactElement {
           accounts={accounts ?? []}
           onClose={closeModal}
           onSubmit={handleSubmitCard}
+        />
+      )}
+
+      {modal !== null && modal.kind === 'installment' && (
+        <InstallmentFormModal
+          cards={cards ?? []}
+          categories={categories ?? []}
+          onClose={closeModal}
+          onSubmit={handleSubmitInstallment}
         />
       )}
 
