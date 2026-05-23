@@ -9,7 +9,7 @@ Ver regra canónica: `.claude/rules/handoff-central.md`
 
 | Ficheiro | De | Para | Data | Próxima acção |
 |---------|-----|------|------|--------------|
-| _(nenhum handoff pending)_ | | | | |
+| [RETOMA-20260523-epic-3-6de11-pronto-para-3.7-3.8-3.9-3.10.md](RETOMA-20260523-epic-3-6de11-pronto-para-3.7-3.8-3.9-3.10.md) | Sessão Claude Code 23/05 (terminal low-context) | Próximo terminal (qualquer agente AIOX, Eurico decide) | 23/05/2026 | Eurico decide entre 7 opções (A-G) — recomendada (A) `@sm *draft 3.7` (vista mensal, demonstra continuidade Nexus) ou (F) paralelizar 3.7+3.8+3.9+3.10 em 4 terminais. Epic 3 a **6/11 Done**, waiver rate 0/6, 5 pendentes todas desbloqueadas (3.7, 3.8, 3.9, 3.10, 3.11). |
 
 ---
 
