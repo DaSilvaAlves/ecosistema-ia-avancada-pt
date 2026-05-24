@@ -1,4 +1,4 @@
-import { endOfMonth, format, startOfMonth } from 'date-fns';
+import { addDays, endOfMonth, format, startOfMonth } from 'date-fns';
 import type { Transaction } from '@/types/db';
 
 /**
@@ -24,7 +24,6 @@ import type { Transaction } from '@/types/db';
  */
 
 const ISO_DAY = 'yyyy-MM-dd';
-const MS_PER_DAY = 86_400_000;
 
 export interface MonthBounds {
   /** Primeiro dia do mês — `YYYY-MM-01`. */
@@ -109,7 +108,8 @@ export function getProjectionWindow(
     );
   }
   const start = reference;
-  const end = new Date(start.getTime() + (days - 1) * MS_PER_DAY);
+  // addDays (date-fns) — DST-safe vs aritmética manual em ms (CR Iter 2 nitpick).
+  const end = addDays(start, days - 1);
   return {
     startISO: format(start, ISO_DAY),
     endISO: format(end, ISO_DAY),

@@ -54,8 +54,8 @@ e985b0d0 docs(nexus-v2): fechar Story 3.6 + actualizar EPIC-3 (6/11 Done) [Story
 | 3 | (mesmo ficheiro) | 102-107 | `endISO: '2027-01-19'` | `endISO: '2027-01-18'` | Cavalo de ano 30d inclusiva |
 | 4 | (mesmo ficheiro) | 109-114 | `endISO: '2026-05-16'` (descrição "janela de 24h") | `endISO: '2026-05-15'` (descrição "janela degenerada — start === end") | days=1 inclusiva → mesmo dia |
 | 5 | (mesmo ficheiro) | 116-121 | `endISO: '2026-07-14'` | `endISO: '2026-07-13'` | days=60 inclusiva |
-| 6 | `imersao-tools/nexus/docs/stories/active/3.7.story.md` | 128 | ``ordenada por `|sum|` desc`` (célula tabela A7) | ``ordenada por `\|sum\|` desc`` | Pipes escapados em cell de tabela (MD056) |
-| 7 | (mesma story) | 254 | ``descendente por `|sum|` em `aggregateByCategory`;`` (célula CR Focus Areas) | ``descendente por `\|sum\|` em `aggregateByCategory`;`` | Pipes escapados em cell de tabela (MD056) |
+| 6 | `imersao-tools/nexus/docs/stories/active/3.7.story.md` | 128 | <code>ordenada por &#124;sum&#124; desc</code> (célula tabela A7) | <code>ordenada por &#124;sum&#124; desc</code> | Pipes escapados em cell de tabela (MD056) |
+| 7 | (mesma story) | 254 | <code>descendente por &#124;sum&#124; em aggregateByCategory;</code> (célula CR Focus Areas) | <code>descendente por &#124;sum&#124; em aggregateByCategory;</code> | Pipes escapados em cell de tabela (MD056) |
 | 8 | `imersao-tools/nexus/docs/handoffs/RETOMA-20260523-story-3.7-qa-pass-ready-for-devops-push.md` | 25 | ` ``` ` (vazio) | ` ```text ` | Language tag (MD040) |
 | 9 | `imersao-tools/nexus/docs/handoffs/archive/RETOMA-20260523-story-3.7-ready-for-dev-quality-gate.md` | 25 | ` ``` ` (vazio) | ` ```text ` | Language tag commit log (MD040) |
 | 10 | (mesmo archive) | 86 | ` ``` ` (vazio) | ` ```text ` | Language tag pseudo-code page (MD040) |
