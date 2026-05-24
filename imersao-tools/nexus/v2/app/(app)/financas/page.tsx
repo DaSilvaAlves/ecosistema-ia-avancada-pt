@@ -9,7 +9,6 @@ import { useCategories } from '@/hooks/useCategories';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useCards } from '@/hooks/useCards';
 import { useFinanceRecurrences } from '@/hooks/useFinanceRecurrences';
-import { useFinanceRecurrenceEngine } from '@/hooks/useFinanceRecurrenceEngine';
 import { useInstallments } from '@/hooks/useInstallments';
 import {
   createTransaction,
@@ -113,8 +112,9 @@ interface FinanceRecurrenceWithRule extends FinanceRecurrence {
 export default function FinancasPage(): React.ReactElement {
   const router = useRouter();
 
-  // Story 3.4 — activa o motor de recorrência financeira uma vez no mount.
-  useFinanceRecurrenceEngine();
+  // Story 3.10 AC7 — a chamada a `useFinanceRecurrenceEngine()` foi removida.
+  // O motor passa a ser activado uma única vez por dia pelo
+  // `<DailyEngineProvider>` em `app/(app)/layout.tsx`.
 
   const [tab, setTab] = useState<Tab>('transactions');
   const [modal, setModal] = useState<ModalState>(null);

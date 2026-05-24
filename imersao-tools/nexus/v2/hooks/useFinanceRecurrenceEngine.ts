@@ -14,12 +14,14 @@ import { runFinanceRecurrenceEngine } from '@/lib/shared/recurrence';
  * (Story 2.7, ADR-2.7-1). O motor em `lib/shared/recurrence.ts` permanece
  * agnóstico ao mecanismo de activação.
  *
- * BOUNDARY com a Story 3.10: este hook NÃO implementa a lógica de "primeiro
- * carregamento do dia" (estado persistido que controla se o motor já correu
- * hoje). Corre a cada mount da página. A Story 3.10 substitui este hook pelo
- * mecanismo de geração diária — sem tocar no motor.
+ * @deprecated since Story 3.10 — utilizar `DailyEngineProvider` em
+ *   `app/(app)/layout.tsx` em vez deste hook. Continua funcional para casos
+ *   de force-run pontual (ex: testes, scripts de debug), mas em produção o
+ *   motor é orquestrado uma vez por dia pelo provider global em vez de a
+ *   cada mount de página.
  *
- * Trace: Story 3.4 AC5 + [AUTO-DECISION] A4 + ADR-2.7-1; `EPIC-3.md` §7.
+ * Trace: Story 3.4 AC5 + [AUTO-DECISION] A4 + ADR-2.7-1; `EPIC-3.md` §7;
+ * deprecado por Story 3.10 [AUTO-DECISION] A3 + AC8.
  */
 export function useFinanceRecurrenceEngine(): void {
   useEffect(() => {

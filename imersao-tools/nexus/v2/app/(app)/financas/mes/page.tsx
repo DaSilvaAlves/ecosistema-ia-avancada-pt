@@ -8,7 +8,6 @@ import { pt } from 'date-fns/locale';
 
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
-import { useFinanceRecurrenceEngine } from '@/hooks/useFinanceRecurrenceEngine';
 import {
   aggregateByCategory,
   aggregateByDay,
@@ -701,9 +700,10 @@ function MonthProjection({ transactions }: ProjectionProps): React.ReactElement 
 export default function MesPage(): React.ReactElement {
   const router = useRouter();
 
-  // AC2 — Garante que recorrentes futuras (Story 3.4) estão materializadas na
-  // tabela `transactions` antes de calcular a projecção 30 dias. Idempotente.
-  useFinanceRecurrenceEngine();
+  // Story 3.10 AC7 — a chamada a `useFinanceRecurrenceEngine()` foi removida.
+  // O motor passa a ser activado uma única vez por dia pelo
+  // `<DailyEngineProvider>` em `app/(app)/layout.tsx`. `useTransactions` /
+  // `useLiveQuery` reflectem as novas instâncias reactivamente.
 
   // [AUTO-DECISION] A3 — anchor inicial = primeiro dia do mês actual.
   const [anchor, setAnchor] = useState<Date>(() => startOfMonth(new Date()));
