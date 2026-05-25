@@ -17,7 +17,14 @@ import { runRecurrenceEngine } from '@/lib/shared/recurrence';
  * justificada por requisito de Background Sync) substitui apenas este hook,
  * sem tocar no motor.
  *
- * Trace: Story 2.7 AC4 + ADR-2.7-1 + EPIC-2 §7 + PRD §10 L446.
+ * @deprecated since Story 3.10 — utilizar `DailyEngineProvider` em
+ *   `app/(app)/layout.tsx` em vez deste hook. Continua funcional para casos
+ *   de force-run pontual (ex: testes, scripts de debug), mas em produção o
+ *   motor é orquestrado uma vez por dia pelo provider global em vez de a
+ *   cada mount de página.
+ *
+ * Trace: Story 2.7 AC4 + ADR-2.7-1 + EPIC-2 §7 + PRD §10 L446; deprecado por
+ * Story 3.10 [AUTO-DECISION] A3 + AC8.
  */
 export function useRecurrenceEngine(): void {
   useEffect(() => {

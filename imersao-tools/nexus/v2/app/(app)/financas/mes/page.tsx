@@ -8,7 +8,6 @@ import { pt } from 'date-fns/locale';
 
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
-import { useFinanceRecurrenceEngine } from '@/hooks/useFinanceRecurrenceEngine';
 import {
   aggregateByCategory,
   aggregateByDay,
@@ -33,8 +32,10 @@ import type { Category, Transaction } from '@/types/db';
  *   - Projecção 30 dias (KPI + lista compacta com rótulos "Recorrente"/"Prestação").
  *
  * Trace: Story 3.7 ACs 2-10; [AUTO-DECISIONS] A1-A10. Reutiliza `useTransactions`
- * (Story 3.1), `useCategories` (Story 3.2), `useFinanceRecurrenceEngine` (Story
- * 3.4 — motor on-mount, idempotente). As recorrentes futuras (Story 3.4) e as
+ * (Story 3.1) e `useCategories` (Story 3.2). Desde Story 3.10, a materialização
+ * diária é orquestrada por `<DailyEngineProvider>` no layout autenticado
+ * (`app/(app)/layout.tsx`) — `useTransactions` e `useLiveQuery` reflectem
+ * novas instâncias reactivamente. As recorrentes futuras (Story 3.4) e as
  * prestações futuras (Story 3.6) já vivem na tabela `transactions` — a janela
  * de 30 dias inclui-as automaticamente.
  *
@@ -701,9 +702,10 @@ function MonthProjection({ transactions }: ProjectionProps): React.ReactElement 
 export default function MesPage(): React.ReactElement {
   const router = useRouter();
 
-  // AC2 — Garante que recorrentes futuras (Story 3.4) estão materializadas na
-  // tabela `transactions` antes de calcular a projecção 30 dias. Idempotente.
-  useFinanceRecurrenceEngine();
+  // Story 3.10 AC7 — a chamada a `useFinanceRecurrenceEngine()` foi removida.
+  // O motor passa a ser activado uma única vez por dia pelo
+  // `<DailyEngineProvider>` em `app/(app)/layout.tsx`. `useTransactions` /
+  // `useLiveQuery` reflectem as novas instâncias reactivamente.
 
   // [AUTO-DECISION] A3 — anchor inicial = primeiro dia do mês actual.
   const [anchor, setAnchor] = useState<Date>(() => startOfMonth(new Date()));
