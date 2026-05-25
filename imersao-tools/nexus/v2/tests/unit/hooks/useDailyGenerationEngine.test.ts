@@ -9,7 +9,7 @@ import { DAILY_RUN_STORAGE_KEY } from '@/lib/shared/dailyRunGate';
  * `runFinanceRecurrenceEngine`). Padrão herdado de
  * `tests/unit/hooks/useRecurrenceEngine.test.ts` (Story 2.7).
  *
- * Cenários T1-T7 cobrem:
+ * Cenários T1-T10 cobrem:
  * - T1: primeira corrida (localStorage vazio)
  * - T2: segunda mount mesma sessão (no-op)
  * - T3: novo dia (re-corrida com actualização)
@@ -17,6 +17,9 @@ import { DAILY_RUN_STORAGE_KEY } from '@/lib/shared/dailyRunGate';
  * - T5: falha em runFinanceRecurrenceEngine (lastRun intacto)
  * - T6: SSR guard (não exercitado em jsdom — coberto via guard explícito no código)
  * - T7: ordem (financeRecurrence só corre depois de recurrence resolver)
+ * - T8: re-renders não disparam motor de novo na mesma mount
+ * - T9: runFinanceRecurrenceEngine retorna errors > 0 sem throw → lastRun intacto (CR Iter 1)
+ * - T10: runRecurrenceEngine retorna errors > 0 sem throw → lastRun intacto (CR Iter 2, simétrico de T9)
  *
  * Trace: Story 3.10 AC2 + AC3 + AC4 + [AUTO-DECISION] A7.
  */
@@ -190,6 +193,29 @@ describe('useDailyGenerationEngine — Story 3.10', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Falha ao executar motor diário de geração — lastRun não foi actualizado',
         expect.objectContaining({ financeErrors: 1 }),
+      );
+    });
+
+    // lastRun não foi gravado mesmo sem throw.
+    expect(window.localStorage.getItem(DAILY_RUN_STORAGE_KEY)).toBeNull();
+  });
+
+  // T10 — simétrico de T9 (CR Iter 2): runRecurrenceEngine resolve com errors > 0 sem lançar.
+  // O hook não interrompe a sequência sem throw (só `try/catch`), por isso `finance` também
+  // corre. A persistência é bloqueada pela condição `recurrenceResult.errors === 0 && financeResult.errors === 0`.
+  it('T10 — runRecurrenceEngine returns errors > 0 (non-throwing): lastRun fica intacto', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    runRecurrenceEngineMock.mockResolvedValueOnce({ created: 0, skipped: 0, errors: 1 });
+
+    const { useDailyGenerationEngine } = await import('@/hooks/useDailyGenerationEngine');
+    renderHook(() => useDailyGenerationEngine());
+
+    await waitFor(() => {
+      expect(runRecurrenceEngineMock).toHaveBeenCalledTimes(1);
+      expect(runFinanceRecurrenceEngineMock).toHaveBeenCalledTimes(1);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Falha ao executar motor diário de geração — lastRun não foi actualizado',
+        expect.objectContaining({ recurrenceErrors: 1 }),
       );
     });
 
