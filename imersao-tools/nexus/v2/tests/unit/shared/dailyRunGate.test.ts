@@ -84,6 +84,16 @@ describe('dailyRunGate — Story 3.10', () => {
     it('boundary de mês: lastRunIso = "2026-05-31", today = "2026-06-01" → true', () => {
       expect(shouldRunDailyEngine('2026-06-01', '2026-05-31')).toBe(true);
     });
+
+    it('lastRunIso = "invalid" → true (malformed, treat as never ran)', () => {
+      // Malformed strings would lexicographically block the engine permanently.
+      // Defensive: invalid date → run as if never ran.
+      expect(shouldRunDailyEngine('2026-05-24', 'invalid')).toBe(true);
+    });
+
+    it('lastRunIso = "not-a-date" → true (malformed, treat as never ran)', () => {
+      expect(shouldRunDailyEngine('2026-05-24', 'not-a-date')).toBe(true);
+    });
   });
 
   describe('resetDailyEngineRun()', () => {

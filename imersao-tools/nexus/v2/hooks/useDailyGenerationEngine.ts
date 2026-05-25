@@ -20,12 +20,10 @@ import {
  * e `runFinanceRecurrenceEngine` em sequência apenas se for um dia diferente do
  * último em que correram (persistido em `localStorage[nexus:lastDailyEngineRun]`).
  *
- * Persistência (AC4): só grava `lastRun` se ambos os motores correrem sem
- * lançar — assim, falha catastrófica num motor garante retentativa na próxima
- * carga. Cada motor já tolera erros internos (retorna `errors` count); falhas
- * dentro desse contrato não interrompem a sequência, mas falhas fora dele
- * (ex: rejeição da `Promise`) sim — esse é o sinal de que `lastRun` não
- * deve avançar.
+ * Persistência (AC4, alargado CR Iter 1): só grava `lastRun` se ambos os
+ * motores correrem sem lançar E com `errors === 0`. Motores com `errors > 0`
+ * não lançam, mas indicam que instâncias não foram criadas — tratar como falha
+ * parcial e não persistir `lastRun` para garantir retentativa na próxima carga.
  *
  * Prestações: NÃO são geradas aqui. A Story 3.6 fez geração eager atómica via
  * `createInstallmentWithTransactions` — não há motor para parceladas e a 3.10
@@ -53,11 +51,19 @@ export function useDailyGenerationEngine(): void {
 
     void (async () => {
       try {
-        await runRecurrenceEngine();
-        await runFinanceRecurrenceEngine();
-        // AC4 — só persiste se ambos correrem sem lançar. Falha em qualquer
-        // motor → `lastRun` permanece intacto → próxima carga re-tenta.
-        window.localStorage.setItem(DAILY_RUN_STORAGE_KEY, todayIso);
+        const recurrenceResult = await runRecurrenceEngine();
+        const financeResult = await runFinanceRecurrenceEngine();
+        // AC4 (alargado CR Iter 1) — persiste só se ambos sem lançar e sem
+        // erros internos. `errors > 0` sem throw indica falha parcial; não
+        // actualizar `lastRun` garante retentativa na próxima carga.
+        if (recurrenceResult.errors === 0 && financeResult.errors === 0) {
+          window.localStorage.setItem(DAILY_RUN_STORAGE_KEY, todayIso);
+        } else {
+          console.error(
+            'Falha ao executar motor diário de geração — lastRun não foi actualizado',
+            { recurrenceErrors: recurrenceResult.errors, financeErrors: financeResult.errors },
+          );
+        }
       } catch (error) {
         console.error(
           'Falha ao executar motor diário de geração — lastRun não foi actualizado',

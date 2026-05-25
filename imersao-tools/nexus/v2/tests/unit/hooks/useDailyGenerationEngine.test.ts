@@ -176,6 +176,27 @@ describe('useDailyGenerationEngine — Story 3.10', () => {
     });
   });
 
+  // T9 — motor retorna errors > 0 sem lançar: lastRun não persiste (CR Iter 1)
+  it('T9 — runFinanceRecurrenceEngine returns errors > 0 (non-throwing): lastRun fica intacto', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    runFinanceRecurrenceEngineMock.mockResolvedValueOnce({ created: 0, skipped: 0, errors: 1 });
+
+    const { useDailyGenerationEngine } = await import('@/hooks/useDailyGenerationEngine');
+    renderHook(() => useDailyGenerationEngine());
+
+    await waitFor(() => {
+      expect(runRecurrenceEngineMock).toHaveBeenCalledTimes(1);
+      expect(runFinanceRecurrenceEngineMock).toHaveBeenCalledTimes(1);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Falha ao executar motor diário de geração — lastRun não foi actualizado',
+        expect.objectContaining({ financeErrors: 1 }),
+      );
+    });
+
+    // lastRun não foi gravado mesmo sem throw.
+    expect(window.localStorage.getItem(DAILY_RUN_STORAGE_KEY)).toBeNull();
+  });
+
   // T8 — não chama de novo em re-render do componente (one-shot guard)
   it('T8 — re-renders não disparam o motor de novo na mesma mount', async () => {
     const { useDailyGenerationEngine } = await import('@/hooks/useDailyGenerationEngine');

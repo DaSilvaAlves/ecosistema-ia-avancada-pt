@@ -46,19 +46,24 @@ export function getTodayLocalIso(now?: Date): string {
  * - `lastRunIso === null` → `true` (nunca correu).
  * - `lastRunIso === ''` → `true` (defensivo — valor corrompido tratado como
  *   "nunca correu", evita estado "stuck").
+ * - `lastRunIso` inválido (ex: `"invalid"`) → `true` (defensivo — valor
+ *   malformado tratado como "nunca correu", evita bloqueio permanente do motor).
  * - `todayIso > lastRunIso` (lexicograficamente) → `true` (novo dia).
  * - `todayIso <= lastRunIso` → `false` (mesmo dia, ou o relógio do utilizador
  *   recuou — não correr, evita duplicar corridas).
  *
- * Função pura — sem `localStorage`, sem `Date`, sem efeitos colaterais.
+ * Função pura — sem `localStorage`, sem efeitos colaterais.
  *
- * Trace: Story 3.10 AC1 + [AUTO-DECISION] A1.
+ * Trace: Story 3.10 AC1 + [AUTO-DECISION] A1; CR Iter 1 (validação de data).
  */
 export function shouldRunDailyEngine(
   todayIso: string,
   lastRunIso: string | null,
 ): boolean {
   if (lastRunIso === null || lastRunIso === '') return true;
+  // Validate lastRunIso is a real date — malformed strings (e.g. "invalid") would
+  // permanently block the engine via lexicographic comparison. Treat as never ran.
+  if (!Number.isFinite(new Date(lastRunIso).getTime())) return true;
   return todayIso > lastRunIso;
 }
 

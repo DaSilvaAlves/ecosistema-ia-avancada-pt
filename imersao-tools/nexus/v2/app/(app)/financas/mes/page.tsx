@@ -32,8 +32,10 @@ import type { Category, Transaction } from '@/types/db';
  *   - Projecção 30 dias (KPI + lista compacta com rótulos "Recorrente"/"Prestação").
  *
  * Trace: Story 3.7 ACs 2-10; [AUTO-DECISIONS] A1-A10. Reutiliza `useTransactions`
- * (Story 3.1), `useCategories` (Story 3.2), `useFinanceRecurrenceEngine` (Story
- * 3.4 — motor on-mount, idempotente). As recorrentes futuras (Story 3.4) e as
+ * (Story 3.1) e `useCategories` (Story 3.2). Desde Story 3.10, a materialização
+ * diária é orquestrada por `<DailyEngineProvider>` no layout autenticado
+ * (`app/(app)/layout.tsx`) — `useTransactions` e `useLiveQuery` reflectem
+ * novas instâncias reactivamente. As recorrentes futuras (Story 3.4) e as
  * prestações futuras (Story 3.6) já vivem na tabela `transactions` — a janela
  * de 30 dias inclui-as automaticamente.
  *
