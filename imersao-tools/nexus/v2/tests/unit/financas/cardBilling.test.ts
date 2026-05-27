@@ -134,6 +134,16 @@ describe('cardBilling — getBillingPeriods', () => {
   it('lança RangeError quando closingDay não é inteiro', () => {
     expect(() => getBillingPeriods(15.5, new Date(2026, 4, 25))).toThrow(RangeError);
   });
+
+  // Story 3.8 CR Iter 2 (A2) completion — caminho explícito do guard `reference`
+  // inválida: `new Date('texto')` produz `Date` com `getTime()` = NaN, que
+  // propagaria silenciosamente para os ISOs de fecho.
+  it('lança RangeError quando reference é Date inválida', () => {
+    expect(() => getBillingPeriods(15, new Date('data-invalida'))).toThrow(RangeError);
+    expect(() => getBillingPeriods(15, new Date('data-invalida'))).toThrow(
+      /reference deve ser um Date válido/,
+    );
+  });
 });
 
 describe('cardBilling — aggregateCardTransactions', () => {
