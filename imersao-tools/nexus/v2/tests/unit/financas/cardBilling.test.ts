@@ -257,4 +257,19 @@ describe('cardBilling — countInstallmentPayments', () => {
       expect(r.totalMonths).toBe(n);
     }
   });
+
+  // Story 3.8 CR Iter 2 (N1) — caminhos de erro explícitos: `countInstallmentPayments`
+  // propaga validações de `installmentDates` (Story 3.6) sem swallow silencioso.
+
+  it('propaga erro quando startDate é inválida', () => {
+    expect(() =>
+      countInstallmentPayments('data-invalida', 3, new Date(2026, 4, 1)),
+    ).toThrow();
+  });
+
+  it('propaga erro quando n é inválido (0)', () => {
+    expect(() =>
+      countInstallmentPayments('2026-05-01', 0, new Date(2026, 4, 1)),
+    ).toThrow();
+  });
 });

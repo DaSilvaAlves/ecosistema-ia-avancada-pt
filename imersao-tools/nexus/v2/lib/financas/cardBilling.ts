@@ -127,7 +127,7 @@ function dayBeforeISO(iso: string): string {
  * @param closingDay - Dia do mês de fecho da fatura, inteiro `[1, 31]`.
  * @param reference - Data de referência. Os campos `getFullYear`/`getMonth`/`getDate` (local) são lidos.
  * @returns Limites ISO da fatura corrente e próxima.
- * @throws {RangeError} Se `closingDay` não for inteiro `[1, 31]`.
+ * @throws {RangeError} Se `closingDay` não for inteiro `[1, 31]` ou `reference` não for `Date` válido.
  */
 export function getBillingPeriods(
   closingDay: number,
@@ -136,6 +136,16 @@ export function getBillingPeriods(
   if (!Number.isInteger(closingDay) || closingDay < 1 || closingDay > 31) {
     throw new RangeError(
       `closingDay deve ser inteiro entre 1 e 31 (recebido: ${closingDay})`,
+    );
+  }
+
+  // Story 3.8 CR Iter 2 (A2) — validar `reference` antes de derivar limites.
+  // Um `Date` inválido (ex: `new Date('texto')`) produz `NaN` em `getFullYear`
+  // e propagaria silenciosamente para os ISOs (`NaN-NaN-NaN`), partindo todas
+  // as comparações lexicográficas a jusante.
+  if (!(reference instanceof Date) || Number.isNaN(reference.getTime())) {
+    throw new RangeError(
+      `reference deve ser um Date válido (recebido: ${String(reference)})`,
     );
   }
 

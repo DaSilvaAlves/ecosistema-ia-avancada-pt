@@ -112,10 +112,36 @@ function CardSection({
   installments,
   reference,
 }: CardSectionProps): React.ReactElement {
-  const periods: BillingPeriods = useMemo(
-    () => getBillingPeriods(card.closingDay, reference),
-    [card.closingDay, reference],
+  // Story 3.8 CR Iter 2 (A1) — guard contra `closingDay` malformado em Dexie.
+  // Em caso de erro, sinaliza com flag e usa períodos sentinela (start > end)
+  // para satisfazer rules-of-hooks (downstream hooks têm de correr sempre, na
+  // mesma ordem). Os sentinelas garantem zero transações matched e zero
+  // renderização de datas fantasma — o early-return abaixo mostra o aviso PT-PT.
+  const SENTINEL_PERIOD: BillingPeriods = useMemo(
+    () => ({
+      current: { startISO: '9999-12-31', endISO: '9999-12-30' },
+      next: { startISO: '9999-12-31', endISO: '9999-12-30' },
+    }),
+    [],
   );
+
+  const { periods, periodsError } = useMemo<{
+    periods: BillingPeriods;
+    periodsError: boolean;
+  }>(() => {
+    try {
+      return {
+        periods: getBillingPeriods(card.closingDay, reference),
+        periodsError: false,
+      };
+    } catch (error) {
+      console.error(
+        `[Story 3.8] getBillingPeriods falhou para cartão ${card.id} (closingDay=${String(card.closingDay)}):`,
+        error,
+      );
+      return { periods: SENTINEL_PERIOD, periodsError: true };
+    }
+  }, [card.closingDay, card.id, reference, SENTINEL_PERIOD]);
 
   // Story 3.8 AC7 — parcelas de prestações com `installmentId` já estão na
   // tabela `transactions` (eager — Story 3.6). A query `useTransactions` com
@@ -144,6 +170,39 @@ function CardSection({
     () => aggregateCardTransactions(txNext ?? [], periods.next),
     [txNext, periods],
   );
+
+  // Story 3.8 CR Iter 2 (A1) — early return APÓS todos os hooks (rules-of-hooks).
+  if (periodsError) {
+    return (
+      <section
+        style={SECTION_STYLE}
+        aria-labelledby={`card-${card.id}-title`}
+      >
+        <h2
+          id={`card-${card.id}-title`}
+          style={{
+            margin: 0,
+            fontSize: '1.25rem',
+            fontWeight: 800,
+            letterSpacing: '-0.01em',
+            color: '#F0F4FF',
+          }}
+        >
+          {card.name}
+        </h2>
+        <p
+          style={{
+            margin: '0.6rem 0 0',
+            color: '#FF006E',
+            fontSize: '0.85rem',
+          }}
+        >
+          Erro a calcular fatura: dia de fecho inválido (
+          {String(card.closingDay)}). Edita o cartão para corrigir.
+        </p>
+      </section>
+    );
+  }
 
   // Fatura: valor a pagar = |outflow + inflow| (saídas tipicamente dominam).
   // Para cartão, o "valor da fatura" é o módulo do `totalCents` (soma com sinal).
@@ -364,21 +423,43 @@ function InstallmentItem({
   installment,
   reference,
 }: InstallmentItemProps): React.ReactElement {
-  const progress = useMemo(
-    () =>
-      countInstallmentPayments(
+  // Story 3.8 CR Iter 2 (A1) — guard contra `startDate`/`installments`
+  // malformados em Dexie. Em caso de erro, devolve progresso a zero
+  // (item ainda renderiza descrição mas sem barra fantasma com dados inválidos).
+  const progress = useMemo(() => {
+    try {
+      return countInstallmentPayments(
         installment.startDate,
         installment.installments,
         reference,
-      ),
-    [installment.startDate, installment.installments, reference],
-  );
+      );
+    } catch (error) {
+      console.error(
+        `[Story 3.8] countInstallmentPayments falhou para prestação ${installment.id} (startDate=${String(installment.startDate)}, n=${String(installment.installments)}):`,
+        error,
+      );
+      return { paid: 0, remaining: 0, totalMonths: 0 };
+    }
+  }, [
+    installment.id,
+    installment.startDate,
+    installment.installments,
+    reference,
+  ]);
 
   // Maior parcela (primeira, com cêntimo extra se houver remainder).
-  const parcelaMaior = useMemo(
-    () => splitInstallmentAmount(installment.totalAmount, installment.installments)[0],
-    [installment.totalAmount, installment.installments],
-  );
+  // Guard defensivo: `splitInstallmentAmount` lança em `n=0` — devolve 0.
+  const parcelaMaior = useMemo(() => {
+    try {
+      return splitInstallmentAmount(installment.totalAmount, installment.installments)[0];
+    } catch (error) {
+      console.error(
+        `[Story 3.8] splitInstallmentAmount falhou para prestação ${installment.id}:`,
+        error,
+      );
+      return 0;
+    }
+  }, [installment.id, installment.totalAmount, installment.installments]);
 
   const progressLabel = `${progress.paid} de ${progress.totalMonths} prestações pagas`;
   const widthPct = progress.totalMonths > 0
