@@ -15,8 +15,9 @@ import type { Account } from '@/types/db';
  *         contas…" e ausência de `TotalKpi` e secções.
  *   - C2: Empty state (`useAccounts === []`) → `TotalKpi` com zeros e link
  *         para `/financas`.
- *   - C3: Content state (3 contas, 2 tipos) → `TotalKpi` com soma correcta,
- *         contagem plural, secção por tipo, contas individuais visíveis.
+ *   - C3: Content state (4 contas, 3 tipos: checking/savings/cash) → `TotalKpi`
+ *         com soma correcta, contagem plural, secção por tipo, contas
+ *         individuais visíveis.
  *   - C4: Toggle expansão de grupo → `aria-expanded` flip de `true` → `false`
  *         e accounts dentro do grupo desaparecem da DOM.
  *   - C5: Overdraft badge → conta com `balance < 0` recebe badge "Descoberto".
@@ -42,9 +43,11 @@ vi.mock('@/hooks/useAccounts', () => ({
 // Importação tem de vir DEPOIS dos `vi.mock` (factory hoisting do Vitest).
 import PatrimonioPage from '@/app/(app)/financas/patrimonio/page';
 
+let accountIdCounter = 0;
+
 function makeAccount(partial: Partial<Account> & Pick<Account, 'balance' | 'type'>): Account {
   return {
-    id: partial.id ?? 'acc-' + Math.random().toString(36).slice(2),
+    id: partial.id ?? `acc-${++accountIdCounter}`,
     name: partial.name ?? 'Conta',
     type: partial.type,
     balance: partial.balance,
@@ -57,6 +60,7 @@ describe('PatrimonioPage (Story 3.9 / FR20)', () => {
     mocks.routerBack.mockClear();
     mocks.routerPush.mockClear();
     mocks.useAccounts.mockReset();
+    accountIdCounter = 0;
   });
 
   afterEach(() => {
@@ -95,29 +99,33 @@ describe('PatrimonioPage (Story 3.9 / FR20)', () => {
   // ─────────────────────────────────────────────────────────────────
   // C3 — Content state (multi-grupo)
   // ─────────────────────────────────────────────────────────────────
-  it('C3 — Content: soma KPI, contagem plural, 2 grupos com contas individuais visíveis', () => {
+  it('C3 — Content: soma KPI, contagem plural, 3 grupos (checking/savings/cash) com contas individuais visíveis', () => {
     const accounts: Account[] = [
       makeAccount({ id: 'a1', name: 'Conta Activos', type: 'checking', balance: 100000 }),
       makeAccount({ id: 'a2', name: 'Conta Suplementar', type: 'checking', balance: 50000 }),
       makeAccount({ id: 'a3', name: 'Poupança Reformas', type: 'savings', balance: 200000 }),
+      makeAccount({ id: 'a4', name: 'Numerário Caixa', type: 'cash', balance: 25000 }),
     ];
     mocks.useAccounts.mockReturnValue(accounts);
 
     render(<PatrimonioPage />);
 
-    // Total = 100000 + 50000 + 200000 = 350000 cêntimos = €3.500,00
+    // Total = 100000 + 50000 + 200000 + 25000 = 375000 cêntimos = €3.750,00
     const kpiSection = screen.getByLabelText('Total do Património');
-    expect(within(kpiSection).getByText(/3\.500,00/)).toBeInTheDocument();
-    expect(within(kpiSection).getByText('3 contas')).toBeInTheDocument();
+    expect(within(kpiSection).getByText(/3\.750,00/)).toBeInTheDocument();
+    expect(within(kpiSection).getByText('4 contas')).toBeInTheDocument();
 
-    // 2 grupos esperados: Conta à ordem (checking, subtotal 150000) e Poupança (savings, subtotal 200000)
+    // 3 grupos esperados: Conta à ordem (checking, subtotal 150000), Poupança
+    // (savings, subtotal 200000) e Dinheiro (cash, subtotal 25000)
     expect(screen.getByRole('button', { name: /Conta à ordem/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Poupança/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Dinheiro/ })).toBeInTheDocument();
 
     // Accounts individuais visíveis (grupos expandidos por defeito — A4)
     expect(screen.getByText('Conta Activos')).toBeInTheDocument();
     expect(screen.getByText('Conta Suplementar')).toBeInTheDocument();
     expect(screen.getByText('Poupança Reformas')).toBeInTheDocument();
+    expect(screen.getByText('Numerário Caixa')).toBeInTheDocument();
 
     // Nenhuma badge "Descoberto" — todas as contas têm balance >= 0
     expect(screen.queryByText('Descoberto')).not.toBeInTheDocument();
