@@ -67,6 +67,31 @@ const FREQ_MAP = {
   yearly: RRule.YEARLY,
 } as const;
 
+/**
+ * Valida que uma string `YYYY-MM-DD` (já validada pelo regex) é uma data de
+ * calendário REAL — rejeita `2026-02-30`, `2026-13-01`, etc. (CR Iter 1).
+ * Sem esta guarda, `new Date('2026-02-30T...')` normaliza silenciosamente para
+ * 2026-03-02, produzindo janelas de recorrência erradas.
+ */
+function isRealIsoDate(s: string): boolean {
+  const [y, m, d] = s.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
+}
+
+/** Campo de data ISO `YYYY-MM-DD` com validação de calendário real + default hoje. */
+function isoDateField() {
+  return z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve ser YYYY-MM-DD')
+    .refine(isRealIsoDate, 'data inválida — não é uma data de calendário real')
+    .default(() => new Date().toISOString().slice(0, 10));
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // argsSchemas (source: FR23 + types/db.ts; decisão @po §3 — montante cêntimos)
 // ═══════════════════════════════════════════════════════════════════
@@ -75,10 +100,7 @@ const CriarFinancaVariavelArgs = z.object({
   montante: z.number().int().positive('montante deve ser positivo em cêntimos'),
   direction: z.enum(['in', 'out']),
   categoriaNome: z.string().min(1),
-  data: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve ser YYYY-MM-DD')
-    .default(() => new Date().toISOString().slice(0, 10)),
+  data: isoDateField(),
   descricao: z.string().max(500).default(''),
   cartaoNome: z.string().nullable().default(null),
   contaId: z.string().nullable().default(null),
@@ -93,10 +115,7 @@ const CriarFinancaRecorrenteArgs = z.object({
     interval: z.number().int().min(1).default(1),
     dayOfMonth: z.number().int().min(1).max(31).nullable().default(null),
   }),
-  dataInicio: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'dataInicio deve ser YYYY-MM-DD')
-    .default(() => new Date().toISOString().slice(0, 10)),
+  dataInicio: isoDateField(),
   descricao: z.string().max(500).default(''),
   cartaoNome: z.string().nullable().default(null),
   contaId: z.string().nullable().default(null),
@@ -116,10 +135,7 @@ const CriarParceladaArgs = z.object({
   parcelas: z.number().int().min(2).max(72),
   descricao: z.string().min(1).max(500),
   categoriaNome: z.string().min(1),
-  dataInicio: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'dataInicio deve ser YYYY-MM-DD')
-    .default(() => new Date().toISOString().slice(0, 10)),
+  dataInicio: isoDateField(),
 });
 
 const ConsultarBalancoArgs = z.object({
@@ -270,6 +286,30 @@ async function resolveCartaoByNome(
   return matches[0];
 }
 
+/**
+ * Integridade referencial (CR Iter 1): (1) se `contaId` for indicado, a conta
+ * tem de existir — espelha a validação de `projectId` em `criar_tarefa`
+ * (Story 2.10); (2) se conta E cartão forem indicados, têm de pertencer à mesma
+ * conta — evita persistir `accountId`/`cardId` incoerentes. Lança Error PT-PT.
+ */
+async function validateContaCartao(
+  contaId: string | null,
+  card: Card | null,
+  ctx: ExecutionContext
+): Promise<void> {
+  if (contaId !== null) {
+    const conta = await ctx.db.accounts.get(contaId);
+    if (conta === undefined) {
+      throw new Error(`Conta "${contaId}" não encontrada`);
+    }
+  }
+  if (contaId !== null && card !== null && card.accountId !== contaId) {
+    throw new Error(
+      `Conta e cartão não pertencem à mesma conta (cartão "${card.name}" pertence a outra conta).`
+    );
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // criar_financa_variavel (FR23 — trace: PRD §6.3, Epic 3 AC4)
 // ═══════════════════════════════════════════════════════════════════
@@ -286,13 +326,11 @@ registar(
     reversible: true,
     execute: async (args, ctx) => {
       const category = await resolveCategoriaByNome(args.categoriaNome, ctx);
-      let cardId: string | null = null;
-      let cartaoNome: string | null = null;
-      if (args.cartaoNome !== null) {
-        const card = await resolveCartaoByNome(args.cartaoNome, ctx);
-        cardId = card.id;
-        cartaoNome = card.name;
-      }
+      const card =
+        args.cartaoNome !== null
+          ? await resolveCartaoByNome(args.cartaoNome, ctx)
+          : null;
+      await validateContaCartao(args.contaId, card, ctx);
       const amount = applyDirection(
         args.montante,
         args.direction === 'out' ? 'saida' : 'entrada'
@@ -305,13 +343,13 @@ registar(
         description: args.descricao,
         date: args.data,
         accountId: args.contaId,
-        cardId,
+        cardId: card?.id ?? null,
         recurrenceId: null,
         installmentId: null,
         createdAt: Date.now(),
       };
       await ctx.db.transactions.add(tx);
-      const cartaoMsg = cartaoNome !== null ? ` com cartão ${cartaoNome}` : '';
+      const cartaoMsg = card !== null ? ` com cartão ${card.name}` : '';
       return {
         id,
         mensagem: `Transação de ${formatCurrency(Math.abs(amount))} criada na categoria ${category}${cartaoMsg}.`,
@@ -342,10 +380,12 @@ registar(
     reversible: true,
     execute: async (args, ctx) => {
       const category = await resolveCategoriaByNome(args.categoriaNome, ctx);
-      let cardId: string | null = null;
-      if (args.cartaoNome !== null) {
-        cardId = (await resolveCartaoByNome(args.cartaoNome, ctx)).id;
-      }
+      const card =
+        args.cartaoNome !== null
+          ? await resolveCartaoByNome(args.cartaoNome, ctx)
+          : null;
+      await validateContaCartao(args.contaId, card, ctx);
+      const cardId = card?.id ?? null;
       const amount = applyDirection(
         args.montante,
         args.direction === 'out' ? 'saida' : 'entrada'
@@ -498,7 +538,9 @@ registar(
       return {
         installmentId,
         nParcelas: args.parcelas,
-        mensagem: `Compra parcelada de ${formatCurrency(args.totalMontante)} em ${args.parcelas}× de ${formatCurrency(montantes[0])} criada.`,
+        // Não mostrar valor por parcela: com resto, as parcelas não são todas
+        // iguais (splitInstallmentAmount distribui o resto). Mostrar total + nº (CR Iter 1).
+        mensagem: `Compra parcelada de ${formatCurrency(args.totalMontante)} em ${args.parcelas} prestações criada.`,
       };
     },
     reverse: async (_args, result, ctx) => {

@@ -214,6 +214,30 @@ describe('criar_finança_variavel', () => {
     const tx = (await db.transactions.get(result.id)) as Transaction;
     expect(tx.amount).toBe(5000);
   });
+
+  it('T26 — contaId inexistente lança Error PT-PT e não persiste (CR Iter 1)', async () => {
+    const t = tool('criar_financa_variavel');
+    const args = t.argsSchema.parse({
+      montante: 5000,
+      direction: 'out',
+      categoriaNome: 'lazer',
+      contaId: crypto.randomUUID(), // conta que não existe
+    });
+    await expect(t.execute(args, ctx)).rejects.toThrow(/Conta .* não encontrada/);
+    expect(await db.transactions.toArray()).toHaveLength(0);
+  });
+
+  it('T27 — argsSchema rejeita data de calendário inválida (CR Iter 1)', () => {
+    const t = tool('criar_financa_variavel');
+    expect(() =>
+      t.argsSchema.parse({
+        montante: 100,
+        direction: 'out',
+        categoriaNome: 'lazer',
+        data: '2026-02-30', // passa o regex mas não é data real
+      })
+    ).toThrow();
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -369,6 +393,29 @@ describe('criar_parcelada', () => {
     expect(txs).toHaveLength(12);
     expect(txs.every((t2) => t2.amount === -10000)).toBe(true); // €1200/12 = €100 saída
     expect(txs.every((t2) => t2.category === 'Lazer')).toBe(true);
+  });
+
+  it('T25 — split não-divisível: soma das parcelas === -totalMontante (CR Iter 1)', async () => {
+    const t = tool('criar_parcelada');
+    // 10000 / 3 = [3334, 3333, 3333] — resto distribuído, nenhum cêntimo perdido.
+    const args = t.argsSchema.parse({
+      cartaoNome: 'Millennium',
+      totalMontante: 10000,
+      parcelas: 3,
+      descricao: 'Compra com resto',
+      categoriaNome: 'lazer',
+      dataInicio: '2026-06-01',
+    });
+    const result = (await t.execute(args, ctx)) as { installmentId: string };
+    const txs = await db.transactions
+      .filter((t2) => t2.installmentId === result.installmentId)
+      .toArray();
+    expect(txs).toHaveLength(3);
+    const soma = txs.reduce((s, t2) => s + t2.amount, 0);
+    expect(soma).toBe(-10000); // soma exacta, sem cêntimos perdidos/inventados
+    expect(txs.map((t2) => t2.amount).sort((a, b) => a - b)).toEqual([
+      -3334, -3333, -3333,
+    ].sort((a, b) => a - b));
   });
 
   it('T13 — atomicidade: falha em bulkAdd faz rollback do installment', async () => {
