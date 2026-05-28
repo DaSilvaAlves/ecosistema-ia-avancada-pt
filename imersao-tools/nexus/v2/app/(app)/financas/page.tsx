@@ -588,6 +588,23 @@ export default function FinancasPage(): React.ReactElement {
           >
             Vista cartões →
           </Link>
+          {/* Story 3.9 / AC7 — link de descoberta para a vista de património. */}
+          <Link
+            href="/financas/patrimonio"
+            aria-label="Abrir vista de património"
+            style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              color: '#00F5FF',
+              textDecoration: 'none',
+              padding: '0.35rem 0.6rem',
+              borderRadius: 6,
+              transition: 'background 0.2s',
+            }}
+          >
+            Património →
+          </Link>
           {newButtonDisabled && newButtonHint !== null && (
             <span
               style={{
