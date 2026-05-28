@@ -160,14 +160,22 @@ describe('consultar_projecto', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 describe('toolRegistry integration', () => {
-  it('T22 — 7 tools registadas após import do barrel', () => {
-    expect(toolRegistry.all()).toHaveLength(7);
+  it('T22 — 13 tools registadas após import do barrel (7 Epic 2 + 6 Epic 3)', () => {
+    // Story 3.11: o barrel passou a importar `./finance` (6 tools domínio 'finance').
+    expect(toolRegistry.all()).toHaveLength(13);
     expect(toolRegistry.byDomain('tasks')).toHaveLength(7);
+    expect(toolRegistry.byDomain('finance')).toHaveLength(6);
 
     const nomes = toolRegistry.all().map((t) => t.name).sort();
     expect(nomes).toEqual([
       'completar_tarefa',
+      'consultar_balanco',
+      'consultar_categoria',
       'consultar_projecto',
+      'criar_cartao',
+      'criar_financa_recorrente',
+      'criar_financa_variavel',
+      'criar_parcelada',
       'criar_projecto',
       'criar_tarefa',
       'listar_atrasadas',
