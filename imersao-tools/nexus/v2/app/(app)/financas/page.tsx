@@ -571,6 +571,23 @@ export default function FinancasPage(): React.ReactElement {
           >
             Este mês →
           </Link>
+          {/* Story 3.8 / AC10 — link de descoberta para a vista de cartões. */}
+          <Link
+            href="/financas/cartoes"
+            aria-label="Abrir vista de cartões"
+            style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              color: '#00F5FF',
+              textDecoration: 'none',
+              padding: '0.35rem 0.6rem',
+              borderRadius: 6,
+              transition: 'background 0.2s',
+            }}
+          >
+            Vista cartões →
+          </Link>
           {newButtonDisabled && newButtonHint !== null && (
             <span
               style={{
