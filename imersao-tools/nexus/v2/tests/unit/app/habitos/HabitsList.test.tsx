@@ -154,19 +154,21 @@ describe('HabitsList (Story 4.2 / AC6)', () => {
     expect(onShowHeatmap).toHaveBeenCalledWith(habits[0]);
   });
 
-  it('C5c — botão "Ver heatmap" também aparece em arquivados (leitura pura)', () => {
+  it('C5c — botão "Ver heatmap" aparece em arquivados e dispara o callback (leitura pura)', () => {
     const habits = [makeHabit({ id: 'h1', name: 'Meditar', archivedAt: Date.now() })];
+    const onShowHeatmap = vi.fn();
     render(
       <HabitsList
         habits={habits}
         todayLogs={[]}
         variant="archived"
         {...noopHandlers}
-        onShowHeatmap={vi.fn()}
+        onShowHeatmap={onShowHeatmap}
       />,
     );
-    expect(
-      screen.getByRole('button', { name: 'Ver heatmap de "Meditar"' }),
-    ).toBeInTheDocument();
+    const btn = screen.getByRole('button', { name: 'Ver heatmap de "Meditar"' });
+    expect(btn).toBeInTheDocument();
+    fireEvent.click(btn);
+    expect(onShowHeatmap).toHaveBeenCalledWith(habits[0]);
   });
 });

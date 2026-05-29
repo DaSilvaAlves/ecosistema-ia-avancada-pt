@@ -73,4 +73,17 @@ describe('HabitHeatmapModal (Story 4.3 / AC9)', () => {
     fireEvent.click(screen.getByLabelText('Fechar heatmap'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('clique no backdrop chama onClose; clique dentro do dialog não', () => {
+    mocks.useHabitLogs.mockReturnValue(sampleLogs);
+    const onClose = vi.fn();
+    const { container } = render(<HabitHeatmapModal habit={habit} onClose={onClose} />);
+    // O overlay (role=presentation) é a raiz; clicar nele (target===currentTarget) fecha.
+    const overlay = container.firstChild as HTMLElement;
+    fireEvent.click(overlay);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    // Clicar dentro do dialog NÃO fecha (target !== currentTarget do overlay).
+    fireEvent.click(screen.getByRole('dialog'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

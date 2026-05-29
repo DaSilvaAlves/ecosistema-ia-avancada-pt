@@ -39,6 +39,7 @@ interface HabitHeatmapProps {
 
 const CELL = 13; // px — lado da célula
 const GAP = 3; // px — espaço entre células
+const DAY_LABEL_WIDTH = 22; // px — largura da coluna de etiquetas de dia (Seg/Qua/Sex)
 const MESES_PT = [
   'Jan',
   'Fev',
@@ -98,7 +99,7 @@ export function HabitHeatmap({ logs, todayISO }: HabitHeatmapProps): React.React
             aria-hidden="true"
             style={{
               display: 'grid',
-              gridTemplateColumns: `${CELL}px repeat(${weeks.length}, ${CELL}px)`,
+              gridTemplateColumns: `${DAY_LABEL_WIDTH}px repeat(${weeks.length}, ${CELL}px)`,
               gap: GAP,
               height: 14,
             }}
@@ -138,7 +139,7 @@ export function HabitHeatmap({ logs, todayISO }: HabitHeatmapProps): React.React
                     fontSize: '0.55rem',
                     color: '#8892A4',
                     lineHeight: `${CELL}px`,
-                    width: 22,
+                    width: DAY_LABEL_WIDTH,
                   }}
                 >
                   {DIAS_LATERAIS[d] ?? ''}
@@ -148,7 +149,7 @@ export function HabitHeatmap({ logs, todayISO }: HabitHeatmapProps): React.React
 
             {/* Grelha: colunas = semanas, linhas = dias (segunda→domingo). */}
             <div
-              role="grid"
+              role="group"
               aria-label="Heatmap de conclusão do hábito nos últimos 6 meses"
               style={{
                 display: 'grid',

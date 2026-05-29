@@ -35,10 +35,15 @@ export function HabitHeatmapModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = 'habit-heatmap-title';
 
-  // Focus trap + Escape (WAI-ARIA) — padrão HabitFormModal.
+  // Foco inicial — SÓ no mount. Separado do effect de keydown para não roubar o
+  // foco quando o parent re-renderiza (a page passa `closeHeatmap` não-memoizado
+  // como `onClose`, cuja identidade muda a cada update do `useLiveQuery`/`useHabits`).
   useEffect(() => {
     closeButtonRef.current?.focus();
+  }, []);
 
+  // Focus trap + Escape (WAI-ARIA) — padrão HabitFormModal.
+  useEffect(() => {
     function getFocusables(): HTMLElement[] {
       if (!modalRef.current) return [];
       return Array.from(
