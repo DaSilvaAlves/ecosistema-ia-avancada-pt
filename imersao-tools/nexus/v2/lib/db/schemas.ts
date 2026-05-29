@@ -251,6 +251,14 @@ export const HabitSchema = z.object({
     .regex(TIME_HHMM_REGEX, 'Horário deve estar em formato HH:MM (24h)')
     .optional(),
   metric: HabitMetricSchema.optional(),
+  // Story 4.2 — timestamp de arquivo (epoch ms). undefined = hábito activo.
+  // Campo não-indexado: extensão de schema sem version bump (mesmo precedente
+  // de `time?`). `restoreHabit` repõe-o a undefined.
+  archivedAt: z
+    .number()
+    .int('archivedAt deve ser epoch ms inteiro')
+    .positive('archivedAt deve ser epoch ms positivo')
+    .optional(),
   createdAt: z.number().int().positive('createdAt deve ser epoch ms positivo'),
 });
 

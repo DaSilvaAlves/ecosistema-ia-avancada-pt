@@ -68,3 +68,36 @@ export async function deleteHabit(id: string): Promise<void> {
     await db.habits.delete(id);
   });
 }
+
+/**
+ * Arquiva um hábito (Story 4.2 — AC4). Acção distinta de apagar: o hábito e o
+ * seu histórico de `habit_logs` são preservados; apenas deixa de aparecer na
+ * lista de activos. Define `archivedAt` com o timestamp actual.
+ *
+ * Lança se o hábito não existir (via `updateHabit`).
+ */
+export async function archiveHabit(id: string): Promise<void> {
+  await updateHabit(id, { archivedAt: Date.now() });
+}
+
+/**
+ * Restaura um hábito arquivado (Story 4.2 — AC4), repondo-o como activo.
+ *
+ * `db.habits.update(id, { archivedAt: undefined })` é insuficiente: a Dexie
+ * ignora propriedades com valor `undefined` no patch, deixando o `archivedAt`
+ * antigo na DB. Para remover mesmo a chave usa-se o sentinela `delete` da Dexie
+ * (`{ archivedAt: undefined }` via `modify` apaga a propriedade). O patch passa
+ * a validação Zod (`archivedAt` é `.optional()`).
+ */
+export async function restoreHabit(id: string): Promise<void> {
+  HabitSchema.partial().parse({ archivedAt: undefined });
+  const modified = await db.habits
+    .where('id')
+    .equals(id)
+    .modify((habit) => {
+      delete habit.archivedAt;
+    });
+  if (modified === 0) {
+    throw new Error(`Hábito ${id} não encontrado — não foi possível restaurar`);
+  }
+}
