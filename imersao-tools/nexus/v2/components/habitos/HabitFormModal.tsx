@@ -122,17 +122,33 @@ export function HabitFormModal({
     if (submitting) return;
     setErrors({});
 
-    // Constrói o patch a validar. `time` vazio significa "sem horário" → omitir
-    // a chave (o schema valida `time` quando presente; uma string vazia falharia
-    // o regex HH:MM).
+    // Constrói o patch a validar. O schema valida `time` quando presente; uma
+    // string vazia falharia o regex HH:MM, por isso "sem horário" é traduzido
+    // para `undefined` (nunca string vazia, nunca `null` — o tipo é
+    // `string | undefined`, coerente com `Habit.time?`).
+    //
+    // Defesa-em-profundidade (CR Iter 3): a chave `time` comporta-se de forma
+    // diferente em create vs edit, para o modal nunca depender do parent corrigir
+    // o patch (verificado contra o comportamento Dexie `update()`):
+    //   - EDIT: a chave `time` está SEMPRE presente no patch (`undefined` quando
+    //     limpa). Limpar o horário emite `time: undefined` — a Dexie remove a
+    //     chave numa só escrita. Se a chave fosse omitida, a Dexie ignorá-la-ia
+    //     e o `time` antigo persistiria (o bug do CR).
+    //   - CREATE: a chave só entra quando há valor (não há registo prévio para
+    //     limpar; omitir mantém o objecto novo enxuto).
+    const time = form.time.trim();
     const patch: Partial<Habit> = {
       name: form.name.trim(),
       frequency: form.frequency.trim(),
       category: form.category.trim(),
     };
-    const time = form.time.trim();
-    if (time !== '') {
-      patch.time = time;
+    if (isCreate) {
+      if (time !== '') {
+        patch.time = time;
+      }
+    } else {
+      // Edit: chave sempre presente (`undefined` limpa o horário de facto).
+      patch.time = time === '' ? undefined : time;
     }
 
     try {

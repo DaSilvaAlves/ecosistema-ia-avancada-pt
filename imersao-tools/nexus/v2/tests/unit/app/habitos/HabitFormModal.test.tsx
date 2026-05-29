@@ -98,6 +98,76 @@ describe('HabitFormModal (Story 4.2 / AC5)', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('C3d — edit: limpar o horário emite time:undefined com a chave PRESENTE no patch', async () => {
+    // Defesa-em-profundidade (CR Iter 3): em modo edit, limpar o campo de
+    // horário tem de emitir explicitamente `time: undefined` no patch (chave
+    // presente) — é assim que a Dexie remove a chave. Se o modal regredisse para
+    // OMITIR a chave (o bug do CR), a asserção `'time' in patch` falharia e o
+    // valor não seria `undefined`. Teste não-tautológico: prova a presença da
+    // chave e o valor undefined, não apenas que onSubmit foi chamado.
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const initial: Partial<Habit> = {
+      name: 'Leitura diária',
+      frequency: 'FREQ=DAILY',
+      category: 'Pessoal',
+      time: '07:30',
+    };
+    render(
+      <HabitFormModal
+        mode="edit"
+        initialValue={initial}
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+      />,
+    );
+    // Limpa o horário pré-preenchido.
+    fireEvent.change(screen.getByLabelText('Horário (opcional)'), {
+      target: { value: '' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const patch = onSubmit.mock.calls[0][0] as Partial<Habit>;
+    // Chave presente (não omitida) — falha se o modal regredir para omitir.
+    expect('time' in patch).toBe(true);
+    expect(patch.time).toBeUndefined();
+    // Os restantes campos mantêm-se.
+    expect(patch).toMatchObject({
+      name: 'Leitura diária',
+      frequency: 'FREQ=DAILY',
+      category: 'Pessoal',
+    });
+  });
+
+  it('C3e — edit: alterar o horário emite o novo valor no patch', async () => {
+    // Contraprova do C3d: com horário definido, a chave `time` carrega o valor
+    // novo (garante que o ramo edit não força sempre undefined).
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const initial: Partial<Habit> = {
+      name: 'Correr',
+      frequency: 'FREQ=DAILY',
+      category: 'Desporto',
+      time: '07:30',
+    };
+    render(
+      <HabitFormModal
+        mode="edit"
+        initialValue={initial}
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('Horário (opcional)'), {
+      target: { value: '08:15' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const patch = onSubmit.mock.calls[0][0] as Partial<Habit>;
+    expect('time' in patch).toBe(true);
+    expect(patch.time).toBe('08:15');
+  });
+
   it('C3c — horário em formato inválido mostra erro HH:MM', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(
