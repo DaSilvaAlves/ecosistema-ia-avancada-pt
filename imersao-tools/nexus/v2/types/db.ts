@@ -172,6 +172,7 @@ export interface Habit {
   name: string;
   frequency: string; // RRULE
   category: string;
+  time?: string; // FR24 — horário opcional sugerido (HH:MM, 24h). Não-indexado (Story 4.1).
   metric?: { unit: string; target: number };
   createdAt: number;
 }
@@ -186,11 +187,16 @@ export interface HabitLog {
 export interface Goal {
   id: string;
   title: string;
+  description?: string; // FR39 — descrição opcional. Não-indexado (Story 4.1).
   type: 'numeric' | 'boolean';
   target: number;
   current: number;
   deadline: string | null;
   status: 'active' | 'achieved' | 'cancelled';
+  // milestones embebido (Architect Gate Story 4.1, [GAP-4.1b]): sub-agregado de
+  // baixa cardinalidade, lido sempre no contexto do Goal. `at` = valor-alvo
+  // numérico (threshold em que `reached` vira true), coerente com `target` em
+  // goals 'numeric'; em goals 'boolean' é um passo qualitativo (`note`).
   milestones: Array<{ at: number; reached: boolean; note?: string }>;
 }
 
