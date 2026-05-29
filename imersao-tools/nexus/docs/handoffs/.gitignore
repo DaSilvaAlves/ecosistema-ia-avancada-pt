@@ -1,0 +1,6 @@
+# Runtime AIOX e lixo temporario — nunca versionar handoffs
+# Memoria de agentes e locks de runtime que calham nesta pasta
+.claude/
+
+# Ficheiros temp do CodeRabbit com nome corrompido (path Windows mal escapado)
+*cr-review-iter*.txt
