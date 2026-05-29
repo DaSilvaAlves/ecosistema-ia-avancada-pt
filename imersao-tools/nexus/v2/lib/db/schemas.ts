@@ -218,3 +218,109 @@ export const FinanceRecurrenceSchema = z.object({
   recurrenceId: z.string().uuid('recurrenceId deve ser UUID válido'),
   createdAt: z.number().int().positive('createdAt deve ser epoch ms positivo'),
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Epic 4 — Hábitos / Metas / Lembretes (Story 4.1)
+//
+// Espelho fiel de types/db.ts:170-209. Decisões do Architect Gate da
+// Story 4.1 ([GAP-4.1b] + cascata):
+// - `Goal.milestones` é EMBEBIDO (array), não tabela separada — sub-agregado
+//   de baixa cardinalidade lido sempre no contexto do Goal.
+// - `Habit.time` (FR24) e `Goal.description` (FR39) são campos não-indexados.
+// - Recorrência de hábitos/lembretes reutiliza a tabela genérica `recurrences`
+//   (`ownerType: 'habit'`/`'reminder'`) — não há tabela própria.
+// ═══════════════════════════════════════════════════════════════════
+
+/** Horário 24h `HH:MM` (FR24 — horário opcional do hábito). */
+const TIME_HHMM_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+// ─── Habit ───
+
+export const HabitMetricSchema = z.object({
+  unit: z.string().min(1, 'Unidade da métrica é obrigatória'),
+  target: z.number({ invalid_type_error: 'Alvo da métrica deve ser numérico' }),
+});
+
+export const HabitSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  name: z.string().min(1, 'Nome do hábito é obrigatório'),
+  frequency: z.string().min(1, 'Frequência (RRULE) é obrigatória'),
+  category: z.string().min(1, 'Categoria é obrigatória'),
+  time: z
+    .string()
+    .regex(TIME_HHMM_REGEX, 'Horário deve estar em formato HH:MM (24h)')
+    .optional(),
+  metric: HabitMetricSchema.optional(),
+  createdAt: z.number().int().positive('createdAt deve ser epoch ms positivo'),
+});
+
+// ─── HabitLog ───
+//
+// `value` é opcional (só presente em hábitos com `metric` — FR27). A coerência
+// "hábito tem metric ⇒ log deve ter value" é regra cross-entity validada no
+// repo (`createHabitLog`), não neste schema isolado.
+
+export const HabitLogSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  habitId: z.string().uuid('habitId deve ser UUID válido'),
+  date: z
+    .string()
+    .min(1, 'Data é obrigatória')
+    .regex(ISO_DATE_REGEX, 'Data deve estar em formato ISO 8601 (ex: 2026-05-15)'),
+  value: z.number().optional(),
+});
+
+// ─── Goal ───
+
+export const GoalTypeSchema = z.enum(['numeric', 'boolean']);
+
+export const GoalStatusSchema = z.enum(['active', 'achieved', 'cancelled']);
+
+/**
+ * Milestone embebido. `at` = valor-alvo numérico (threshold em que `reached`
+ * vira true). Architect Gate Story 4.1: NÃO se força `at` coerente com
+ * `Goal.target` — em goals 'boolean' é um passo qualitativo (`note`).
+ */
+export const GoalMilestoneSchema = z.object({
+  at: z.number({ invalid_type_error: 'Valor-alvo do milestone deve ser numérico' }),
+  reached: z.boolean(),
+  note: z.string().optional(),
+});
+
+export const GoalSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  title: z.string().min(1, 'Título da meta é obrigatório'),
+  description: z.string().optional(),
+  type: GoalTypeSchema,
+  target: z.number({ invalid_type_error: 'Alvo deve ser numérico' }),
+  current: z.number({ invalid_type_error: 'Valor actual deve ser numérico' }),
+  deadline: z.string().nullable(),
+  status: GoalStatusSchema,
+  milestones: z.array(GoalMilestoneSchema),
+});
+
+export type GoalType = z.infer<typeof GoalTypeSchema>;
+export type GoalStatus = z.infer<typeof GoalStatusSchema>;
+
+// ─── Reminder ───
+
+export const ReminderChannelSchema = z.enum(['push', 'telegram']);
+
+export const ReminderStatusSchema = z.enum([
+  'pending',
+  'sent',
+  'cancelled',
+  'snoozed',
+]);
+
+export const ReminderSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  text: z.string().min(1, 'Texto do lembrete é obrigatório'),
+  fireAt: z.number().int().positive('fireAt deve ser epoch ms positivo'),
+  recurrenceId: z.string().uuid('recurrenceId deve ser UUID válido').nullable(),
+  channels: z.array(ReminderChannelSchema),
+  status: ReminderStatusSchema,
+});
+
+export type ReminderChannel = z.infer<typeof ReminderChannelSchema>;
+export type ReminderStatus = z.infer<typeof ReminderStatusSchema>;
