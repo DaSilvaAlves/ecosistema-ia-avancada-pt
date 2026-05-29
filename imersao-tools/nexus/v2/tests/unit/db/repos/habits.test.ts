@@ -197,4 +197,44 @@ describe('habits repo', () => {
       restoreHabit('00000000-0000-0000-0000-000000000000'),
     ).rejects.toThrow(/não encontrado/i);
   });
+
+  // ── Story 4.2 Iter 2 (CR CRITICAL) — clear do time no edit (AC5) ──
+  //
+  // O bug do CR Iter 1: ao limpar o horário, o handler antigo NÃO incluía a
+  // chave `time` no patch (chave ausente) e a Dexie ignora chaves ausentes —
+  // o `time` antigo persistia. A correcção inclui SEMPRE a chave `time` no
+  // patch (com `undefined` quando limpo), e a Dexie remove a chave nesse caso.
+  // Os 2 testes abaixo provam a distinção real ausente-vs-undefined.
+
+  // Teste NÃO-TAUTOLÓGICO: chave PRESENTE com `undefined` → a Dexie REMOVE a
+  // chave (prova com `hasOwnProperty`). É o mecanismo que limpa o horário no
+  // edit numa única escrita atómica.
+  it('updateHabit({ time: undefined }) REMOVE a chave time (clear atómico)', async () => {
+    const habit = makeHabit({ time: '07:30' });
+    await createHabit(habit);
+    expect((await getHabit(habit.id))?.time).toBe('07:30');
+
+    await updateHabit(habit.id, { name: 'Correr', time: undefined });
+
+    const got = await getHabit(habit.id);
+    expect(got?.name).toBe('Correr');
+    expect(got?.time).toBeUndefined();
+    // Prova de remoção real da chave (não basta ser undefined na leitura).
+    expect(Object.prototype.hasOwnProperty.call(got ?? {}, 'time')).toBe(false);
+  });
+
+  // Contraprova do bug do CR Iter 1: chave AUSENTE no patch → a Dexie ignora-a
+  // e o `time` antigo PERSISTE. É exactamente o que o handler antigo fazia ao
+  // limpar o horário. Este teste falharia se o patch removesse a chave por si.
+  it('updateHabit sem a chave time NÃO toca o time antigo (contraprova do bug do CR Iter 1)', async () => {
+    const habit = makeHabit({ time: '07:30' });
+    await createHabit(habit);
+
+    await updateHabit(habit.id, { name: 'Correr' }); // chave `time` ausente
+
+    const got = await getHabit(habit.id);
+    expect(got?.name).toBe('Correr');
+    // O `time` antigo persiste — o bug do edit branch quando a chave fica fora.
+    expect(got?.time).toBe('07:30');
+  });
 });

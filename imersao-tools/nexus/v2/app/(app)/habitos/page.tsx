@@ -153,17 +153,23 @@ export default function HabitosPage(): React.ReactElement {
         };
         await createHabit(habit);
       } else if (modal?.mode === 'edit') {
-        // Patch parcial: actualiza só os campos editáveis. `time` ausente no
-        // patch (sem horário) é removido explicitamente para o limpar.
+        // Patch único e atómico (uma só escrita). A chave `time` está SEMPRE
+        // presente no patch: com o valor introduzido, ou `undefined` quando o
+        // utilizador limpou o campo. Distinção crítica do comportamento Dexie
+        // `update()` (verificada em `habits.test.ts`):
+        //   - chave AUSENTE no patch → ignorada (o `time` antigo persistiria);
+        //   - chave PRESENTE com `undefined` → a Dexie REMOVE a chave.
+        // Por isso `input.time` (que o modal entrega `undefined` quando limpo)
+        // entra sempre no patch — limpar o horário remove-o de facto numa só
+        // operação. O tipo é `string | undefined` (sem `null`): "sem horário" =
+        // ausência da chave, não `null`.
         const patch: Partial<Habit> = {
           name: input.name,
           frequency: input.frequency,
           category: input.category,
+          time: input.time,
         };
         await updateHabit(modal.habit.id, patch);
-        if (input.time !== undefined) {
-          await updateHabit(modal.habit.id, { time: input.time });
-        }
       }
     } catch (error) {
       console.error('Erro ao guardar hábito', error);

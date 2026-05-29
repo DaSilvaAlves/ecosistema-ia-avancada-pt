@@ -164,6 +164,58 @@ describe('HabitosPage (Story 4.2 / AC9)', () => {
     expect(mocks.createHabitLog).not.toHaveBeenCalled();
   });
 
+  // ── CR Iter 2 (CRITICAL) — clear do time no edit ──
+
+  // Prova que limpar o campo Horário no edit produz UM patch único com a chave
+  // `time` PRESENTE e `undefined` — o mecanismo que a Dexie usa para remover a
+  // chave. Falharia se o handler regredisse para o bug do CR Iter 1 (chave
+  // `time` ausente do patch → a Dexie ignora-a e o `time` antigo persiste) ou
+  // para a deleção condicional/2ª chamada que não era atómica.
+  it('CR-edit: limpar o horário envia patch único com time:undefined presente (uma só escrita)', async () => {
+    mocks.useHabits.mockReturnValue([
+      makeHabit({ id: 'a1', name: 'Correr', time: '07:30' }),
+    ]);
+    mocks.updateHabit.mockResolvedValue(undefined);
+
+    render(<HabitosPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'Editar "Correr"' }));
+
+    // Limpa o campo de horário (pré-preenchido com '07:30').
+    const timeInput = screen.getByLabelText(/Horário/);
+    expect(timeInput).toHaveValue('07:30');
+    fireEvent.change(timeInput, { target: { value: '' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    // Uma só chamada atómica a updateHabit.
+    await waitFor(() => expect(mocks.updateHabit).toHaveBeenCalledTimes(1));
+    expect(mocks.updateHabit).toHaveBeenCalledWith('a1', expect.anything());
+    const patchArg = mocks.updateHabit.mock.calls[0][1] as Partial<Habit>;
+    // A chave `time` TEM de estar presente (com undefined) para a Dexie a
+    // remover — não pode ficar ausente (era o bug do CR Iter 1).
+    expect(Object.prototype.hasOwnProperty.call(patchArg, 'time')).toBe(true);
+    expect(patchArg.time).toBeUndefined();
+  });
+
+  // Caminho complementar: editar com horário definido inclui o `time` no mesmo
+  // patch único — uma só escrita, sem chamadas extra.
+  it('CR-edit: editar com horário definido inclui time no patch único', async () => {
+    mocks.useHabits.mockReturnValue([
+      makeHabit({ id: 'a1', name: 'Correr', time: '07:30' }),
+    ]);
+    mocks.updateHabit.mockResolvedValue(undefined);
+
+    render(<HabitosPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'Editar "Correr"' }));
+
+    fireEvent.change(screen.getByLabelText(/Horário/), { target: { value: '08:15' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(mocks.updateHabit).toHaveBeenCalledTimes(1));
+    const patchArg = mocks.updateHabit.mock.calls[0][1] as Partial<Habit>;
+    expect(patchArg.time).toBe('08:15');
+  });
+
   // ── AC8 — confirm de apagar ──
   it('AC8 — apagar pede confirmação que menciona arquivar; cancelar não apaga', () => {
     mocks.useHabits.mockReturnValue([makeHabit({ id: 'a1', name: 'Correr' })]);
