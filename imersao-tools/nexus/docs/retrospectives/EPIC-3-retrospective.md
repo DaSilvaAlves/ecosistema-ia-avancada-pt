@@ -264,12 +264,14 @@ Os nomes das tools FR23 (com cedilha no PRD) eram inválidos para o registry/Ant
 
 ### Acções que requerem `@aiox-master` (Orion) — resumo
 
+> **Executadas por Orion (`@aiox-master`) em 29/05/2026.** Ficheiros pendentes de commit+push por `@devops`.
+
 | Acção | Natureza | Estado |
 |-------|----------|--------|
-| **A3** | **NOVA REGRA** (ou secção em regra de testes): critério "componente React exige teste de componente" | A executar por `@aiox-master` |
-| **A4** | A AVALIAR por `@aiox-master`: validação de identificadores contra contratos externos (template `@sm` ou regra formal) | A decidir por `@aiox-master` |
-| **A2** | A AVALIAR por `@aiox-master`: se a verificação de teste/doc no QA Gate justifica formalização em regra | A decidir por `@aiox-master` |
-| **A5** | A AVALIAR por `@aiox-master`: se a convenção de contagens de teste justifica formalização | A decidir por `@aiox-master` |
+| **A3** | **NOVA REGRA** criada: `.claude/rules/react-component-test-criteria.md` — critério objectivo (>= 3 estados de render → teste de componente obrigatório), com secção de Aplicação no QA Gate | **EXECUTADA** — regra criada |
+| **A4** | **NOVA REGRA** criada: `.claude/rules/external-contract-identifiers.md` — validar identificadores (tool names, API fields, enums) contra o contrato externo no draft. Rota template `@sm` (`story-tmpl.yaml`) bloqueada pela fronteira L2 (template framework protegido) → regra formal foi o caminho correcto | **EXECUTADA** — regra criada |
+| **A2** | **SEM regra separada** (evita redundância — `synapse-domain-governance`). A vertente "teste de componente" ficou formalizada na regra A3 (secção QA Gate); adicionado check 8 ao QA Gate em `.claude/rules/story-lifecycle.md` a apontar para A3 + convenção A5 | **EXECUTADA** — `story-lifecycle.md` actualizado |
+| **A5** | **SEM regra nova** — convenção adicionada a `.claude/rules/story-lifecycle.md` (secção "Test Count Convention": contagens exactas só no Change Log/Dev Record como snapshot datado, nunca em headers/File List). Template `story-tmpl.yaml` é L2 protegido → a regra de projecto foi o local correcto | **EXECUTADA** — `story-lifecycle.md` actualizado |
 
 > `@po` (Pax) **não** cria regras formais — apenas as propõe. A criação/alteração de `.claude/rules/` é autoridade de `@aiox-master` (precedente Epic 1: `mock-protocol-fidelity.md`, `not-tested-trailer-rules.md`, `separation-of-roles.md`).
 

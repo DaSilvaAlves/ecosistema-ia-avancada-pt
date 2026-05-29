@@ -84,7 +84,7 @@ if CRITICAL persist after 2 iterations:
 
 **Task:** `qa-gate.md`
 
-### 7 Quality Checks
+### 8 Quality Checks
 
 1. **Code review** — patterns, readability, maintainability
 2. **Unit tests** — adequate coverage, all passing
@@ -93,6 +93,7 @@ if CRITICAL persist after 2 iterations:
 5. **Performance** — within acceptable limits
 6. **Security** — OWASP basics verified
 7. **Documentation** — updated if necessary
+8. **Component test criteria** — for stories delivering React components, count render states and apply `react-component-test-criteria.md` (>= 3 distinct states → component test required). Also verify doc/count consistency per the Test Count Convention below. This catches at the AIOX gate what CodeRabbit otherwise raises as Major in the PR (Retrospective Epic 3, actions A2/A3).
 
 ### Gate Decisions
 
@@ -143,3 +144,22 @@ issues:
 | File List, Dev Notes, checkboxes | @dev |
 | QA Results | @qa only |
 | Change Log | Any agent (append only) |
+
+## Test Count Convention
+
+**Exact test counts (e.g. "17 testes", "5/5 passing") live ONLY in the Change Log or Dev Agent Record as a dated snapshot — never repeated in section headers, AC descriptions, or the File List.**
+
+### Origem
+
+Manually-maintained exact test counts in the story body desynchronise as tests are added across CodeRabbit iterations, and the CodeRabbit catches the drift as findings. Two cases in Epic 3 Nexus v2 (28/05/2026): Story 3.10 — header said "17 testes" but the groups summed to 19; the CR raised it and the merge was waived on this nitpick (the epic's only waiver, not a code issue). Story 3.8 — test-count reclassification consumed a CR finding. Neither was a quality problem; both were doc drift.
+
+### Rules
+
+| # | Rule |
+|---|------|
+| 1 | A specific test count appears at most once per story, in the Change Log / Dev Agent Record, tagged with the iteration/date it reflects |
+| 2 | Section headers and AC descriptions refer to test *groups/scenarios by name* (e.g. "loading/empty/content/toggle/overdraft"), not running totals |
+| 3 | The File List names test files, not the count of tests inside them |
+| 4 | If a count must appear, it is a dated snapshot ("988/988 — pós CR Iter 2, 28/05") — never a figure implied to stay current |
+
+This is a story-authoring convention (Retrospective Epic 3, action A5) — owner `@sm` when drafting, enforced at the QA Gate (check 8 above) by rejecting exact running counts repeated in the story body.
