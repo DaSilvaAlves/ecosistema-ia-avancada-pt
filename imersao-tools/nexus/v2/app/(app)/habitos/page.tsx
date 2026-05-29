@@ -18,6 +18,7 @@ import {
 import type { Habit, HabitLog } from '@/types/db';
 import { TabStrip, type TabDescriptor } from '@/components/ui/TabStrip';
 import { HabitFormModal } from '@/components/habitos/HabitFormModal';
+import { HabitHeatmapModal } from '@/components/habitos/HabitHeatmapModal';
 import { HabitsList } from '@/components/habitos/HabitsList';
 
 /**
@@ -62,6 +63,7 @@ export default function HabitosPage(): React.ReactElement {
 
   const [tab, setTab] = useState<Tab>('active');
   const [modal, setModal] = useState<ModalState>(null);
+  const [heatmapHabit, setHeatmapHabit] = useState<Habit | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [openerEl, setOpenerEl] = useState<HTMLElement | null>(null);
@@ -93,12 +95,13 @@ export default function HabitosPage(): React.ReactElement {
   // o seu próprio Escape). Precedente `financas/page.tsx`.
   useEffect(() => {
     function handleEscape(e: KeyboardEvent): void {
-      if (modal !== null) return;
+      // Os modais (form/heatmap) tratam o seu próprio Escape — não navegar atrás.
+      if (modal !== null || heatmapHabit !== null) return;
       if (e.key === 'Escape') router.back();
     }
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [router, modal]);
+  }, [router, modal, heatmapHabit]);
 
   // Auto-dismiss dos toasts após 4s.
   useEffect(() => {
@@ -137,6 +140,20 @@ export default function HabitosPage(): React.ReactElement {
     rememberOpener();
     setModal({ mode: 'edit', habit });
   }, []);
+
+  // AC6 — abrir o heatmap de um hábito (activos e arquivados).
+  const handleShowHeatmap = useCallback((habit: Habit): void => {
+    rememberOpener();
+    setHeatmapHabit(habit);
+  }, []);
+
+  function closeHeatmap(): void {
+    setHeatmapHabit(null);
+    if (openerEl !== null) {
+      setTimeout(() => openerEl.focus(), 0);
+      setOpenerEl(null);
+    }
+  }
 
   async function handleSubmit(input: Partial<Habit>): Promise<void> {
     try {
@@ -295,6 +312,7 @@ export default function HabitosPage(): React.ReactElement {
             onArchive={handleArchive}
             onRestore={handleRestore}
             onDelete={handleDelete}
+            onShowHeatmap={handleShowHeatmap}
           />
         </div>
       )}
@@ -310,6 +328,7 @@ export default function HabitosPage(): React.ReactElement {
             onArchive={handleArchive}
             onRestore={handleRestore}
             onDelete={handleDelete}
+            onShowHeatmap={handleShowHeatmap}
           />
         </div>
       )}
@@ -321,6 +340,10 @@ export default function HabitosPage(): React.ReactElement {
           onClose={closeModal}
           onSubmit={handleSubmit}
         />
+      )}
+
+      {heatmapHabit !== null && (
+        <HabitHeatmapModal habit={heatmapHabit} onClose={closeHeatmap} />
       )}
 
       {errorMessage !== null && (

@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Check, Archive, Trash2, ArchiveRestore } from 'lucide-react';
+import { Pencil, Check, Archive, Trash2, ArchiveRestore, CalendarRange } from 'lucide-react';
 import type { Habit, HabitLog } from '@/types/db';
 
 /**
@@ -19,6 +19,10 @@ import type { Habit, HabitLog } from '@/types/db';
  *   - `'active'` → acções Editar / Marcar concluído / Arquivar / Apagar.
  *   - `'archived'` → acções Restaurar / Apagar (sem "Marcar concluído" — AC9).
  *
+ * `onShowHeatmap` (opcional, Story 4.3 — AC6): quando presente, cada linha ganha
+ * uma acção "Ver heatmap" (nas duas variantes — leitura pura, útil também em
+ * arquivados). Extensão mínima — não altera as acções existentes.
+ *
  * `todayLogs` são os logs de hoje (filtrados na page). Um hábito cujo `id`
  * aparece em `todayLogs` já foi concluído hoje (idempotência — [AUTO-DECISION]
  * A2): o botão de marcar fica desactivado e mostra "Concluído hoje".
@@ -36,6 +40,7 @@ interface HabitsListProps {
   onArchive: (habit: Habit) => void;
   onRestore: (habit: Habit) => void;
   onDelete: (habit: Habit) => void;
+  onShowHeatmap?: (habit: Habit) => void;
 }
 
 export function HabitsList({
@@ -47,6 +52,7 @@ export function HabitsList({
   onArchive,
   onRestore,
   onDelete,
+  onShowHeatmap,
 }: HabitsListProps): React.ReactElement {
   if (habits === undefined) {
     return <LoadingSkeleton label="A carregar hábitos" />;
@@ -125,6 +131,15 @@ export function HabitsList({
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {onShowHeatmap !== undefined && (
+                <IconButton
+                  label={`Ver heatmap de "${habit.name}"`}
+                  onClick={() => onShowHeatmap(habit)}
+                  color="#9D00FF"
+                >
+                  <CalendarRange size={16} />
+                </IconButton>
+              )}
               {variant === 'active' ? (
                 <>
                   {doneToday ? (
