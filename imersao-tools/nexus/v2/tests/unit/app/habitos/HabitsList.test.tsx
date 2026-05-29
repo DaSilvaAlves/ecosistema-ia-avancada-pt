@@ -126,4 +126,49 @@ describe('HabitsList (Story 4.2 / AC6)', () => {
     expect(noopHandlers.onArchive).toHaveBeenCalledWith(habits[0]);
     expect(noopHandlers.onDelete).toHaveBeenCalledWith(habits[0]);
   });
+
+  // ── Story 4.3 / AC6 — acção "Ver heatmap" ──
+  it('C5 — sem onShowHeatmap: NÃO renderiza o botão "Ver heatmap"', () => {
+    const habits = [makeHabit({ id: 'h1', name: 'Correr' })];
+    render(
+      <HabitsList habits={habits} todayLogs={[]} variant="active" {...noopHandlers} />,
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Ver heatmap de "Correr"' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('C5b — com onShowHeatmap: renderiza o botão e dispara o callback (active)', () => {
+    const habits = [makeHabit({ id: 'h1', name: 'Correr' })];
+    const onShowHeatmap = vi.fn();
+    render(
+      <HabitsList
+        habits={habits}
+        todayLogs={[]}
+        variant="active"
+        {...noopHandlers}
+        onShowHeatmap={onShowHeatmap}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Ver heatmap de "Correr"' }));
+    expect(onShowHeatmap).toHaveBeenCalledWith(habits[0]);
+  });
+
+  it('C5c — botão "Ver heatmap" aparece em arquivados e dispara o callback (leitura pura)', () => {
+    const habits = [makeHabit({ id: 'h1', name: 'Meditar', archivedAt: Date.now() })];
+    const onShowHeatmap = vi.fn();
+    render(
+      <HabitsList
+        habits={habits}
+        todayLogs={[]}
+        variant="archived"
+        {...noopHandlers}
+        onShowHeatmap={onShowHeatmap}
+      />,
+    );
+    const btn = screen.getByRole('button', { name: 'Ver heatmap de "Meditar"' });
+    expect(btn).toBeInTheDocument();
+    fireEvent.click(btn);
+    expect(onShowHeatmap).toHaveBeenCalledWith(habits[0]);
+  });
 });
