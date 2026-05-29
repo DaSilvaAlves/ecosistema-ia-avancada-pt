@@ -15,7 +15,7 @@
 | **Projecto** | Nexus v2 (`imersao-tools/nexus/`) |
 | **Epic** | Epic 3 — Finanças Completas (**✅ 11/11 Done — COMPLETO**) |
 | **Story activa** | Nenhuma (Epic 3 fechado) |
-| **Status handoff** | pending |
+| **Status handoff** | **consumed** (29/05/2026 — closure `c11ec286` + retrospective `045d1f95` + regras `1344a121` feitos; pendentes A1/A6/A7/A9 transferidos para `RETOMA-20260529-...-A1-A6-A7-A9.md`) |
 | **to_agent** | `@devops` (Gage) — primeiro (closure commit+push); depois `@po` (Pax) — `*retrospective epic-3` |
 
 ---
