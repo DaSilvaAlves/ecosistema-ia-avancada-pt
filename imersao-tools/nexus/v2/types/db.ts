@@ -174,6 +174,7 @@ export interface Habit {
   category: string;
   time?: string; // FR24 — horário opcional sugerido (HH:MM, 24h). Não-indexado (Story 4.1).
   metric?: { unit: string; target: number };
+  archivedAt?: number; // Story 4.2 — epoch ms do arquivo; undefined = activo. Não-indexado (sem version bump).
   createdAt: number;
 }
 

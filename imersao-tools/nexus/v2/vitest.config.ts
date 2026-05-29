@@ -66,6 +66,15 @@ export default defineConfig({
         // adiciona path à allowlist do report; thresholds globais inalterados;
         // sem alteração comportamental do test runner.
         'lib/financas/**',
+        // Story 4.2 — CRUD hábitos + UI partilhada (precedente Stories
+        // 2.3/3.3 — adiciona paths à allowlist do report; thresholds globais
+        // inalterados; sem alteração comportamental do test runner).
+        'app/(app)/habitos/**',
+        'components/habitos/**',
+        'components/ui/FormField.tsx',
+        'components/ui/TabStrip.tsx',
+        'hooks/useHabits.ts',
+        'hooks/useHabitLogs.ts',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)
