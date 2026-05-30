@@ -1,6 +1,6 @@
-import { getClassifier } from '@/lib/agent/providers/factory';
 import { buildClassifierSystemPrompt } from '@/lib/agent/prompts/classifier-system';
 import type { ClassificationResult } from '@/lib/agent/schemas';
+import type { ClassifierProvider } from '@/lib/agent/providers/types';
 import type { ToolDomain } from '@/lib/agent/tools/types';
 
 /**
@@ -75,6 +75,33 @@ export interface ClassifyOpts {
   maxTokens?: number;
   /** Default 0 (determinismo). */
   temperature?: number;
+  /**
+   * Story 1.11 (ADR-9, A1+A6) — provider de classificação injectável.
+   *
+   * Antes da Story 1.11 `classifyPrompt` instanciava `getClassifier()`
+   * hard-coded (SDK Anthropic directo + `ANTHROPIC_API_KEY` server-only), o
+   * que vazaria a key se o classifier corresse no browser. ADR-9 move o
+   * classifier para o cliente: o `InferenceTransport` (que fala com
+   * `/api/anthropic/proxy`) é injectado aqui. Ausente → factory server-side
+   * `getClassifier()` por dynamic import (retrocompat com server/testes).
+   */
+  provider?: ClassifierProvider;
+}
+
+/**
+ * Story 1.11 (ADR-9, A1+A6) — resolve o provider de classificação server-side
+ * (Haiku via SDK directo) por **dynamic import**.
+ *
+ * Mesma motivação que `resolveServerExecutor` em `executor.ts`: importar
+ * `@/lib/agent/providers/factory` estaticamente puxaria o SDK Anthropic +
+ * `ANTHROPIC_API_KEY` para qualquer bundle que importe este módulo, incluindo
+ * o bundle `'use client'`. O dynamic import só corre quando o caller NÃO
+ * injecta um provider (caminho server/testes). No cliente, o
+ * `InferenceTransport` é sempre injectado via `ClassifyOpts.provider`.
+ */
+async function resolveServerClassifier(): Promise<ClassifierProvider> {
+  const { getClassifier } = await import('@/lib/agent/providers/factory');
+  return getClassifier();
 }
 
 /**
@@ -201,7 +228,11 @@ export async function classifyPrompt(
   const availableDomains = opts.availableDomains ?? ALL_DOMAINS;
   const systemPrompt = buildClassifierSystemPrompt(availableDomains);
 
-  const classifier = getClassifier();
+  // Story 1.11 (ADR-9, A1+A6): provider injectado pelo caller (cliente passa o
+  // `InferenceTransport` por proxy). Ausente → factory server-side via dynamic
+  // import — NUNCA importar `providers/factory` no topo do módulo, senão o SDK
+  // Anthropic + `ANTHROPIC_API_KEY` entram no bundle client (viola §9.2/NFR5).
+  const classifier = opts.provider ?? (await resolveServerClassifier());
   const result = await classifier.classify(systemPrompt, trimmed, {
     model: opts.model,
     maxTokens: opts.maxTokens ?? DEFAULT_CLASSIFIER_OPTS.maxTokens,
