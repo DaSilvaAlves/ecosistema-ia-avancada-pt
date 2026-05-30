@@ -21,9 +21,10 @@ vi.mock('@vercel/kv', () => ({
   },
 }));
 
-// Story 1.7 — import necessário para os tests `Story 1.7 undo registration`
-// poderem aceder ao mock do `kv` singleton via `vi.mocked(kv.set/get/del)`.
-import { kv } from '@vercel/kv';
+// Story 1.11 — o singleton `@vercel/kv` deixou de estar no caminho do executor
+// (undo agora injectável via `RunAgentOpts.undoStore`). O `vi.mock` acima
+// mantém-se como guard de segurança caso algum import transitivo o toque, mas
+// já NÃO importamos `kv` nos testes — os testes de undo usam um `undoStore` mock.
 import {
   MAX_TOOL_ITERATIONS,
   PREVIEW_CONFIDENCE_THRESHOLD,
@@ -465,11 +466,15 @@ describe('runAgent — Edge runtime safety (AC12)', () => {
     const runtimeDbImport = /^\s*import\s+(?!type\s)[^;]*from\s+['"]@\/lib\/db\/client['"]/m;
     expect(source).not.toMatch(runtimeDbImport);
 
-    // Story 1.7: import runtime de `@vercel/kv` é PERMITIDO (Edge-safe — Upstash
-    // REST API via fetch). Pre-Story 1.7 este teste rejeitava qualquer import.
-    // Agora valida apenas que o import existe (KV é necessário para undo).
+    // Story 1.11 (ADR-9, A1): o executor passou a correr CLIENT-SIDE (browser).
+    // `@vercel/kv` NÃO corre no browser — o import de valor no topo do módulo
+    // explodiria o bundle client. Por isso o `kv` passou a ser INJECTÁVEL via
+    // `RunAgentOpts.kv` (server injecta o adapter; client injecta nada → noKvStub).
+    // Esta asserção foi INVERTIDA face à Story 1.7: o executor agora NÃO importa
+    // `@vercel/kv` como valor. (Pré-1.11 importava-o; pré-1.7 rejeitava qualquer
+    // import — a história deste teste documenta a evolução da fronteira Edge.)
     const vercelKvImport = /^\s*import\s+(?!type\s)[^;]*from\s+['"]@vercel\/kv['"]/m;
-    expect(source).toMatch(vercelKvImport);
+    expect(source).not.toMatch(vercelKvImport);
 
     // Zero Node-only APIs
     expect(source).not.toMatch(/from\s+['"]fs['"]/);
@@ -1326,22 +1331,21 @@ describe('runAgent — CR Iter 1 fix #2: tool_result injectado em error branches
 // Story 1.7 — undo registration
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('runAgent — Story 1.7 undo registration', () => {
-  // Acedemos ao mock global declarado no topo (vi.mock('@vercel/kv'))
-  const kvMockSet = vi.mocked((kv as unknown as { set: ReturnType<typeof vi.fn> }).set);
-  const kvMockGet = vi.mocked((kv as unknown as { get: ReturnType<typeof vi.fn> }).get);
-  const kvMockDel = vi.mocked((kv as unknown as { del: ReturnType<typeof vi.fn> }).del);
+describe('runAgent — Story 1.7 undo registration (Story 1.11: undoStore injectável)', () => {
+  // Story 1.11 (ADR-9, A1+A4): o executor deixou de chamar `kv.set` directamente
+  // — o undo é agora INJECTADO via `RunAgentOpts.undoStore`. Server injecta o
+  // adapter KV; client injecta no-op (Phase 1) / store in-memory (Phase 2). Estes
+  // testes exercitam o contrato injectável com um `undoStore` mock, em vez de
+  // espiar o singleton `@vercel/kv` (que já não está no caminho do executor).
+  let undoRegister: ReturnType<typeof vi.fn>;
+  let undoStore: { register: typeof undoRegister };
 
   beforeEach(() => {
-    kvMockSet.mockClear();
-    kvMockGet.mockClear();
-    kvMockDel.mockClear();
-    kvMockSet.mockResolvedValue('OK');
-    kvMockGet.mockResolvedValue(null);
-    kvMockDel.mockResolvedValue(0);
+    undoRegister = vi.fn().mockResolvedValue(undefined);
+    undoStore = { register: undoRegister };
   });
 
-  it('regista undo entry e emite undo_registered após tool reversível bem-sucedida', async () => {
+  it('chama undoStore.register e emite undo_registered após tool reversível bem-sucedida', async () => {
     const tool = defineTool({
       name: 'tool_test_one',
       description: 'Tool reversível de teste',
@@ -1355,25 +1359,21 @@ describe('runAgent — Story 1.7 undo registration', () => {
     });
     toolRegistry.register(tool as ToolDefinition);
 
-    const events = await collectEvents(MOCK_PROMPTS.oneToolUse);
+    const events = await collectEvents(MOCK_PROMPTS.oneToolUse, { undoStore });
 
-    // kv.set chamado com chave canónica + ex: 30
-    expect(kvMockSet).toHaveBeenCalledTimes(1);
-    const [key, value, opts] = kvMockSet.mock.calls[0];
-    expect(key).toMatch(/^nexus:undo:run:[0-9a-f-]{36}$/);
-    expect(opts).toEqual({ ex: 30 });
-    expect(value).toMatchObject({
-      runId: expect.any(String),
-      toolCalls: [
-        {
-          toolName: 'tool_test_one',
-          args: { x: 'hello' },
-          result: { ok: true, echo: 'hello' },
-          durationMs: expect.any(Number),
-          reverted: false,
-        },
-      ],
-    });
+    // undoStore.register chamado com (runId, reversibleToolCalls).
+    expect(undoRegister).toHaveBeenCalledTimes(1);
+    const [runIdArg, toolCallsArg] = undoRegister.mock.calls[0];
+    expect(runIdArg).toMatch(/^[0-9a-f-]{36}$/);
+    expect(toolCallsArg).toMatchObject([
+      {
+        toolName: 'tool_test_one',
+        args: { x: 'hello' },
+        result: { ok: true, echo: 'hello' },
+        durationMs: expect.any(Number),
+        reverted: false,
+      },
+    ]);
 
     // undo_registered event emitido ANTES de done
     const undoRegistered = events.find((e) => e.type === 'undo_registered');
@@ -1387,7 +1387,31 @@ describe('runAgent — Story 1.7 undo registration', () => {
     expect(undoIdx).toBeLessThan(doneIdx);
   });
 
-  it('NÃO regista undo quando tool tem reversible: false', async () => {
+  it('Phase 1: sem undoStore injectado → undo desactivado (no-op), done na mesma', async () => {
+    // Story 1.11: o caminho client Phase 1 NÃO injecta undoStore — o undo fica
+    // desactivado mas o run completa normalmente (AC8 é Phase 2).
+    const tool = defineTool({
+      name: 'tool_test_one',
+      description: 'Tool reversível sem store',
+      domain: 'meta',
+      argsSchema: z.object({ x: z.string() }),
+      resultSchema: z.object({ ok: z.boolean(), echo: z.string() }),
+      requiresPreview: false,
+      reversible: true,
+      execute: async (args: { x: string }) => ({ ok: true, echo: args.x }),
+      reverse: async () => undefined,
+    });
+    toolRegistry.register(tool as ToolDefinition);
+
+    const events = await collectEvents(MOCK_PROMPTS.oneToolUse);
+
+    expect(events.find((e) => e.type === 'undo_registered')).toBeUndefined();
+    const done = events.at(-1);
+    if (done?.type !== 'done') throw new Error();
+    expect(done.status).toBe('success');
+  });
+
+  it('NÃO chama undoStore.register quando tool tem reversible: false', async () => {
     const tool = defineTool({
       name: 'tool_test_one',
       description: 'Tool não reversível',
@@ -1400,9 +1424,9 @@ describe('runAgent — Story 1.7 undo registration', () => {
     });
     toolRegistry.register(tool as ToolDefinition);
 
-    const events = await collectEvents(MOCK_PROMPTS.oneToolUse);
+    const events = await collectEvents(MOCK_PROMPTS.oneToolUse, { undoStore });
 
-    expect(kvMockSet).not.toHaveBeenCalled();
+    expect(undoRegister).not.toHaveBeenCalled();
     expect(events.find((e) => e.type === 'undo_registered')).toBeUndefined();
 
     const done = events.at(-1);
@@ -1410,7 +1434,7 @@ describe('runAgent — Story 1.7 undo registration', () => {
     expect(done.status).toBe('success');
   });
 
-  it('NÃO regista undo quando done.status === failed (classifier falha)', async () => {
+  it('NÃO chama undoStore.register quando done.status === failed (classifier falha)', async () => {
     // Classifier falha → status 'failed' → NÃO regista undo
     // (mesmo que houvesse tool reversível registada — não chega ao loop)
     const tool = defineTool({
@@ -1427,10 +1451,11 @@ describe('runAgent — Story 1.7 undo registration', () => {
     toolRegistry.register(tool as ToolDefinition);
 
     const { events } = await collectEventsExpectingThrow(
-      MOCK_PROMPTS.classifierFail
+      MOCK_PROMPTS.classifierFail,
+      { undoStore }
     );
 
-    expect(kvMockSet).not.toHaveBeenCalled();
+    expect(undoRegister).not.toHaveBeenCalled();
     expect(events.find((e) => e.type === 'undo_registered')).toBeUndefined();
 
     const done = events.find((e) => e.type === 'done');
@@ -1438,8 +1463,8 @@ describe('runAgent — Story 1.7 undo registration', () => {
     expect(done.status).toBe('failed');
   });
 
-  it('emite done mesmo quando registerUndoEntry lança (best-effort)', async () => {
-    kvMockSet.mockRejectedValueOnce(new Error('KV connection refused'));
+  it('emite done mesmo quando undoStore.register lança (best-effort)', async () => {
+    undoRegister.mockRejectedValueOnce(new Error('KV connection refused'));
 
     const tool = defineTool({
       name: 'tool_test_one',
@@ -1454,7 +1479,7 @@ describe('runAgent — Story 1.7 undo registration', () => {
     });
     toolRegistry.register(tool as ToolDefinition);
 
-    const events = await collectEvents(MOCK_PROMPTS.oneToolUse);
+    const events = await collectEvents(MOCK_PROMPTS.oneToolUse, { undoStore });
 
     // tool_error com toolName 'undo_register' emitido (observability)
     const undoErr = events.find(
@@ -1464,10 +1489,10 @@ describe('runAgent — Story 1.7 undo registration', () => {
     if (undoErr?.type !== 'tool_error') throw new Error();
     expect(undoErr.error).toMatch(/KV connection refused/);
 
-    // undo_registered NÃO emitido (registerUndoEntry falhou)
+    // undo_registered NÃO emitido (register falhou)
     expect(events.find((e) => e.type === 'undo_registered')).toBeUndefined();
 
-    // done EMITIDO (best-effort: KV down não bloqueia o run)
+    // done EMITIDO (best-effort: store down não bloqueia o run)
     const done = events.at(-1);
     if (done?.type !== 'done') throw new Error();
     expect(done.status).toBe('success'); // tool executou OK; só undo registration falhou

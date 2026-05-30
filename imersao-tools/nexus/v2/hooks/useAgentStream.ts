@@ -2,50 +2,60 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ExecutorSSEEvent } from '@/lib/agent/executor';
+import { runClientAgent } from '@/lib/agent/client-executor';
 import { db } from '@/lib/db/client';
 import { addChatMessage, DEFAULT_CONVERSATION_ID } from '@/lib/db/repos/chat-messages';
 import { appendToolCall, createAgentRun } from '@/lib/db/repos/agent-runs';
 import type { AgentRun, ChatMessage, ToolCall } from '@/types/db';
 
 /**
- * Nexus v2 — useAgentStream hook (Story 1.9 AC1 + AC2)
+ * Nexus v2 — useAgentStream hook (Story 1.9 AC1 + AC2 · Story 1.11 ADR-9 AC4)
  *
- * Hook 'use client' que consome `POST /api/agent/prompt` (Story 1.8) via fetch
- * + ReadableStream reader. Parseia SSE events `data: <JSON>\n\n`, expõe estado
- * reactivo para a UI e PERSISTE a run em Dexie client-side (RESOLVED-2 da
- * Story 1.5 — server stateless, persistência é responsabilidade do consumer).
+ * Hook 'use client' que CONDUZ o executor client-side (`runClientAgent`,
+ * Story 1.11 ADR-9) no browser, em vez de fazer `fetch('/api/agent/prompt')`.
+ * Consome o AsyncGenerator de `ExecutorSSEEvent`, expõe estado reactivo para a
+ * UI e PERSISTE a run em Dexie client-side.
+ *
+ * Story 1.11 (ADR-9, A1+A4 — fix do bug de produção):
+ * - Antes: o hook fazia `POST /api/agent/prompt` (Edge, `ctx.db = null`), logo
+ *   `criar_tarefa` falhava com `Cannot read properties of null (reading
+ *   'tasks')`. O executor corria no Edge sem IndexedDB.
+ * - Agora: o hook conduz `runClientAgent(prompt)` no browser, onde o `ctx.db` é
+ *   o Dexie real (`@/lib/db/client`) e o transport de inferência fala com
+ *   `/api/anthropic/proxy` (a `ANTHROPIC_API_KEY` fica server-only). As 12
+ *   tools (inalteradas) escrevem/leem directamente.
+ *
+ * O contrato de saída (`UseAgentStreamResult`) e a persistência de chat-log
+ * (agent_runs/chat_messages) MANTÊM-SE — `ChatPanel`/`MessageList`/`ToolCard`
+ * não mudam (consomem `events` exactamente como antes).
  *
  * Trace canónico:
  * - Story 1.9 AC1 — assinatura `UseAgentStreamResult`
  * - Story 1.9 AC2 — Dexie runtime (startRun em meta(start), appendToolCall em
  *   tool_complete, finishRun em done, ChatMessage em done success/partial)
- * - Architecture v2 §8 line 689 — "persist ChatMessage + AgentRun → IndexedDB
- *   (no client após receber stream)"
- * - executor.ts L159-255 — `ExecutorSSEEvent` discriminated union (10 tipos)
- * - executor.ts L46-67 — RESOLVED-2 contract
+ * - Story 1.11 ADR-9 AC4 — hook conduz o executor client-side
+ * - Architecture v2 ADR-9 — executor client-side + ctx.db Dexie real
+ * - executor.ts — `ExecutorSSEEvent` discriminated union
  *
  * Anti-patterns críticos (AC2 + arch ADR-2):
- * - `'use client'` é obrigatório — Dexie é client-only, NUNCA importar em
- *   código com `runtime = 'edge'`
- * - NUNCA chamar `runAgent()` directamente — sempre via `POST /api/agent/prompt`
- *   (Story 1.8 endpoint pronto)
+ * - `'use client'` é obrigatório — Dexie + executor client são client-only,
+ *   NUNCA importar em código com `runtime = 'edge'`
  * - NUNCA tocar `db.agent_runs.*` directamente — usar repos `createAgentRun`/
  *   `appendToolCall`/`updateAgentRunStatus` (Story 1.1)
  *
- * Persistência Dexie como side-effects no caminho do reader (não bloqueante):
- * - Erros de Dexie são logados via `console.error` mas NÃO interrompem a
- *   stream — UX prioriza ver resultado, mesmo que persistência local falhe
- *   (alinha com best-effort do executor para `registerUndoEntry`)
+ * Persistência Dexie como side-effects no caminho de consumo (não bloqueante):
+ * - Erros de Dexie são logados via `console.error` mas NÃO interrompem a run —
+ *   UX prioriza ver resultado, mesmo que persistência de chat-log falhe
  * - Idempotência: `createAgentRun` usa `db.agent_runs.add()` — se o runId já
  *   existe (e.g., race ou retry), Dexie lança `ConstraintError` que é
- *   silenciosamente apanhado e logado (run continua a streamar)
+ *   silenciosamente apanhado e logado (run continua)
  */
 
 /**
  * Resultado canónico do hook (Story 1.9 AC1).
  */
 export interface UseAgentStreamResult {
-  /** Submete um prompt para `/api/agent/prompt`. NÃO retorna — UI observa estado. */
+  /** Conduz o executor client-side (`runClientAgent`) para o prompt. NÃO retorna — UI observa estado. */
   submit: (prompt: string) => void;
   /** `true` enquanto a stream está activa (após `submit`, antes de `[DONE]`). */
   isStreaming: boolean;
@@ -257,44 +267,30 @@ export function useAgentStream(): UseAgentStreamResult {
   }, []);
 
   /**
-   * Processa uma linha SSE individual. Retorna `true` se a stream terminou
-   * (`[DONE]` recebido), `false` para continuar.
-   *
-   * Side-effects de persistência Dexie acontecem aqui — best-effort (ver doc
-   * do módulo).
+   * Processa um `ExecutorSSEEvent` já desserializado (vindo directamente do
+   * AsyncGenerator do executor client-side — Story 1.11 ADR-9, não há mais
+   * parsing de linhas `data:`). Side-effects de persistência Dexie acontecem
+   * aqui — best-effort (ver doc do módulo).
    */
-  const processSseLine = useCallback(async (line: string): Promise<boolean> => {
-    if (!line.startsWith('data: ')) return false;
-
-    const raw = line.slice(6).trim();
-    if (raw.length === 0) return false;
-    if (raw === '[DONE]') return true;
-
-    let event: ExecutorSSEEvent;
-    try {
-      event = JSON.parse(raw) as ExecutorSSEEvent;
-    } catch (e) {
-      console.error('[useAgentStream] parse SSE line falhou', { raw, e });
-      return false;
-    }
-
+  const processEvent = useCallback(async (event: ExecutorSSEEvent): Promise<void> => {
     setEvents((prev) => [...prev, event]);
 
     // Acumular text_delta para ChatMessage final
     if (event.type === 'text_delta') {
       accumulatedTextRef.current += event.delta;
+      return;
     }
 
     // Capturar runId do meta(start) para UI correlation
     if (event.type === 'meta' && event.phase === 'start') {
       setCurrentRunId(event.runId);
       await persistRunStart(event);
-      return false;
+      return;
     }
 
     if (event.type === 'tool_complete') {
       await persistToolCall(event);
-      return false;
+      return;
     }
 
     if (event.type === 'done') {
@@ -304,75 +300,49 @@ export function useAgentStream(): UseAgentStreamResult {
       if (event.status === 'success' || event.status === 'partial') {
         await persistAssistantMessage(event.runId, accumulatedTextRef.current);
       }
-      return false;
+      return;
     }
-
-    return false;
   }, []);
 
   /**
-   * Consume a `Response.body` ReadableStream — itera linhas `data: ...\n\n`,
-   * pipa para `processSseLine`, termina ao receber `[DONE]` ou `EOF`.
+   * Consome o AsyncGenerator do executor client-side (`runClientAgent`),
+   * processando cada `ExecutorSSEEvent`. Story 1.11 (ADR-9): substitui o
+   * antigo consumo de `Response.body` SSE — o executor corre no browser, logo
+   * não há rede a parsear.
    *
-   * Story 1.9 Iter 2 — `signal` opcional para abortar leitura quando o caller
-   * cancelar (duplo submit, unmount, ou `reset()`). `reader.cancel()` solta
-   * upstream cleanly; `releaseLock` em finally como antes.
+   * `signal` aborta o consumo (duplo submit, unmount, `reset()`). Ao abortar,
+   * chamamos `generator.return()` IMEDIATAMENTE via listener do signal — isto
+   * interrompe um `await generator.next()` que esteja suspenso entre yields
+   * (caso contrário o `for await` só reavaliaria `signal.aborted` no próximo
+   * yield, deixando o abort pendurado enquanto o executor não produz eventos).
+   * `.return()` corre o `finally` interno do transport (reader cleanup via
+   * `releaseLock`). O guard `signal.aborted` no topo do loop cobre o caso de o
+   * abort chegar entre yields já disponíveis.
    */
-  const consumeStream = useCallback(
-    async (response: Response, signal?: AbortSignal): Promise<void> => {
-      if (!response.body) {
-        throw new Error('Resposta sem body — stream impossível');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      // Liga o signal ao reader: ao abortar, `reader.cancel()` desbloqueia o
-      // `await reader.read()` próximo. Listener removido em finally para
-      // evitar leak entre runs.
-      const onAbort = (): void => {
-        // Cancel é safe mesmo se o reader já estiver fechado.
-        void reader.cancel().catch(() => undefined);
+  const consumeAgent = useCallback(
+    async (
+      generator: AsyncGenerator<ExecutorSSEEvent>,
+      signal: AbortSignal
+    ): Promise<void> => {
+      const onAbort = () => {
+        // Interrompe um `next()` suspenso. `.catch` silencia se já terminou.
+        void generator.return(undefined as never).catch(() => undefined);
       };
-      if (signal) {
-        if (signal.aborted) {
-          onAbort();
-        } else {
-          signal.addEventListener('abort', onAbort, { once: true });
-        }
+      if (signal.aborted) {
+        onAbort();
+        return;
       }
-
+      signal.addEventListener('abort', onAbort, { once: true });
       try {
-        while (true) {
-          if (signal?.aborted) return;
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          // Split em `\n\n` — separator canónico SSE
-          const lines = buffer.split('\n\n');
-          buffer = lines.pop() ?? '';
-          for (const line of lines) {
-            if (signal?.aborted) return;
-            const sseDone = await processSseLine(line);
-            if (sseDone) return;
-          }
-        }
-        // Flush buffer remanescente (sem `\n\n` final)
-        if (!signal?.aborted && buffer.length > 0) {
-          await processSseLine(buffer);
+        for await (const event of generator) {
+          if (signal.aborted) return;
+          await processEvent(event);
         }
       } finally {
-        if (signal) signal.removeEventListener('abort', onAbort);
-        // Liberta o reader explicitamente — em Edge runtime o GC pode demorar.
-        try {
-          reader.releaseLock();
-        } catch {
-          // releaseLock pode lançar se o reader já está fechado — silencia.
-        }
+        signal.removeEventListener('abort', onAbort);
       }
     },
-    [processSseLine]
+    [processEvent]
   );
 
   const submit = useCallback(
@@ -380,9 +350,9 @@ export function useAgentStream(): UseAgentStreamResult {
       const trimmed = prompt.trim();
       if (trimmed.length === 0) return;
 
-      // Story 1.9 Iter 2 — Major #4 — abortar qualquer stream em curso antes
-      // de iniciar nova. Duplo submit / submit-durante-stream agora cancela
-      // o anterior em vez de duplicar side-effects Dexie.
+      // Story 1.9 Iter 2 — Major #4 — abortar qualquer run em curso antes de
+      // iniciar nova. Duplo submit / submit-durante-run agora cancela a
+      // anterior em vez de duplicar side-effects Dexie.
       controllerRef.current?.abort();
       const controller = new AbortController();
       controllerRef.current = controller;
@@ -396,35 +366,19 @@ export function useAgentStream(): UseAgentStreamResult {
       setIsStreaming(true);
       accumulatedTextRef.current = '';
 
-      // Persistir mensagem do utilizador imediatamente — não bloqueia o stream
+      // Persistir mensagem do utilizador imediatamente — não bloqueia a run
       void persistUserMessage(trimmed);
 
       // Async IIFE — `submit` é fire-and-forget; UI observa state via hook.
       void (async () => {
         try {
-          const response = await fetch('/api/agent/prompt', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: trimmed }),
-            signal,
-          });
-
-          if (signal.aborted) return;
-
-          if (!response.ok) {
-            const status = response.status;
-            const message =
-              status === 401
-                ? 'Sessão expirada — inicia sessão novamente'
-                : status === 400
-                  ? 'Prompt inválido — verifica o conteúdo'
-                  : `Erro do servidor (${status}) — tenta de novo`;
-            setError(message);
-            setIsStreaming(false);
-            return;
-          }
-
-          await consumeStream(response, signal);
+          // Story 1.11 (ADR-9, AC4): conduz o executor no browser. Sem
+          // confirmationProvider → auto-confirm (comportamento Story 1.5 e da
+          // UI actual, que nunca wired o gate de confirmação). A
+          // ANTHROPIC_API_KEY nunca entra no cliente — o transport fala com
+          // o proxy Edge.
+          const generator = runClientAgent(trimmed);
+          await consumeAgent(generator, signal);
         } catch (e) {
           // AbortError é esperado em duplo submit / unmount — não mostra
           // erro ao utilizador (UX: foi intencional).
@@ -443,7 +397,7 @@ export function useAgentStream(): UseAgentStreamResult {
         }
       })();
     },
-    [consumeStream]
+    [consumeAgent]
   );
 
   return {

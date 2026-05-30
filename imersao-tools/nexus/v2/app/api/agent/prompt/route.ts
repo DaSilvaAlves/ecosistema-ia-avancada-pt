@@ -13,7 +13,17 @@ import type { Logger, VercelKV } from '@/lib/agent/tools/types';
 import '@/lib/agent/tools';
 
 /**
- * Nexus v2 — Agent prompt endpoint (Story 1.8)
+ * Nexus v2 — Agent prompt endpoint (Story 1.8 · DEPRECATED Story 1.11 ADR-9 AC10)
+ *
+ * @deprecated Story 1.11 (ADR-9): o cérebro passou a correr **client-side** —
+ * o `useAgentStream` conduz o executor no browser (`runClientAgent`) com
+ * `ctx.db` Dexie real, em vez de fazer `fetch` a este endpoint. Este endpoint
+ * mantém-se na Phase 1 apenas por segurança (consumidores não-auditados, e.g.
+ * Telegram Epic 6) e emite um `console.warn` se invocado. A remoção física está
+ * planeada para a Phase 2 (após `@architect` confirmar zero outros callers — o
+ * único caller conhecido, `useAgentStream`, já não o chama). Razão da deprecação:
+ * o executor Edge injectava `ctx.db = null`, partindo `criar_tarefa` em produção
+ * (`Cannot read properties of null (reading 'tasks')`) — ADR-9 fix.
  *
  * `POST /api/agent/prompt` — endpoint principal do cérebro multi-intent.
  * Orquestra:
@@ -100,6 +110,13 @@ async function promptHash(prompt: string): Promise<string> {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  // Story 1.11 (ADR-9, AC10) — endpoint DEPRECATED. O cérebro corre client-side
+  // (useAgentStream → runClientAgent). Logar aviso para detectar consumidores
+  // não-auditados antes da remoção física na Phase 2. NFR11: sem prompt cru.
+  promptLogger.error(
+    'DEPRECATED: /api/agent/prompt invocado — o cérebro corre client-side desde ADR-9 (Story 1.11). Este endpoint será removido na Phase 2.'
+  );
+
   // 1. Auth PRIMEIRO (Crit-3 PO Pax — pattern Story 1.7 route.ts L124-159).
   // Cliente sem sessão NÃO pode sondar com `prompt: ""` para distinguir 400/401.
   const session = await getSession(req);

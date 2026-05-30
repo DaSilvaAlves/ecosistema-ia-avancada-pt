@@ -1,29 +1,32 @@
 /**
- * Nexus v2 — useAgentStream hook tests (Story 1.9 AC10 + AC11)
+ * Nexus v2 — useAgentStream hook tests (Story 1.9 AC10/AC11 · Story 1.11 ADR-9 AC4)
  *
- * Cobertura mínima 85% lines (AC11):
- * - submit() dispara fetch para /api/agent/prompt com body correcto
- * - isStreaming é true durante stream e false após [DONE]
+ * Story 1.11 (ADR-9): o hook DEIXOU de fazer `fetch('/api/agent/prompt')` e passou
+ * a CONDUZIR o executor client-side via `runClientAgent` (`@/lib/agent/client-executor`),
+ * que devolve um `AsyncGenerator<ExecutorSSEEvent>`. Estes testes foram adaptados:
+ * em vez de mockar o endpoint SSE com MSW, mockamos `runClientAgent` para devolver
+ * um generator controlável de eventos. A intenção mantém-se: verificar que o hook
+ * acumula `events`, expõe estado reactivo e PERSISTE a run em Dexie client-side.
+ *
+ * Cobertura:
+ * - submit() conduz runClientAgent com o prompt trimmed
+ * - isStreaming é true durante a stream e false após o generator esgotar
  * - Eventos meta, tool_complete, done acumulados em events
- * - Dexie startRun invocado em meta(start)
+ * - Dexie createAgentRun invocado em meta(start)
  * - Dexie appendToolCall invocado em tool_complete
- * - Dexie finishRun (db.agent_runs.update) invocado em done
- * - ChatMessage assistant persistido em done success
- * - Erro de rede exposto em error PT-PT
+ * - Dexie agent_runs.update invocado em done (finishRun)
+ * - ChatMessage assistant persistido em done success com texto acumulado
+ * - Erro do generator exposto em error PT-PT
+ * - AbortController: duplo submit / unmount / reset() abortam o generator em curso
  *
- * MSW para mockar /api/agent/prompt — handler segue o protocolo real:
- * Content-Type: text/event-stream + linhas data: <JSON>\n\n + data: [DONE]\n\n
- * (memória `feedback_mock_must_reflect_real_protocol.md`).
- *
- * Dexie mockado via vi.mock('@/lib/db/repos/agent-runs') + chat-messages —
- * isola o hook de chamadas Dexie reais para tornar os asserts precisos.
+ * Dexie mockado via vi.mock dos repos — isola o hook de Dexie real.
+ * `runClientAgent` mockado — isola o hook do runtime do executor/transport.
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
+import type { ExecutorSSEEvent } from '@/lib/agent/executor';
 
-// Mock dos repos Dexie ANTES de importar o hook — vi.mock é hoisted
+// Mock dos repos Dexie ANTES de importar o hook — vi.mock é hoisted.
 vi.mock('@/lib/db/repos/agent-runs', () => ({
   createAgentRun: vi.fn(async (run) => run),
   appendToolCall: vi.fn(async () => undefined),
@@ -42,86 +45,133 @@ vi.mock('@/lib/db/client', () => ({
   },
 }));
 
+// Story 1.11 — mock do executor client-side. O hook conduz este generator em vez
+// de fazer fetch. Cada teste configura `mockGenerator` com a sequência de eventos
+// (ou um generator controlável para os testes de abort).
+vi.mock('@/lib/agent/client-executor', () => ({
+  runClientAgent: vi.fn(),
+}));
+
 import { useAgentStream } from '@/hooks/useAgentStream';
+import { runClientAgent } from '@/lib/agent/client-executor';
 import { createAgentRun, appendToolCall } from '@/lib/db/repos/agent-runs';
 import { addChatMessage } from '@/lib/db/repos/chat-messages';
 import { db } from '@/lib/db/client';
 
+const mockRunClientAgent = vi.mocked(runClientAgent);
+
 /**
- * Helper para construir um SSE stream body conforme o protocolo real.
- * `events` são eventos JSON; o helper acrescenta `data: ...\n\n` e `[DONE]\n\n`.
+ * Constrói um AsyncGenerator que emite `events` em sequência. Simula o
+ * `runClientAgent` num caso simples (todos os eventos disponíveis de imediato).
  */
-function buildSseStream(events: unknown[]): ReadableStream<Uint8Array> {
-  const encoder = new TextEncoder();
-  return new ReadableStream({
-    async start(controller) {
-      for (const event of events) {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-      }
-      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      controller.close();
-    },
-  });
+async function* eventsGenerator(
+  events: ExecutorSSEEvent[]
+): AsyncGenerator<ExecutorSSEEvent> {
+  for (const ev of events) {
+    yield ev;
+  }
 }
 
-const server = setupServer();
+/**
+ * Generator controlável: bloqueia no primeiro `yield` até `release()` ser
+ * chamado. Expõe `returned` (true se o consumidor chamou `.return()` — i.e.
+ * abortou) para os testes de AbortController.
+ */
+function controllableGenerator(): {
+  generator: AsyncGenerator<ExecutorSSEEvent>;
+  release: () => void;
+  state: { started: boolean; returned: boolean };
+} {
+  const state = { started: false, returned: false };
+  let resolveGate: (() => void) | null = null;
+  const gate = new Promise<void>((resolve) => {
+    resolveGate = resolve;
+  });
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  server.listen({ onUnhandledRequest: 'error' });
-});
+  async function* gen(): AsyncGenerator<ExecutorSSEEvent> {
+    state.started = true;
+    try {
+      await gate;
+      // Após release, emite um done e termina.
+      yield {
+        type: 'done',
+        runId: RUN_ID,
+        status: 'success',
+        intents: [],
+        inputTokens: 0,
+        outputTokens: 0,
+        durationMs: 0,
+        totals: { intents: 0, toolCalls: 0 },
+      } as ExecutorSSEEvent;
+    } finally {
+      // `.return()` (abort) ou esgotamento natural passam aqui; distinguimos
+      // pelo flag `returned` que setamos no return override abaixo.
+    }
+  }
 
-afterEach(() => {
-  server.resetHandlers();
-  server.close();
-});
+  const generator = gen();
+  // Override de `.return()` para registar o abort (o hook chama-o ao abortar).
+  const originalReturn = generator.return.bind(generator);
+  generator.return = ((value?: unknown) => {
+    state.returned = true;
+    resolveGate?.(); // desbloqueia para o finally correr
+    return originalReturn(value as never);
+  }) as typeof generator.return;
+
+  return {
+    generator,
+    release: () => resolveGate?.(),
+    state,
+  };
+}
 
 const RUN_ID = '11111111-2222-3333-4444-555555555555';
 const startedAt = 1_700_000_000_000;
 
+const metaStart: ExecutorSSEEvent = {
+  type: 'meta',
+  phase: 'start',
+  runId: RUN_ID,
+  prompt: 'teste',
+  modelClassifier: 'haiku',
+  modelExecutor: 'sonnet',
+  startedAt,
+  classifierResult: null,
+};
+
+const doneSuccess: ExecutorSSEEvent = {
+  type: 'done',
+  runId: RUN_ID,
+  status: 'success',
+  intents: [],
+  inputTokens: 0,
+  outputTokens: 0,
+  durationMs: 0,
+  totals: { intents: 0, toolCalls: 0 },
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe('useAgentStream', () => {
-  it('submit() dispara fetch para /api/agent/prompt com body correcto', async () => {
-    let capturedBody: unknown = null;
-    server.use(
-      http.post('/api/agent/prompt', async ({ request }) => {
-        capturedBody = await request.json();
-        return new HttpResponse(buildSseStream([]), {
-          status: 200,
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      })
-    );
+  it('submit() conduz runClientAgent com o prompt trimmed', async () => {
+    mockRunClientAgent.mockReturnValue(eventsGenerator([metaStart, doneSuccess]));
 
     const { result } = renderHook(() => useAgentStream());
 
     await act(async () => {
-      result.current.submit('amanhã reunião 15h');
+      result.current.submit('  amanhã reunião 15h  ');
     });
 
     await waitFor(() => expect(result.current.isStreaming).toBe(false));
-    expect(capturedBody).toEqual({ prompt: 'amanhã reunião 15h' });
+    expect(mockRunClientAgent).toHaveBeenCalledTimes(1);
+    expect(mockRunClientAgent).toHaveBeenCalledWith('amanhã reunião 15h');
   });
 
-  it('isStreaming é true durante stream e false após [DONE]', async () => {
-    let resolveStream: (() => void) | null = null;
-    const blockedStream = new ReadableStream({
-      async start(controller) {
-        await new Promise<void>((resolve) => {
-          resolveStream = resolve;
-        });
-        controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
-        controller.close();
-      },
-    });
-
-    server.use(
-      http.post('/api/agent/prompt', () => {
-        return new HttpResponse(blockedStream, {
-          status: 200,
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      })
-    );
+  it('isStreaming é true durante a stream e false após esgotar', async () => {
+    const ctrl = controllableGenerator();
+    mockRunClientAgent.mockReturnValue(ctrl.generator);
 
     const { result } = renderHook(() => useAgentStream());
 
@@ -132,24 +182,15 @@ describe('useAgentStream', () => {
     await waitFor(() => expect(result.current.isStreaming).toBe(true));
 
     act(() => {
-      resolveStream?.();
+      ctrl.release();
     });
 
     await waitFor(() => expect(result.current.isStreaming).toBe(false));
   });
 
   it('eventos meta, tool_complete, done acumulados em events', async () => {
-    const events = [
-      {
-        type: 'meta',
-        phase: 'start',
-        runId: RUN_ID,
-        prompt: 'teste',
-        modelClassifier: 'haiku',
-        modelExecutor: 'sonnet',
-        startedAt,
-        classifierResult: null,
-      },
+    const events: ExecutorSSEEvent[] = [
+      metaStart,
       {
         type: 'tool_complete',
         runId: RUN_ID,
@@ -169,15 +210,7 @@ describe('useAgentStream', () => {
         totals: { intents: 1, toolCalls: 1 },
       },
     ];
-
-    server.use(
-      http.post('/api/agent/prompt', () => {
-        return new HttpResponse(buildSseStream(events), {
-          status: 200,
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      })
-    );
+    mockRunClientAgent.mockReturnValue(eventsGenerator(events));
 
     const { result } = renderHook(() => useAgentStream());
 
@@ -194,27 +227,7 @@ describe('useAgentStream', () => {
   });
 
   it('Dexie createAgentRun invocado ao receber meta(start)', async () => {
-    const events = [
-      {
-        type: 'meta',
-        phase: 'start',
-        runId: RUN_ID,
-        prompt: 'teste',
-        modelClassifier: 'haiku',
-        modelExecutor: 'sonnet',
-        startedAt,
-        classifierResult: null,
-      },
-    ];
-
-    server.use(
-      http.post('/api/agent/prompt', () => {
-        return new HttpResponse(buildSseStream(events), {
-          status: 200,
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      })
-    );
+    mockRunClientAgent.mockReturnValue(eventsGenerator([metaStart]));
 
     const { result } = renderHook(() => useAgentStream());
 
@@ -235,17 +248,8 @@ describe('useAgentStream', () => {
   });
 
   it('Dexie appendToolCall invocado ao receber tool_complete', async () => {
-    const events = [
-      {
-        type: 'meta',
-        phase: 'start',
-        runId: RUN_ID,
-        prompt: 'teste',
-        modelClassifier: 'haiku',
-        modelExecutor: 'sonnet',
-        startedAt,
-        classifierResult: null,
-      },
+    const events: ExecutorSSEEvent[] = [
+      metaStart,
       {
         type: 'tool_complete',
         runId: RUN_ID,
@@ -255,15 +259,7 @@ describe('useAgentStream', () => {
         durationMs: 50,
       },
     ];
-
-    server.use(
-      http.post('/api/agent/prompt', () => {
-        return new HttpResponse(buildSseStream(events), {
-          status: 200,
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      })
-    );
+    mockRunClientAgent.mockReturnValue(eventsGenerator(events));
 
     const { result } = renderHook(() => useAgentStream());
 
@@ -283,17 +279,8 @@ describe('useAgentStream', () => {
   });
 
   it('Dexie agent_runs.update invocado ao receber done (finishRun)', async () => {
-    const events = [
-      {
-        type: 'meta',
-        phase: 'start',
-        runId: RUN_ID,
-        prompt: 'teste',
-        modelClassifier: 'haiku',
-        modelExecutor: 'sonnet',
-        startedAt,
-        classifierResult: null,
-      },
+    const events: ExecutorSSEEvent[] = [
+      metaStart,
       {
         type: 'done',
         runId: RUN_ID,
@@ -305,15 +292,7 @@ describe('useAgentStream', () => {
         totals: { intents: 1, toolCalls: 0 },
       },
     ];
-
-    server.use(
-      http.post('/api/agent/prompt', () => {
-        return new HttpResponse(buildSseStream(events), {
-          status: 200,
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      })
-    );
+    mockRunClientAgent.mockReturnValue(eventsGenerator(events));
 
     const { result } = renderHook(() => useAgentStream());
 
@@ -334,17 +313,8 @@ describe('useAgentStream', () => {
   });
 
   it('persiste ChatMessage assistant em done success com texto acumulado', async () => {
-    const events = [
-      {
-        type: 'meta',
-        phase: 'start',
-        runId: RUN_ID,
-        prompt: 'olá',
-        modelClassifier: 'haiku',
-        modelExecutor: 'sonnet',
-        startedAt,
-        classifierResult: null,
-      },
+    const events: ExecutorSSEEvent[] = [
+      { ...metaStart, prompt: 'olá' },
       { type: 'text_delta', runId: RUN_ID, delta: 'Olá' },
       { type: 'text_delta', runId: RUN_ID, delta: ' Eurico!' },
       {
@@ -358,15 +328,7 @@ describe('useAgentStream', () => {
         totals: { intents: 0, toolCalls: 0 },
       },
     ];
-
-    server.use(
-      http.post('/api/agent/prompt', () => {
-        return new HttpResponse(buildSseStream(events), {
-          status: 200,
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      })
-    );
+    mockRunClientAgent.mockReturnValue(eventsGenerator(events));
 
     const { result } = renderHook(() => useAgentStream());
 
@@ -385,17 +347,8 @@ describe('useAgentStream', () => {
   });
 
   it('NÃO persiste ChatMessage assistant em done failed', async () => {
-    const events = [
-      {
-        type: 'meta',
-        phase: 'start',
-        runId: RUN_ID,
-        prompt: 'erro',
-        modelClassifier: 'haiku',
-        modelExecutor: 'sonnet',
-        startedAt,
-        classifierResult: null,
-      },
+    const events: ExecutorSSEEvent[] = [
+      { ...metaStart, prompt: 'erro' },
       {
         type: 'done',
         runId: RUN_ID,
@@ -408,15 +361,7 @@ describe('useAgentStream', () => {
         totals: { intents: 0, toolCalls: 0 },
       },
     ];
-
-    server.use(
-      http.post('/api/agent/prompt', () => {
-        return new HttpResponse(buildSseStream(events), {
-          status: 200,
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      })
-    );
+    mockRunClientAgent.mockReturnValue(eventsGenerator(events));
 
     const { result } = renderHook(() => useAgentStream());
 
@@ -431,12 +376,15 @@ describe('useAgentStream', () => {
     expect(assistantCalls).toHaveLength(0);
   });
 
-  it('erro de rede exposto em error com mensagem PT-PT', async () => {
-    server.use(
-      http.post('/api/agent/prompt', () => {
-        return HttpResponse.error();
-      })
-    );
+  it('erro do executor exposto em error com mensagem PT-PT', async () => {
+    // Story 1.11: o hook já não faz HTTP — qualquer erro vem do runClientAgent
+    // (transport/proxy/classifier). O hook converte-o via networkErrorMessage.
+    async function* failingGenerator(): AsyncGenerator<ExecutorSSEEvent> {
+      throw new Error('proxy de inferência indisponível');
+      // eslint-disable-next-line no-unreachable
+      yield doneSuccess;
+    }
+    mockRunClientAgent.mockReturnValue(failingGenerator());
 
     const { result } = renderHook(() => useAgentStream());
 
@@ -449,76 +397,8 @@ describe('useAgentStream', () => {
     expect(result.current.isStreaming).toBe(false);
   });
 
-  it('HTTP 401 expõe mensagem PT-PT de sessão expirada', async () => {
-    server.use(
-      http.post('/api/agent/prompt', () => {
-        return new HttpResponse(JSON.stringify({ error: 'unauthorized' }), {
-          status: 401,
-        });
-      })
-    );
-
-    const { result } = renderHook(() => useAgentStream());
-
-    await act(async () => {
-      result.current.submit('teste');
-    });
-
-    await waitFor(() => expect(result.current.error).not.toBeNull());
-    expect(result.current.error).toMatch(/Sessão expirada/);
-  });
-
-  it('HTTP 400 expõe mensagem PT-PT de prompt inválido', async () => {
-    server.use(
-      http.post('/api/agent/prompt', () => {
-        return new HttpResponse(JSON.stringify({ error: 'invalid' }), {
-          status: 400,
-        });
-      })
-    );
-
-    const { result } = renderHook(() => useAgentStream());
-
-    await act(async () => {
-      result.current.submit('teste');
-    });
-
-    await waitFor(() => expect(result.current.error).not.toBeNull());
-    expect(result.current.error).toMatch(/Prompt inválido/);
-  });
-
   it('reset() limpa events, error e currentRunId', async () => {
-    const events = [
-      {
-        type: 'meta',
-        phase: 'start',
-        runId: RUN_ID,
-        prompt: 'teste',
-        modelClassifier: 'haiku',
-        modelExecutor: 'sonnet',
-        startedAt,
-        classifierResult: null,
-      },
-      {
-        type: 'done',
-        runId: RUN_ID,
-        status: 'success',
-        intents: [],
-        inputTokens: 0,
-        outputTokens: 0,
-        durationMs: 0,
-        totals: { intents: 0, toolCalls: 0 },
-      },
-    ];
-
-    server.use(
-      http.post('/api/agent/prompt', () => {
-        return new HttpResponse(buildSseStream(events), {
-          status: 200,
-          headers: { 'Content-Type': 'text/event-stream' },
-        });
-      })
-    );
+    mockRunClientAgent.mockReturnValue(eventsGenerator([metaStart, doneSuccess]));
 
     const { result } = renderHook(() => useAgentStream());
 
@@ -538,171 +418,77 @@ describe('useAgentStream', () => {
     expect(result.current.error).toBeNull();
   });
 
-  it('submit() com prompt vazio não dispara fetch', () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+  it('submit() com prompt vazio não conduz o executor', () => {
     const { result } = renderHook(() => useAgentStream());
 
     act(() => {
       result.current.submit('   ');
     });
 
-    expect(fetchSpy).not.toHaveBeenCalled();
-    fetchSpy.mockRestore();
+    expect(mockRunClientAgent).not.toHaveBeenCalled();
   });
 
-  // Story 1.9 Iter 2 — Major #4 — AbortController em duplo submit / unmount
+  // Story 1.9 Iter 2 — Major #4 — AbortController em duplo submit / unmount / reset.
+  // Story 1.11: o abort agora corta a iteração do generator e chama
+  // `generator.return()` (não há mais `request.signal`).
   describe('AbortController (Story 1.9 Iter 2 Major #4)', () => {
     it('submit duplo aborta o anterior — apenas o último completa', async () => {
-      const requestSignals: AbortSignal[] = [];
-      // Box pattern: TS strict não consegue inferir que callbacks async
-      // atribuem variáveis após `waitFor`; objecto wrapper resolve isto.
-      const resolverBox: { fn: (() => void) | null } = { fn: null };
-
-      server.use(
-        http.post('/api/agent/prompt', async ({ request }) => {
-          requestSignals.push(request.signal);
-          // 1º submit: stream que bloqueia até resolver — deve ser abortado
-          if (requestSignals.length === 1) {
-            const blocked = new ReadableStream({
-              async start(controller) {
-                await new Promise<void>((resolve) => {
-                  resolverBox.fn = resolve;
-                  request.signal.addEventListener('abort', () => resolve(), {
-                    once: true,
-                  });
-                });
-                try {
-                  controller.close();
-                } catch {
-                  // já fechado
-                }
-              },
-            });
-            return new HttpResponse(blocked, {
-              status: 200,
-              headers: { 'Content-Type': 'text/event-stream' },
-            });
-          }
-          // 2º submit: stream rápido com [DONE]
-          return new HttpResponse(buildSseStream([]), {
-            status: 200,
-            headers: { 'Content-Type': 'text/event-stream' },
-          });
-        })
-      );
+      const first = controllableGenerator();
+      mockRunClientAgent.mockReturnValueOnce(first.generator);
 
       const { result } = renderHook(() => useAgentStream());
 
-      // Primeiro submit (fica pendente)
       act(() => {
         result.current.submit('primeiro');
       });
-      await waitFor(() => expect(requestSignals).toHaveLength(1));
+      await waitFor(() => expect(first.state.started).toBe(true));
 
-      // Segundo submit — deve abortar o primeiro
+      // Segundo submit — deve abortar o primeiro generator.
+      mockRunClientAgent.mockReturnValueOnce(eventsGenerator([doneSuccess]));
       act(() => {
         result.current.submit('segundo');
       });
 
-      await waitFor(() => expect(requestSignals).toHaveLength(2));
-      // O signal do primeiro request deve estar agora aborted
-      expect(requestSignals[0].aborted).toBe(true);
-      // Limpar bloqueio do primeiro caso ainda exista
-      resolverBox.fn?.();
-
-      // Esperar o segundo terminar
+      await waitFor(() => expect(first.state.returned).toBe(true));
       await waitFor(() => expect(result.current.isStreaming).toBe(false));
       expect(result.current.error).toBeNull();
     });
 
-    it('unmount durante stream aborta o request — sem state update tardio', async () => {
-      const requestSignals: AbortSignal[] = [];
-      const resolverBox: { fn: (() => void) | null } = { fn: null };
-
-      server.use(
-        http.post('/api/agent/prompt', ({ request }) => {
-          requestSignals.push(request.signal);
-          const blocked = new ReadableStream({
-            async start(controller) {
-              await new Promise<void>((resolve) => {
-                resolverBox.fn = resolve;
-                request.signal.addEventListener('abort', () => resolve(), {
-                  once: true,
-                });
-              });
-              try {
-                controller.close();
-              } catch {
-                // já fechado
-              }
-            },
-          });
-          return new HttpResponse(blocked, {
-            status: 200,
-            headers: { 'Content-Type': 'text/event-stream' },
-          });
-        })
-      );
+    it('unmount durante stream aborta o generator — sem state update tardio', async () => {
+      const ctrl = controllableGenerator();
+      mockRunClientAgent.mockReturnValue(ctrl.generator);
 
       const { result, unmount } = renderHook(() => useAgentStream());
 
       act(() => {
         result.current.submit('teste');
       });
-      await waitFor(() => expect(requestSignals).toHaveLength(1));
-      expect(requestSignals[0].aborted).toBe(false);
+      await waitFor(() => expect(ctrl.state.started).toBe(true));
+      expect(ctrl.state.returned).toBe(false);
 
       unmount();
 
-      // Após unmount o signal deve estar aborted
-      expect(requestSignals[0].aborted).toBe(true);
-      resolverBox.fn?.();
+      await waitFor(() => expect(ctrl.state.returned).toBe(true));
     });
 
     it('reset() aborta stream em curso e limpa state', async () => {
-      const requestSignals: AbortSignal[] = [];
-      const resolverBox: { fn: (() => void) | null } = { fn: null };
-
-      server.use(
-        http.post('/api/agent/prompt', ({ request }) => {
-          requestSignals.push(request.signal);
-          const blocked = new ReadableStream({
-            async start(controller) {
-              await new Promise<void>((resolve) => {
-                resolverBox.fn = resolve;
-                request.signal.addEventListener('abort', () => resolve(), {
-                  once: true,
-                });
-              });
-              try {
-                controller.close();
-              } catch {
-                // já fechado
-              }
-            },
-          });
-          return new HttpResponse(blocked, {
-            status: 200,
-            headers: { 'Content-Type': 'text/event-stream' },
-          });
-        })
-      );
+      const ctrl = controllableGenerator();
+      mockRunClientAgent.mockReturnValue(ctrl.generator);
 
       const { result } = renderHook(() => useAgentStream());
 
       act(() => {
         result.current.submit('teste');
       });
-      await waitFor(() => expect(requestSignals).toHaveLength(1));
+      await waitFor(() => expect(ctrl.state.started).toBe(true));
 
       act(() => {
         result.current.reset();
       });
 
-      expect(requestSignals[0].aborted).toBe(true);
+      await waitFor(() => expect(ctrl.state.returned).toBe(true));
       expect(result.current.events).toHaveLength(0);
       expect(result.current.currentRunId).toBeNull();
-      resolverBox.fn?.();
     });
   });
 });

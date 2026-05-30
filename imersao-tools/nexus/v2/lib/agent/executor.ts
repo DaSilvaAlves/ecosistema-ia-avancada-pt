@@ -1,7 +1,5 @@
-import { kv } from '@vercel/kv';
 import { classifyPrompt, type ClassifyOpts } from '@/lib/agent/classifier';
 import { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL } from '@/lib/agent/models';
-import { getExecutor } from '@/lib/agent/providers/factory';
 import type {
   ClassificationResult,
   ContentBlock,
@@ -10,6 +8,10 @@ import type {
   ToolCall,
 } from '@/lib/agent/schemas';
 import type {
+  ClassifierProvider,
+  ExecutorProvider,
+} from '@/lib/agent/providers/types';
+import type {
   ExecutionContext,
   Logger,
   ToolDefinition,
@@ -17,8 +19,37 @@ import type {
   VercelKV,
 } from '@/lib/agent/tools/types';
 import { toolRegistry } from '@/lib/agent/tools/registry';
-import { registerUndoEntry, UNDO_TTL_SECONDS } from '@/lib/agent/undo';
+import { UNDO_TTL_SECONDS } from '@/lib/agent/undo';
 import type { NexusDB } from '@/lib/db/client';
+
+/**
+ * Story 1.11 (ADR-9, A1) — Store de undo injectável.
+ *
+ * Antes da Story 1.11 o executor importava `registerUndoEntry` (valor) de
+ * `@/lib/agent/undo`, que por sua vez recebia `ctx.kv` (`@vercel/kv`). O import
+ * de valor de `@vercel/kv` no topo do módulo (`executor.ts:1`) explodia ao
+ * carregar o executor num bundle `'use client'` (browser) — `@vercel/kv` é
+ * server-only. ADR-9 move o `runAgent` para o cliente; logo o undo passa a ser
+ * **injectado** via `RunAgentOpts.undoStore`.
+ *
+ * Phase 1: o cliente injecta um no-op (`{ register: async () => {} }`); o
+ * caminho server (proxy/testes) injecta o adapter KV via
+ * `createKvUndoStore(kv)`. Phase 2 (A4) implementa o store client-side real
+ * (memória + timer 30s) que reverte mutações Dexie.
+ *
+ * `registerUndoEntry`/`UNDO_TTL_SECONDS` continuam em `@/lib/agent/undo` mas
+ * `registerUndoEntry` (que toca KV) deixa de ser importado no caminho que entra
+ * no bundle client — só `UNDO_TTL_SECONDS` (constante pura) é importado para o
+ * cálculo do `expiresAt` no evento `undo_registered`.
+ */
+export interface UndoStore {
+  /**
+   * Regista os tool calls reversíveis de um run para permitir undo. A
+   * implementação concreta decide onde persistir (KV server-side, memória
+   * client-side). Best-effort no caller: falha não bloqueia o `done`.
+   */
+  register(runId: string, reversibleToolCalls: ToolCall[]): Promise<void>;
+}
 
 /**
  * Nexus v2 — Executor: chat agent + SSE streaming + tool calling loop (Story 1.5)
@@ -136,6 +167,59 @@ export interface RunAgentOpts {
    * injectam o provider real para bloquear até confirmação humana via UI.
    */
   confirmationProvider?: ConfirmationProvider;
+  /**
+   * Story 1.11 (ADR-9, A1) — instância Dexie `NexusDB` injectada no
+   * `ExecutionContext.db` das tools.
+   *
+   * Antes da Story 1.11 o executor fixava `db: null` (server-side Edge sem
+   * IndexedDB), o que partia qualquer tool que chamasse `ctx.db.*`. ADR-9 move
+   * o `runAgent` para o cliente, onde o Dexie vive — o cliente injecta aqui o
+   * singleton `db` de `@/lib/db/client`. Quando ausente (testes do executor que
+   * não tocam tools de DB), `db` fica `null` e as tools de DB falhariam — mas
+   * o gate de design exige que o caminho de produção injecte sempre `db` real.
+   */
+  db?: NexusDB;
+  /**
+   * Story 1.11 (ADR-9, A1) — cliente KV injectado no `ExecutionContext.kv`.
+   *
+   * Antes da Story 1.11 o executor importava o singleton `@vercel/kv` (valor),
+   * que não corre no browser. ADR-9 torna `kv` injectável: o caminho server
+   * (proxy/testes) injecta o adapter KV; o caminho client injecta `undefined`
+   * (as tools client não usam `ctx.kv` no fluxo Phase 1). Quando ausente, é
+   * passado um stub que lança se invocado — as tools Epic 2/3 não tocam
+   * `ctx.kv`, logo nunca o invocam.
+   */
+  kv?: VercelKV;
+  /**
+   * Story 1.11 (ADR-9, A1) — provider de execução (Sonnet) injectável.
+   *
+   * Antes da Story 1.11 o executor instanciava `getExecutor()` hard-coded
+   * (`AnthropicExecutor` com o SDK directo + `ANTHROPIC_API_KEY` server-only),
+   * o que vazaria a key no bundle client. ADR-9 (A2): o cliente injecta um
+   * `InferenceTransport` que fala com `/api/anthropic/proxy`. Quando ausente,
+   * o executor usa o factory server-side `getExecutor()` (retrocompat com o
+   * caminho server/testes).
+   */
+  executor?: ExecutorProvider;
+  /**
+   * Story 1.11 (ADR-9, A1+A6) — provider de classificação (Haiku) injectável.
+   *
+   * Mesma motivação que `executor`: o classifier corria via `getClassifier()`
+   * hard-coded (SDK directo). O cliente injecta o mesmo `InferenceTransport`.
+   * Forwarded a `classifyPrompt` via `classifyOpts.provider`. Quando ausente,
+   * `classifyPrompt` usa `getClassifier()` (retrocompat).
+   */
+  classifier?: ClassifierProvider;
+  /**
+   * Story 1.11 (ADR-9, A1+A4) — store de undo injectável.
+   *
+   * Antes da Story 1.11 o executor chamava `registerUndoEntry(..., ctx.kv)`
+   * (KV server-side). ADR-9 torna-o injectável: server injecta
+   * `createKvUndoStore(kv)`; client injecta um no-op na Phase 1 (Phase 2
+   * implementa o store client-side real). Quando ausente, undo é desactivado
+   * (no-op) — o evento `undo_registered` continua a ser emitido para a UI.
+   */
+  undoStore?: UndoStore;
 }
 
 /**
@@ -394,27 +478,83 @@ const executorLogger: Logger = {
 };
 
 /**
- * Constrói `ExecutionContext` para esta run. Stateless server-side (RESOLVED-2):
+ * Story 1.11 (ADR-9, A1+A2) — resolve o provider de execução server-side
+ * (Sonnet via SDK directo) por **dynamic import**.
  *
- * - `db = null as unknown as NexusDB` — Edge runtime NÃO tem IndexedDB.
- *   Stories 2-7 que precisem de Dexie devolvem command no result (cliente executa).
- * - `kv` — singleton real `@vercel/kv` (Story 1.7 substituiu o placeholder
- *   `null as unknown as VercelKV`). Cliente Upstash Redis para undo window
- *   (TTL 30s) e Stories 6.x cache OAuth. Type-cast `as unknown as VercelKV`
- *   alinha com a interface mínima local (apenas `get`/`set`/`del`) — o
- *   singleton real do `@vercel/kv` expõe muito mais mas Story 1.7 só usa este
- *   subset (RESOLVED-1: `vi.mock('@vercel/kv')` directo nos tests).
+ * Crítico para Edge-safety/bundle client: `@/lib/agent/providers/factory`
+ * importa `@/lib/agent/providers/anthropic`, que faz `import Anthropic from
+ * '@anthropic-ai/sdk'` e lê `ANTHROPIC_API_KEY`. Um import estático no topo
+ * deste módulo puxaria o SDK + a key para qualquer bundle que importe o
+ * executor — incluindo o bundle `'use client'` (browser), violando §9.2/NFR5.
+ *
+ * O dynamic import só é avaliado quando o caller NÃO injecta um provider
+ * (caminho server/testes). No cliente, o `InferenceTransport` é sempre
+ * injectado via `RunAgentOpts.executor`, logo este import nunca corre — o
+ * bundler (webpack/Turbopack) coloca o factory num chunk separado que o
+ * browser não carrega.
+ */
+async function resolveServerExecutor(): Promise<ExecutorProvider> {
+  const { getExecutor } = await import('@/lib/agent/providers/factory');
+  return getExecutor();
+}
+
+/**
+ * Stub de `VercelKV` injectado quando o caller não fornece `kv` (caminho
+ * client-side Phase 1). As tools Epic 2/3 NÃO tocam `ctx.kv` — só o caminho
+ * de undo o usava, e esse é agora injectável via `UndoStore`. Se alguma tool
+ * futura invocar `ctx.kv` sem KV injectado, falha-loud com mensagem PT-PT em
+ * vez de um `null.get` silencioso.
+ *
+ * Story 1.11 (ADR-9, A1): remove a dependência do singleton `@vercel/kv` do
+ * caminho que entra no bundle client.
+ */
+const noKvStub: VercelKV = {
+  get: async () => {
+    throw new Error(
+      'Executor: ctx.kv não disponível neste runtime (cliente) — nenhuma tool deve depender de KV no fluxo client-side (ADR-9)'
+    );
+  },
+  set: async () => {
+    throw new Error(
+      'Executor: ctx.kv não disponível neste runtime (cliente) — nenhuma tool deve depender de KV no fluxo client-side (ADR-9)'
+    );
+  },
+  del: async () => {
+    throw new Error(
+      'Executor: ctx.kv não disponível neste runtime (cliente) — nenhuma tool deve depender de KV no fluxo client-side (ADR-9)'
+    );
+  },
+};
+
+/**
+ * Constrói `ExecutionContext` para esta run.
+ *
+ * Story 1.11 (ADR-9, A1) — `db` e `kv` passam a ser **injectados** via
+ * `RunAgentOpts`, em vez de fixados (`db: null` / `kv: @vercel/kv` singleton).
+ * Razão: o `runAgent` move-se para o cliente (browser), onde o Dexie real vive;
+ * o cliente injecta `db` de `@/lib/db/client`. O caminho server (proxy/testes)
+ * pode injectar `db` mockado e o adapter KV.
+ *
+ * - `db` — instância Dexie real (cliente) ou mock (testes). Quando ausente,
+ *   `null` (tools de DB falhariam — o gate exige injecção no caminho de produção).
+ * - `kv` — adapter KV (server) ou `noKvStub` (client, falha-loud se invocado).
  * - `userId = 'eurico'` — single-user constraint C1 da arch.
- * - `fetch = globalThis.fetch` — Edge + Node compatible.
+ * - `fetch = globalThis.fetch` — Edge + Node + browser compatible.
  * - `logger` — `executorLogger` com guard NFR11 implícito.
  * - `runId` — gerado pelo caller via `crypto.randomUUID()` (Web Crypto API).
  */
-function buildExecutionContext(runId: string): ExecutionContext {
+function buildExecutionContext(
+  runId: string,
+  db: NexusDB | undefined,
+  kvClient: VercelKV | undefined
+): ExecutionContext {
   return {
     userId: 'eurico',
-    /** @todo Stories 2-7 — tools que precisem de Dexie devem devolver "commands" no result (RESOLVED-2 da Story 1.5); persistência Dexie é client-only conforme arch §8 line 689 + ADR-2 */
-    db: null as unknown as NexusDB,
-    kv: kv as unknown as VercelKV,
+    // ADR-9: `db` injectado pelo caller. No cliente é o Dexie real
+    // (`@/lib/db/client`); nos testes do executor que não tocam tools de DB
+    // pode ser `null` (cast preservado para o tipo da interface).
+    db: (db ?? null) as unknown as NexusDB,
+    kv: kvClient ?? noKvStub,
     fetch: globalThis.fetch,
     logger: executorLogger,
     runId,
@@ -511,9 +651,16 @@ export async function* runAgent(
     };
 
     // Step 5 — classifier
+    // Story 1.11 (ADR-9, A1+A6): o classifier provider é injectável. O cliente
+    // passa o mesmo `InferenceTransport` (proxy) que usa para o executor,
+    // forwarded via `classifyOpts.provider`. Ausente → `getClassifier()`
+    // (factory server-side, retrocompat).
     let classification: ClassificationResult;
     try {
-      classification = await classifyPrompt(trimmed, opts.classifyOpts);
+      classification = await classifyPrompt(trimmed, {
+        ...opts.classifyOpts,
+        ...(opts.classifier ? { provider: opts.classifier } : {}),
+      });
     } catch (e) {
       status = 'failed';
       errorMessageOut = errorMessage(e);
@@ -544,7 +691,10 @@ export async function* runAgent(
     });
 
     // Step 8 — tool calling loop
-    const ctx = buildExecutionContext(runId);
+    // Story 1.11 (ADR-9, A1): `db`/`kv` injectados via opts; o executor
+    // (Sonnet) provider também é injectável (cliente passa o InferenceTransport
+    // por proxy; ausente → factory server-side `getExecutor()`).
+    const ctx = buildExecutionContext(runId, opts.db, opts.kv);
     const messages: LLMMessage[] = [{ role: 'user', content: trimmed }];
 
     const loopResult = yield* toolCallingLoop({
@@ -557,6 +707,7 @@ export async function* runAgent(
       maxIterations,
       classification,
       confirmationProvider: opts.confirmationProvider,
+      executor: opts.executor,
     });
 
     inputTokens = loopResult.inputTokens;
@@ -590,17 +741,19 @@ export async function* runAgent(
     //
     // RESOLVED-4 (Architect): "última operação" = último AgentRun (multi-tool);
     // todos os toolCalls reversíveis revertem em ordem reversa via endpoint.
+    // Story 1.11 (ADR-9, A1+A4): undo via `UndoStore` injectável em vez de
+    // `registerUndoEntry(..., ctx.kv)` directo. Server injecta o adapter KV
+    // (`createKvUndoStore`); client injecta no-op na Phase 1. Sem store
+    // injectado, undo é desactivado mas o evento `undo_registered` continua
+    // a ser emitido (a UI mostra o toast; Phase 2 liga o store client real).
     if (
       status !== 'failed' &&
-      loopResult.reversibleToolCalls.length > 0
+      loopResult.reversibleToolCalls.length > 0 &&
+      opts.undoStore !== undefined
     ) {
       const expiresAt = Date.now() + UNDO_TTL_SECONDS * 1000;
       try {
-        await registerUndoEntry(
-          runId,
-          loopResult.reversibleToolCalls,
-          ctx.kv
-        );
+        await opts.undoStore.register(runId, loopResult.reversibleToolCalls);
         yield {
           type: 'undo_registered',
           runId,
@@ -730,6 +883,12 @@ interface LoopParams {
    * e prossegue), preservando comportamento Story 1.5.
    */
   confirmationProvider?: ConfirmationProvider;
+  /**
+   * Story 1.11 (ADR-9, A1+A2) — provider de execução (Sonnet) injectado.
+   * Cliente passa o `InferenceTransport` (proxy); ausente → factory
+   * server-side `getExecutor()` (lazy import, ver `resolveExecutorProvider`).
+   */
+  executor?: ExecutorProvider;
 }
 
 /**
@@ -770,7 +929,11 @@ async function* toolCallingLoop(
   } = params;
   const messages = [...params.messages]; // shallow copy — não mutamos input
 
-  const executor = getExecutor();
+  // Story 1.11 (ADR-9, A1+A2): provider injectado pelo caller (cliente passa o
+  // `InferenceTransport` por proxy). Ausente → factory server-side via dynamic
+  // import — NUNCA importar `providers/factory` no topo do módulo, senão o SDK
+  // Anthropic + `ANTHROPIC_API_KEY` entram no bundle client (viola §9.2/NFR5).
+  const executor = params.executor ?? (await resolveServerExecutor());
   let inputTokens = 0;
   let outputTokens = 0;
   let toolCallCount = 0;
