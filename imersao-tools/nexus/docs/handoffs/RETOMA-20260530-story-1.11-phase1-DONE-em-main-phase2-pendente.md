@@ -54,22 +54,28 @@ O check de CI **"50-prompt regression"** (suite E2E da Story 1.10) está e **con
 1. **`noKvStub` falha-loud** (`executor.ts`) — confirmar que nenhuma tool futura do **Epic 4** (hábitos/metas/lembretes) passa a depender de `ctx.kv` no caminho client; senão o stub explode em runtime.
 2. **`/api/agent/confirm` e `/api/agent/undo`** continuam Edge e vivos (fluxo KV antigo). A auditoria de A5 deve confirmar que ficam órfãos com o client-side antes de qualquer remoção.
 
-## ⚠️ Estado git do commit de fecho (para `@devops`)
+## ✅ Estado git — RESOLVIDO (push concluído 31/05/2026)
 
-O commit de fecho docs-only desta sessão é **`f069dc64`** (`docs(nexus-v2): fechar Story 1.11 (Done Phase 1)…`) e está na branch **`fix/nexus-1.11-cerebro-client-side`** (a branch da Phase 1), **NÃO em `main`**. Razão: o `main` **local** ainda está em `28409281` (atrás do remote) — **não tem** o merge do PR #44 (squash `d0f2739c`) que já está no remote. A 1.11 no `main` local está em `active/` com Status `Ready` (versão pré-implementação), por isso um cherry-pick directo do fecho para `main` local entraria em conflito.
+Tudo em `main`, local e remoto sincronizados. Nada pendente do lado git.
 
-**Acção `@devops`:**
-1. `git fetch` + actualizar `main` local com o merge remoto `d0f2739c` (passa a ter a story em `completed/`? NÃO — o squash mergeou só o conteúdo da story v0.6; o move `active→completed` + Change Log v0.7 vivem no commit de fecho `f069dc64`).
-2. Aplicar o fecho docs-only sobre o `main` actualizado: cherry-pick de `f069dc64` para `main` (ou recriar o fecho — `git mv active→completed` + as edições de Status/Change Log v0.7 + handoffs/INDEX) e **push para `origin/main`**.
-3. Apagar a branch `fix/nexus-1.11-cerebro-client-side` (já mergeada via PR #44).
+| Item | Estado |
+|------|--------|
+| `main` HEAD (local = remoto) | **`d5a11870`** — `docs(nexus-v2): fechar Story 1.11 (Done Phase 1)…` |
+| Merge da Phase 1 | PR #44 squash **`d0f2739c`** em `main` (pai do commit de fecho) |
+| Commit de fecho docs-only | `d5a11870` (story `active→completed`, Status Done, Change Log v0.7, handoffs/INDEX) |
+| Branch `fix/nexus-1.11-cerebro-client-side` | **apagada** (local + remoto, mergeada via #44) |
+| Commit local órfão `28409281` (Architect Gate v0.4) | **descartado** — nunca foi pushed; o seu conteúdo já entrou no squash `d0f2739c`. Divergência `main` resolvida com `reset --hard origin/main` + cherry-pick do fecho |
 
-> Nota: o ficheiro untracked `docs/PR-BODY-STORY-1.11.md` ficou **fora** do commit de fecho (artefacto de PR do `@devops`, não do close-story).
+> Nota: o ficheiro untracked `docs/PR-BODY-STORY-1.11.md` ficou fora do commit de fecho (artefacto de PR, não do close-story) — pode ser apagado.
 
-## next_action
+## next_action (para o próximo terminal)
 
-1. **Decisão Eurico/`@pm`:** abrir a Phase 2 já (story/PR separado — `@sm *draft` de uma 1.11-Phase2) **OU** retomar o Epic 4 (em curso, 3/10) e tratar a Phase 2 como dívida agendada. A Phase 1 já resolveu o bug de produção do cérebro, por isso a Phase 2 é hardening, não urgência.
-2. Quando a Phase 2 arrancar: começar pelo **AC11** (re-rota da suite E2E) para repor o sinal de CI verde, depois AC8 + AC10.
-3. `@devops` (Gage): aterrar o commit de fecho `f069dc64` em `main` + push (ver "Estado git" acima) — exclusivo `@devops`.
+**Passo 0 — sincronizar:** `cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt" && git fetch && git status` (esperar `main` = `d5a11870`, sincronizado).
+
+**Decisão Eurico/`@pm`** — duas vias (a Phase 1 já resolveu o bug de produção; a Phase 2 é hardening, não urgência):
+
+1. **Abrir a Phase 2 já** — `@sm *draft` de uma story 1.11-Phase2 com **AC8 + AC10 + AC11**. Quando arrancar, começar pelo **AC11** (re-rota da suite E2E ao fluxo client-side) para repor o sinal de CI verde, depois AC8 + AC10.
+2. **Retomar o Epic 4** (em curso, 3/10) e tratar a Phase 2 como dívida agendada. ⚠️ Se seguir por aqui, ter presente o concern do gate: nenhuma tool nova do Epic 4 (hábitos/metas/lembretes) deve depender de `ctx.kv` no caminho client (`noKvStub` falha-loud).
 
 ---
 
@@ -82,5 +88,5 @@ ESTE HANDOFF FOI CRIADO SEGUINDO A REGRA OBRIGATÓRIA `.claude/rules/handoff-loc
 - LOCALIZAÇÃO ACTUAL: `imersao-tools/nexus/docs/handoffs/RETOMA-20260530-story-1.11-phase1-DONE-em-main-phase2-pendente.md`
 - COINCIDEM? `SIM`
 
-AGENTE RESPONSÁVEL: `Pax (@po)`
-DATA: `30/05/2026`
+AGENTE RESPONSÁVEL: `Pax (@po)` · git resolvido + push por `Claude (orquestrador main)` em 31/05/2026
+DATA: `30/05/2026` (fecho) · `31/05/2026` (push de `main` concluído)
