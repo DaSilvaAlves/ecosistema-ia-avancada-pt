@@ -233,10 +233,11 @@ export class InferenceTransport implements ClassifierProvider, ExecutorProvider 
    * JSON do classifier) e valida via `ClassificationResultSchema`.
    *
    * Espelha `AnthropicClassifier.classify` de `providers/anthropic.ts`, mas via
-   * proxy em vez do SDK. NÃO faz strip de markdown fences aqui — o wrapper
-   * `classifyPrompt` (`classifier.ts`) é quem aplica `validateClassifierOutput`;
-   * o strip de fences é feito pelo `AnthropicClassifier` server-side. Para
-   * paridade, replicamos o parse mínimo do `content[].text`.
+   * proxy em vez do SDK. Aplica `stripJsonMarkdownFences` ao `content[].text`
+   * antes do `JSON.parse` (hotfix 2026-05-31, paridade com o server-side),
+   * preservando o `rawResponse` original com fences downstream (NFR11/debug).
+   * NÃO remover este strip client-side: a sua omissão na migração ADR-9 foi a
+   * regressão que partiu produção (cérebro down para prompts-com-tool).
    */
   async classify(
     systemPrompt: string,

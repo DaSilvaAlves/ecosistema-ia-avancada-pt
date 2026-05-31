@@ -116,6 +116,21 @@ describe('InferenceTransport.classify (AC2)', () => {
     expect(result.intents).toEqual(['finance']);
     expect(result.confidence.finance).toBe(0.88);
   });
+
+  it('parseia JSON do classifier com fence de abertura SEM fecho (fence malformado — fallback balanceado)', async () => {
+    // Edge case: ```json de abertura mas a Haiku trunca/omite o ``` de fecho.
+    // O `stripJsonMarkdownFences` cai no fallback `extractFirstJsonObject`
+    // (objecto JSON balanceado) — documenta e tranca este comportamento.
+    const unclosedFence = '```json\n{"intents":["tasks"],"confidence":{"tasks":0.91}}';
+    const transport = new InferenceTransport(classifierResponseWithText(unclosedFence));
+
+    const result = await transport.classify('sys', 'lembra-me de ligar ao banco');
+
+    expect(result.intents).toEqual(['tasks']);
+    expect(result.confidence.tasks).toBe(0.91);
+    // `rawResponse` preserva o original com o marcador de fence sem fecho.
+    expect(result.rawResponse).toContain('```json');
+  });
 });
 
 describe('InferenceTransport.execute — guards (AC2)', () => {
