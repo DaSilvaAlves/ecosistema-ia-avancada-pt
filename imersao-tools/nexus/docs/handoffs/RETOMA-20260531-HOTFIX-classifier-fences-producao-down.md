@@ -23,10 +23,10 @@ A verificação manual pós-deploy da Story 1.12 (recomendada pelo gate `@archit
 
 Erro no chat live (`imersao.ia.expressia.pt`), prompt "anota a tarefa de comprar pão":
 
-```
+````text
 Erro de rede: InferenceTransport: resposta do classifier não é JSON válido —
 recebido: ```json {"intents":["tasks"],"confidence":{"tasks":0.96}} ```
-```
+````
 
 O JSON é válido — só vem **dentro de fences**. O classify faz `JSON.parse(rawResponse)` directo.
 
