@@ -88,11 +88,15 @@ export function extractFirstJsonObject(input: string, startIndex: number = 0): s
  *
  * Estratégia (em ordem):
  * 1. Se a string trimmed começa com fence E acaba com fence → strip simétrico (caso simples).
+ *    Excepção: se o resultado ainda contém um marcador ` ``` ` residual (ex:
+ *    múltiplos blocos fenced), o strip simétrico não basta → cai para o Caso 3
+ *    (extracção balanceada do primeiro objecto), em vez de devolver os
+ *    marcadores intermédios e rebentar o parse.
  * 2. Senão, procurar a primeira abertura ` ``` ` e o próximo ` ``` ` a seguir;
  *    se ambos existirem, devolver o conteúdo entre eles (cobre prosa antes e depois).
  * 3. Senão, fallback: extrair o primeiro objecto JSON balanceado (`{...}`)
- *    via {@link extractFirstJsonObject} — cobre variantes sem fences ou com
- *    fences malformados.
+ *    via {@link extractFirstJsonObject} — cobre variantes sem fences, com
+ *    fences malformados, ou múltiplos blocos fenced.
  * 4. Senão, devolver a string trimmed intacta — o `JSON.parse` falhará com
  *    mensagem PT-PT que mostra o `rawResponse` original (debuggability).
  *
@@ -106,7 +110,16 @@ export function stripJsonMarkdownFences(raw: string): string {
   const fenceOpenMatch = trimmed.match(/^```(?:json)?\s*\n?/i);
   const fenceCloseMatch = trimmed.match(/\n?\s*```$/);
   if (fenceOpenMatch && fenceCloseMatch) {
-    return trimmed.slice(fenceOpenMatch[0].length, trimmed.length - fenceCloseMatch[0].length).trim();
+    const inner = trimmed
+      .slice(fenceOpenMatch[0].length, trimmed.length - fenceCloseMatch[0].length)
+      .trim();
+    // Se o conteúdo entre os fences extremos ainda tem um marcador ` ``` `
+    // residual (múltiplos blocos fenced), o strip simétrico devolveria JSON
+    // inválido. Cai para a extracção balanceada (Caso 3) que isola o primeiro
+    // objecto correctamente.
+    if (!inner.includes('```')) {
+      return inner;
+    }
   }
 
   // Caso 2: fence em qualquer posição — extrai o conteúdo entre o primeiro
