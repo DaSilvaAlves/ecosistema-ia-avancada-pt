@@ -1,21 +1,25 @@
 /**
- * Story 1.10 — E2E Regression Suite (50 prompts PT-PT).
+ * Story 1.10 + Story 1.12 — E2E Regression Suite (50 prompts PT-PT).
  *
- * Quality gate final do Epic 1. Bloqueante para Epic 2.
+ * Quality gate do cérebro (Epic 1). Story 1.12 (ADR-9) RE-ROTA a suite ao fluxo
+ * client-side real: intercepta `/api/anthropic/proxy` (wire SSE Anthropic), o
+ * `runAgent` corre no browser e EXECUTA as tools reais contra o Dexie semeado.
  *
- * Pipeline exercitado: ChatComposer → POST /api/agent/prompt → SSE stream
- * → ToolCards + ChatPanel → Dexie persistence → UndoToast (categoria undo-flow).
+ * Conjunto ACTIVO (30 prompts, tools tasks/finance/projects reais) vs DIFERIDO
+ * (20 prompts `pending-tool-epic` — dependem de calendar/reminder/eliminar_tarefa,
+ * Epic futuro). Decisão Architect Gate Story 1.12 §4.4. Threshold 26/30 (86,7%).
  *
- * Modo CI (default): MSW determinístico via `installMockRoute()` — intercepta
- * `POST /api/agent/prompt` e devolve sequência SSE de `mockProfile` do fixture.
- * Modo Staging: `USE_REAL_API=true` desactiva o mock — request vai ao server
- * Anthropic real (apenas prompts com tag `@real-api`).
+ * Seeding determinístico (`seedRegressionDb`) no `beforeEach` torna as tools com
+ * pré-condições (finance/completar) executáveis; `clearRegressionDb` isola cada
+ * teste (`mode: 'serial'`). Verificação por UI (ToolCards `success`) + Dexie de
+ * domínio (`window.__nexusDB` via `getDomainSnapshot`/`getAgentRunsSnapshot`).
  *
- * Decisões @po (PO-VALIDATION-STORY-1.10.md, 09/05/2026):
- *  - D1: Opção C híbrida → MSW em CI + 5 `@real-api` em staging
- *  - D2: pass rate `>= 43/50` (PRD §10 linha 431) com zero falhas em canónicos
- *  - D3: workflow CI dedicado bloqueante
- *  - D4: p95 < 2s CI; < 6s staging
+ * Modo CI (default): mock determinístico via `installMockRoute()`.
+ * Modo Staging: `USE_REAL_API=true` desactiva o mock — só os prompts ACTIVOS com
+ * tag `@real-api` correm contra a Anthropic real.
+ *
+ * Decisões @po (PO-VALIDATION-STORY-1.10.md): D1 híbrida; D2 pass rate; D3 CI
+ * dedicado; D4 p95.
  */
 
 import { readFileSync } from 'node:fs';
@@ -27,7 +31,8 @@ import type { RegressionFixture, PromptResult } from './helpers/types';
 import { installMockRoute, uninstallMockRoute } from './helpers/route-handler';
 import { loginViaApi } from './helpers/auth';
 import { submitPromptAndWait, dismissOnboardingModal } from './helpers/stream-wait';
-import { getAgentRunsSnapshot, clearAgentRuns } from './helpers/dexie-eval';
+import { getAgentRunsSnapshot, getDomainSnapshot } from './helpers/dexie-eval';
+import { seedRegressionDb, clearRegressionDb, waitForNexusDb } from './helpers/seed-db';
 import {
   generateReport,
   PASS_RATE_THRESHOLD,
@@ -40,49 +45,61 @@ const REPORT_PATH = join(process.cwd(), 'tests/e2e/regression/report/report.json
 const fixture = JSON.parse(readFileSync(FIXTURE_PATH, 'utf-8')) as RegressionFixture;
 const useRealApi = process.env.USE_REAL_API === 'true';
 
-const promptsToRun = useRealApi
-  ? fixture.prompts.filter((p) => p.tags.includes('@real-api'))
-  : fixture.prompts;
+// Story 1.12 — split activo/diferido. Diferidos (`pending-tool-epic`) dependem
+// de tools ainda não registadas (Epic futuro) e são `test.fixme`.
+const PENDING_TAG = 'pending-tool-epic';
+const activePrompts = fixture.prompts.filter((p) => !p.tags.includes(PENDING_TAG));
+const deferredPrompts = fixture.prompts.filter((p) => p.tags.includes(PENDING_TAG));
 
+const promptsToRun = useRealApi
+  ? activePrompts.filter((p) => p.tags.includes('@real-api'))
+  : activePrompts;
+
+// Canónicos só entre os prompts EFECTIVAMENTE corridos (R040 ac1, R029 ac2,
+// R034/R035 ac4). CodeRabbit Iter 1: derivar de `promptsToRun` (não
+// `activePrompts`) para alinhar com o universo executado — em `useRealApi` o
+// subconjunto é menor, e `canonicalResults` (afterAll) é filtrado de `results`,
+// que só contém prompts corridos.
 const canonicalIds = new Set(
-  fixture.prompts.filter((p) => p.tags.some((t) => CANONICAL_TAGS.includes(t))).map((p) => p.id)
+  promptsToRun.filter((p) => p.tags.some((t) => CANONICAL_TAGS.includes(t))).map((p) => p.id)
 );
 
 const results: PromptResult[] = [];
 
-test.describe.configure({ mode: 'serial' });
+// Baseline determinístico pós-seed (seedRegressionDb): 1 tarefa, 0 transações,
+// 1 cartão, 0 recorrências, 0 prestações. Usado para asserts de domínio no undo.
+const SEED_BASELINE = { tasks: 1, transactions: 0 } as const;
 
-test.describe('E2E Regression — 50 prompts PT-PT', () => {
+test.describe('E2E Regression — activos (fluxo client-side ADR-9)', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ page }) => {
-    // Login DEVE acontecer antes de qualquer page.goto e antes de instalar mocks
-    // de rota — `page.request` partilha cookies com o BrowserContext da page,
-    // garantindo que o cookie `nexus_session` chega à navegação subsequente
-    // (caso contrário middleware.ts redirecciona `/` → `/login`).
-    // Iter 2 fix CI PR #14 (10/05/2026): `loginViaApi(request)` em `beforeAll`
-    // não funciona porque `APIRequestContext` é independente do `BrowserContext`.
+    // Login antes de qualquer goto/mock (cookies partilhados com o BrowserContext).
     await loginViaApi(page);
 
     if (!useRealApi) {
       await installMockRoute(page, { fixturePrompts: fixture.prompts });
     }
 
-    // Iter 3 fix CI PR #14 (10/05/2026): pre-set onboarding flag em
-    // `localStorage` ANTES de `page.goto('/')`. O `OnboardingModal` (Story 0.7)
-    // lê a flag no mount via `useEffect` — se esperarmos para depois, o modal
-    // já abriu e mesmo após dismiss visual permanece o jitter de re-render.
-    // Pre-setar requer uma navegação inicial para qualquer URL same-origin
-    // (about:blank não tem origin, logo o setItem falha).
+    // Pre-set onboarding flag antes de `/` (Story 1.10 Iter 3).
     await page.goto('/login');
     await dismissOnboardingModal(page);
 
     await page.goto('/');
-    await clearAgentRuns(page);
+    // Story 1.12 — espera que o DevDbExposer exponha `window.__nexusDB` (useEffect
+    // pós-hidratação), depois isola e semeia: limpa domínio residual e semeia o
+    // baseline determinístico que torna as tools reais executáveis.
+    await waitForNexusDb(page);
+    await clearRegressionDb(page);
+    await seedRegressionDb(page);
   });
 
   test.afterEach(async ({ page }) => {
     if (!useRealApi) {
       await uninstallMockRoute(page);
     }
+    // Limpa o domínio semeado/escrito (mode serial acumularia senão).
+    await clearRegressionDb(page);
   });
 
   for (const promptDef of promptsToRun) {
@@ -108,19 +125,10 @@ test.describe('E2E Regression — 50 prompts PT-PT', () => {
         }
 
         if (promptDef.requiresPreview && status === 'PASS') {
-          // Iter 3 (PR #14) — mock SSE é one-shot fulfill (route.fulfill não
-          // suporta streaming bidirecional). O mock emite a sequência completa
-          // (`preview_request` + `preview_confirmed` + `tool_complete`) num
-          // único payload, pelo que o ToolCard transita de `preview-required`
-          // → `success` quase instantaneamente — o estado intermédio é
-          // invisível à inspecção pós-stream.
-          //
-          // Validação adaptada: confirmar que o ToolCard final está no estado
-          // expected (`success` para preview-low-confidence/destructive) e
-          // que o request POST /api/agent/confirm foi disparado (via espelho
-          // do mock route que aceita qualquer click-thru). Em staging real
-          // (`USE_REAL_API=true`) o gate cross-process é validado pelo flow
-          // KV completo do executor.
+          // Story 1.12 — no fluxo client-side o gate de preview AUTO-CONFIRMA
+          // dentro do `runAgent` (sem confirmationProvider) → o ToolCard transita
+          // preview-required → loading → success quase instantaneamente. Validamos
+          // o estado final `success` (o intermédio é invisível à inspecção).
           const finalCard = page.locator('[data-testid="tool-card"][data-state="success"]').first();
           const successCount = await finalCard.count();
           if (successCount === 0) {
@@ -140,10 +148,29 @@ test.describe('E2E Regression — 50 prompts PT-PT', () => {
             if ((await undoButton.count()) > 0) {
               await undoButton.click();
               await page.waitForTimeout(500);
+              // AC2 (Story 1.12) — o undo client-side reverte via ClientUndoStore:
+              // (a) agent_run marcado 'reverted'; (b) a mutação Dexie de domínio
+              // foi revertida (volta ao baseline semeado). Prova real do ADR-9.
               const snapshot = await getAgentRunsSnapshot(page);
               if (snapshot.available && snapshot.lastStatus !== 'reverted') {
                 status = 'FAIL';
                 reason = `After Undo click, lastStatus is ${snapshot.lastStatus} (expected 'reverted')`;
+              }
+              if (status === 'PASS') {
+                const domain = await getDomainSnapshot(page);
+                if (domain.available) {
+                  if (promptDef.mockProfile === 'single-task' && domain.tasks !== SEED_BASELINE.tasks) {
+                    status = 'FAIL';
+                    reason = `After Undo, tasks=${domain.tasks} (expected baseline ${SEED_BASELINE.tasks} — Dexie reverse falhou)`;
+                  }
+                  if (
+                    promptDef.mockProfile === 'single-finance-variable' &&
+                    domain.transactions !== SEED_BASELINE.transactions
+                  ) {
+                    status = 'FAIL';
+                    reason = `After Undo, transactions=${domain.transactions} (expected baseline ${SEED_BASELINE.transactions} — Dexie reverse falhou)`;
+                  }
+                }
               }
             }
           }
@@ -153,7 +180,7 @@ test.describe('E2E Regression — 50 prompts PT-PT', () => {
         observedRunStatus = dexieSnapshot.lastStatus;
         if (dexieSnapshot.available && dexieSnapshot.count === 0 && promptDef.expectedToolCount > 0) {
           status = 'FAIL';
-          reason = reason ?? 'Dexie agentRuns count is 0 (expected >= 1 after run)';
+          reason = reason ?? 'Dexie agent_runs count is 0 (expected >= 1 after run)';
         }
       } catch (err) {
         status = 'FAIL';
@@ -193,4 +220,21 @@ test.describe('E2E Regression — 50 prompts PT-PT', () => {
     expect.soft(report.canonicalPromptsAllPassed, 'Canonical prompts (ac1/ac2/ac4-epic1) must all PASS').toBe(true);
     expect.soft(report.p95Met, `P95 ${report.p95DurationMs}ms exceeds budget ${report.p95Threshold}ms`).toBe(true);
   });
+});
+
+/**
+ * DIFERIDOS (Story 1.12 §4.4 Decisão 2/4) — 20 prompts que dependem de tools
+ * `calendar`/`reminder`/`eliminar_tarefa` ainda NÃO registadas no v2 (Epic futuro).
+ * Marcados `test.fixme` (visíveis no relatório como diferidos, NÃO apagados —
+ * No-Invention). Follow-up: quando as tools existirem, remover o `pending-tool-epic`
+ * da fixture e estes voltam a correr; restaurar threshold 43/50.
+ */
+test.describe('E2E Regression — diferidos (pending-tool-epic, Epic futuro)', () => {
+  for (const promptDef of deferredPrompts) {
+    test.fixme(`${promptDef.id} [${promptDef.category}] ${promptDef.prompt.slice(0, 60)} — requer tool ${promptDef.expectedIntents.join('/')}`, async () => {
+      // Intencionalmente vazio: a tool de domínio (calendar/reminder/eliminar_tarefa)
+      // ainda não existe no registry v2. Reactivar em follow-up (remover a tag
+      // `pending-tool-epic` da fixture) quando o Epic correspondente registar a tool.
+    });
+  }
 });

@@ -1,41 +1,44 @@
 /**
- * Nexus v2 — UndoToast component tests (Story 1.9 AC10 + AC11)
+ * Nexus v2 — UndoToast component tests (Story 1.9 AC10/AC11 + Story 1.12 AC2)
  *
- * Cobertura mínima 85% lines (AC11).
+ * Story 1.12 (ADR-9, A4): o `UndoToast` deixou de fazer `POST /api/agent/undo`
+ * (endpoint Edge morto na Phase 1) e passou a reverter via
+ * `clientUndoStore.undo(runId)` (browser + Dexie real). Estes testes mockam o
+ * `clientUndoStore` em vez de MSW/fetch.
  *
  * Verifica:
  * - Renderiza texto "N acções criadas"
- * - Progress bar começa em 100% e decrementa
- * - Clicar "Anular" faz POST /api/agent/undo (mockado MSW) e invoca markRunReverted
- * - Resposta 410 mostra toast Magenta "Já não é possível anular"
- * - Resposta 5xx mostra toast Magenta "Erro ao anular"
+ * - Progress bar começa em 100% e decrementa (aria-valuenow/max — AC9)
+ * - Clicar "Anular" chama `clientUndoStore.undo` e invoca `markRunReverted`
+ * - `status: 'expired'` mostra toast Magenta "Já não é possível anular"
+ * - `undo` lança → toast Magenta "Erro ao anular"
  * - Desaparece após 30s (fake timers)
- * - aria-valuenow/max do progress bar (AC9)
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
 
-// Mock do markRunReverted
+// Mock do markRunReverted (Dexie repo)
 vi.mock('@/lib/db/repos/agent-runs', () => ({
   markRunReverted: vi.fn(async () => undefined),
 }));
 
+// Story 1.12 — mock do ClientUndoStore (substitui o fetch /api/agent/undo).
+vi.mock('@/lib/agent/client-undo-store', () => ({
+  clientUndoStore: { undo: vi.fn() },
+}));
+
 import { UndoToast } from '@/components/chat/UndoToast';
 import { markRunReverted } from '@/lib/db/repos/agent-runs';
+import { clientUndoStore } from '@/lib/agent/client-undo-store';
 
-const server = setupServer();
+const undoMock = vi.mocked(clientUndoStore.undo);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  server.listen({ onUnhandledRequest: 'error' });
 });
 
 afterEach(() => {
   vi.useRealTimers();
-  server.resetHandlers();
-  server.close();
 });
 
 const RUN_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
@@ -65,7 +68,6 @@ describe('UndoToast', () => {
     const { rerender } = render(
       <UndoToast runId={RUN_ID} undoableToolCount={1} expiresAt={expiresAtIn(30)} />
     );
-    // Singular: "Anular 1 acção" (não "acções")
     const btnSingular = screen.getByRole('button', { name: /anular 1 acç(ão|ões)/i });
     expect(btnSingular.getAttribute('aria-label')).toBe('Anular 1 acção');
 
@@ -89,14 +91,8 @@ describe('UndoToast', () => {
     expect(Number(valueNow)).toBeLessThanOrEqual(30);
   });
 
-  it('clicar "Anular" faz POST /api/agent/undo e invoca markRunReverted', async () => {
-    let capturedBody: unknown = null;
-    server.use(
-      http.post('/api/agent/undo', async ({ request }) => {
-        capturedBody = await request.json();
-        return HttpResponse.json({ reverted: 2, errors: [] }, { status: 200 });
-      })
-    );
+  it('clicar "Anular" reverte via clientUndoStore e invoca markRunReverted', async () => {
+    undoMock.mockResolvedValue({ status: 'reverted', reverted: 2, errors: [] });
 
     const onSuccess = vi.fn();
     render(
@@ -110,9 +106,7 @@ describe('UndoToast', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /anular 2 acções/i }));
 
-    await waitFor(() => {
-      expect(capturedBody).toEqual({ runId: RUN_ID });
-    });
+    await waitFor(() => expect(undoMock).toHaveBeenCalledWith(RUN_ID));
     await waitFor(() => expect(markRunReverted).toHaveBeenCalledWith(RUN_ID));
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith(2));
     await waitFor(() =>
@@ -120,15 +114,8 @@ describe('UndoToast', () => {
     );
   });
 
-  it('Resposta 410 Gone mostra toast Magenta "Já não é possível anular"', async () => {
-    server.use(
-      http.post('/api/agent/undo', () => {
-        return HttpResponse.json(
-          { error: 'undo_window_expired', message: 'expirou' },
-          { status: 410 }
-        );
-      })
-    );
+  it('status "expired" mostra toast Magenta "Já não é possível anular"', async () => {
+    undoMock.mockResolvedValue({ status: 'expired', reverted: 0, errors: [] });
 
     render(
       <UndoToast runId={RUN_ID} undoableToolCount={1} expiresAt={expiresAtIn(30)} />
@@ -141,15 +128,8 @@ describe('UndoToast', () => {
     expect(markRunReverted).not.toHaveBeenCalled();
   });
 
-  it('Resposta 5xx mostra toast Magenta "Erro ao anular"', async () => {
-    server.use(
-      http.post('/api/agent/undo', () => {
-        return HttpResponse.json(
-          { error: 'kv_failed', message: 'down' },
-          { status: 503 }
-        );
-      })
-    );
+  it('undo que lança mostra toast Magenta "Erro ao anular"', async () => {
+    undoMock.mockRejectedValue(new Error('falha inesperada'));
 
     render(
       <UndoToast runId={RUN_ID} undoableToolCount={1} expiresAt={expiresAtIn(30)} />
@@ -176,7 +156,6 @@ describe('UndoToast', () => {
     );
     expect(container.querySelector('[role="progressbar"]')).toBeInTheDocument();
 
-    // Avançar 31s
     act(() => {
       vi.advanceTimersByTime(31_000);
     });

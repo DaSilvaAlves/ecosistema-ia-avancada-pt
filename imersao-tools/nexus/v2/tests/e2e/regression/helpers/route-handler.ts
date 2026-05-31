@@ -1,63 +1,78 @@
 /**
- * Story 1.10 — Playwright route handler para mockar `/api/agent/prompt`.
+ * Story 1.12 (ADR-9, Architect Gate §4.4) — Playwright route handler que intercepta
+ * `/api/anthropic/proxy` (re-rota da Story 1.10, que interceptava `/api/agent/prompt`).
  *
- * Intercepta o endpoint interno do Nexus (não `api.anthropic.com`) e devolve
- * um stream SSE determinístico baseado no `mockProfile` do prompt fixture.
+ * No fluxo client-side (ADR-9) o `useAgentStream` corre `runAgent` no browser, que
+ * fala com `/api/anthropic/proxy` (pass-through do wire SSE Anthropic) e EXECUTA as
+ * tools reais contra o Dexie semeado. Logo este handler:
+ *   - intercepta o proxy (não o endpoint Edge `/api/agent/prompt`, já morto no client);
+ *   - discrimina **classifier** (non-stream → JSON) de **executor** (stream → SSE)
+ *     pelo `body.stream`, tal como o proxy real perante a Anthropic;
+ *   - emite o **wire SSE real da Anthropic** (`mock-protocol-fidelity.md`), deixando
+ *     o `runAgent` gerar os `ExecutorSSEEvent` + executar as tools de verdade.
  *
- * Activado por `installMockRoute(page, fixturePrompts)` antes de cada test.
- * Em modo `USE_REAL_API=true` (staging, subset `@real-api`), NÃO é instalado
- * — Playwright deixa o request ir directo ao server real.
+ * Estado por teste (closure, `mode: 'serial'`): cada run faz 1 chamada classifier +
+ * N chamadas executor (1 por iteração do tool loop). `executorCallByPrompt` conta
+ * as chamadas executor por prompt para servir o turno certo do profile.
  *
- * O matcher é por `prompt` exacto (campo do JSON body). Se o request não
- * mapear nenhum prompt do fixture, o handler responde 404 para falhar
- * explicitamente (evita silenciosos pass-throughs em testes mal alinhados).
- *
- * **Iter 3 (PR #14) — fix protocolo SSE alinhado com `executor.ts`:**
- * - Emitir `meta(start)` com `phase: 'start'` + prompt + modelClassifier +
- *   modelExecutor + startedAt + classifierResult: null
- * - Emitir `meta(classified)` separado (executor real emite ambos)
- * - `text_delta` usa campo `delta` (não `text`)
- * - `done` inclui intents + inputTokens + outputTokens + durationMs + totals
- * - Stream termina com `data: [DONE]\n\n` (executor.ts/route.ts L176)
- *
- * Sem estes alinhamentos, `useAgentStream` (Story 1.9) não persistia o run
- * em Dexie e `MessageList.reduceLiveBubble` rejeitava a stream toda
- * (retornava `null`), fazendo `submitPromptAndWait.waitForFunction` ficar
- * 30s à espera de tool-cards/assistant-text que nunca renderizavam.
- *
- * **Preview profiles — gate cross-process simulation simplificado:**
- * Mockamos `/api/agent/confirm` para responder 200, mas a stream principal
- * envia tudo o de uma vez (incluindo `preview_request` + `preview_confirmed`
- * + `tool_complete`) — porque `route.fulfill` é one-shot (não streaming).
- *
- * O spec valida o flow preview detectando o evento `preview_request` no
- * events array exposto pelo `useAgentStream` (via `page.evaluate`), em vez
- * de procurar o ToolCard em `data-state="preview-required"` (que é estado
- * transitório invisível à inspecção pós-stream).
+ * `/api/agent/confirm` NÃO é mais mockado: no client-side o gate de preview
+ * auto-confirma dentro do `runAgent` (sem `confirmationProvider` injectado) — não
+ * há POST HTTP a `/api/agent/confirm`.
  */
 
-import type { Page } from '@playwright/test';
+import type { Page, Route, Request } from '@playwright/test';
 
 import type { RegressionPrompt } from './types';
-import { buildMockSseEvents, serializeSseEvents } from './mock-events';
-
-interface PromptRequestBody {
-  prompt: string;
-}
+import {
+  buildAbortProfile,
+  buildClassifierResponseBody,
+  buildEmptyEndTurnSseBody,
+  buildExecutorSseBody,
+  getProfileDef,
+  type MockProfileDef,
+} from './mock-events';
 
 export interface InstallMockRouteOptions {
   fixturePrompts: RegressionPrompt[];
-  /**
-   * Quando true, o handler simula abort: emite `meta` + `tool_start` e fecha
-   * o stream sem `done`. Usado para a categoria `abort-mid-stream`.
-   *
-   * Detectado automaticamente por categoria do prompt — não precisa ser
-   * passado por turn. Mantido aqui para override de teste.
-   */
-  forceAbort?: boolean;
 }
 
-export async function installMockRoute(page: Page, options: InstallMockRouteOptions): Promise<void> {
+interface AnthropicProxyBody {
+  stream?: boolean;
+  messages?: Array<{ role?: string; content?: unknown }>;
+}
+
+/**
+ * Extrai o prompt do utilizador do body do proxy. Tanto o classifier
+ * (`messages: [{role:'user', content: <prompt>}]`) como o executor (primeira
+ * mensagem `{role:'user', content: <prompt>}`, seguida de assistant/tool_result)
+ * têm o prompt como a 1ª mensagem `user` com `content` string.
+ */
+function extractPrompt(body: AnthropicProxyBody): string | null {
+  for (const m of body.messages ?? []) {
+    if (m.role === 'user' && typeof m.content === 'string') {
+      return m.content;
+    }
+  }
+  return null;
+}
+
+/**
+ * Resolve o `MockProfileDef` de uma fixture. `abort-during-stream` é
+ * parametrizado pelo `expectedToolCount` + domínio (DEV-DECISION D-ABORT) — os
+ * restantes vêm de `getProfileDef` (que lança para profiles diferidos).
+ */
+function resolveProfileDef(fixture: RegressionPrompt): MockProfileDef {
+  if (fixture.mockProfile === 'abort-during-stream') {
+    const domain = fixture.expectedIntents.includes('finance') ? 'finance' : 'tasks';
+    return buildAbortProfile(fixture.expectedToolCount, domain);
+  }
+  return getProfileDef(fixture.mockProfile);
+}
+
+export async function installMockRoute(
+  page: Page,
+  options: InstallMockRouteOptions
+): Promise<void> {
   const { fixturePrompts } = options;
 
   const promptByText = new Map<string, RegressionPrompt>();
@@ -65,70 +80,55 @@ export async function installMockRoute(page: Page, options: InstallMockRouteOpti
     promptByText.set(p.prompt, p);
   }
 
-  await page.route('**/api/agent/prompt', async (route, request) => {
-    let body: PromptRequestBody | null = null;
+  // Contador de chamadas executor por prompt — serve o turno certo do profile.
+  const executorCallByPrompt = new Map<string, number>();
+
+  await page.route('**/api/anthropic/proxy', async (route: Route, request: Request) => {
+    let body: AnthropicProxyBody;
     try {
-      body = JSON.parse(request.postData() ?? '{}') as PromptRequestBody;
+      body = JSON.parse(request.postData() ?? '{}') as AnthropicProxyBody;
     } catch {
-      await route.fulfill({ status: 400, body: 'invalid JSON' });
+      await route.fulfill({ status: 400, contentType: 'text/plain', body: 'invalid JSON' });
       return;
     }
 
-    const promptText = body?.prompt ?? '';
-    const fixture = promptByText.get(promptText);
-
+    const prompt = extractPrompt(body);
+    const fixture = prompt !== null ? promptByText.get(prompt) : undefined;
     if (!fixture) {
       await route.fulfill({
         status: 404,
         contentType: 'text/plain',
-        body: `[mock-route] No fixture matches prompt: ${promptText.slice(0, 80)}`,
+        body: `[mock-proxy] Nenhuma fixture corresponde ao prompt: ${(prompt ?? '').slice(0, 80)}`,
       });
       return;
     }
 
-    const startedAt = Date.now();
-    const runId = `run_${fixture.id}_${startedAt}`;
-    // Iter 3 — passamos `prompt` + `startedAt` para o builder porque o
-    // protocolo real (`executor.ts` L506-510) inclui esses campos no
-    // `meta(start)`. Sem eles, o `useAgentStream` consumer não persiste o
-    // run em Dexie correctamente e o `MessageList.reduceLiveBubble` rejeita
-    // a stream toda. Ver `mock-events.ts` doc para causa raiz Iter 3.
-    const events = buildMockSseEvents({
-      profile: fixture.mockProfile,
-      runId,
-      prompt: promptText,
-      startedAt,
-    });
-    const ssePayload = serializeSseEvents(events);
+    const profile = resolveProfileDef(fixture);
 
-    await route.fulfill({
-      status: 200,
-      contentType: 'text/event-stream',
-      headers: {
-        'cache-control': 'no-cache',
-        connection: 'keep-alive',
-      },
-      body: ssePayload,
-    });
-  });
+    // Executor (stream:true) → wire SSE real, um turno por chamada.
+    if (body.stream === true) {
+      const i = executorCallByPrompt.get(fixture.prompt) ?? 0;
+      executorCallByPrompt.set(fixture.prompt, i + 1);
+      const turn = profile.executorTurns[i];
+      const sse = turn ? buildExecutorSseBody(turn) : buildEmptyEndTurnSseBody();
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        headers: { 'cache-control': 'no-cache', connection: 'keep-alive' },
+        body: sse,
+      });
+      return;
+    }
 
-  // Iter 3 — mock de `/api/agent/confirm`. O ChatPanel envia POST quando
-  // utilizador clica preview-confirm. Devolvemos 200 OK silencioso — o
-  // executor mock já incluiu `preview_confirmed` + `tool_complete` no
-  // payload SSE inicial (one-shot fulfill — `route.fulfill` não suporta
-  // streaming bidirecional). O spec valida o gate via inspecção do events
-  // array do `useAgentStream` (ver helpers/preview-eval.ts), não via
-  // observação visual do ToolCard em `preview-required` (estado transitório).
-  await page.route('**/api/agent/confirm', async (route) => {
+    // Classifier (non-stream) → resposta JSON da Anthropic Messages API.
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ ok: true }),
+      body: buildClassifierResponseBody(profile),
     });
   });
 }
 
 export async function uninstallMockRoute(page: Page): Promise<void> {
-  await page.unroute('**/api/agent/prompt');
-  await page.unroute('**/api/agent/confirm');
+  await page.unroute('**/api/anthropic/proxy');
 }

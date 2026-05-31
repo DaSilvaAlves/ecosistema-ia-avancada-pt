@@ -3,6 +3,7 @@
 import { runAgent, type ExecutorSSEEvent } from '@/lib/agent/executor';
 import { InferenceTransport } from '@/lib/agent/inference-transport';
 import type { ClientConfirmationProvider } from '@/lib/agent/client-confirmation-provider';
+import { clientUndoStore } from '@/lib/agent/client-undo-store';
 import { db } from '@/lib/db/client';
 // Story 1.11 (ADR-9, A1) — side-effect import que regista as tools do Epic 2/3
 // no `toolRegistry` singleton. Antes da Story 1.11 este registo vivia no Route
@@ -34,8 +35,11 @@ import '@/lib/agent/tools';
  * `runtime='edge'`. O único ponto Edge do cérebro continua a ser o
  * `/api/anthropic/proxy` (sem Dexie). O transport (T2) fala com esse proxy.
  *
- * Phase 1 (esta story): undo desactivado (no `undoStore` injectado) — Phase 2
- * (A4) implementa o store client-side real (memória + timer 30s).
+ * Story 1.12 (Phase 2, ADR-9 A4): undo REACTIVADO — injecta-se o singleton
+ * `clientUndoStore` (memória + timer 30s, reverte mutações Dexie). O executor
+ * volta a emitir `undo_registered` quando há tool calls reversíveis, e o
+ * `UndoToast` reverte via `clientUndoStore.undo(runId)`. (Na Phase 1 o
+ * `undoStore` era omitido → undo desactivado em produção.)
  *
  * Trace canónico:
  * - architecture-v2.md ADR-9 — executor client-side + ctx.db Dexie real
@@ -70,7 +74,9 @@ export async function* runClientAgent(
     executor: transport,
     classifier: transport,
     ...(confirmationProvider ? { confirmationProvider } : {}),
-    // Phase 1 (ADR-9 faseamento): undoStore omitido → undo desactivado.
-    // Phase 2 (A4) injecta o store client-side real (memória + timer 30s).
+    // Story 1.12 (Phase 2, ADR-9 A4): store de undo client-side real (memória +
+    // timer 30s). O executor volta a emitir `undo_registered` e o `UndoToast`
+    // reverte via `clientUndoStore.undo(runId)`.
+    undoStore: clientUndoStore,
   });
 }

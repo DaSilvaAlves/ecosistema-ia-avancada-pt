@@ -3,6 +3,7 @@
 import { Undo2, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { UNDO_TTL_SECONDS } from '@/lib/agent/undo';
+import { clientUndoStore } from '@/lib/agent/client-undo-store';
 import { markRunReverted } from '@/lib/db/repos/agent-runs';
 
 /**
@@ -12,11 +13,13 @@ import { markRunReverted } from '@/lib/db/repos/agent-runs';
  *
  * Trace canónico:
  * - Front-end-spec §4.3 — countdown progress bar Cyan, hover-pause, botão "Anular"
- * - Story 1.9 AC5 — todos os comportamentos (POST /api/agent/undo, markRunReverted,
- *   toasts feedback, empilhamento max 3 FIFO)
+ * - Story 1.9 AC5 — comportamentos (markRunReverted, toasts feedback, empilhamento max 3 FIFO)
  * - Story 1.9 AC9 — `role="alert"`, `aria-live="polite"`, `aria-valuenow/max`,
  *   countdown progress bar acessível
- * - Story 1.7 — `UNDO_TTL_SECONDS = 30`, endpoint `POST /api/agent/undo`
+ * - Story 1.7 — `UNDO_TTL_SECONDS = 30`
+ * - Story 1.12 (ADR-9, A4 — Phase 2): reverte via `clientUndoStore.undo(runId)`
+ *   (browser + Dexie real), substituindo o antigo `fetch('/api/agent/undo')`
+ *   (endpoint Edge morto na Phase 1). Ver `lib/agent/client-undo-store.ts`.
  * - PRD §6.1 FR6 + Epic 1 AC4
  *
  * Renderizado pelo `ChatPanel` quando o `useAgentStream` recebe `undo_registered`
@@ -120,13 +123,14 @@ export function UndoToast(props: UndoToastProps): ReactElement | null {
     setBusy(true);
 
     try {
-      const response = await fetch('/api/agent/undo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ runId }),
-      });
+      // Story 1.12 (ADR-9, A4 — Phase 2): reverte via `clientUndoStore` no
+      // browser (memória + Dexie real), em vez de `fetch('/api/agent/undo')`
+      // (endpoint do fluxo Edge morto na Phase 1 — undo estava desligado em
+      // produção). O store reverte cada tool call em ordem reversa via
+      // `tool.reverse(args, result, ctx)` com o Dexie real.
+      const result = await clientUndoStore.undo(runId);
 
-      if (response.status === 410) {
+      if (result.status === 'expired') {
         setFeedback({
           kind: 'expired',
           message: 'Já não é possível anular — 30s expirados',
@@ -134,26 +138,18 @@ export function UndoToast(props: UndoToastProps): ReactElement | null {
         return;
       }
 
-      if (!response.ok) {
-        setFeedback({
-          kind: 'error',
-          message: 'Erro ao anular — tenta de novo',
-        });
-        return;
-      }
-
-      const body = (await response.json()) as { reverted: number };
-      // markRunReverted Dexie (AC5) — best-effort, não bloqueia UI
+      // markRunReverted Dexie (AC5) — best-effort, não bloqueia UI. Marca o
+      // agent_run como 'reverted' (consumido pelo assert E2E da regressão).
       try {
         await markRunReverted(runId);
       } catch (e) {
         console.error('[UndoToast] markRunReverted falhou', e);
       }
 
-      onUndoSuccess?.(body.reverted);
+      onUndoSuccess?.(result.reverted);
       setFeedback({
         kind: 'success',
-        message: `Anulado · ${body.reverted} ${body.reverted === 1 ? 'acção revertida' : 'acções revertidas'}`,
+        message: `Anulado · ${result.reverted} ${result.reverted === 1 ? 'acção revertida' : 'acções revertidas'}`,
       });
     } catch (e) {
       console.error('[UndoToast] handleUndo falhou', e);

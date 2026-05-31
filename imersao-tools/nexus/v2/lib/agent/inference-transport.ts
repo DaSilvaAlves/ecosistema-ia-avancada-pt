@@ -210,8 +210,20 @@ export class InferenceTransport implements ClassifierProvider, ExecutorProvider 
    */
   private readonly fetchFn: typeof fetch;
 
-  constructor(fetchFn: typeof fetch = globalThis.fetch) {
-    this.fetchFn = fetchFn;
+  /**
+   * Story 1.12 (DEV-DECISION D-FETCH-BIND) — o default tem de ser
+   * `globalThis.fetch` VINCULADO a `globalThis`. O `fetch` nativo exige
+   * `this === Window`/`WorkerGlobalScope`; armazená-lo numa propriedade e
+   * invocá-lo como `this.fetchFn(...)` faz `this === InferenceTransport` →
+   * `TypeError: Failed to execute 'fetch' on 'Window': Illegal invocation`.
+   * Bug latente da Phase 1 (ADR-9): os unit tests sempre injectam um `fetchFn`
+   * mock (nunca exercitam o default) e a suite E2E da Story 1.10 mockava
+   * `/api/agent/prompt` (não passava pelo transport). A re-rota da Story 1.12
+   * (que exercita o caminho client REAL pela 1ª vez em E2E) revelou-o.
+   * `fetchFn` injectado é usado tal-qual; só o default é vinculado.
+   */
+  constructor(fetchFn?: typeof fetch) {
+    this.fetchFn = fetchFn ?? globalThis.fetch.bind(globalThis);
   }
 
   /**
