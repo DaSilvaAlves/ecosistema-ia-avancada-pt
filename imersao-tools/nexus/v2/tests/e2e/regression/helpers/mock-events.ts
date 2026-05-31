@@ -382,14 +382,23 @@ interface SseEvent {
   data: object;
 }
 
-/** Resposta JSON síncrona do classifier (Anthropic Messages API non-stream). */
+/**
+ * Resposta JSON síncrona do classifier (Anthropic Messages API non-stream).
+ *
+ * `mock-protocol-fidelity.md` (hotfix produção 2026-05-31): o Haiku REAL envolve
+ * o JSON do classifier em markdown fences (```` ```json ... ``` ````) apesar do
+ * system prompt pedir "APENAS JSON". O mock espelha isso — assim a suite exercita
+ * o `stripJsonMarkdownFences` do `InferenceTransport.classify`. Falha se o strip
+ * regredir (foi exactamente o que partiu em produção: o transport client-side
+ * omitia o strip que o server-side tinha).
+ */
 export function buildClassifierResponseBody(profile: MockProfileDef): string {
   return JSON.stringify({
     id: 'msg_proxy_classifier',
     type: 'message',
     role: 'assistant',
     model: MOCK_MODEL_CLASSIFIER,
-    content: [{ type: 'text', text: JSON.stringify(profile.classifier) }],
+    content: [{ type: 'text', text: '```json\n' + JSON.stringify(profile.classifier) + '\n```' }],
     stop_reason: 'end_turn',
     usage: { input_tokens: 60, output_tokens: 30 },
   });

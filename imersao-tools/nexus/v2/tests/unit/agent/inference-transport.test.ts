@@ -72,6 +72,50 @@ describe('InferenceTransport.classify (AC2)', () => {
     const transport = new InferenceTransport(fetchFn);
     await expect(transport.classify('sys', 'prompt')).rejects.toThrow(/não é JSON válido/);
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // FIDELIDADE (hotfix produção 2026-05-31) — mock-protocol-fidelity.md
+  // O Haiku REAL envolve o JSON do classifier em markdown fences. O transport
+  // tem de o limpar (`stripJsonMarkdownFences`) antes do `JSON.parse`. Estes
+  // testes FALHAM se o strip for removido (regressão que partiu produção: o
+  // transport client-side omitia o strip que o `AnthropicClassifier` tinha).
+  // ───────────────────────────────────────────────────────────────────────────
+
+  /** Constrói uma resposta do proxy com o `text` do classifier tal-qual (sem assumir formato). */
+  function classifierResponseWithText(text: string): typeof fetch {
+    return (async () =>
+      new Response(
+        JSON.stringify({
+          content: [{ type: 'text', text }],
+          usage: { input_tokens: 60, output_tokens: 30 },
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      )) as typeof fetch;
+  }
+
+  it('parseia JSON do classifier envolvido em ```json fences (caso real Haiku — produção 31/05)', async () => {
+    // Forma EXACTA que partiu em produção: ```json {...} ``` numa só linha.
+    const fenced = '```json\n{"intents":["tasks"],"confidence":{"tasks":0.96}}\n```';
+    const transport = new InferenceTransport(classifierResponseWithText(fenced));
+
+    const result = await transport.classify('sys', 'anota a tarefa de comprar pão');
+
+    expect(result.intents).toEqual(['tasks']);
+    expect(result.confidence.tasks).toBe(0.96);
+    // `rawResponse` preserva o original COM fences (NFR11/debug downstream).
+    expect(result.rawResponse).toContain('```json');
+  });
+
+  it('parseia JSON do classifier com fences + prosa à volta (hotfix 05-18, paridade server-side)', async () => {
+    const fencedWithProse =
+      'Claro! Aqui está a classificação:\n```json\n{"intents":["finance"],"confidence":{"finance":0.88}}\n```\nEspero ter ajudado.';
+    const transport = new InferenceTransport(classifierResponseWithText(fencedWithProse));
+
+    const result = await transport.classify('sys', 'paguei 50 no supermercado');
+
+    expect(result.intents).toEqual(['finance']);
+    expect(result.confidence.finance).toBe(0.88);
+  });
 });
 
 describe('InferenceTransport.execute — guards (AC2)', () => {

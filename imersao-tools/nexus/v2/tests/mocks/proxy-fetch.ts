@@ -181,7 +181,13 @@ function buildExecutorEvents(opts: {
   return events;
 }
 
-/** Resposta JSON síncrona do classifier (Anthropic Messages API non-stream). */
+/**
+ * Resposta JSON síncrona do classifier (Anthropic Messages API non-stream).
+ *
+ * `mock-protocol-fidelity.md` (hotfix produção 2026-05-31): o Haiku REAL envolve
+ * o JSON em markdown fences (```` ```json ... ``` ````). O mock espelha-o para
+ * exercitar o `stripJsonMarkdownFences` do `InferenceTransport.classify`.
+ */
 function buildClassifierResponse(model: string, payload: ClassifierResponse): Response {
   return new Response(
     JSON.stringify({
@@ -189,7 +195,7 @@ function buildClassifierResponse(model: string, payload: ClassifierResponse): Re
       type: 'message',
       role: 'assistant',
       model,
-      content: [{ type: 'text', text: JSON.stringify(payload) }],
+      content: [{ type: 'text', text: '```json\n' + JSON.stringify(payload) + '\n```' }],
       stop_reason: 'end_turn',
       usage: { input_tokens: 60, output_tokens: 30 },
     }),
