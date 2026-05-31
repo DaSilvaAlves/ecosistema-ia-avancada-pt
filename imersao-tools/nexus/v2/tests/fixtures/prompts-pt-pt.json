@@ -1,7 +1,7 @@
 {
   "$schema": "./prompts-pt-pt.schema.json",
-  "version": "1.0.0",
-  "story": "1.10",
+  "version": "1.1.0",
+  "story": "1.12",
   "epic": "1",
   "createdAt": "2026-05-09",
   "totalPrompts": 50,
@@ -27,7 +27,7 @@
       "expectedToolCount": 2,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["ac1-epic1", "canonical", "@real-api"],
+      "tags": ["@real-api", "pending-tool-epic"],
       "mockProfile": "multi-intent-canonical-ac1"
     },
     {
@@ -38,7 +38,7 @@
       "expectedToolCount": 2,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["multi-intent"],
+      "tags": ["multi-intent", "pending-tool-epic"],
       "mockProfile": "multi-intent-tasks-calendar"
     },
     {
@@ -49,7 +49,7 @@
       "expectedToolCount": 2,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["multi-intent"],
+      "tags": ["multi-intent", "pending-tool-epic"],
       "mockProfile": "multi-intent-reminder-finance"
     },
     {
@@ -60,7 +60,7 @@
       "expectedToolCount": 2,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["multi-intent"],
+      "tags": ["multi-intent", "pending-tool-epic"],
       "mockProfile": "multi-intent-canonical-ac1"
     },
     {
@@ -71,7 +71,7 @@
       "expectedToolCount": 3,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["multi-intent", "triple"],
+      "tags": ["multi-intent", "triple", "pending-tool-epic"],
       "mockProfile": "multi-intent-triple"
     },
     {
@@ -82,7 +82,7 @@
       "expectedToolCount": 2,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["multi-intent"],
+      "tags": ["multi-intent", "pending-tool-epic"],
       "mockProfile": "multi-intent-canonical-ac1"
     },
     {
@@ -93,7 +93,7 @@
       "expectedToolCount": 2,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["multi-intent"],
+      "tags": ["multi-intent", "pending-tool-epic"],
       "mockProfile": "multi-intent-canonical-ac1"
     },
     {
@@ -104,7 +104,7 @@
       "expectedToolCount": 2,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["multi-intent"],
+      "tags": ["multi-intent", "pending-tool-epic"],
       "mockProfile": "multi-intent-tasks-reminder"
     },
     {
@@ -247,7 +247,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["ac2-epic1", "single-intent"],
+      "tags": ["single-intent", "pending-tool-epic"],
       "mockProfile": "single-calendar"
     },
     {
@@ -258,7 +258,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["single-intent"],
+      "tags": ["single-intent", "pending-tool-epic"],
       "mockProfile": "single-calendar"
     },
     {
@@ -269,7 +269,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["single-intent"],
+      "tags": ["single-intent", "pending-tool-epic"],
       "mockProfile": "single-calendar"
     },
     {
@@ -280,7 +280,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["single-intent"],
+      "tags": ["single-intent", "pending-tool-epic"],
       "mockProfile": "single-calendar"
     },
     {
@@ -291,7 +291,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["single-intent"],
+      "tags": ["single-intent", "pending-tool-epic"],
       "mockProfile": "single-reminder"
     },
     {
@@ -302,7 +302,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["single-intent"],
+      "tags": ["single-intent", "pending-tool-epic"],
       "mockProfile": "single-reminder"
     },
     {
@@ -313,7 +313,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["single-intent"],
+      "tags": ["single-intent", "pending-tool-epic"],
       "mockProfile": "single-reminder"
     },
     {
@@ -324,7 +324,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["single-intent"],
+      "tags": ["single-intent", "pending-tool-epic"],
       "mockProfile": "single-reminder"
     },
     {
@@ -335,7 +335,7 @@
       "expectedToolCount": 1,
       "requiresPreview": true,
       "expectUndo": false,
-      "tags": ["ac2-epic1", "low-confidence"],
+      "tags": ["ac2-epic1", "canonical", "low-confidence"],
       "mockProfile": "preview-low-confidence"
     },
     {
@@ -368,7 +368,7 @@
       "expectedToolCount": 1,
       "requiresPreview": true,
       "expectUndo": false,
-      "tags": ["destructive"],
+      "tags": ["destructive", "pending-tool-epic"],
       "mockProfile": "preview-destructive"
     },
     {
@@ -379,7 +379,7 @@
       "expectedToolCount": 1,
       "requiresPreview": true,
       "expectUndo": false,
-      "tags": ["destructive"],
+      "tags": ["destructive", "pending-tool-epic"],
       "mockProfile": "preview-destructive"
     },
     {
@@ -390,7 +390,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": true,
-      "tags": ["ac4-epic1", "undo"],
+      "tags": ["ac4-epic1", "canonical", "undo"],
       "mockProfile": "single-task"
     },
     {
@@ -401,7 +401,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": true,
-      "tags": ["ac4-epic1", "undo"],
+      "tags": ["ac4-epic1", "canonical", "undo"],
       "mockProfile": "single-finance-variable"
     },
     {
@@ -412,7 +412,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": true,
-      "tags": ["undo"],
+      "tags": ["undo", "pending-tool-epic"],
       "mockProfile": "single-calendar"
     },
     {
@@ -423,7 +423,7 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": true,
-      "tags": ["undo"],
+      "tags": ["undo", "pending-tool-epic"],
       "mockProfile": "single-reminder"
     },
     {
@@ -434,8 +434,8 @@
       "expectedToolCount": 1,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["error"],
-      "mockProfile": "tool-error"
+      "tags": ["error", "retag-success-1.12"],
+      "mockProfile": "single-task"
     },
     {
       "id": "R039",
@@ -456,7 +456,7 @@
       "expectedToolCount": 2,
       "requiresPreview": false,
       "expectUndo": false,
-      "tags": ["error", "partial-success"],
+      "tags": ["ac1-epic1", "canonical", "error", "partial-success"],
       "mockProfile": "multi-intent-with-error"
     },
     {

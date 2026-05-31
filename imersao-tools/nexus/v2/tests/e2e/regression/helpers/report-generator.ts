@@ -6,8 +6,16 @@
  *  - `tests/e2e/regression/report/report.json` (artefacto CI)
  *  - Sumário stdout: "Regression: N/50 PASS | P95: Xms | Failures: ..."
  *
- * Pass rate threshold: `>= 43/50` (>= 86%) com zero falhas em prompts canónicos
- * `ac1-epic1`, `ac2-epic1`, `ac4-epic1` (D2 — PRD §10 linha 431).
+ * Pass rate threshold (Story 1.12 — ADR-9, Architect Gate §4.4 Decisão 4):
+ * recalibrado de `>= 43/50` (Story 1.10) para `>= 26/30`. Razão: a re-rota ao
+ * fluxo client-side real (ADR-9) executa as tools de verdade; 20 dos 50 prompts
+ * dependem de tools calendar/reminder/eliminar_tarefa ainda NÃO registadas no v2
+ * (Epic futuro) → foram diferidos (`pending-tool-epic` + `test.fixme`) e ficam
+ * fora do universo executável. Sobram 30 prompts activos; mantendo a mesma
+ * exigência relativa de 86% (era 43/50 = 86%), o novo threshold é 26/30 (86,7%).
+ * Quando as tools calendar/reminder forem registadas (follow-up), reactivar os
+ * 20 diferidos e restaurar 43/50. Zero falhas em canónicos `ac1-epic1` (R040),
+ * `ac2-epic1` (R029), `ac4-epic1` (R034/R035) mantém-se obrigatório.
  *
  * P95 budget CI (MSW): `< 2s` (D4 — flagado SF1 ao @architect).
  * P95 budget Staging (real API): `< 6s` (PRD §10 AC5 linha 428).
@@ -18,7 +26,7 @@ import { dirname } from 'node:path';
 
 import type { PromptResult, RegressionReport } from './types';
 
-export const PASS_RATE_THRESHOLD = 43;
+export const PASS_RATE_THRESHOLD = 26;
 export const P95_THRESHOLD_CI_MS = 2_000;
 export const P95_THRESHOLD_STAGING_MS = 6_000;
 export const CANONICAL_TAGS = ['ac1-epic1', 'ac2-epic1', 'ac4-epic1'];

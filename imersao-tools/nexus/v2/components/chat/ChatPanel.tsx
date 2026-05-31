@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
+import type { ExecutorSSEEvent } from '@/lib/agent/executor';
 import { MessageList } from '@/components/chat/MessageList';
 import { InputBox, type InputBoxStreamingState } from '@/components/chat/InputBox';
 import { UndoToast } from '@/components/chat/UndoToast';
@@ -98,26 +99,35 @@ export function ChatPanel(): ReactElement {
     }
   }, [stream.events]);
 
-  // Detectar `undo_registered` → adicionar toast (FIFO max 3)
+  // Detectar `undo_registered` → adicionar toast (FIFO max 3).
+  //
+  // Story 1.12 (ADR-9): no fluxo client-side REAL o executor emite
+  // `undo_registered` ANTES de `done` (executor.ts:757) — logo o ÚLTIMO evento
+  // do stream é `done`, não `undo_registered`. A versão Story 1.9 inspeccionava
+  // apenas `events[length-1]` e nunca via o `undo_registered` (tech-debt
+  // registado na 1.10; reexposto pela re-rota da Story 1.12). Gate §6 follow-up
+  // #3: itera TODOS os `undo_registered` (dedupe por runId) em vez de só o último.
   useEffect(() => {
-    if (stream.events.length === 0) return;
-    const last = stream.events[stream.events.length - 1];
-    if (last.type !== 'undo_registered') return;
+    const undoEvents = stream.events.filter(
+      (e): e is Extract<ExecutorSSEEvent, { type: 'undo_registered' }> =>
+        e.type === 'undo_registered'
+    );
+    if (undoEvents.length === 0) return;
 
-    const newToast: ActiveUndoToast = {
-      runId: last.runId,
-      undoableToolCount: last.undoableToolCount,
-      expiresAt: last.expiresAt,
-    };
     setUndoToasts((prev) => {
-      // Dedupe — mesmo runId não duplica
-      const filtered = prev.filter((t) => t.runId !== newToast.runId);
-      const next = [...filtered, newToast];
-      // FIFO: descarta o mais antigo se exceder max
-      if (next.length > MAX_STACKED_TOASTS) {
-        return next.slice(next.length - MAX_STACKED_TOASTS);
+      // Dedupe por runId, preservando ordem de inserção (FIFO).
+      const byRun = new Map<string, ActiveUndoToast>(prev.map((t) => [t.runId, t]));
+      for (const e of undoEvents) {
+        byRun.set(e.runId, {
+          runId: e.runId,
+          undoableToolCount: e.undoableToolCount,
+          expiresAt: e.expiresAt,
+        });
       }
-      return next;
+      const next = Array.from(byRun.values());
+      return next.length > MAX_STACKED_TOASTS
+        ? next.slice(next.length - MAX_STACKED_TOASTS)
+        : next;
     });
   }, [stream.events]);
 

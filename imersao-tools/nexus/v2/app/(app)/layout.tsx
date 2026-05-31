@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DailyEngineProvider } from '@/components/system/DailyEngineProvider';
+import { DevDbExposer } from '@/components/system/DevDbExposer';
 
 /**
  * Nexus v2 — Authenticated app layout (Story 0.4 + Story 3.10)
@@ -39,6 +40,7 @@ export default async function AppLayout({
         flexDirection: 'column',
       }}
     >
+      <DevDbExposer />
       <DailyEngineProvider>{children}</DailyEngineProvider>
     </div>
   );
