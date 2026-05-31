@@ -1,7 +1,8 @@
 'use client';
 
-import { Pencil, Check, Archive, Trash2, ArchiveRestore, CalendarRange } from 'lucide-react';
+import { Pencil, Check, Archive, Trash2, ArchiveRestore, CalendarRange, LineChart } from 'lucide-react';
 import type { Habit, HabitLog } from '@/types/db';
+import { formatMetricValue } from '@/lib/habitos/metrics';
 
 /**
  * Nexus v2 — HabitsList (Story 4.2 — AC6, FR24/FR25)
@@ -23,6 +24,12 @@ import type { Habit, HabitLog } from '@/types/db';
  * uma acção "Ver heatmap" (nas duas variantes — leitura pura, útil também em
  * arquivados). Extensão mínima — não altera as acções existentes.
  *
+ * `onRegisterMetric` (opcional, Story 4.4 — AC3): quando presente E o hábito tem
+ * `metric`, o botão "Marcar concluído" é substituído por "Registar {unit}" (abre
+ * o `HabitMetricsModal`). Se já houver log de hoje com `value`, mostra a badge
+ * "Registado hoje ({valor} {unit})". Hábitos sem `metric` mantêm o comportamento
+ * original. Extensão mínima — não altera as props/acções existentes.
+ *
  * `todayLogs` são os logs de hoje (filtrados na page). Um hábito cujo `id`
  * aparece em `todayLogs` já foi concluído hoje (idempotência — [AUTO-DECISION]
  * A2): o botão de marcar fica desactivado e mostra "Concluído hoje".
@@ -41,6 +48,7 @@ interface HabitsListProps {
   onRestore: (habit: Habit) => void;
   onDelete: (habit: Habit) => void;
   onShowHeatmap?: (habit: Habit) => void;
+  onRegisterMetric?: (habit: Habit) => void;
 }
 
 export function HabitsList({
@@ -53,6 +61,7 @@ export function HabitsList({
   onRestore,
   onDelete,
   onShowHeatmap,
+  onRegisterMetric,
 }: HabitsListProps): React.ReactElement {
   if (habits === undefined) {
     return <LoadingSkeleton label="A carregar hábitos" />;
@@ -67,6 +76,10 @@ export function HabitsList({
   }
 
   const doneTodayIds = new Set((todayLogs ?? []).map((log) => log.habitId));
+  // Mapa habitId → log de hoje (para a badge de métrica mostrar o valor — AC3).
+  const todayLogByHabit = new Map(
+    (todayLogs ?? []).map((log) => [log.habitId, log]),
+  );
 
   return (
     <ul
@@ -81,6 +94,14 @@ export function HabitsList({
     >
       {habits.map((habit) => {
         const doneToday = doneTodayIds.has(habit.id);
+        // AC3 — registo por métrica: activo só quando o hábito tem `metric` e o
+        // parent forneceu o handler. Caso contrário, comportamento original.
+        const useMetric =
+          onRegisterMetric !== undefined && habit.metric !== undefined;
+        const todayLog = todayLogByHabit.get(habit.id);
+        const metricValueToday = todayLog?.value;
+        const registeredMetricToday =
+          useMetric && metricValueToday !== undefined;
         return (
           <li
             key={habit.id}
@@ -142,7 +163,54 @@ export function HabitsList({
               )}
               {variant === 'active' ? (
                 <>
-                  {doneToday ? (
+                  {useMetric ? (
+                    registeredMetricToday ? (
+                      <span
+                        data-testid={`habit-metric-badge-${habit.id}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.04em',
+                          color: '#39FF14',
+                          background: 'rgba(57, 255, 20, 0.08)',
+                          border: '1px solid rgba(57, 255, 20, 0.25)',
+                          borderRadius: 20,
+                          padding: '0.3rem 0.6rem',
+                        }}
+                      >
+                        <Check size={12} /> Registado hoje (
+                        {formatMetricValue(metricValueToday!)} {habit.metric!.unit})
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        data-testid={`habit-register-metric-${habit.id}`}
+                        aria-label={`Registar ${habit.metric!.unit} de "${habit.name}"`}
+                        onClick={() => onRegisterMetric!(habit)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.04em',
+                          color: '#39FF14',
+                          background: 'rgba(57, 255, 20, 0.06)',
+                          border: '1px solid rgba(57, 255, 20, 0.3)',
+                          borderRadius: 20,
+                          padding: '0.3rem 0.7rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <LineChart size={12} /> Registar {habit.metric!.unit}
+                      </button>
+                    )
+                  ) : doneToday ? (
                     <span
                       data-testid={`habit-done-badge-${habit.id}`}
                       style={{

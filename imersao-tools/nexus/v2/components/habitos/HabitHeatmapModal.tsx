@@ -160,7 +160,7 @@ export function HabitHeatmapModal({
           </button>
         </div>
 
-        <HabitHeatmap logs={logs} todayISO={todayISO} />
+        <HabitHeatmap logs={logs} todayISO={todayISO} metric={habit.metric} />
       </div>
     </div>
   );
