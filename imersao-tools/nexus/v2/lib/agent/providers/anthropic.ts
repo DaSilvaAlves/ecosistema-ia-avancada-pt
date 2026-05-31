@@ -6,6 +6,7 @@ import {
 import { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL } from '@/lib/agent/models';
 import { EXECUTOR_SYSTEM_PROMPT } from '@/lib/agent/prompts/executor-system';
 import { toolsToAnthropicShape } from '@/lib/agent/tools/registry';
+import { stripJsonMarkdownFences } from '@/lib/agent/classifier-json';
 import type {
   ClassifierProvider,
   ClassifierOpts,
@@ -39,112 +40,10 @@ const DEFAULT_EXECUTOR_MAX_TOKENS = 4096;
 // Re-export para compat com AC5 (constantes exportadas de anthropic.ts)
 export { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL };
 
-/**
- * Extrai o primeiro objecto JSON balanceado de uma string a partir de um índice
- * inicial. Conta chavetas `{` e `}` respeitando strings e escapes para suportar
- * conteúdo como `"label": "{x}"` sem desbalancear. Retorna o substring entre a
- * primeira `{` (inclusive) e a `}` que fecha o objecto raiz, ou `null` se não
- * encontrar um JSON balanceado.
- *
- * Usado como rede de segurança em {@link stripJsonMarkdownFences} para o caso
- * em que o Haiku devolve JSON misturado com prosa noutra forma que os regex
- * não cobrem (texto antes do fence, fence parcial, etc).
- */
-function extractFirstJsonObject(input: string, startIndex: number = 0): string | null {
-  let depth = 0;
-  let start = -1;
-  let inString = false;
-  let escape = false;
-  for (let i = startIndex; i < input.length; i++) {
-    const ch = input[i];
-    if (inString) {
-      if (escape) {
-        escape = false;
-      } else if (ch === '\\') {
-        escape = true;
-      } else if (ch === '"') {
-        inString = false;
-      }
-      continue;
-    }
-    if (ch === '"') {
-      inString = true;
-      continue;
-    }
-    if (ch === '{') {
-      if (depth === 0) start = i;
-      depth++;
-    } else if (ch === '}') {
-      depth--;
-      if (depth === 0 && start !== -1) {
-        return input.slice(start, i + 1);
-      }
-    }
-  }
-  return null;
-}
-
-/**
- * Remove markdown code fences que a Haiku ocasionalmente envolve à volta do
- * JSON apesar do system prompt pedir "APENAS JSON válido, sem markdown".
- *
- * Padrões observados em produção:
- *
- *   Hotfix 2026-05-09 (cobre):
- *     "```json\n{...}\n```"          (fence simétrico, fim absoluto)
- *     "```\n{...}\n```"              (fence sem language tag)
- *
- *   Hotfix 2026-05-18 (cobre adicionalmente — bug em prod com prompts vagos):
- *     "```json\n{...}\n```\n<prosa>" (fence + prosa explicativa a seguir)
- *     "<prosa>\n```json\n{...}\n```" (prosa antes do fence)
- *     "<prosa>\n```\n{...}\n```\n<prosa>" (prosa antes e depois)
- *
- * Estratégia (em ordem):
- * 1. Se a string trimmed começa com fence E acaba com fence → strip simétrico (caso simples).
- * 2. Senão, procurar a primeira abertura ` ``` ` e o próximo ` ``` ` a seguir;
- *    se ambos existirem, devolver o conteúdo entre eles (cobre prosa antes e depois).
- * 3. Senão, fallback: extrair o primeiro objecto JSON balanceado (`{...}`)
- *    via {@link extractFirstJsonObject} — cobre variantes sem fences ou com
- *    fences malformados.
- * 4. Senão, devolver a string trimmed intacta — o `JSON.parse` falhará com
- *    mensagem PT-PT que mostra o `rawResponse` original (debuggability).
- *
- * O `rawResponse` original (com fences/prosa) é preservado no campo
- * `ClassificationResult.rawResponse` para debug e PII redaction downstream.
- */
-function stripJsonMarkdownFences(raw: string): string {
-  const trimmed = raw.trim();
-
-  // Caso 1: fence simétrico start+end (mantém comportamento do hotfix anterior).
-  const fenceOpenMatch = trimmed.match(/^```(?:json)?\s*\n?/i);
-  const fenceCloseMatch = trimmed.match(/\n?\s*```$/);
-  if (fenceOpenMatch && fenceCloseMatch) {
-    return trimmed.slice(fenceOpenMatch[0].length, trimmed.length - fenceCloseMatch[0].length).trim();
-  }
-
-  // Caso 2: fence em qualquer posição — extrai o conteúdo entre o primeiro
-  // ``` de abertura e o próximo ``` de fecho. Cobre prosa antes ou depois.
-  const openRegex = /```(?:json)?\s*\n?/i;
-  const openMatch = openRegex.exec(trimmed);
-  if (openMatch) {
-    const afterOpen = openMatch.index + openMatch[0].length;
-    const closeIdx = trimmed.indexOf('```', afterOpen);
-    if (closeIdx !== -1) {
-      return trimmed.slice(afterOpen, closeIdx).trim();
-    }
-    // Fence de abertura sem fecho — tenta extrair JSON balanceado a partir
-    // do fim do fence.
-    const json = extractFirstJsonObject(trimmed, afterOpen);
-    if (json) return json;
-  }
-
-  // Caso 3: fallback — extrai primeiro objecto JSON balanceado.
-  const json = extractFirstJsonObject(trimmed);
-  if (json) return json;
-
-  // Caso 4: devolve intacto — parse vai falhar com mensagem útil.
-  return trimmed;
-}
+// `stripJsonMarkdownFences` + `extractFirstJsonObject` foram extraídas para
+// `lib/agent/classifier-json.ts` (hotfix produção 2026-05-31) para serem
+// partilhadas com o `InferenceTransport` client-side (ADR-9), que antes omitia
+// o strip e rebentava com o JSON fenced do Haiku. Comportamento inalterado aqui.
 
 /**
  * Erro sentinela que sinaliza ao outer catch do `execute()` que o evento

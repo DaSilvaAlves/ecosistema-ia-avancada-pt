@@ -5,6 +5,7 @@ import {
 import { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL } from '@/lib/agent/models';
 import { EXECUTOR_SYSTEM_PROMPT } from '@/lib/agent/prompts/executor-system';
 import { toolsToAnthropicShape } from '@/lib/agent/tools/registry';
+import { stripJsonMarkdownFences } from '@/lib/agent/classifier-json';
 import type {
   ClassifierProvider,
   ClassifierOpts,
@@ -278,9 +279,17 @@ export class InferenceTransport implements ClassifierProvider, ExecutorProvider 
     }
     const rawResponse = textBlock.text;
 
+    // Hotfix produção 2026-05-31: o Haiku envolve o JSON em markdown fences
+    // (```` ```json ... ``` ````) apesar do system prompt pedir "APENAS JSON".
+    // O `AnthropicClassifier` server-side já fazia este strip (hotfixes 05-09 +
+    // 05-18); a migração client-side (ADR-9) omitiu-o → `JSON.parse` cru
+    // rebentava em produção. Aplicar `stripJsonMarkdownFences` antes do parse,
+    // preservando `rawResponse` original (com fences) downstream (NFR11/debug).
+    const cleanedResponse = stripJsonMarkdownFences(rawResponse);
+
     let parsed: { intents?: unknown; confidence?: unknown };
     try {
-      parsed = JSON.parse(rawResponse) as {
+      parsed = JSON.parse(cleanedResponse) as {
         intents?: unknown;
         confidence?: unknown;
       };
