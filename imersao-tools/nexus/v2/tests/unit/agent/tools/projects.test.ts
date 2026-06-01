@@ -160,26 +160,38 @@ describe('consultar_projecto', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 describe('toolRegistry integration', () => {
-  it('T22 — 13 tools registadas após import do barrel (7 Epic 2 + 6 Epic 3)', () => {
-    // Story 3.11: o barrel passou a importar `./finance` (6 tools domínio 'finance').
-    expect(toolRegistry.all()).toHaveLength(13);
+  it('T22 — 22 tools registadas após import do barrel (7 Epic 2 + 6 Epic 3 + 9 Epic 4)', () => {
+    // Story 3.11: o barrel importa `./finance` (6 tools domínio 'finance').
+    // Story 4.10: o barrel importa habits/goals/reminders (9 tools domínio
+    // 'habits' — D-DOMAIN Opção A: metas/lembretes partilham o bucket 'habits').
+    expect(toolRegistry.all()).toHaveLength(22);
     expect(toolRegistry.byDomain('tasks')).toHaveLength(7);
     expect(toolRegistry.byDomain('finance')).toHaveLength(6);
+    expect(toolRegistry.byDomain('habits')).toHaveLength(9);
 
     const nomes = toolRegistry.all().map((t) => t.name).sort();
     expect(nomes).toEqual([
+      'actualizar_meta',
+      'cancelar_lembrete',
       'completar_tarefa',
       'consultar_balanco',
       'consultar_categoria',
+      'consultar_evolucao_habito',
+      'consultar_metas',
       'consultar_projecto',
       'criar_cartao',
       'criar_financa_recorrente',
       'criar_financa_variavel',
+      'criar_habito',
+      'criar_lembrete',
+      'criar_meta',
       'criar_parcelada',
       'criar_projecto',
       'criar_tarefa',
       'listar_atrasadas',
+      'listar_lembretes',
       'listar_tarefas',
+      'registar_habito_concluido',
       'vincular_tarefa_projecto',
     ]);
   });
