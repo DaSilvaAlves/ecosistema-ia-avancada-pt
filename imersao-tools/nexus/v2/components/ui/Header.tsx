@@ -93,6 +93,7 @@ export function Header({ onToggleSidebar, showSidebarToggle }: HeaderProps): Rea
         <NavLink href="/tasks">Tarefas</NavLink>
         <NavLink href="/financas">Finanças</NavLink>
         <NavLink href="/habitos">Hábitos</NavLink>
+        <NavLink href="/metas">Metas</NavLink>
         <NavLink href="/lembretes">Lembretes</NavLink>
         <NavLink href="/journal">Diário</NavLink>
         <NavLink href="/knowledge">Conhecimento</NavLink>

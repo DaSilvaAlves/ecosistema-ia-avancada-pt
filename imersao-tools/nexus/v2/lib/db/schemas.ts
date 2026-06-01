@@ -295,6 +295,20 @@ export const GoalMilestoneSchema = z.object({
   note: z.string().optional(),
 });
 
+/**
+ * Story 4.5 (FR40) — entrada do histórico de actualizações do `current`.
+ * `date` em `YYYY-MM-DD` (mesma convenção UTC do resto do schema — regex
+ * partilhada `ISO_DATE_REGEX`, mais defensiva que `z.string()` cru, dado que o
+ * helper `formatGoalDeadline`/o histórico dependem de datas UTC bem formadas).
+ */
+export const GoalProgressEntrySchema = z.object({
+  date: z
+    .string()
+    .regex(ISO_DATE_REGEX, 'Data deve estar em formato ISO 8601 (ex: 2026-06-01)'),
+  value: z.number({ invalid_type_error: 'Valor deve ser numérico' }),
+  note: z.string().optional(),
+});
+
 export const GoalSchema = z.object({
   id: z.string().uuid('id deve ser UUID válido'),
   title: z.string().min(1, 'Título da meta é obrigatório'),
@@ -305,6 +319,9 @@ export const GoalSchema = z.object({
   deadline: z.string().nullable(),
   status: GoalStatusSchema,
   milestones: z.array(GoalMilestoneSchema),
+  // Story 4.5 — histórico de updates do `current` (FR40). Embebido,
+  // não-indexado, opcional. Sem version bump (precedente `Habit.archivedAt?`).
+  progressLog: z.array(GoalProgressEntrySchema).optional(),
 });
 
 export type GoalType = z.infer<typeof GoalTypeSchema>;
