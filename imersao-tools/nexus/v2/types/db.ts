@@ -199,6 +199,12 @@ export interface Goal {
   // numérico (threshold em que `reached` vira true), coerente com `target` em
   // goals 'numeric'; em goals 'boolean' é um passo qualitativo (`note`).
   milestones: Array<{ at: number; reached: boolean; note?: string }>;
+  // Story 4.5 (FR40) — histórico de actualizações do `current`. Cada entrada é
+  // o valor de `current` registado numa data (`YYYY-MM-DD`) com nota opcional.
+  // Campo embebido NÃO-indexado: extensão de schema sem version bump (mesmo
+  // precedente de `Habit.archivedAt?`). `undefined` = meta sem histórico
+  // (metas criadas antes da 4.5 — o GoalView mostra "Sem histórico").
+  progressLog?: Array<{ date: string; value: number; note?: string }>;
 }
 
 export interface Reminder {
