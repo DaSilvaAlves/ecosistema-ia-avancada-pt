@@ -21,6 +21,7 @@ function makeHabit(overrides: Partial<Habit> = {}): Habit {
     frequency: overrides.frequency ?? 'FREQ=DAILY',
     category: overrides.category ?? 'Pessoal',
     time: overrides.time,
+    metric: overrides.metric,
     createdAt: overrides.createdAt ?? Date.now(),
     archivedAt: overrides.archivedAt,
   };
@@ -170,5 +171,97 @@ describe('HabitsList (Story 4.2 / AC6)', () => {
     expect(btn).toBeInTheDocument();
     fireEvent.click(btn);
     expect(onShowHeatmap).toHaveBeenCalledWith(habits[0]);
+  });
+
+  // ── Story 4.4 / AC3 — registo por métrica ──
+  it('M1 — hábito SEM metric mantém o botão "Marcar concluído" (sem alterar comportamento)', () => {
+    const habits = [makeHabit({ id: 'h1', name: 'Correr' })]; // sem metric
+    render(
+      <HabitsList
+        habits={habits}
+        todayLogs={[]}
+        variant="active"
+        {...noopHandlers}
+        onRegisterMetric={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Marcar "Correr" como concluído hoje' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('habit-register-metric-h1'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('M2 — hábito COM metric + onRegisterMetric: mostra "Registar {unit}" e dispara o callback', () => {
+    const habits = [
+      makeHabit({ id: 'h1', name: 'Correr', metric: { unit: 'km', target: 10 } }),
+    ];
+    const onRegisterMetric = vi.fn();
+    render(
+      <HabitsList
+        habits={habits}
+        todayLogs={[]}
+        variant="active"
+        {...noopHandlers}
+        onRegisterMetric={onRegisterMetric}
+      />,
+    );
+    const btn = screen.getByRole('button', { name: 'Registar km de "Correr"' });
+    expect(btn).toBeInTheDocument();
+    // O botão de "Marcar concluído" é substituído.
+    expect(
+      screen.queryByRole('button', { name: 'Marcar "Correr" como concluído hoje' }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(btn);
+    expect(onRegisterMetric).toHaveBeenCalledWith(habits[0]);
+  });
+
+  it('M3 — hábito COM metric e log de hoje COM value: badge "Registado hoje (valor unit)"', () => {
+    const habits = [
+      makeHabit({ id: 'h1', name: 'Correr', metric: { unit: 'km', target: 10 } }),
+    ];
+    const todayLogs: HabitLog[] = [
+      { id: 'log1', habitId: 'h1', date: '2026-05-31', value: 7 },
+    ];
+    render(
+      <HabitsList
+        habits={habits}
+        todayLogs={todayLogs}
+        variant="active"
+        {...noopHandlers}
+        onRegisterMetric={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('habit-metric-badge-h1')).toBeInTheDocument();
+    expect(screen.getByText(/Registado hoje \(7 km\)/)).toBeInTheDocument();
+    // Sem botão de registo quando já registado.
+    expect(
+      screen.queryByRole('button', { name: 'Registar km de "Correr"' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('M4 — hábito COM metric e log de hoje SEM value: ainda mostra "Registar {unit}"', () => {
+    const habits = [
+      makeHabit({ id: 'h1', name: 'Correr', metric: { unit: 'km', target: 10 } }),
+    ];
+    const todayLogs: HabitLog[] = [
+      { id: 'log1', habitId: 'h1', date: '2026-05-31' }, // sem value
+    ];
+    render(
+      <HabitsList
+        habits={habits}
+        todayLogs={todayLogs}
+        variant="active"
+        {...noopHandlers}
+        onRegisterMetric={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Registar km de "Correr"' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('habit-metric-badge-h1'),
+    ).not.toBeInTheDocument();
   });
 });

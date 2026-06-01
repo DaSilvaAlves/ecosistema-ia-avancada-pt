@@ -17,8 +17,10 @@ import { HabitHeatmap } from '@/components/habitos/HabitHeatmap';
 const TODAY = '2026-05-29'; // sexta → range from 2025-12-01
 
 let counter = 0;
-function makeLog(date: string): HabitLog {
-  return { id: `log-${++counter}`, habitId: 'h1', date };
+function makeLog(date: string, value?: number): HabitLog {
+  const log: HabitLog = { id: `log-${++counter}`, habitId: 'h1', date };
+  if (value !== undefined) log.value = value;
+  return log;
 }
 
 describe('HabitHeatmap (Story 4.3 / AC8)', () => {
@@ -72,5 +74,33 @@ describe('HabitHeatmap (Story 4.3 / AC8)', () => {
     const todayCell = screen.getByLabelText('29/05/2026: não concluído (hoje)');
     expect(todayCell).toBeInTheDocument();
     expect(todayCell).toHaveAttribute('data-today', 'true');
+  });
+
+  // ── Story 4.4 / AC10 — extensão com prop `metric` (intensidade por valor) ──
+  it('C6 — com metric + log com value: aria-label inclui o valor numérico (PT-PT)', () => {
+    render(
+      <HabitHeatmap
+        logs={[makeLog('2026-03-10', 7.2)]}
+        todayISO={TODAY}
+        metric={{ unit: 'km', target: 10 }}
+      />,
+    );
+    // aria-label com valor (não-só-cor) + legenda de 4 níveis.
+    expect(screen.getByLabelText('10/03/2026: 7,2 km')).toBeInTheDocument();
+    expect(screen.getByText('≥ 100% do alvo')).toBeInTheDocument();
+  });
+
+  it('C7 — com metric + log sem value: célula tratada como nível 1 (valor 0)', () => {
+    render(
+      <HabitHeatmap
+        logs={[makeLog('2026-03-10')]} // log sem value
+        todayISO={TODAY}
+        metric={{ unit: 'km', target: 10 }}
+      />,
+    );
+    // value ausente → 0 km no aria-label (getHeatmapLevel(0, 10) = 1).
+    const cell = screen.getByLabelText('10/03/2026: 0 km');
+    expect(cell).toBeInTheDocument();
+    expect(cell).toHaveAttribute('data-completed', 'true');
   });
 });

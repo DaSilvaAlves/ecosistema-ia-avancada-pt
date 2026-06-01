@@ -7,6 +7,7 @@ import {
   getLast6MonthsRange,
   type HeatmapWeek,
 } from '@/lib/habitos/heatmap';
+import { getHeatmapLevel, formatMetricValue } from '@/lib/habitos/metrics';
 
 /**
  * Nexus v2 — HabitHeatmap (Story 4.3 — AC3/AC4, FR26)
@@ -30,12 +31,29 @@ import {
  *   - Legenda visível ("Concluído" / "Não concluído").
  * Design system (`design-system-ia-avancada.md`): fundo #04040A, glassmorphism,
  * Inter + JetBrains Mono, paleta fixa, sem nova dependência (CSS grid nativo).
+ *
+ * Extensão Story 4.4 (AC6, [AUTO-DECISION] A6) — prop opcional `metric`:
+ *   - Quando presente, cada célula com log é colorida por intensidade (nível 1-4
+ *     via `getHeatmapLevel(value, target)`), com opacidade crescente do Lime.
+ *   - O `aria-label` passa a incluir o valor numérico ("{data}: {valor} {unit}").
+ *   - A legenda mostra os 4 níveis ("< 25%" … "≥ 100% do alvo").
+ *   - Quando `metric` é `undefined`: comportamento binário original inalterado
+ *     (os testes C1-C5 da 4.3 passam sem alteração — extensão aditiva).
  */
 
 interface HabitHeatmapProps {
   logs: HabitLog[] | undefined;
   todayISO: string;
+  metric?: { unit: string; target: number };
 }
+
+/** Opacidade do Lime por nível de intensidade (1-4) — distinção não-só-cor. */
+const LEVEL_OPACITY: Record<1 | 2 | 3 | 4, number> = {
+  1: 0.3,
+  2: 0.5,
+  3: 0.7,
+  4: 1,
+};
 
 const CELL = 13; // px — lado da célula
 const GAP = 3; // px — espaço entre células
@@ -76,12 +94,18 @@ function monthLabels(weeks: HeatmapWeek[]): (string | null)[] {
   });
 }
 
-export function HabitHeatmap({ logs, todayISO }: HabitHeatmapProps): React.ReactElement {
+export function HabitHeatmap({ logs, todayISO, metric }: HabitHeatmapProps): React.ReactElement {
   const range = useMemo(() => getLast6MonthsRange(todayISO), [todayISO]);
   const weeks = useMemo(
     () => (logs === undefined ? [] : buildHeatmapGrid(logs, range)),
     [logs, range],
   );
+  // Mapa data → valor (último log do dia). Só usado quando `metric` está presente.
+  const valueByDate = useMemo(() => {
+    const map = new Map<string, number | undefined>();
+    for (const log of logs ?? []) map.set(log.date, log.value);
+    return map;
+  }, [logs]);
 
   if (logs === undefined) {
     return <HeatmapSkeleton />;
@@ -171,8 +195,31 @@ export function HabitHeatmap({ logs, todayISO }: HabitHeatmapProps): React.React
                     );
                   }
                   const isToday = day.date === todayISO;
-                  const estado = day.completed ? 'concluído' : 'não concluído';
-                  const label = `${formatPtDate(day.date)}: ${estado}${isToday ? ' (hoje)' : ''}`;
+                  const todaySuffix = isToday ? ' (hoje)' : '';
+
+                  // Com `metric`: intensidade por nível + valor no aria-label.
+                  // Sem `metric`: comportamento binário original (inalterado).
+                  let label: string;
+                  let background: string;
+                  let border: string;
+                  if (metric !== undefined && day.completed) {
+                    const value = valueByDate.get(day.date) ?? 0;
+                    const level = getHeatmapLevel(value, metric.target);
+                    label = `${formatPtDate(day.date)}: ${formatMetricValue(value)} ${metric.unit}${todaySuffix}`;
+                    background = `rgba(57, 255, 20, ${LEVEL_OPACITY[level]})`;
+                    border = '1px solid rgba(57, 255, 20, 0.6)';
+                  } else if (metric !== undefined) {
+                    label = `${formatPtDate(day.date)}: não concluído${todaySuffix}`;
+                    background = 'rgba(255, 255, 255, 0.05)';
+                    border = '1px solid rgba(255, 255, 255, 0.08)';
+                  } else {
+                    const estado = day.completed ? 'concluído' : 'não concluído';
+                    label = `${formatPtDate(day.date)}: ${estado}${todaySuffix}`;
+                    background = day.completed ? '#39FF14' : 'rgba(255, 255, 255, 0.05)';
+                    border = day.completed
+                      ? '1px solid #39FF14'
+                      : '1px solid rgba(255, 255, 255, 0.08)';
+                  }
                   return (
                     <span
                       key={day.date}
@@ -185,10 +232,8 @@ export function HabitHeatmap({ logs, todayISO }: HabitHeatmapProps): React.React
                         height: CELL,
                         borderRadius: 3,
                         // Distinção por preenchimento (forma), não só cor:
-                        background: day.completed ? '#39FF14' : 'rgba(255, 255, 255, 0.05)',
-                        border: day.completed
-                          ? '1px solid #39FF14'
-                          : '1px solid rgba(255, 255, 255, 0.08)',
+                        background,
+                        border,
                         // Realce do dia de hoje: contorno cyan.
                         outline: isToday ? '1px solid #00F5FF' : 'none',
                         outlineOffset: isToday ? 1 : 0,
@@ -223,37 +268,69 @@ export function HabitHeatmap({ logs, todayISO }: HabitHeatmapProps): React.React
           display: 'flex',
           alignItems: 'center',
           gap: 16,
+          flexWrap: 'wrap',
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: '0.62rem',
           color: '#8892A4',
         }}
       >
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span
-            aria-hidden="true"
-            style={{
-              width: CELL,
-              height: CELL,
-              borderRadius: 3,
-              background: '#39FF14',
-              border: '1px solid #39FF14',
-            }}
-          />
-          Concluído
-        </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span
-            aria-hidden="true"
-            style={{
-              width: CELL,
-              height: CELL,
-              borderRadius: 3,
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          />
-          Não concluído
-        </span>
+        {metric !== undefined ? (
+          // Legenda de 4 níveis de intensidade (AC6).
+          (
+            [
+              [1, '≤ 25%'],
+              [2, '26-50%'],
+              [3, '51-99%'],
+              [4, '≥ 100% do alvo'],
+            ] as const
+          ).map(([level, text]) => (
+            <span
+              key={level}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  width: CELL,
+                  height: CELL,
+                  borderRadius: 3,
+                  background: `rgba(57, 255, 20, ${LEVEL_OPACITY[level]})`,
+                  border: '1px solid rgba(57, 255, 20, 0.6)',
+                }}
+              />
+              {text}
+            </span>
+          ))
+        ) : (
+          <>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: CELL,
+                  height: CELL,
+                  borderRadius: 3,
+                  background: '#39FF14',
+                  border: '1px solid #39FF14',
+                }}
+              />
+              Concluído
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: CELL,
+                  height: CELL,
+                  borderRadius: 3,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
+              />
+              Não concluído
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

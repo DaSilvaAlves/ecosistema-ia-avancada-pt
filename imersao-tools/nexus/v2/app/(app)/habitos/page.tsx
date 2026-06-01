@@ -13,12 +13,15 @@ import {
 } from '@/lib/db/repos/habits';
 import {
   createHabitLog,
+  updateHabitLog,
   listHabitLogsByHabit,
 } from '@/lib/db/repos/habit-logs';
+import { useHabitLogs } from '@/hooks/useHabitLogs';
 import type { Habit, HabitLog } from '@/types/db';
 import { TabStrip, type TabDescriptor } from '@/components/ui/TabStrip';
 import { HabitFormModal } from '@/components/habitos/HabitFormModal';
 import { HabitHeatmapModal } from '@/components/habitos/HabitHeatmapModal';
+import { HabitMetricsModal } from '@/components/habitos/HabitMetricsModal';
 import { HabitsList } from '@/components/habitos/HabitsList';
 
 /**
@@ -64,6 +67,7 @@ export default function HabitosPage(): React.ReactElement {
   const [tab, setTab] = useState<Tab>('active');
   const [modal, setModal] = useState<ModalState>(null);
   const [heatmapHabit, setHeatmapHabit] = useState<Habit | null>(null);
+  const [metricsHabit, setMetricsHabit] = useState<Habit | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [openerEl, setOpenerEl] = useState<HTMLElement | null>(null);
@@ -81,6 +85,11 @@ export default function HabitosPage(): React.ReactElement {
     return perHabit.flat();
   }, [habits]);
 
+  // Logs históricos do hábito de métrica seleccionado (sem range — recordes
+  // calculam-se sobre TODOS os logs; [AUTO-DECISION] A4). `undefined` no 1.º
+  // render alimenta o estado loading do modal. `''` quando nenhum modal aberto.
+  const metricAllLogs = useHabitLogs(metricsHabit?.id ?? '');
+
   // Separa hábitos activos (sem `archivedAt`) de arquivados.
   const activeHabits = useMemo<Habit[] | undefined>(
     () => habits?.filter((h) => h.archivedAt === undefined),
@@ -95,13 +104,13 @@ export default function HabitosPage(): React.ReactElement {
   // o seu próprio Escape). Precedente `financas/page.tsx`.
   useEffect(() => {
     function handleEscape(e: KeyboardEvent): void {
-      // Os modais (form/heatmap) tratam o seu próprio Escape — não navegar atrás.
-      if (modal !== null || heatmapHabit !== null) return;
+      // Os modais (form/heatmap/métricas) tratam o seu próprio Escape — não navegar atrás.
+      if (modal !== null || heatmapHabit !== null || metricsHabit !== null) return;
       if (e.key === 'Escape') router.back();
     }
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [router, modal, heatmapHabit]);
+  }, [router, modal, heatmapHabit, metricsHabit]);
 
   // Auto-dismiss dos toasts após 4s.
   useEffect(() => {
@@ -154,6 +163,59 @@ export default function HabitosPage(): React.ReactElement {
       setOpenerEl(null);
     }
   }
+
+  // AC7 — abrir o modal de métricas de um hábito com `metric`.
+  const handleRegisterMetric = useCallback((habit: Habit): void => {
+    rememberOpener();
+    setMetricsHabit(habit);
+  }, []);
+
+  function closeMetrics(): void {
+    setMetricsHabit(null);
+    if (openerEl !== null) {
+      setTimeout(() => openerEl.focus(), 0);
+      setOpenerEl(null);
+    }
+  }
+
+  // AC7 — registo do valor numérico. Idempotência (gotcha A1, convenção 4.2):
+  // a coerência vive no handler, não no repo. Se já existe log de hoje:
+  //   - com `value` → bloqueia (o modal já mostra "Registado hoje");
+  //   - sem `value` (criado por "Marcar concluído" antes da métrica) → `updateHabitLog`
+  //     preenche o valor no log existente (não duplica — usa a função que JÁ EXISTE);
+  // senão → `createHabitLog` cria um novo log com `value`.
+  const handleSubmitMetric = useCallback(
+    async (value: number): Promise<void> => {
+      if (metricsHabit === null) return;
+      const today = todayISO();
+      try {
+        const existing = await listHabitLogsByHabit(metricsHabit.id, {
+          from: today,
+          to: today,
+        });
+        const todayLog = existing[0];
+        if (todayLog !== undefined && todayLog.value !== undefined) {
+          setInfoMessage(`"${metricsHabit.name}" já tinha valor registado hoje.`);
+          return;
+        }
+        if (todayLog !== undefined) {
+          await updateHabitLog(todayLog.id, { value });
+        } else {
+          await createHabitLog({
+            id: crypto.randomUUID(),
+            habitId: metricsHabit.id,
+            date: today,
+            value,
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao registar valor do hábito', error);
+        setErrorMessage('Erro ao registar valor — tenta novamente.');
+        throw error;
+      }
+    },
+    [metricsHabit],
+  );
 
   async function handleSubmit(input: Partial<Habit>): Promise<void> {
     try {
@@ -313,6 +375,7 @@ export default function HabitosPage(): React.ReactElement {
             onRestore={handleRestore}
             onDelete={handleDelete}
             onShowHeatmap={handleShowHeatmap}
+            onRegisterMetric={handleRegisterMetric}
           />
         </div>
       )}
@@ -329,6 +392,7 @@ export default function HabitosPage(): React.ReactElement {
             onRestore={handleRestore}
             onDelete={handleDelete}
             onShowHeatmap={handleShowHeatmap}
+            onRegisterMetric={handleRegisterMetric}
           />
         </div>
       )}
@@ -344,6 +408,17 @@ export default function HabitosPage(): React.ReactElement {
 
       {heatmapHabit !== null && (
         <HabitHeatmapModal habit={heatmapHabit} onClose={closeHeatmap} />
+      )}
+
+      {metricsHabit !== null && (
+        <HabitMetricsModal
+          habit={metricsHabit}
+          todayLogs={todayLogs ?? []}
+          allLogs={metricAllLogs}
+          todayISO={todayISO()}
+          onClose={closeMetrics}
+          onRegister={handleSubmitMetric}
+        />
       )}
 
       {errorMessage !== null && (
