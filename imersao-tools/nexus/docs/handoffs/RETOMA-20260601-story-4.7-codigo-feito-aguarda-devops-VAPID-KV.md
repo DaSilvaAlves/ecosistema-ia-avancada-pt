@@ -5,10 +5,37 @@
 > HANDOFFS SÓ VIVEM DENTRO DA PASTA DO PROJECTO A QUE SE REFEREM.
 
 **from_agent:** Dex (`@dev`) — implementação T1-T9 + T11 da Story 4.7
-**to_agent:** `@devops` (Gage — provisionar VAPID+KV) → depois `@dev` (smoke test) → `@architect` (gate)
+**to_agent:** ~~`@devops` (Gage — provisionar VAPID+KV)~~ → **Eurico (colar 5 secrets no `.env.local`)** → `@dev` (smoke test) → `@architect` (gate)
 **created:** 2026-06-01
-**status:** pending
-**prioridade:** MÉDIA-ALTA — código pronto e commitado; só falta a infra (secrets + KV) que é autoridade exclusiva do `@devops`.
+**status:** pending (infra parcial — ver secção @devops PROGRESS)
+**prioridade:** MÉDIA-ALTA — código pronto e commitado; VAPID provisionadas; falta só Eurico colar 5 secrets Sensitive no `.env.local`.
+
+---
+
+## @devops PROGRESS — 01/06/2026 (Gage)
+
+Provisioning executado. Resumo:
+
+| Item | Estado |
+|------|--------|
+| Par VAPID gerado | ✓ `npx web-push generate-vapid-keys` |
+| `NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC` | ✓ Vercel **Production** + **Development** |
+| `WEB_PUSH_VAPID_PRIVATE` | ✓ Vercel **Production** + **Development** |
+| VAPID → **Preview** | ⚠ **PENDENTE** — bug do Vercel CLI: o caminho "all Preview branches" devolve `git_branch_required` em loop mesmo com `--value … --yes`. Resolver com 1-clique no dashboard (Settings → Environment Variables → adicionar as 2 VAPID ao scope Preview) OU `vercel env add NOME preview <branch> --value <v> --yes` para uma branch específica. **NÃO bloqueia a 4.7** (smoke = dev local; app live = Production). |
+| Vercel KV (prod) | ✓ **vivo** — `KV_REST_API_URL/TOKEN/URL`, `REDIS_URL` (Production+Preview, criados há 28d) |
+| `.env.local` (nexus/v2) | ✓ criado via `vercel env pull --environment=production`, **gitignored** (`.env*.local`). VAPID já preenchidas. |
+
+**Chave pública VAPID** (não-secreta, já no bundle client e em `.env.local`):
+`BKDYtYbrXTrSpRdcE97YqO920i917Yuyt5NkDLsFsBW5fZJ8aFmjwK2EG5SWrrQoFe5bXW5RGNZMOm_HDvh_ej0`
+
+**BLOQUEIO encontrado:** os 5 secrets pré-existentes estão marcados **"Sensitive"** no Vercel → o `vercel env pull` traz-nos **vazios** (design do Vercel: não-descarregáveis). Por isso o `.env.local` tem 5 campos marcados `__PREENCHER__` com instruções inline. Decisão do Eurico (01/06): **colar os 5 valores ele próprio**.
+
+**Campos a colar no `imersao-tools/nexus/v2/.env.local`:**
+1. `ANTHROPIC_API_KEY` — consola Anthropic (sk-ant-…)
+2. `NEXUS_PASSWORD_HASH` — `node -e "console.log(require('bcryptjs').hashSync('password',10))"`
+3. `SESSION_SECRET` — `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+4. `KV_REST_API_URL` — Vercel → Storage → (KV) → separador `.env.local`
+5. `KV_REST_API_TOKEN` — mesmo separador
 
 ## Summary
 
@@ -25,19 +52,14 @@ A Story 4.7 (infra Web Push, Epic 4) tem **todo o código de aplicação impleme
 | Quality gate local | lint PASS · typecheck PASS (0 erros) · vitest 1290/1290 · build OK |
 | Epic 4 | 7/10 Done; 4.7 é a 8ª (Web Push) |
 
-## next_action — `@devops` (Gage)
+## next_action
 
-**Passo 0 (BLOQUEIA AC1/AC9/AC14) — provisionar infra:**
-1. Gerar par VAPID: `npx web-push generate-vapid-keys`
-2. Definir as 2 env vars (nomes canónicos — confirmados em `env.ts:27,36` e `.env.example:32-33`):
-   - `NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC=<public>` (pública — vai para o bundle client)
-   - `WEB_PUSH_VAPID_PRIVATE=<private>` (secret server-only — NUNCA commitar)
-3. Adicionar em `imersao-tools/nexus/v2/.env.local` (dev) **e** no painel Vercel (prod).
-4. Confirmar/provisionar Vercel KV: `KV_REST_API_URL` + `KV_REST_API_TOKEN` (`env.ts:29-30`) activos no `.env.local` (o projecto Nexus já usa KV para sessões/undo — confirmar que está vivo).
+**Passo 0 — provisionar infra (✓ FEITO por @devops, ver secção PROGRESS acima).**
+Resta apenas a acção manual do Eurico:
 
-> É operação com secrets + outward-facing (Vercel prod) → autoridade exclusiva `@devops`/Eurico. O `@dev` já verificou: env actualmente VAZIAS, sem `.env.local`.
+**Passo 0.5 (BLOQUEIA AC14) — Eurico:** colar os 5 secrets `__PREENCHER__` no `imersao-tools/nexus/v2/.env.local` (lista na secção PROGRESS). Depois `npm run dev` arranca.
 
-**Passo 1 (depois da infra) — `@dev` (Dex):** smoke test manual Chrome+Edge (T10/AC14): `npm run dev` (porta 3001) → activar notificações no `PushPermissionPrompt` → `POST /api/push/send` `{ "title":"Teste","body":"Push 4.7 OK" }` → confirmar notificação no Windows com tab em segundo plano. Registar resultado no Dev Agent Record. Correr CodeRabbit pre-commit.
+**Passo 1 (depois dos secrets) — `@dev` (Dex):** smoke test manual Chrome+Edge (T10/AC14): `npm run dev` (porta 3001) → activar notificações no `PushPermissionPrompt` → `POST /api/push/send` `{ "title":"Teste","body":"Push 4.7 OK" }` → confirmar notificação no Windows com tab em segundo plano. Registar resultado no Dev Agent Record. Correr CodeRabbit pre-commit.
 
 **Passo 2 — gate `@architect` (Aria):** quality gate (separation-of-roles: executor Dex ≠ gate). Marcar story InReview→Done.
 
