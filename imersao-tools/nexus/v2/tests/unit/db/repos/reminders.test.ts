@@ -103,6 +103,24 @@ describe('reminders repo', () => {
     expect((await getReminder(reminder.id))?.status).toBe('sent');
   });
 
+  // Story 4.6 / AC4 — caminho `status: 'cancelled'` (cancelar = pausar sem
+  // apagar). Distinto do caminho `pending → sent` da 4.1: aqui prova-se que
+  // cancelar um lembrete recorrente NÃO apaga a Recurrence associada (ao
+  // contrário de `deleteReminder`, que faz cascade). OBS-1 da PO Validation:
+  // só o caminho novo, sem recriar os testes de cascade/update da 4.1.
+  it('updateReminder cancelar (pending → cancelled) preserva a Recurrence associada', async () => {
+    const reminder = makeReminder();
+    const recurrence = makeRecurrence(reminder.id);
+    await createRecurrence(recurrence);
+    await createReminder({ ...reminder, recurrenceId: recurrence.id });
+
+    await updateReminder(reminder.id, { status: 'cancelled' });
+
+    expect((await getReminder(reminder.id))?.status).toBe('cancelled');
+    // A Recurrence NÃO é apagada por cancelar (só `deleteReminder` faz cascade).
+    expect(await getRecurrence(recurrence.id)).toBeDefined();
+  });
+
   it('deleteReminder não-recorrente remove só o lembrete', async () => {
     const reminder = makeReminder({ recurrenceId: null });
     await createReminder(reminder);

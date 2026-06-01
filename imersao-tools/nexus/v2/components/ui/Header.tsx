@@ -7,7 +7,7 @@ import { Menu, Settings, Zap } from 'lucide-react';
  * Nexus v2 — Header (Story 0.4)
  *
  * Sticky top, h:56px, glass background.
- * Logo NEXUS Cyan + nav links [Tarefas][Finanças][Hábitos][Diário][Conhecimento][⚙️].
+ * Logo NEXUS Cyan + nav links [Tarefas][Finanças][Hábitos][Lembretes][Diário][Conhecimento][⚙️].
  *
  * Conforme front-end-spec-v2.md §2.2 e §3.1.
  */
@@ -93,6 +93,7 @@ export function Header({ onToggleSidebar, showSidebarToggle }: HeaderProps): Rea
         <NavLink href="/tasks">Tarefas</NavLink>
         <NavLink href="/financas">Finanças</NavLink>
         <NavLink href="/habitos">Hábitos</NavLink>
+        <NavLink href="/lembretes">Lembretes</NavLink>
         <NavLink href="/journal">Diário</NavLink>
         <NavLink href="/knowledge">Conhecimento</NavLink>
         <Link
