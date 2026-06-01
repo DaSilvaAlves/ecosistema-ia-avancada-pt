@@ -2,7 +2,7 @@
 
 > **Projecto:** Nexus v2 (`imersao-tools/nexus/`)
 > **Criado por:** Morgan (`@pm`) em 29/05/2026
-> **Estado:** EM CURSO — 3/10 stories Done (4.1 schema/DAL, 4.2 CRUD hábitos, 4.3 heatmap calendário). Próxima: 4.4 (métricas) / 4.5 (CRUD metas) / 4.6 (CRUD lembretes) / 4.7 (setup Web Push — maior risco arquitectural) — todas desbloqueadas.
+> **Estado:** EM CURSO — 4/10 stories Done (4.1 schema/DAL, 4.2 CRUD hábitos, 4.3 heatmap calendário, 4.4 métricas por hábito). Próxima: 4.5 (CRUD metas) / 4.6 (CRUD lembretes) / 4.7 (setup Web Push — maior risco arquitectural) — todas desbloqueadas.
 > **Fonte da verdade:** `PRD-NEXUS-V2.md` §6.4 (Hábitos, FR24-28), §6.6 (Lembretes, FR33-38), §6.7 (Metas, FR39-41), §9 (roadmap), §10 Epic 4 — Constitution Artigo IV (No Invention): cada story, FR e AC abaixo traça ao PRD
 > **Arquitectura:** `architecture-v2.md` (5 ADRs — não reabrir, ver `project_nexus_v2_architecture.md`). Epic 4 introduz território arquitectural novo (Web Push + Service Worker) — ver §7 (GAPs para o draft).
 > **Lições aplicadas:** Retrospectiva Epic 1 (A1/A2/A6), Epic 2 (A1/A2/A4) e Epic 3 (A1-A7). Regras novas do Epic 3: `react-component-test-criteria.md` (A3) + `external-contract-identifiers.md` (A4) aplicadas preventivamente neste epic.
@@ -77,7 +77,7 @@ Trace directo a `PRD-NEXUS-V2.md` §6.4, §6.6, §6.7. 14 FRs no total.
 | 4.1 | Schema hábitos/metas/lembretes | Schema Dexie `habits`, `habit_logs`, `goals`, `goal_milestones`, `reminders` (`version(N)` aditivo) — estende o schema dos Epics 1/2/3. Define a **convenção de delete-cascata** das relações pai-filho (ver §8 decisão A7/D6) | FR24, FR27, FR39 | `@data-engineer` | `@architect` | **DONE** — PR #41 merged `aa74ce56` (29/05). EMBEBIDO ratificado, sem `version(5)`. Convenção cascata fixada (composição→cascade, hard-delete; corolário D6 = `Task.projectId` set null) |
 | 4.2 | CRUD hábitos | CRUD de hábitos com frequência configurável (diária, X×/semana, dias específicos), categoria, horário opcional + registo diário de concluído. **Absorveu a extracção de UI partilhada (`FormField` D-3.5-3 + `TabStrip` roving tabindex D-3.5-2) — §8 decisão A6** | FR24, FR25 | `@dev` | `@qa` | **DONE** — PR #42 merged `d0e14160` (29/05). `archivedAt?` + `archiveHabit`/`restoreHabit` (D-RESTORE via `.modify(delete)` ratificada); `FormField`+`TabStrip` partilhados criados; rota `/habitos`. CR 3 iter (Iter 3 autorizada Eurico), No findings, zero waivers, Vitest 1074/1074 |
 | 4.3 | Heatmap calendário | Heatmap estilo GitHub contributions por hábito, últimos 6 meses. **Componente com múltiplos estados de render → teste de componente obrigatório (`react-component-test-criteria.md`)** | FR26 | `@ux-design-expert` | `@dev` | **DONE** — PR #43 merged `1be785a3` (30/05). Helper puro UTC `lib/habitos/heatmap.ts` (1.º de `lib/habitos/`) + `HabitHeatmap`/`HabitHeatmapModal`; CR Iter 1 6 Minor (0 CRITICAL), 0 waivers; PO Validation GO 10/10 + @dev gate PASS; vitest 1101/1101 |
-| 4.4 | Métricas por hábito | Hábitos com métrica opcional (km, páginas, peso): registar valor + evolução mensal + recordes. Lógica de agregação/recordes em helper puro (`lib/habitos/**`) | FR27 | `@dev` | `@qa` | Pendente (depende de 4.2) |
+| 4.4 | Métricas por hábito | Hábitos com métrica opcional (km, páginas, peso): registar valor + evolução mensal + recordes. Lógica de agregação/recordes em helper puro (`lib/habitos/**`) | FR27 | `@dev` | `@qa` | **DONE** — PR #50 merged `192b488c` (01/06). Helper puro `lib/habitos/metrics.ts` (evolução mensal + recordes); `HabitMetricsModal` + `HabitMonthlyChart`; intensidade heatmap por valor de métrica. Vitest verde, CI 100% verde, zero waivers |
 | 4.5 | CRUD metas + vista | CRUD metas (título, prazo, métrica numérica/booleana, target, actual, milestones) + vista com progress bar + histórico + milestones | FR39, FR40 | `@ux-design-expert` | `@dev` | Pendente (desbloqueada por 4.1) |
 | 4.6 | CRUD lembretes | CRUD lembretes (texto, horário, recorrência opcional) reutilizando a estrutura de recorrência das tarefas (Story 2.7) | FR33 | `@dev` | `@qa` | Pendente (desbloqueada por 4.1) |
 | 4.7 | Setup Web Push | VAPID keys (self-generated), fluxo de subscrição no browser (FR35), endpoint `/api/push/send`. **GAP arquitectural: Edge vs Node runtime; secrets VAPID — ver §7** | FR34, FR35 | `@dev` | `@architect` | Pendente |
@@ -162,7 +162,7 @@ Trace PRD §10 Epic 4: "Epic 1 + teste manual push em Chrome + Edge".
 
 ## 10. Próximo passo
 
-**Epic 4 EM CURSO — 1/10 stories Done (4.1).** A Story 4.1 (schema/DAL) está DONE em `main` (PR #41, merge `aa74ce56`) e **desbloqueia 4.2-4.10**. As decisões arquitecturais da 4.1 estão fixadas: `goal_milestones` EMBEBIDO (sem `version(5)`); convenção de delete-cascata = *cascade nos filhos sem vida própria (composição); set null nas referências a entidades com vida própria (associação)*; hard-delete; corolário D6 (`Task.projectId` → set null) ratificado como referência para a story técnica pós-Epic-4.
+**Epic 4 EM CURSO — 4/10 stories Done (4.1, 4.2, 4.3, 4.4).** As Stories 4.1 (schema/DAL, PR #41 merge `aa74ce56`), 4.2 (CRUD hábitos, PR #42), 4.3 (heatmap calendário) e 4.4 (métricas por hábito, PR #50 merge `192b488c`) estão DONE em `main`. Restam 6 stories: 4.5 (CRUD metas), 4.6 (CRUD lembretes), 4.7 (setup Web Push — maior risco arquitectural), 4.8 (agendamento push), 4.9 (SW push handler) e 4.10 (tools cérebro). **Próxima sugerida: 4.5 / 4.6 / 4.7** — todas desbloqueadas. As decisões arquitecturais da 4.1 estão fixadas: `goal_milestones` EMBEBIDO (sem `version(5)`); convenção de delete-cascata = *cascade nos filhos sem vida própria (composição); set null nas referências a entidades com vida própria (associação)*; hard-delete; corolário D6 (`Task.projectId` → set null) ratificado como referência para a story técnica pós-Epic-4.
 
 ### Orientação herdada da 4.1 para a Story 4.2 (CRUD hábitos) — REGISTADA
 
@@ -176,8 +176,8 @@ A Story 4.2 deve absorver, além do CRUD de hábitos:
 
 ### Próximas acções na sequência
 
-1. **`@sm` (River)** — `*draft` da Story 4.2 (CRUD hábitos), absorvendo a orientação herdada acima (archive + D-3.5-2/3) e a decisão A6.
-2. **`@devops` (Gage)** — executa **A1** (afinar `.coderabbit.yaml`) ANTES da 1.ª story de UI (4.2), e **[GAP-4.4]** (gerar par VAPID + configurar secret) quando a Story 4.7 arrancar.
+1. **`@sm` (River)** — `*draft` da próxima story: **4.5 (CRUD metas)** ou **4.6 (CRUD lembretes)** (ambas reutilizam a UI partilhada já extraída pela 4.2), ou **4.7 (setup Web Push)** para desbloquear cedo o caminho de maior risco. A orientação herdada acima (archive + D-3.5-2/3, decisão A6) já foi absorvida e realizada pela 4.2.
+2. **`@devops` (Gage)** — executa **[GAP-4.4]** (gerar par VAPID + configurar secret) quando a Story 4.7 arrancar. A1 (afinar `.coderabbit.yaml`) já não bloqueia — as stories de UI 4.2/4.3/4.4 estão fechadas.
 3. **Eurico** — **A7/D7 DECIDIDO** (29/05/2026): hotfix dedicado via SOP Hotfix Produção. Agendar o hotfix do fallback de intent PT-BR do classifier independentemente do Epic 4.
 4. **`@architect` (Aria)** — envolvida cedo no draft das stories de Web Push (4.7/4.8/4.9) para resolver `[GAP-4.3]`, `[GAP-4.5]`, `[GAP-4.6]` antes da implementação.
 
