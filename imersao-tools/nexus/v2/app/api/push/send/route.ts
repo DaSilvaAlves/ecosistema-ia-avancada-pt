@@ -3,7 +3,10 @@ import { z } from 'zod';
 import webpush from 'web-push';
 import { getSession } from '@/lib/auth/session';
 import { getServerEnv } from '@/lib/shared/env';
-import { getPushSubscription } from '@/lib/push/subscriptions-store';
+import {
+  deletePushSubscription,
+  getPushSubscription,
+} from '@/lib/push/subscriptions-store';
 
 /**
  * Nexus v2 — Push send (Story 4.7, AC9)
@@ -28,7 +31,7 @@ const VAPID_SUBJECT = 'mailto:eurico@nexus.app';
 const SendSchema = z.object({
   title: z.string().min(1, 'title ausente'),
   body: z.string().min(1, 'body ausente'),
-  data: z.record(z.unknown()).optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -87,6 +90,27 @@ export async function POST(req: NextRequest): Promise<Response> {
     // Degradação graciosa (C8.1): KV indisponível, push service a recusar, etc.
     // Loga só a mensagem do erro — nunca secrets nem o corpo da subscription.
     const message = err instanceof Error ? err.message : 'erro desconhecido';
+
+    // Subscrição expirada/cancelada: o push service responde 404/410. Apagar o
+    // registo singleton para não voltar a enviar a um endpoint morto (CR Iter 1
+    // Fix #1). Best-effort: uma falha do delete não muda a resposta ao chamador.
+    if (err instanceof webpush.WebPushError && (err.statusCode === 404 || err.statusCode === 410)) {
+      try {
+        await deletePushSubscription();
+        console.error(
+          `[push/send] subscrição expirada (HTTP ${err.statusCode}) — removida do store`
+        );
+      } catch (delErr) {
+        const delMessage =
+          delErr instanceof Error ? delErr.message : 'erro desconhecido';
+        console.error('[push/send] falha ao remover subscrição expirada:', delMessage);
+      }
+      return NextResponse.json(
+        { error: 'Subscrição expirada.' },
+        { status: 410 }
+      );
+    }
+
     console.error('[push/send] falha ao enviar notificação:', message);
     return NextResponse.json(
       { error: 'Falha ao enviar notificação.' },

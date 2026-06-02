@@ -31,11 +31,13 @@ let registerSpy: ReturnType<typeof vi.fn>;
 let getSubscriptionSpy: ReturnType<typeof vi.fn>;
 let requestPermissionSpy: ReturnType<typeof vi.fn>;
 let fetchSpy: ReturnType<typeof vi.fn>;
+let unsubscribeSpy: ReturnType<typeof vi.fn>;
 
 function installSupport(permission: NotificationPermission = 'default'): void {
+  unsubscribeSpy = vi.fn().mockResolvedValue(true);
   const fakeSubscription = {
     toJSON: () => SUBSCRIPTION_JSON,
-    unsubscribe: vi.fn().mockResolvedValue(true),
+    unsubscribe: unsubscribeSpy,
   };
   subscribeSpy = vi.fn().mockResolvedValue(fakeSubscription);
   getSubscriptionSpy = vi.fn().mockResolvedValue(null);
@@ -144,6 +146,41 @@ describe('usePushSubscription', () => {
       await expect(result.current.subscribe()).resolves.toBeUndefined();
     });
 
+    expect(result.current.isSubscribed).toBe(false);
+  });
+
+  it('persistência server-side falha: rollback da subscrição do browser (Fix #4)', async () => {
+    installSupport('granted');
+    // O POST /api/push/subscribe devolve não-OK → a subscrição do browser foi
+    // criada mas não persistiu. O hook deve cancelá-la e propagar o erro.
+    fetchSpy.mockResolvedValueOnce({ ok: false, status: 500 });
+    const { result } = renderHook(() => usePushSubscription());
+
+    await act(async () => {
+      await expect(result.current.subscribe()).rejects.toThrow('subscribe falhou: 500');
+    });
+
+    // Rollback: a subscrição do browser foi cancelada e o estado não ficou activo.
+    expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+    expect(result.current.isSubscribed).toBe(false);
+  });
+
+  it('unsubscribe(): cancela no browser e propaga DELETE server-side (Fix #5)', async () => {
+    installSupport('granted');
+    // Existe uma subscrição activa neste browser → unsubscribe() deve cancelá-la
+    // e apagar o registo server-side.
+    getSubscriptionSpy.mockResolvedValue({
+      toJSON: () => SUBSCRIPTION_JSON,
+      unsubscribe: unsubscribeSpy,
+    });
+    const { result } = renderHook(() => usePushSubscription());
+
+    await act(async () => {
+      await result.current.unsubscribe();
+    });
+
+    expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledWith('/api/push/subscribe', { method: 'DELETE' });
     expect(result.current.isSubscribed).toBe(false);
   });
 });

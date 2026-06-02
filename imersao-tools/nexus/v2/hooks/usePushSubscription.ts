@@ -94,6 +94,15 @@ export function usePushSubscription(): PushSubscriptionState {
         body: JSON.stringify(subscription.toJSON()),
       });
       if (!response.ok) {
+        // A persistência server-side falhou: a subscrição do browser ficaria
+        // activa sem registo em KV (estado inconsistente após reload). Cancela-a
+        // antes de propagar o erro (CR Iter 1 Fix #4). Rollback best-effort —
+        // uma falha do unsubscribe não deve mascarar o erro original.
+        try {
+          await subscription.unsubscribe();
+        } catch (rollbackErr) {
+          console.warn('[push] rollback da subscrição do browser falhou:', rollbackErr);
+        }
         throw new Error(`subscribe falhou: ${response.status}`);
       }
 
@@ -113,6 +122,14 @@ export function usePushSubscription(): PushSubscriptionState {
       const subscription = await registration?.pushManager.getSubscription();
       if (subscription) {
         await subscription.unsubscribe();
+        // Propaga o delete ao store server-side para não deixar endpoint/keys
+        // órfãos em KV (CR Iter 1 Fix #5). Best-effort: a falha do DELETE não
+        // deve impedir o utilizador de cancelar localmente.
+        try {
+          await fetch('/api/push/subscribe', { method: 'DELETE' });
+        } catch (deleteErr) {
+          console.warn('[push] DELETE da subscrição server-side falhou:', deleteErr);
+        }
       }
       setIsSubscribed(false);
     } finally {
