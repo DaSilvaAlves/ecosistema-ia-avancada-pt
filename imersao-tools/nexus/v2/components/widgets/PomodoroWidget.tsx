@@ -16,7 +16,7 @@ import { formatDuration } from '@/lib/shared/format';
  */
 
 export function PomodoroWidget(): React.ReactElement {
-  const { state, toggle, reset } = usePomodoro();
+  const { state, toggle, reset, setWorkDurationMinutes, setAlarmSound } = usePomodoro();
   const [taskLinkOpen, setTaskLinkOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
@@ -57,6 +57,73 @@ export function PomodoroWidget(): React.ReactElement {
         >
           {label} · {state.sessionsToday} hoje
         </span>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            width: '100%',
+            color: '#8892A4',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.72rem',
+          }}
+        >
+          <span>Minutos</span>
+          <input
+            type="number"
+            min={1}
+            max={180}
+            step={1}
+            value={state.workDurationMinutes}
+            disabled={state.isRunning}
+            onChange={(event) => setWorkDurationMinutes(Number(event.target.value))}
+            aria-label="Duracao do Pomodoro em minutos"
+            style={{
+              width: 72,
+              padding: '6px 8px',
+              background: 'rgba(0,0,0,0.32)',
+              color: '#F0F4FF',
+              border: '1px solid rgba(255,255,255,0.10)',
+              borderRadius: 6,
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '0.78rem',
+            }}
+          />
+        </label>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            width: '100%',
+            color: '#8892A4',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.72rem',
+          }}
+        >
+          <span>Alarme</span>
+          <select
+            value={state.alarmSound}
+            onChange={(event) => setAlarmSound(event.target.value as typeof state.alarmSound)}
+            aria-label="Som do alarme do Pomodoro"
+            style={{
+              width: 94,
+              padding: '6px 8px',
+              background: 'rgba(0,0,0,0.32)',
+              color: '#F0F4FF',
+              border: '1px solid rgba(255,255,255,0.10)',
+              borderRadius: 6,
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '0.78rem',
+            }}
+          >
+            <option value="soft">Suave</option>
+            <option value="clear">Claro</option>
+            <option value="urgent">Urgente</option>
+          </select>
+        </label>
         <div style={{ display: 'flex', gap: 6, width: '100%' }}>
           <button
             type="button"
