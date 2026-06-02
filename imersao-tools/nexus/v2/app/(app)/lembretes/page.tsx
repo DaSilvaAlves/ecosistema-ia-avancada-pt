@@ -20,6 +20,7 @@ import {
   type ReminderFormSubmit,
 } from '@/components/lembretes/ReminderFormModal';
 import { RemindersList } from '@/components/lembretes/RemindersList';
+import { PushPermissionPrompt } from '@/components/push/PushPermissionPrompt';
 
 /**
  * Nexus v2 — Página /lembretes (Story 4.6 — FR33)
@@ -304,6 +305,12 @@ export default function LembretesPage(): React.ReactElement {
           </button>
         )}
       </header>
+
+      {/* Web Push (Story 4.7, FR35) — activar/gerir notificações dos lembretes.
+          Local de integração escolhido: página Lembretes (fit semântico push↔lembretes). */}
+      <div style={{ padding: '0 1.5rem 1rem' }}>
+        <PushPermissionPrompt />
+      </div>
 
       <TabStrip
         tabs={TABS}
