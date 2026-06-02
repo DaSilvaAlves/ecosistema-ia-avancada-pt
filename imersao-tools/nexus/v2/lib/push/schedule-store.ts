@@ -1,0 +1,77 @@
+import { kv } from '@vercel/kv';
+import { z } from 'zod';
+
+/**
+ * Nexus v2 — Mirror server-side da agenda de lembretes em Vercel KV (Story 4.8)
+ *
+ * Server-only: importa `@vercel/kv`. NUNCA importar em código client (o client
+ * fala com este store apenas via `fetch` a `/api/push/schedule`).
+ *
+ * A fonte-de-verdade dos lembretes é Dexie/IndexedDB (client-only) — o servidor
+ * não a lê. Para o disparo server-side (`/api/push/dispatch`, app possivelmente
+ * fechada) o client espelha `{id, fireAt, text, status}` de cada lembrete para
+ * este mirror nos handlers de CRUD (`/api/push/schedule`).
+ *
+ * DEV-DECISION D-KV-HASH (FLAG @architect): a agenda vive num **hash** Redis
+ * `nexus:push:schedule` (field = id do lembrete), não numa chave por id. Razão:
+ * o dispatch enumera todos os devidos com um único `hgetall` — evita `kv.keys()`
+ * / `scan` (anti-pattern em Redis de produção), é atómico por field, e mantém o
+ * prefixo `nexus:` (ADR-6). A decisão de entrada referia `nexus:push:schedule:<id>`;
+ * o hash preserva o mesmo namespace lógico com enumeração O(1) por chamada.
+ *
+ * Trace: Story 4.8 AC3.2/AC3.3; Architect Gate (a) pontos 2-3; ADR-6.
+ */
+
+const SCHEDULE_KEY = 'nexus:push:schedule';
+
+/**
+ * Estado de um lembrete no mirror. `pending` = a aguardar disparo; `sent` =
+ * disparado pelo dispatch (aguarda reconciliação client → Dexie). `cancelled`
+ * e `snoozed` nunca entram no mirror (o client remove-os).
+ */
+export const ScheduleEntrySchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  fireAt: z.number().int().positive('fireAt deve ser epoch ms positivo'),
+  text: z.string().min(1, 'text ausente'),
+  status: z.enum(['pending', 'sent']),
+});
+
+export type ScheduleEntry = z.infer<typeof ScheduleEntrySchema>;
+
+/**
+ * Insere ou actualiza a entrada de agenda de um lembrete (idempotente por id).
+ */
+export async function putSchedule(entry: ScheduleEntry): Promise<void> {
+  await kv.hset(SCHEDULE_KEY, { [entry.id]: entry });
+}
+
+/**
+ * Remove a entrada de agenda de um lembrete (no-op se ausente).
+ */
+export async function deleteSchedule(id: string): Promise<void> {
+  await kv.hdel(SCHEDULE_KEY, id);
+}
+
+/**
+ * Lê todas as entradas de agenda. Devolve `[]` se o hash não existir.
+ * Entradas malformadas (schema inválido) são descartadas defensivamente — uma
+ * entrada corrompida nunca bloqueia o dispatch das restantes.
+ */
+export async function listSchedules(): Promise<ScheduleEntry[]> {
+  const raw = await kv.hgetall<Record<string, unknown>>(SCHEDULE_KEY);
+  if (!raw) return [];
+  const entries: ScheduleEntry[] = [];
+  for (const value of Object.values(raw)) {
+    const parsed = ScheduleEntrySchema.safeParse(value);
+    if (parsed.success) entries.push(parsed.data);
+  }
+  return entries;
+}
+
+/**
+ * Marca uma entrada como `sent` (transição idempotente após o disparo). Mantém
+ * `fireAt`/`text` para a reconciliação client poder identificar o lembrete.
+ */
+export async function markScheduleSent(entry: ScheduleEntry): Promise<void> {
+  await kv.hset(SCHEDULE_KEY, { [entry.id]: { ...entry, status: 'sent' } });
+}

@@ -1,0 +1,126 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { getSession } from '@/lib/auth/session';
+import {
+  ScheduleEntrySchema,
+  deleteSchedule,
+  listSchedules,
+  putSchedule,
+} from '@/lib/push/schedule-store';
+
+/**
+ * Nexus v2 — Mirror de agenda de lembretes (Story 4.8, AC3.2)
+ *
+ * Endpoint **cookie-auth** (`getSession` → 401) que o client invoca nos handlers
+ * de CRUD de lembrete (`app/(app)/lembretes/page.tsx`) para espelhar a agenda
+ * para o KV, de onde o `/api/push/dispatch` a lê (app possivelmente fechada).
+ *
+ *   - PUT    — upsert da entrada `{id, fireAt, text, status}` (create/edit/restore)
+ *   - DELETE — remove a entrada de um id (cancel/delete; e cleanup pós-reconciliação)
+ *   - GET    — devolve os ids `sent` para a reconciliação client → Dexie (AC6)
+ *
+ * Node runtime: `@vercel/kv` no store. Segurança (NFR5): nada sensível é logado.
+ *
+ * Trace: Story 4.8 AC3.2/AC6; Architect Gate (a) ponto 3; ADR-6.
+ */
+
+export const runtime = 'nodejs';
+
+const DeleteSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+});
+
+/** Espelha (upsert) a agenda de um lembrete. */
+export async function PUT(req: NextRequest): Promise<Response> {
+  const session = await getSession(req);
+  if (!session.valid) {
+    return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: 'Body inválido — esperado JSON.' },
+      { status: 400 }
+    );
+  }
+
+  // O client só espelha lembretes a aguardar disparo — o status aceite aqui é
+  // `pending` (a UI não espelha `cancelled`/`snoozed`; usa DELETE para os remover).
+  const parsed = ScheduleEntrySchema.safeParse(body);
+  if (!parsed.success || parsed.data.status !== 'pending') {
+    return NextResponse.json({ error: 'Agenda inválida.' }, { status: 400 });
+  }
+
+  try {
+    await putSchedule(parsed.data);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'erro desconhecido';
+    console.error('[push/schedule] falha ao espelhar agenda:', message);
+    return NextResponse.json(
+      { error: 'Falha ao guardar agenda.' },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
+/** Remove a agenda de um lembrete (cancel/delete; cleanup pós-reconciliação). */
+export async function DELETE(req: NextRequest): Promise<Response> {
+  const session = await getSession(req);
+  if (!session.valid) {
+    return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: 'Body inválido — esperado JSON.' },
+      { status: 400 }
+    );
+  }
+
+  const parsed = DeleteSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'id inválido.' }, { status: 400 });
+  }
+
+  try {
+    await deleteSchedule(parsed.data.id);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'erro desconhecido';
+    console.error('[push/schedule] falha ao remover agenda:', message);
+    return NextResponse.json(
+      { error: 'Falha ao remover agenda.' },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
+/**
+ * Devolve os ids dos lembretes já `sent` no mirror — a reconciliação client
+ * (on-mount) usa-os para marcar `sent` em Dexie e depois remove-os via DELETE.
+ */
+export async function GET(req: NextRequest): Promise<Response> {
+  const session = await getSession(req);
+  if (!session.valid) {
+    return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
+  }
+
+  try {
+    const schedules = await listSchedules();
+    const sent = schedules.filter((s) => s.status === 'sent').map((s) => s.id);
+    return NextResponse.json({ sent });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'erro desconhecido';
+    console.error('[push/schedule] falha ao ler agenda:', message);
+    return NextResponse.json({ error: 'Falha ao ler agenda.' }, { status: 500 });
+  }
+}
