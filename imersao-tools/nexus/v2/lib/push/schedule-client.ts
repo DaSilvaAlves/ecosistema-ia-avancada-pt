@@ -23,7 +23,7 @@ import type { Reminder } from '@/types/db';
 export async function putReminderSchedule(reminder: Reminder): Promise<void> {
   if (!reminder.channels.includes('push')) return;
   try {
-    await fetch('/api/push/schedule', {
+    const resp = await fetch('/api/push/schedule', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -33,8 +33,15 @@ export async function putReminderSchedule(reminder: Reminder): Promise<void> {
         status: 'pending',
       }),
     });
+    if (!resp.ok) {
+      console.error(
+        '[push/schedule-client] falha ao espelhar agenda',
+        reminder.id,
+        resp.status,
+      );
+    }
   } catch (error) {
-    console.error('[push/schedule-client] falha ao espelhar agenda', error);
+    console.error('[push/schedule-client] erro ao espelhar agenda', error);
   }
 }
 
@@ -43,13 +50,16 @@ export async function putReminderSchedule(reminder: Reminder): Promise<void> {
  */
 export async function removeReminderSchedule(id: string): Promise<void> {
   try {
-    await fetch('/api/push/schedule', {
+    const resp = await fetch('/api/push/schedule', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
+    if (!resp.ok) {
+      console.error('[push/schedule-client] falha ao remover agenda', id, resp.status);
+    }
   } catch (error) {
-    console.error('[push/schedule-client] falha ao remover agenda', error);
+    console.error('[push/schedule-client] erro ao remover agenda', error);
   }
 }
 

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSession } from '@/lib/auth/session';
 import {
@@ -31,7 +31,7 @@ const DeleteSchema = z.object({
 });
 
 /** Espelha (upsert) a agenda de um lembrete. */
-export async function PUT(req: NextRequest): Promise<Response> {
+export async function PUT(req: Request): Promise<Response> {
   const session = await getSession(req);
   if (!session.valid) {
     return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
@@ -69,7 +69,7 @@ export async function PUT(req: NextRequest): Promise<Response> {
 }
 
 /** Remove a agenda de um lembrete (cancel/delete; cleanup pós-reconciliação). */
-export async function DELETE(req: NextRequest): Promise<Response> {
+export async function DELETE(req: Request): Promise<Response> {
   const session = await getSession(req);
   if (!session.valid) {
     return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
@@ -108,7 +108,7 @@ export async function DELETE(req: NextRequest): Promise<Response> {
  * Devolve os ids dos lembretes já `sent` no mirror — a reconciliação client
  * (on-mount) usa-os para marcar `sent` em Dexie e depois remove-os via DELETE.
  */
-export async function GET(req: NextRequest): Promise<Response> {
+export async function GET(req: Request): Promise<Response> {
   const session = await getSession(req);
   if (!session.valid) {
     return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
