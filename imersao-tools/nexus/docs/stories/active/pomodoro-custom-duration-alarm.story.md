@@ -2,7 +2,7 @@
 
 **Story ID:** pomodoro-custom-duration (feature standalone, não pertence a nenhum Epic numerado)
 **Epic:** — (funcionalidade isolada; commit `fd7fbd12` em branch partilhada, **não em `main`**)
-**Status:** Ready for Review — gate `@architect`
+**Status:** Reviewed — gate `@architect` PASS (ready for `@devops` cherry-pick + PR)
 **Branch de origem:** `feat/nexus-v2-story-4.8-push-dispatch` (commit `fd7fbd12fe8183b5dca2c24b5a34684267d3e7f8`)
 **Nota de ciclo:** Esta funcionalidade foi implementada (`fd7fbd12`) numa branch partilhada com a Story 4.8. A Story 4.8 foi isolada (cherry-pick) e mergeada via PR #55. Este commit **não está em `main`** e precisa de ciclo SDC próprio (PR isolado, gate @architect, CodeRabbit). Ver histórico em `RETOMA-20260603-story-4.8-scheduler-live-AC8-pendente-pomodoro-promo.md` §E.
 **Bloqueia:** nenhuma
@@ -108,12 +108,12 @@ As alterações limitam-se a `hooks/usePomodoro.ts` + `components/widgets/Pomodo
   - [x] `npm run test:unit` → 1329/1329 PASS, 113 ficheiros (inclui os 4 testes de `usePomodoro.test.tsx` + 1 novo teste SF-2)
   - [x] `npm run build` → exit 0, 23 rotas geradas
 
-- [ ] T2 — Gate `@architect` de saída (revisão do código existente) — **PENDENTE (@architect)**
-  - [ ] `@architect` revê `usePomodoro.ts` — ADR-2 (localStorage), `endsAt` concurrency model, `AudioContext` fallback
-  - [ ] `@architect` revê `PomodoroWidget.tsx` — input desactivado enquanto a correr, sem regressão
-  - [ ] `@architect` revê testes — 5 cenários cobrem os AC principais (4 originais + SF-2)
-  - [ ] `@architect` regista a contagem de estados de render do `PomodoroWidget.tsx` (SF-1)
-  - [ ] Gate: PASS / CONCERNS / FAIL
+- [x] T2 — Gate `@architect` de saída (revisão do código existente) — **PASS (@architect Aria, 03/06/2026)**
+  - [x] `@architect` revê `usePomodoro.ts` — ADR-2 (localStorage), `endsAt` concurrency model, `AudioContext` fallback
+  - [x] `@architect` revê `PomodoroWidget.tsx` — input desactivado enquanto a correr, sem regressão
+  - [x] `@architect` revê testes — 5 cenários cobrem os AC principais (4 originais + SF-2)
+  - [x] `@architect` regista a contagem de estados de render do `PomodoroWidget.tsx` (SF-1) — **5 estados, todos pré-existentes da Story 0.8**
+  - [x] Gate: **PASS**
 
 - [ ] T3 — Criar PR isolado (responsabilidade `@devops`)
   - [ ] Cherry-pick `fd7fbd12` para branch nova `feat/nexus-v2-pomodoro-custom-duration`
@@ -260,6 +260,7 @@ v2/tests/unit/hooks/usePomodoro.test.tsx
 | 02/06/2026 | v0.1 | Implementação original (commit `fd7fbd12`) em branch partilhada. Story técnica mínima criada. | Dex (`@dev`) / GPT-5 Codex |
 | 03/06/2026 | v0.2 | Refinamento pelo `@sm` River: alinhamento ao SDC, AC testáveis, Tasks de gate/promoção, Dev Notes com código real. Status: Draft — Ready for PO validation. | River (`@sm`) |
 | 03/06/2026 | v0.3 | Gate local `@dev` Dex: 4 quality gates frescos PASS (typecheck/lint/test 1329/build, após `npm install` que repôs `node_modules` incompleto). SF-2 avaliado → manter comportamento + teste de invariante adicionado (5 testes). Dev Agent Record + File List. Status: Ready for Review (gate `@architect`). | Dex (`@dev`) |
+| 03/06/2026 | v0.4 | Gate de saída `@architect` Aria: **PASS**. AC→código fiel; SF-1 registado (5 estados de render, todos pré-existentes Story 0.8 → não exige teste de componente); SF-2 arquitecturalmente sã; ADR-2 retrocompatível; scope isolado (4 ficheiros, zero push/4.8). Status: Reviewed (ready for `@devops` cherry-pick + PR). | Aria (`@architect`) |
 
 ## Not-Tested Evidence Gate
 
@@ -314,3 +315,48 @@ A D-COMPONENT-TEST declara "2 estados → fronteira → não obrigatório". Cont
 
 ### Próxima acção
 `@dev *develop pomodoro-custom-duration` (T1 quality gates locais — código já existe) → gate `@architect` (T2, com SF-1/SF-2 endereçados no registo do gate) → `@devops` cherry-pick `fd7fbd12` + PR isolado (T3). Status pode passar Draft → Approved.
+
+---
+
+## Architect Gate (Aria) — 03/06/2026 — VEREDICTO: PASS
+
+> Gate de saída T2. `separation-of-roles.md`: `@dev` executou/validou; o gate sobe para `@architect` (gate de feature isolada já implementada, designado pelo handoff). **Não toquei neste código antes** — gate sobre código pré-existente de `fd7fbd12`. Verificação cruzada com código real (`hooks/usePomodoro.ts`, `components/widgets/PomodoroWidget.tsx`, `tests/unit/hooks/usePomodoro.test.tsx`) e `git show --stat`.
+
+| # | Ponto do gate | Status | Nota |
+|---|---------------|--------|------|
+| 1 | AC → código (amostra) | PASS | Mapa AC1-AC7 da story fiel ao código. Verificado: AC1 input min=1/max=180 `disabled={isRunning}` (Widget L73-92) + clamp `normalizeWorkDuration` (hook L75-79); AC3 `endsAt=Date.now()+timeLeft*1000` (L209) + recompute `Math.ceil` (L142); AC5/AC6 `ALARM_PATTERNS` soft=3/clear=6/urgent=8 (L33-37), default `clear` vol 0.5; teste confirma 6 oscillators (test L122) |
+| 2 | SF-1 — contagem de estados de render | PASS | **5 estados de render distintos** (ver tabela abaixo). Todos PRÉ-EXISTENTES da Story 0.8. `fd7fbd12` adiciona só 2 controlos sempre-presentes (input + select) sem novo ramo de árvore. `react-component-test-criteria.md` aplica-se ao que a story **altera** (baixo risco, sem novo estado). Lógica nova vive no hook (5 testes). **Não exige teste de componente.** |
+| 3 | SF-2 — input activo em `isBreak` | PASS | Arquitecturalmente sã. `setWorkDurationMinutes` (L229) preserva `timeLeft` em `isRunning\|\|isBreak`: alterar duração na pausa só configura a próxima sessão. `@dev` blindou com teste de invariante (test L81-105) sem tocar código de produção — abordagem correcta |
+| 4 | ADR-2 / localStorage retrocompatível | PASS | `loadState` (L121-152): normalizadores com fallbacks 25/`clear`; `endsAt` defensivo; reset diário preservado; `toStoredState` exclui `alarmDue` interno. Estado pré-`fd7fbd12` não quebra (spread `...baseState`). Dentro do contrato ADR-2 (<100KB, UI não-crítica) |
+| 5 | Scope isolation | PASS | `git show --stat fd7fbd12` → exactamente 4 ficheiros (story + Widget + hook + teste). **Zero ficheiros de push/4.8.** `473fb8b7` toca só story + teste. Cherry-pick `@devops` será limpo |
+
+### SF-1 — Contagem de estados de render registada (para o CR não reabrir como Major)
+
+`PomodoroWidget.tsx` tem **5 estados de render distintos**:
+
+| # | Estado de render | Localização | Origem |
+|---|------------------|-------------|--------|
+| 1 | `isRunning` true vs false (input `disabled`, cor do tempo, botão Iniciar/Pausar) | L43, L79, L134-144 | Story 0.8 |
+| 2 | `taskLinkOpen` colapsado vs expandido (bloco condicional) | L183 `{taskLinkOpen && ...}` | Story 0.8 |
+| 3 | `tasks === undefined` (a carregar) | L193 | Story 0.8 |
+| 4 | `tasks.length === 0` (sem tarefas) | L194-196 | Story 0.8 |
+| 5 | `tasks.length > 0` (select de tarefas) | L197-220 | Story 0.8 |
+
+**Conclusão SF-1:** contagem = 5 (>= 3), **todos pré-existentes da Story 0.8**. O commit `fd7fbd12` adiciona o input numérico (L73-92) e o select de alarme (L107-125) — **ambos renderizam incondicionalmente**, sem introduzir ramo de render novo. Pela `react-component-test-criteria.md`, a regra incide sobre o que a story **altera**: alteração de baixo risco, sem novo estado de render. A lógica nova é toda do hook e está coberta por 5 testes unitários. **Ausência de teste de componente é deliberada e defensável — não exige teste de componente adicional.**
+
+### Observação não-bloqueadora (transparência)
+
+O `useEffect` de alarme (L174-178) inclui `state.alarmSound` nas dependências; `alarmDue` é reposto a `false` no mesmo efeito (L177), pelo que mudar o alarme com `alarmDue` activo não causa duplo disparo na prática. Não é defeito — registo só para transparência ao `@devops`/CR.
+
+### Cobertura de testes (5 cenários)
+
+| Teste | AC coberto |
+|-------|-----------|
+| "permite configurar e persistir a duracao" | AC1, AC2 |
+| "permite escolher e persistir um alarme mais intenso" | AC6 |
+| "usa endsAt persistido... apos remount" | AC3 |
+| "alterar a duracao durante a pausa nao perturba o timer (SF-2)" | invariante SF-2 |
+| "completa sessao vencida apos remount e toca alarme uma vez" | AC4, AC5 |
+
+### Próxima acção (T3 — `@devops`)
+`@devops` cherry-pick `fd7fbd12` + `473fb8b7` para branch isolada `feat/nexus-v2-pomodoro-custom-duration` → confirmar que nenhum ficheiro de push/4.8 entra → pre-push gates (typecheck + lint + vitest + build) → `gh pr create` contra `main` (--repo DaSilvaAlves/ecosistema-ia-avancada-pt) → CodeRabbit Iter 1. Handoff: `RETOMA-20260603-pomodoro-gate-PASS-ready-for-devops.md`.
