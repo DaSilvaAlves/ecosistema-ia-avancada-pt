@@ -9,9 +9,20 @@ import { NextRequest, NextResponse } from 'next/server';
  * NOTA: Middleware corre em Edge runtime. Validação completa via KV é feita
  * dentro de cada handler `/api/*` (que importa `getSession`). Aqui apenas
  * verifica presença do cookie para redirect rápido.
+ *
+ * Story 4.8 (hotfix) — `/api/push/dispatch` é exemptado do redirect de cookie.
+ * É um endpoint sem cookie, chamado por um scheduler (Vercel Cron / cron-job.org)
+ * que nunca traz `nexus_session`. Sem a excepção, o middleware redireciona o POST
+ * para `/login` (307) e o handler nunca corre — o disparo server-side de Web Push
+ * fica não-funcional. A excepção NÃO abre buraco: o handler impõe a sua própria
+ * auth `CRON_SECRET` (`Authorization: Bearer`, comparação timing-safe; 503 se o
+ * secret estiver ausente, 401 se o Bearer estiver errado). "Público" aqui significa
+ * apenas "salta o redirect de cookie" — mesmo padrão de `/api/auth/login`. Só o
+ * dispatch é Bearer-auth cookie-less; `send`/`subscribe`/`schedule` são cookie-auth
+ * do browser e mantêm-se protegidos.
  */
 
-const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/logout'];
+const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/logout', '/api/push/dispatch'];
 const PUBLIC_PREFIXES = ['/_next/', '/icons/', '/favicon', '/manifest', '/sw.js', '/api/auth/'];
 
 function isPublic(pathname: string): boolean {
