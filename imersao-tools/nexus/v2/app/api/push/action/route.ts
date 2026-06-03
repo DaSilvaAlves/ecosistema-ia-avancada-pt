@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getServerEnv } from '@/lib/shared/env';
-import { secretsMatch, extractBearer } from '@/lib/push/cron-auth';
+import { getSession } from '@/lib/auth/session';
 import {
   listSchedules,
   markScheduleSent,
@@ -11,10 +10,14 @@ import {
 /**
  * Nexus v2 — Acção de notificação push aplicada ao mirror KV (Story 4.9, AC7)
  *
- * Endpoint **sem cookie**, protegido por `CRON_SECRET` (`Authorization: Bearer`).
- * Chamado pelo Service Worker (`public/sw.js`) quando o utilizador clica num
- * botão da notificação — o SW não tem contexto de sessão, por isso reutiliza o
- * mesmo segredo Bearer do dispatch (D-ACTION-AUTH).
+ * Endpoint **cookie-auth** (`getSession` → 401), igual ao `/api/push/schedule`.
+ * Chamado pelo Service Worker (`public/sw.js`) no handler `notificationclick`,
+ * que corre same-origin no browser do utilizador autenticado — o `fetch` envia
+ * o cookie de sessão automaticamente (default same-origin credentials;
+ * `SameSite=Strict` envia em requisições same-origin). Decisão D-ACTION-AUTH-COOKIE
+ * (revoga D-ACTION-AUTH/CRON_SECRET, que estava funcionalmente quebrada — o secret
+ * nunca era injectado no SW estático → 401 sempre — e exporia no cliente o secret
+ * que protege o `/api/push/dispatch`).
  *
  *   - `marcar-feito` — marca a entrada `sent` no mirror (`markScheduleSent`); a
  *     reconciliação on-mount (`reconcileSentReminders`, 4.8) traz o `sent` para
@@ -25,8 +28,9 @@ import {
  *     on-mount (`reconcileSnoozedReminders`, AC10/AC11) marca `snoozed` em Dexie
  *     para feedback visual.
  *
- * Node runtime: `@vercel/kv` no store, `node:crypto` na auth (ADR-1).
- * Segurança (NFR5): `CRON_SECRET` nunca é logado; comparação timing-safe.
+ * Node runtime: `@vercel/kv` no store, `getSession` em KV (ADR-1).
+ * Segurança (NFR5): cookie HttpOnly; o `/api/push/dispatch` (cron, server-to-server)
+ * mantém o `CRON_SECRET` Bearer — os dois caminhos de auth separam-se.
  *
  * Trace: Story 4.9 AC7; EPIC-4.md §5 (gate @architect — contrato externo).
  */
@@ -41,19 +45,9 @@ const ActionSchema = z.object({
 });
 
 export async function POST(req: Request): Promise<Response> {
-  const cronSecret = getServerEnv().CRON_SECRET;
-  if (!cronSecret) {
-    // Sem secret configurado, o endpoint nunca processa (segurança fail-closed).
-    console.error('[push/action] CRON_SECRET ausente na configuração');
-    return NextResponse.json(
-      { error: 'Serviço de acção indisponível.' },
-      { status: 503 }
-    );
-  }
-
-  const provided = extractBearer(req.headers.get('authorization'));
-  if (provided === null || !secretsMatch(provided, cronSecret)) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  const session = await getSession(req);
+  if (!session.valid) {
+    return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
   }
 
   let body: unknown;

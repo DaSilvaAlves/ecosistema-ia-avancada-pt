@@ -12,13 +12,6 @@
 //
 // Não é TypeScript — corre no scope global do browser (ServiceWorkerGlobalScope).
 
-// Segredo Bearer partilhado com /api/push/action. O SW não tem cookie de sessão,
-// por isso reutiliza o CRON_SECRET (mesmo padrão da 4.8 — D-ACTION-AUTH).
-// É injectado no momento do registo (substituição de placeholder server-side) ou
-// fica vazio em ambientes onde o endpoint não está protegido — o fetch é
-// best-effort e nunca quebra o SW.
-const PUSH_ACTION_SECRET = self.__NEXUS_PUSH_ACTION_SECRET__ || '';
-
 // Acções da notificação. ASCII kebab-case — conformes à NotificationAction.action
 // spec (sem acentos/cedilha). Ver external-contract-identifiers.md.
 const ACTION_MARK_DONE = 'marcar-feito';
@@ -65,17 +58,18 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// Envia a acção do utilizador ao endpoint Node /api/push/action. Best-effort: uma
+// Envia a acção do utilizador ao endpoint Node /api/push/action. O fetch é
+// same-origin (o notificationclick corre no contexto autenticado do browser),
+// por isso o cookie de sessão é enviado automaticamente — auth por sessão, não
+// por secret (D-ACTION-AUTH-COOKIE). `credentials: 'same-origin'` é o default
+// para fetches same-origin; explicitado aqui por clareza. Best-effort: uma
 // falha de rede não pode quebrar o handler do SW (a reconciliação on-mount na app
 // recupera o estado na próxima abertura).
 function postAction(body) {
-  const headers = { 'Content-Type': 'application/json' };
-  if (PUSH_ACTION_SECRET) {
-    headers['Authorization'] = 'Bearer ' + PUSH_ACTION_SECRET;
-  }
   return fetch('/api/push/action', {
     method: 'POST',
-    headers,
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   }).catch((error) => {
     console.error('[SW] falha ao enviar acção para /api/push/action', error);

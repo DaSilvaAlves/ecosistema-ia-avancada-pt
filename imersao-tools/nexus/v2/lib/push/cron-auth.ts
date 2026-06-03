@@ -1,13 +1,19 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 
 /**
- * Nexus v2 — Auth partilhada `CRON_SECRET` Bearer para endpoints cookie-less
- * (Story 4.9, D-ACTION-AUTH)
+ * Nexus v2 — Auth `CRON_SECRET` Bearer para o endpoint cron `/api/push/dispatch`
+ * (Story 4.8, extraído na Story 4.9)
  *
- * Extraído da lógica inline de `/api/push/dispatch` (Story 4.8) para ser
- * reutilizado pelo `/api/push/action` (Story 4.9). Ambos os endpoints são
- * chamados sem cookie de sessão — o dispatch pelo scheduler, o action pelo
- * Service Worker — e partilham o mesmo `CRON_SECRET` (`Authorization: Bearer`).
+ * Extraído da lógica inline de `/api/push/dispatch` (Story 4.8) para um módulo
+ * server-only. Usado **apenas** pelo `/api/push/dispatch` — chamado pelo
+ * scheduler externo (cron-job.org), server-to-server, sem cookie de sessão.
+ *
+ * Nota (Story 4.9, D-ACTION-AUTH-COOKIE): o `/api/push/action` foi inicialmente
+ * desenhado para reutilizar este Bearer (D-ACTION-AUTH), mas essa decisão foi
+ * revogada — esse endpoint passou a auth por cookie de sessão (`getSession`),
+ * porque o Service Worker corre same-origin no browser autenticado. Este módulo
+ * deixou de ser partilhado: o `CRON_SECRET` é server-to-server e nunca vive no
+ * cliente.
  *
  * Server-only (`node:crypto`). NUNCA importar em código client.
  *

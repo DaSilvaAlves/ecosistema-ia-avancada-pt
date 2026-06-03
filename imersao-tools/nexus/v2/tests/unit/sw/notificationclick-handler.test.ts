@@ -85,6 +85,12 @@ describe('SW notificationclick handler — Story 4.9', () => {
       reminderId: REMINDER_ID,
       action: 'marcar-feito',
     });
+    // Auth por cookie same-origin (D-ACTION-AUTH-COOKIE): o fetch envia o cookie
+    // de sessão automaticamente e NÃO inclui header Authorization. Falharia se o
+    // SW regredisse para Bearer (CRON_SECRET no cliente — a regressão revogada).
+    expect(init.credentials).toBe('same-origin');
+    expect(init.headers).toEqual({ 'Content-Type': 'application/json' });
+    expect(init.headers).not.toHaveProperty('Authorization');
     expect(openWindowMock).not.toHaveBeenCalled();
   });
 
