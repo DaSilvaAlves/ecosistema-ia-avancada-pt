@@ -10,6 +10,7 @@ import {
   runRecurrenceEngine,
   runFinanceRecurrenceEngine,
 } from '@/lib/shared/recurrence';
+import { reconcileSentReminders } from '@/lib/push/reconcile-reminders';
 
 /**
  * Nexus v2 — useDailyGenerationEngine (Story 3.10 / AC2-AC4)
@@ -44,6 +45,12 @@ import {
 export function useDailyGenerationEngine(): void {
   useEffect(() => {
     if (typeof window === 'undefined') return; // SSR guard
+
+    // Story 4.8 (AC6, D-RECON-MOUNT) — reconciliação de lembretes disparados
+    // server-side corre em CADA mount, fora do gate diário: traz os `sent` do
+    // mirror KV para Dexie. É barata (1 fetch) e idempotente; gated-por-dia
+    // atrasaria a marcação `sent` até ao dia seguinte se a app reabrisse hoje.
+    void reconcileSentReminders();
 
     const todayIso = getTodayLocalIso();
     const lastRunIso = window.localStorage.getItem(DAILY_RUN_STORAGE_KEY);

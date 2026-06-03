@@ -26,6 +26,11 @@ const ServerEnvSchema = z.object({
 
   WEB_PUSH_VAPID_PRIVATE: z.string().optional(),
 
+  // Story 4.8 — segredo partilhado que protege `/api/push/dispatch` (chamado
+  // pelo scheduler, sem cookie de sessão). Opcional em dev (o dispatch recusa-se
+  // a operar se ausente); provisionado pelo @devops em prod. NUNCA logado (NFR5).
+  CRON_SECRET: z.string().optional(),
+
   KV_REST_API_URL: z.string().url().optional(),
   KV_REST_API_TOKEN: z.string().optional(),
 

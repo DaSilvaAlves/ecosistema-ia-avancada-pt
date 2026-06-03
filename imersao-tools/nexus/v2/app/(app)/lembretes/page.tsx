@@ -13,6 +13,10 @@ import {
   getRecurrence,
   deleteRecurrence,
 } from '@/lib/db/repos/recurrences';
+import {
+  putReminderSchedule,
+  removeReminderSchedule,
+} from '@/lib/push/schedule-client';
 import type { Reminder } from '@/types/db';
 import { TabStrip, type TabDescriptor } from '@/components/ui/TabStrip';
 import {
@@ -156,14 +160,17 @@ export default function LembretesPage(): React.ReactElement {
           ownerId: reminderId,
         });
       }
-      await createReminder({
+      const created: Reminder = {
         id: reminderId,
         text: input.text,
         fireAt: input.fireAt,
         recurrenceId,
         channels: ['push'],
         status: 'pending',
-      });
+      };
+      await createReminder(created);
+      // Story 4.8 (AC3.2) — espelha a agenda para o mirror KV (disparo server-side).
+      await putReminderSchedule(created);
     } catch (error) {
       console.error('Erro ao criar lembrete', error);
       setErrorMessage('Erro ao criar lembrete — tenta novamente.');
@@ -211,6 +218,13 @@ export default function LembretesPage(): React.ReactElement {
         fireAt: input.fireAt,
         recurrenceId,
       });
+      // Story 4.8 (AC3.2) — re-espelha a agenda (text/fireAt mudaram).
+      await putReminderSchedule({
+        ...reminder,
+        text: input.text,
+        fireAt: input.fireAt,
+        recurrenceId,
+      });
     } catch (error) {
       console.error('Erro ao guardar lembrete', error);
       setErrorMessage('Erro ao guardar lembrete — tenta novamente.');
@@ -231,6 +245,8 @@ export default function LembretesPage(): React.ReactElement {
   const handleCancel = useCallback(async (reminder: Reminder): Promise<void> => {
     try {
       await updateReminder(reminder.id, { status: 'cancelled' });
+      // Story 4.8 (AC3.2) — cancelado deixa de ser devido: remove do mirror KV.
+      await removeReminderSchedule(reminder.id);
     } catch (error) {
       console.error('Erro ao cancelar lembrete', error);
       setErrorMessage('Erro ao cancelar lembrete — tenta novamente.');
@@ -241,6 +257,8 @@ export default function LembretesPage(): React.ReactElement {
   const handleRestore = useCallback(async (reminder: Reminder): Promise<void> => {
     try {
       await updateReminder(reminder.id, { status: 'pending' });
+      // Story 4.8 (AC3.2) — restaurado volta a ser devido: re-espelha no mirror KV.
+      await putReminderSchedule({ ...reminder, status: 'pending' });
     } catch (error) {
       console.error('Erro ao restaurar lembrete', error);
       setErrorMessage('Erro ao restaurar lembrete — tenta novamente.');
@@ -256,6 +274,8 @@ export default function LembretesPage(): React.ReactElement {
     if (!confirmed) return;
     try {
       await deleteReminder(reminder.id);
+      // Story 4.8 (AC3.2) — apagado: remove a agenda do mirror KV.
+      await removeReminderSchedule(reminder.id);
     } catch (error) {
       console.error('Erro ao apagar lembrete', error);
       setErrorMessage('Erro ao apagar lembrete — tenta novamente.');

@@ -1,32 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import webpush from 'web-push';
 import { getSession } from '@/lib/auth/session';
-import { getServerEnv } from '@/lib/shared/env';
-import {
-  deletePushSubscription,
-  getPushSubscription,
-} from '@/lib/push/subscriptions-store';
+import { sendPushNotification } from '@/lib/push/send-notification';
 
 /**
- * Nexus v2 — Push send (Story 4.7, AC9)
+ * Nexus v2 — Push send (Story 4.7 AC9; refactor Story 4.8 AC3.1)
  *
- * Envia uma notificação Web Push para a subscription singleton guardada em KV.
- * Endpoint interno: a Story 4.8 invoca-o para disparar lembretes agendados (D5).
- * Esta story entrega só a infra de envio — o agendamento é da 4.8 (GAP-4.6).
+ * Endpoint **cookie-auth** para envio manual de uma notificação (teste manual e,
+ * futuramente, a Story 4.9). Story 4.8: a lógica de envio foi extraída para
+ * `lib/push/send-notification.ts` (partilhada com `/api/push/dispatch`); este
+ * route handler é agora um wrapper fino — **contrato externo inalterado** (mesmos
+ * status codes e bodies da 4.7: 401/400/409/410/500/200).
  *
- * Node runtime obrigatório: `web-push` usa `crypto` nativo Node, incompatível
- * com Edge runtime da Vercel (GAP-4.3, ADR-1).
+ * Node runtime obrigatório: `web-push` usa `crypto` nativo Node (GAP-4.3, ADR-1).
+ * Segurança (NFR5): nenhum secret é logado (o logging vive em `send-notification`).
  *
- * Segurança (NFR5): `WEB_PUSH_VAPID_PRIVATE` e `keys.auth` nunca são logados.
- *
- * Trace: FR34; D5; CONCERN C8.1 Pax (degradação graciosa se KV indisponível).
+ * Trace: FR34; Story 4.8 AC3.1; Architect Gate (a) ponto 1.
  */
 
 export const runtime = 'nodejs';
-
-// Literal VAPID subject (RFC 8292 §3.2) — não é env var (preferência Aria).
-const VAPID_SUBJECT = 'mailto:eurico@nexus.app';
 
 const SendSchema = z.object({
   title: z.string().min(1, 'title ausente'),
@@ -52,69 +44,30 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const parsed = SendSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Payload inválido.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Payload inválido.' }, { status: 400 });
   }
 
-  // Config VAPID — ausência é erro de configuração (500), nunca expõe valores.
-  const publicKey = process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC;
-  const privateKey = getServerEnv().WEB_PUSH_VAPID_PRIVATE;
-  if (!publicKey || !privateKey) {
-    console.error('[push/send] VAPID keys ausentes na configuração');
-    return NextResponse.json(
-      { error: 'Serviço de notificações indisponível.' },
-      { status: 500 }
-    );
-  }
-
-  try {
-    const subscription = await getPushSubscription();
-    if (subscription === null) {
-      return NextResponse.json({ error: 'no_subscription' }, { status: 409 });
-    }
-
-    webpush.setVapidDetails(VAPID_SUBJECT, publicKey, privateKey);
-    await webpush.sendNotification(
-      subscription,
-      JSON.stringify({
-        title: parsed.data.title,
-        body: parsed.data.body,
-        data: parsed.data.data,
-      })
-    );
-
+  const result = await sendPushNotification(parsed.data);
+  if (result.ok) {
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    // Degradação graciosa (C8.1): KV indisponível, push service a recusar, etc.
-    // Loga só a mensagem do erro — nunca secrets nem o corpo da subscription.
-    const message = err instanceof Error ? err.message : 'erro desconhecido';
+  }
 
-    // Subscrição expirada/cancelada: o push service responde 404/410. Apagar o
-    // registo singleton para não voltar a enviar a um endpoint morto (CR Iter 1
-    // Fix #1). Best-effort: uma falha do delete não muda a resposta ao chamador.
-    if (err instanceof webpush.WebPushError && (err.statusCode === 404 || err.statusCode === 410)) {
-      try {
-        await deletePushSubscription();
-        console.error(
-          `[push/send] subscrição expirada (HTTP ${err.statusCode}) — removida do store`
-        );
-      } catch (delErr) {
-        const delMessage =
-          delErr instanceof Error ? delErr.message : 'erro desconhecido';
-        console.error('[push/send] falha ao remover subscrição expirada:', delMessage);
-      }
+  // Mapeamento preservado da Story 4.7 (contrato externo inalterado).
+  switch (result.reason) {
+    case 'not_configured':
       return NextResponse.json(
-        { error: 'Subscrição expirada.' },
-        { status: 410 }
+        { error: 'Serviço de notificações indisponível.' },
+        { status: 500 }
       );
-    }
-
-    console.error('[push/send] falha ao enviar notificação:', message);
-    return NextResponse.json(
-      { error: 'Falha ao enviar notificação.' },
-      { status: 500 }
-    );
+    case 'no_subscription':
+      return NextResponse.json({ error: 'no_subscription' }, { status: 409 });
+    case 'expired':
+      return NextResponse.json({ error: 'Subscrição expirada.' }, { status: 410 });
+    case 'error':
+    default:
+      return NextResponse.json(
+        { error: 'Falha ao enviar notificação.' },
+        { status: 500 }
+      );
   }
 }
