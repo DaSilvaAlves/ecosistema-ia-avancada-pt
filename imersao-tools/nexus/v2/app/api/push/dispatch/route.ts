@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createHash, timingSafeEqual } from 'node:crypto';
 import { getServerEnv } from '@/lib/shared/env';
 import { sendPushNotification } from '@/lib/push/send-notification';
+import { secretsMatch, extractBearer } from '@/lib/push/cron-auth';
 import {
   listSchedules,
   markScheduleSent,
@@ -29,23 +29,8 @@ import {
 
 export const runtime = 'nodejs';
 
-/**
- * Comparação timing-safe de dois segredos. Hash SHA-256 de ambos antes de
- * comparar para (a) igualar o comprimento (evita o `throw` de `timingSafeEqual`
- * e o leak do comprimento) e (b) manter tempo constante.
- */
-function secretsMatch(provided: string, expected: string): boolean {
-  const a = createHash('sha256').update(provided).digest();
-  const b = createHash('sha256').update(expected).digest();
-  return timingSafeEqual(a, b);
-}
-
-/** Extrai o token de um header `Authorization: Bearer <token>`. */
-function extractBearer(header: string | null): string | null {
-  if (!header) return null;
-  const match = header.match(/^Bearer\s+(.+)$/i);
-  return match?.[1] ?? null;
-}
+// Auth `CRON_SECRET` Bearer partilhada com `/api/push/action` (Story 4.9):
+// `secretsMatch`/`extractBearer` movidas para `lib/push/cron-auth.ts`.
 
 async function dispatchDue(now: number): Promise<{
   total: number;

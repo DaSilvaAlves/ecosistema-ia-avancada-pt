@@ -79,3 +79,30 @@ export async function fetchSentReminderIds(): Promise<string[]> {
     return [];
   }
 }
+
+/**
+ * Lê as entradas `pending` do mirror com `{ id, fireAt }` (Story 4.9, AC9). A
+ * reconciliação de snooze (`reconcileSnoozedReminders`) usa-as para reflectir um
+ * `fireAt` actualizado em Dexie. Devolve `[]` em qualquer falha (best-effort —
+ * mesmo padrão de `fetchSentReminderIds`). Auth de sessão (cookie) implícita.
+ */
+export async function fetchPendingSchedules(): Promise<
+  Array<{ id: string; fireAt: number }>
+> {
+  try {
+    const resp = await fetch('/api/push/schedule', { method: 'GET' });
+    if (!resp.ok) return [];
+    const json = (await resp.json()) as { pending?: unknown };
+    if (!Array.isArray(json.pending)) return [];
+    return json.pending.filter(
+      (entry): entry is { id: string; fireAt: number } =>
+        typeof entry === 'object' &&
+        entry !== null &&
+        typeof (entry as { id?: unknown }).id === 'string' &&
+        typeof (entry as { fireAt?: unknown }).fireAt === 'number',
+    );
+  } catch (error) {
+    console.error('[push/schedule-client] falha ao ler agenda pendente', error);
+    return [];
+  }
+}

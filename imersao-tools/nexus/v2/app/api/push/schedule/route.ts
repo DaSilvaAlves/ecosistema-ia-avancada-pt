@@ -105,8 +105,13 @@ export async function DELETE(req: Request): Promise<Response> {
 }
 
 /**
- * Devolve os ids dos lembretes já `sent` no mirror — a reconciliação client
- * (on-mount) usa-os para marcar `sent` em Dexie e depois remove-os via DELETE.
+ * Devolve, para a reconciliação client (on-mount):
+ *   - `sent`    — ids dos lembretes já disparados (4.8 AC6 — marca `sent` em Dexie
+ *     e remove-os via DELETE).
+ *   - `pending` — entradas a aguardar disparo, com `{ id, fireAt }` (Story 4.9
+ *     AC8). Usado por `reconcileSnoozedReminders` para reflectir um `fireAt`
+ *     actualizado por snooze em Dexie. Extensão não-breaking: `fetchSentReminderIds`
+ *     lê apenas `json.sent` e ignora campos desconhecidos.
  */
 export async function GET(req: Request): Promise<Response> {
   const session = await getSession(req);
@@ -117,7 +122,10 @@ export async function GET(req: Request): Promise<Response> {
   try {
     const schedules = await listSchedules();
     const sent = schedules.filter((s) => s.status === 'sent').map((s) => s.id);
-    return NextResponse.json({ sent });
+    const pending = schedules
+      .filter((s) => s.status === 'pending')
+      .map((s) => ({ id: s.id, fireAt: s.fireAt }));
+    return NextResponse.json({ sent, pending });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'erro desconhecido';
     console.error('[push/schedule] falha ao ler agenda:', message);

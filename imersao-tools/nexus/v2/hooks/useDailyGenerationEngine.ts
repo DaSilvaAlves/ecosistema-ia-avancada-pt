@@ -11,6 +11,7 @@ import {
   runFinanceRecurrenceEngine,
 } from '@/lib/shared/recurrence';
 import { reconcileSentReminders } from '@/lib/push/reconcile-reminders';
+import { reconcileSnoozedReminders } from '@/lib/push/reconcile-snooze';
 
 /**
  * Nexus v2 — useDailyGenerationEngine (Story 3.10 / AC2-AC4)
@@ -51,6 +52,9 @@ export function useDailyGenerationEngine(): void {
     // mirror KV para Dexie. É barata (1 fetch) e idempotente; gated-por-dia
     // atrasaria a marcação `sent` até ao dia seguinte se a app reabrisse hoje.
     void reconcileSentReminders();
+    // Story 4.9 (AC11) — reconciliação de lembretes com `fireAt` actualizado por
+    // snooze. Mesma corrida on-mount, barata e idempotente.
+    void reconcileSnoozedReminders();
 
     const todayIso = getTodayLocalIso();
     const lastRunIso = window.localStorage.getItem(DAILY_RUN_STORAGE_KEY);
