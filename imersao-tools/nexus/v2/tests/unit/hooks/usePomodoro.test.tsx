@@ -78,6 +78,32 @@ describe('usePomodoro', () => {
     expect(second.result.current.state.timeLeft).toBe(6 * 60);
   });
 
+  it('alterar a duracao durante a pausa nao perturba o timer da pausa em curso (SF-2)', () => {
+    const { result } = renderHook(() => usePomodoro());
+
+    // Sessao de 1 min, inicia e expira -> transita para pausa (isBreak=true)
+    act(() => {
+      result.current.setWorkDurationMinutes(1);
+      result.current.toggle();
+    });
+    act(() => {
+      vi.advanceTimersByTime(61_000);
+    });
+
+    expect(result.current.state.isBreak).toBe(true);
+    const breakTimeLeft = result.current.state.timeLeft;
+
+    // Durante a pausa o utilizador ajusta a proxima sessao de trabalho
+    act(() => {
+      result.current.setWorkDurationMinutes(45);
+    });
+
+    // A nova duracao fica guardada, mas a pausa em curso nao e tocada
+    expect(result.current.state.workDurationMinutes).toBe(45);
+    expect(result.current.state.timeLeft).toBe(breakTimeLeft);
+    expect(result.current.state.isBreak).toBe(true);
+  });
+
   it('completa sessao vencida apos remount e toca alarme uma vez', () => {
     const first = renderHook(() => usePomodoro());
 
