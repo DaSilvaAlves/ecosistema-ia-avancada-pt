@@ -2,7 +2,7 @@
 
 **Story ID:** pomodoro-custom-duration (feature standalone, não pertence a nenhum Epic numerado)
 **Epic:** — (funcionalidade isolada; commit `fd7fbd12` em branch partilhada, **não em `main`**)
-**Status:** Reviewed — gate `@architect` PASS (ready for `@devops` cherry-pick + PR)
+**Status:** Done — squash-merged em `main` `cd49d934` via PR #57 (CR Iter 1 limpo, gates verdes, autorizado por Eurico)
 **Branch de origem:** `feat/nexus-v2-story-4.8-push-dispatch` (commit `fd7fbd12fe8183b5dca2c24b5a34684267d3e7f8`)
 **Nota de ciclo:** Esta funcionalidade foi implementada (`fd7fbd12`) numa branch partilhada com a Story 4.8. A Story 4.8 foi isolada (cherry-pick) e mergeada via PR #55. Este commit **não está em `main`** e precisa de ciclo SDC próprio (PR isolado, gate @architect, CodeRabbit). Ver histórico em `RETOMA-20260603-story-4.8-scheduler-live-AC8-pendente-pomodoro-promo.md` §E.
 **Bloqueia:** nenhuma
