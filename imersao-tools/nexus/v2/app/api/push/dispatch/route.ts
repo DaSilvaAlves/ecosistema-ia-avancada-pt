@@ -29,8 +29,10 @@ import {
 
 export const runtime = 'nodejs';
 
-// Auth `CRON_SECRET` Bearer partilhada com `/api/push/action` (Story 4.9):
-// `secretsMatch`/`extractBearer` movidas para `lib/push/cron-auth.ts`.
+// Auth `CRON_SECRET` Bearer usada APENAS por `/api/push/dispatch` (cron,
+// server-to-server). O `/api/push/action` (Story 4.9) usa cookie de sessão
+// same-origin (D-ACTION-AUTH-COOKIE), não este secret. `secretsMatch`/`extractBearer`
+// em `lib/push/cron-auth.ts`.
 
 async function dispatchDue(now: number): Promise<{
   total: number;

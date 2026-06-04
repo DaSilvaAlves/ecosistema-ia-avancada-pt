@@ -18,10 +18,11 @@ const handlers: Record<string, Handler | undefined> = {};
 let openWindowMock: Mock;
 let matchAllMock: Mock;
 let fetchMock: Mock;
+let showNotificationMock: Mock;
 
 interface ClickEvent {
   action: string | undefined;
-  notification: { data: unknown; close: Mock };
+  notification: { title: string; body: string; data: unknown; close: Mock };
   waitUntil: Mock;
   _waited: Promise<unknown>[];
 }
@@ -30,7 +31,7 @@ function makeClickEvent(action: string | undefined, data: unknown): ClickEvent {
   const waited: Promise<unknown>[] = [];
   return {
     action,
-    notification: { data, close: vi.fn() },
+    notification: { title: 'Lembrete', body: 'Pagar a luz', data, close: vi.fn() },
     waitUntil: vi.fn((p: Promise<unknown>) => waited.push(p)),
     _waited: waited,
   };
@@ -46,13 +47,14 @@ beforeEach(async () => {
   openWindowMock = vi.fn(() => Promise.resolve());
   matchAllMock = vi.fn(() => Promise.resolve([]));
   fetchMock = vi.fn(() => Promise.resolve({ ok: true }));
+  showNotificationMock = vi.fn(() => Promise.resolve());
 
   vi.stubGlobal('self', {
     addEventListener: vi.fn((type: string, fn: Handler) => {
       handlers[type] = fn;
     }),
     skipWaiting: vi.fn(),
-    registration: { showNotification: vi.fn(() => Promise.resolve()) },
+    registration: { showNotification: showNotificationMock },
   });
   vi.stubGlobal('clients', {
     claim: vi.fn(() => Promise.resolve()),
@@ -142,5 +144,59 @@ describe('SW notificationclick handler — Story 4.9', () => {
     handlers.notificationclick?.(event);
     expect(event.waitUntil).toHaveBeenCalledTimes(1);
     await Promise.all(event._waited);
+  });
+
+  // M4 — falha HTTP (response.ok === false) NÃO é sucesso. O SW re-mostra a
+  // notificação (recovery path) para o utilizador saber que a acção falhou.
+  // Falharia se o SW voltasse a engolir o não-ok (a regressão revogada do M4).
+  it('M4 — response.ok===false (401) re-mostra a notificação (não silencia)', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 401 });
+    const event = makeClickEvent('marcar-feito', { reminderId: REMINDER_ID });
+    handlers.notificationclick?.(event);
+    await Promise.all(event._waited);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Recovery path: a notificação é re-mostrada com os botões accionáveis.
+    expect(showNotificationMock).toHaveBeenCalledTimes(1);
+    const [title, opts] = showNotificationMock.mock.calls[0];
+    expect(title).toBe('Lembrete');
+    expect(opts.body).toBe('Pagar a luz');
+    expect(opts.actions).toEqual([
+      { action: 'marcar-feito', title: 'Marcar feito' },
+      { action: 'snooze', title: 'Snooze 10min' },
+    ]);
+  });
+
+  // M4 — 409 schedule-gone (snooze de entrada já removida) também re-mostra.
+  it('M4 — snooze com 409 schedule-gone re-mostra a notificação', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 409 });
+    const event = makeClickEvent('snooze', { reminderId: REMINDER_ID });
+    handlers.notificationclick?.(event);
+    await Promise.all(event._waited);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(showNotificationMock).toHaveBeenCalledTimes(1);
+  });
+
+  // M4 — caminho de sucesso (ok===true): NÃO re-mostra. Garante que o recovery
+  // path só dispara em falha (asserção não-tautológica do par positivo/negativo).
+  it('M4 — response.ok===true NÃO re-mostra a notificação (caminho normal)', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true });
+    const event = makeClickEvent('marcar-feito', { reminderId: REMINDER_ID });
+    handlers.notificationclick?.(event);
+    await Promise.all(event._waited);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(showNotificationMock).not.toHaveBeenCalled();
+  });
+
+  // M4 — erro de rede (fetch rejeita) também re-mostra (best-effort transitório).
+  it('M4 — erro de rede re-mostra a notificação', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('offline'));
+    const event = makeClickEvent('marcar-feito', { reminderId: REMINDER_ID });
+    handlers.notificationclick?.(event);
+    await Promise.all(event._waited);
+
+    expect(showNotificationMock).toHaveBeenCalledTimes(1);
   });
 });

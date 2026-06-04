@@ -25,15 +25,28 @@ import { z } from 'zod';
 const SCHEDULE_KEY = 'nexus:push:schedule';
 
 /**
- * Estado de um lembrete no mirror. `pending` = a aguardar disparo; `sent` =
- * disparado pelo dispatch (aguarda reconciliação client → Dexie). `cancelled`
- * e `snoozed` nunca entram no mirror (o client remove-os).
+ * Estado de um lembrete no mirror. `status`: `pending` = a aguardar disparo;
+ * `sent` = disparado pelo dispatch (aguarda reconciliação client → Dexie).
+ * `cancelled` nunca entra no mirror (o client remove-o via DELETE).
+ *
+ * D-SNOOZE-CONTRACT (Story 4.9, Architect Gate Iter 3): `snoozedAt?` é o marcador
+ * dedicado e inequívoco de "adiado pelo utilizador". É ORTOGONAL a `status`:
+ * `status` exprime "a aguardar disparo / disparado"; `snoozedAt` (epoch ms do
+ * snooze) exprime "foi adiado". Uma entrada adiada por snooze mantém
+ * `status: 'pending'` (para o dispatch re-disparar quando o novo `fireAt` chegar)
+ * E ganha `snoozedAt`. O campo é OPCIONAL → entradas escritas pela 4.8
+ * (`putReminderSchedule`, sem `snoozedAt`) continuam válidas (retrocompatível;
+ * `listSchedules` não as descarta). A reconciliação on-mount actua só sobre
+ * entradas com `snoozedAt` definido — nunca sobre o conjunto `pending` inteiro.
  */
 export const ScheduleEntrySchema = z.object({
   id: z.string().uuid('id deve ser UUID válido'),
   fireAt: z.number().int().positive('fireAt deve ser epoch ms positivo'),
   text: z.string().min(1, 'text ausente'),
   status: z.enum(['pending', 'sent']),
+  // D-SNOOZE-CONTRACT: presente ⇔ entrada adiada pelo utilizador via "Snooze".
+  // Ausente nas entradas normais escritas pelo CRUD de lembretes (4.8).
+  snoozedAt: z.number().int().positive().optional(),
 });
 
 export type ScheduleEntry = z.infer<typeof ScheduleEntrySchema>;

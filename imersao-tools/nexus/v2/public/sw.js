@@ -62,17 +62,51 @@ self.addEventListener('push', (event) => {
 // same-origin (o notificationclick corre no contexto autenticado do browser),
 // por isso o cookie de sessão é enviado automaticamente — auth por sessão, não
 // por secret (D-ACTION-AUTH-COOKIE). `credentials: 'same-origin'` é o default
-// para fetches same-origin; explicitado aqui por clareza. Best-effort: uma
-// falha de rede não pode quebrar o handler do SW (a reconciliação on-mount na app
-// recupera o estado na próxima abertura).
-function postAction(body) {
-  return fetch('/api/push/action', {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  }).catch((error) => {
-    console.error('[SW] falha ao enviar acção para /api/push/action', error);
+// para fetches same-origin; explicitado aqui por clareza.
+//
+// D-SNOOZE-CONTRACT (M4 do CR PR #58): a resposta TEM de ser verificada. Uma
+// falha HTTP (401 sessão expirada, 409 schedule-gone no snooze, 5xx) NÃO é
+// sucesso — engoli-la deixaria o utilizador a pensar que a acção resultou. Em
+// não-`ok`, re-mostramos a notificação (recovery path mínimo) para o utilizador
+// saber que a acção falhou e poder repetir. Um erro de rede transitório é
+// best-effort (também re-mostra). Devolve `true` em sucesso, `false` caso falhe.
+async function postAction(body, notification) {
+  let response;
+  try {
+    response = await fetch('/api/push/action', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    // Falha de rede (offline, etc.) — re-mostra a notificação (best-effort).
+    console.error('[SW] falha de rede ao enviar acção para /api/push/action', error);
+    await reshowNotification(notification);
+    return false;
+  }
+
+  if (!response.ok) {
+    // Falha HTTP (401/409/5xx) ≠ sucesso. Re-mostra para o utilizador repetir.
+    console.error('[SW] /api/push/action devolveu estado não-ok', response.status);
+    await reshowNotification(notification);
+    return false;
+  }
+
+  return true;
+}
+
+// Re-mostra a notificação original (recovery path) reaproveitando título/corpo/data.
+// Mantém os botões accionáveis para o utilizador poder tentar a acção de novo.
+function reshowNotification(notification) {
+  if (!notification) return Promise.resolve();
+  return self.registration.showNotification(notification.title || 'Lembrete', {
+    body: notification.body || '',
+    data: notification.data,
+    actions: [
+      { action: ACTION_MARK_DONE, title: 'Marcar feito' },
+      { action: ACTION_SNOOZE, title: 'Snooze 10min' },
+    ],
   });
 }
 
@@ -100,20 +134,34 @@ self.addEventListener('notificationclick', (event) => {
   const reminderId = event.notification.data && event.notification.data.reminderId;
   const action = event.action;
 
+  // Snapshot da notificação para o recovery path do `postAction` (re-mostrar em
+  // falha HTTP/rede — D-SNOOZE-CONTRACT M4). `event.notification` já foi fechada
+  // acima; capturamos os campos necessários para a reconstruir.
+  const notification = {
+    title: event.notification.title,
+    body: event.notification.body,
+    data: event.notification.data,
+  };
+
   if (action === ACTION_MARK_DONE) {
     // AC4 — marca o lembrete feito SEM abrir a app.
-    event.waitUntil(postAction({ reminderId, action: ACTION_MARK_DONE }));
+    event.waitUntil(
+      postAction({ reminderId, action: ACTION_MARK_DONE }, notification),
+    );
     return;
   }
 
   if (action === ACTION_SNOOZE) {
     // AC5 — adia 10min SEM abrir a app.
     event.waitUntil(
-      postAction({
-        reminderId,
-        action: ACTION_SNOOZE,
-        snoozeMinutes: SNOOZE_MINUTES,
-      }),
+      postAction(
+        {
+          reminderId,
+          action: ACTION_SNOOZE,
+          snoozeMinutes: SNOOZE_MINUTES,
+        },
+        notification,
+      ),
     );
     return;
   }

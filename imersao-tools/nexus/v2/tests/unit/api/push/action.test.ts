@@ -8,8 +8,11 @@ import type { ScheduleEntry } from '@/lib/push/schedule-store';
  * O Service Worker chama este endpoint same-origin no browser autenticado, pelo
  * que o cookie de sessão é enviado automaticamente. Cobre auth (401 sem sessão,
  * 200 com sessão), validação de body, `marcar-feito` (→ `markScheduleSent`) e
- * `snooze` (→ `putSchedule` com novo `fireAt` mantendo `pending` — SF-1,
- * D-RECON-SNOOZE-KEEP). Mock de `getSession` alinhado com `schedule-get-extension.test.ts`.
+ * `snooze` (→ `putSchedule` com novo `fireAt` mantendo `pending` + marcador
+ * `snoozedAt` — SF-1, D-SNOOZE-CONTRACT). Cobre também a bifurcação por acção
+ * quando a entrada está ausente (M1): `snooze` → 409 `schedule-gone`;
+ * `marcar-feito` → 200 idempotente. Mock de `getSession` alinhado com
+ * `schedule-get-extension.test.ts`.
  */
 
 let mockSessionValid = true;
@@ -154,6 +157,25 @@ describe('POST /api/push/action — validação', () => {
     const resp = await call({ reminderId: 'x', action: 'snooze' });
     expect(resp.status).toBe(400);
   });
+
+  // RF7 — fecha a branch `.int().positive()` do schema de snoozeMinutes.
+  it('400 com snoozeMinutes = 0 (não-positivo)', async () => {
+    const resp = await call({ reminderId: ID, action: 'snooze', snoozeMinutes: 0 });
+    expect(resp.status).toBe(400);
+    expect(putMock).not.toHaveBeenCalled();
+  });
+
+  it('400 com snoozeMinutes negativo', async () => {
+    const resp = await call({ reminderId: ID, action: 'snooze', snoozeMinutes: -5 });
+    expect(resp.status).toBe(400);
+    expect(putMock).not.toHaveBeenCalled();
+  });
+
+  it('400 com snoozeMinutes decimal (não-inteiro)', async () => {
+    const resp = await call({ reminderId: ID, action: 'snooze', snoozeMinutes: 2.5 });
+    expect(resp.status).toBe(400);
+    expect(putMock).not.toHaveBeenCalled();
+  });
 });
 
 describe('POST /api/push/action — marcar-feito (C7)', () => {
@@ -165,6 +187,7 @@ describe('POST /api/push/action — marcar-feito (C7)', () => {
     expect(putMock).not.toHaveBeenCalled();
   });
 
+  // RF2(c) — marcar-feito com entrada ausente: idempotente, 200 applied:false.
   it('200 applied:false quando a entrada já não existe no mirror', async () => {
     listMock.mockResolvedValue([]);
     const resp = await call({ reminderId: ID, action: 'marcar-feito' });
@@ -175,9 +198,9 @@ describe('POST /api/push/action — marcar-feito (C7)', () => {
   });
 });
 
-describe('POST /api/push/action — snooze (C8)', () => {
-  // C8 — SF-1: fireAt re-escrito; status mantém `pending` (NÃO transita para sent).
-  it('C8 — reescreve fireAt = now + 10min e MANTÉM status pending', async () => {
+describe('POST /api/push/action — snooze (C8, D-SNOOZE-CONTRACT)', () => {
+  // C8 — SF-1: fireAt re-escrito; status mantém `pending`; grava marcador `snoozedAt`.
+  it('C8 — reescreve fireAt = now + 10min, MANTÉM pending e grava snoozedAt', async () => {
     const resp = await call({ reminderId: ID, action: 'snooze', snoozeMinutes: 10 });
     expect(resp.status).toBe(200);
     expect(putMock).toHaveBeenCalledTimes(1);
@@ -186,15 +209,36 @@ describe('POST /api/push/action — snooze (C8)', () => {
     expect(written.status).toBe('pending');
     expect(written.id).toBe(ID);
     expect(written.text).toBe('Pagar a luz');
+    // RF2(a) — marcador dedicado `snoozedAt` é gravado (número positivo).
+    // Falharia se o snooze regredisse para não marcar a entrada (M2/M3 voltariam:
+    // a entrada ficaria indistinguível de uma `pending` normal).
+    expect(typeof written.snoozedAt).toBe('number');
+    expect(written.snoozedAt).toBe(NOW);
     // SF-1 — não transita para sent.
     expect(markMock).not.toHaveBeenCalled();
   });
 
-  it('snooze sem snoozeMinutes usa 10 por defeito', async () => {
+  it('snooze sem snoozeMinutes usa 10 por defeito (e grava snoozedAt)', async () => {
     const resp = await call({ reminderId: ID, action: 'snooze' });
     expect(resp.status).toBe(200);
     const written = putMock.mock.calls[0][0] as ScheduleEntry;
     expect(written.fireAt).toBe(NOW + 10 * 60_000);
+    expect(typeof written.snoozedAt).toBe('number');
+  });
+
+  // RF2(b) — M1: snooze de entrada ausente NÃO pode ser silenciado → 409.
+  // Falharia se o endpoint regredisse para o `{ok:true, applied:false}` antigo
+  // (silent loss): o snooze perdia-se sem o utilizador saber.
+  it('M1 — snooze com entrada ausente devolve 409 schedule-gone (não silencia)', async () => {
+    listMock.mockResolvedValue([]);
+    const resp = await call({ reminderId: ID, action: 'snooze', snoozeMinutes: 10 });
+    expect(resp.status).toBe(409);
+    const json = (await resp.json()) as { ok: boolean; error: string };
+    expect(json.ok).toBe(false);
+    expect(json.error).toBe('schedule-gone');
+    // Nada é escrito no mirror (não há `text`/`fireAt` para recriar a entrada).
+    expect(putMock).not.toHaveBeenCalled();
+    expect(markMock).not.toHaveBeenCalled();
   });
 
   it('500 quando o store lança', async () => {

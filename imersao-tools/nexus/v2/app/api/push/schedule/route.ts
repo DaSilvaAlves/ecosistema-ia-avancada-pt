@@ -108,10 +108,16 @@ export async function DELETE(req: Request): Promise<Response> {
  * Devolve, para a reconciliação client (on-mount):
  *   - `sent`    — ids dos lembretes já disparados (4.8 AC6 — marca `sent` em Dexie
  *     e remove-os via DELETE).
- *   - `pending` — entradas a aguardar disparo, com `{ id, fireAt }` (Story 4.9
- *     AC8). Usado por `reconcileSnoozedReminders` para reflectir um `fireAt`
- *     actualizado por snooze em Dexie. Extensão não-breaking: `fetchSentReminderIds`
- *     lê apenas `json.sent` e ignora campos desconhecidos.
+ *   - `pending` — entradas **adiadas por snooze** a aguardar re-disparo, com
+ *     `{ id, fireAt }` (Story 4.9 AC8, D-SNOOZE-CONTRACT). O filtro é
+ *     `status === 'pending' && typeof snoozedAt === 'number'`: lembretes `pending`
+ *     NORMAIS (sem `snoozedAt`, ainda não accionados pelo utilizador) NÃO entram
+ *     neste array — caso contrário a `reconcileSnoozedReminders` re-rotularia
+ *     lembretes futuros normais como "adiados" em Dexie (bug M2/M3 do CR PR #58).
+ *     O nome do campo mantém-se `pending` por compatibilidade com
+ *     `fetchPendingSchedules` e os testes; a sua SEMÂNTICA é "snoozes a aguardar
+ *     re-disparo" (rename semântico interno, não identificador externo).
+ *     Extensão não-breaking: `fetchSentReminderIds` lê apenas `json.sent`.
  */
 export async function GET(req: Request): Promise<Response> {
   const session = await getSession(req);
@@ -122,8 +128,10 @@ export async function GET(req: Request): Promise<Response> {
   try {
     const schedules = await listSchedules();
     const sent = schedules.filter((s) => s.status === 'sent').map((s) => s.id);
+    // D-SNOOZE-CONTRACT: só entradas com o marcador `snoozedAt` (adiadas pelo
+    // utilizador) — não todas as `pending`.
     const pending = schedules
-      .filter((s) => s.status === 'pending')
+      .filter((s) => s.status === 'pending' && typeof s.snoozedAt === 'number')
       .map((s) => ({ id: s.id, fireAt: s.fireAt }));
     return NextResponse.json({ sent, pending });
   } catch (err) {
