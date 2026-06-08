@@ -250,3 +250,18 @@ export interface KnowledgeNote {
   sourceUrl?: string;
   updatedAt: number;
 }
+
+/**
+ * Brain Dump (FR47-49) — Story 5.1, decisão @architect `D-BRAINDUMP-STORE`.
+ * Tabela Dexie `version(5)` (não estado transitório): o `status` é uma máquina
+ * de estados que atravessa sessões (parse → aprovação item-a-item). `parsedOutput`
+ * é `unknown` deliberado — o tipo exacto dos 4 buckets AI é definido na Story 5.7
+ * (parser AI), evitando coupling nesta story de schema.
+ */
+export interface BrainDump {
+  id: string;
+  createdAt: number; // epoch ms — índice historial DESC (FR47)
+  bodyMarkdown: string; // input original (FR47)
+  parsedOutput?: unknown; // 4 buckets AI (FR48); tipo exacto definido na Story 5.7
+  status: 'pending' | 'parsed' | 'partially_approved' | 'fully_approved';
+}
