@@ -114,10 +114,10 @@ describe('schema upgrade v2 → v3 (Story 3.1, AC15)', () => {
 
     oldDB.close();
 
-    // 2. Reabrir como NexusDB completa (v1 + v2 + v3 + v4) — Dexie aplica upgrade aditivo.
+    // 2. Reabrir como NexusDB completa (v1 + v2 + v3 + v4 + v5) — Dexie aplica upgrade aditivo.
     const newDB = new NexusDB();
     await newDB.open();
-    expect(newDB.verno).toBe(4);
+    expect(newDB.verno).toBe(5);
 
     // 3. Dados de version(1) e version(2) sobrevivem intactos.
     expect(await newDB.transactions.count()).toBe(1);
@@ -201,7 +201,7 @@ describe('schema upgrade v2 → v3 (Story 3.1, AC15)', () => {
   it('o índice composto [cardId+date] adicionado a transactions em version(3) é funcional', async () => {
     const newDB = new NexusDB();
     await newDB.open();
-    expect(newDB.verno).toBe(4);
+    expect(newDB.verno).toBe(5);
 
     const cardId = crypto.randomUUID();
     await newDB.transactions.add(makeTransaction({ cardId, date: '2026-05-10' }));
@@ -219,13 +219,14 @@ describe('schema upgrade v2 → v3 (Story 3.1, AC15)', () => {
     newDB.close();
   });
 
-  it('NexusDB em base limpa abre directamente em version(4) com todas as 20 tabelas', async () => {
+  it('NexusDB em base limpa abre directamente em version(5) com todas as 21 tabelas', async () => {
     const db = new NexusDB();
     await db.open();
-    expect(db.verno).toBe(4);
+    expect(db.verno).toBe(5);
 
-    // 13 de version(1) + 2 de version(2) + 4 de version(3) + 1 de version(4) = 20.
-    expect(db.tables).toHaveLength(20);
+    // 13 de version(1) + 2 de version(2) + 4 de version(3) + 1 de version(4)
+    // + 1 de version(5) = 21.
+    expect(db.tables).toHaveLength(21);
 
     // As 15 tabelas de version(2).
     expect(await db.tasks.count()).toBe(0);
@@ -252,6 +253,9 @@ describe('schema upgrade v2 → v3 (Story 3.1, AC15)', () => {
 
     // A tabela nova de version(4) — Story 3.4 (recorrências financeiras).
     expect(await db.financeRecurrences.count()).toBe(0);
+
+    // A tabela nova de version(5) — Story 5.1 (brain dumps).
+    expect(await db.brain_dumps.count()).toBe(0);
 
     db.close();
   });

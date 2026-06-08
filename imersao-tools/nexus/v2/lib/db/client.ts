@@ -18,6 +18,7 @@ import type {
   KnowledgeArea,
   KnowledgeNotebook,
   KnowledgeNote,
+  BrainDump,
   AgentRun,
   ChatMessage,
 } from '@/types/db';
@@ -77,6 +78,7 @@ export class NexusDB extends Dexie {
   knowledge_areas!: Table<KnowledgeArea, string>;
   knowledge_notebooks!: Table<KnowledgeNotebook, string>;
   knowledge_notes!: Table<KnowledgeNote, string>;
+  brain_dumps!: Table<BrainDump, string>;
   agent_runs!: Table<AgentRun, string>;
   chat_messages!: Table<ChatMessage, string>;
 
@@ -144,6 +146,18 @@ export class NexusDB extends Dexie {
     //   template → RRULE em `deleteFinanceRecurrence`.
     this.version(4).stores({
       financeRecurrences: 'id, recurrenceId',
+    });
+    // Story 5.1 — Epic 5 schema increment (Brain Dump, FR47-49).
+    // Decisão @architect `D-BRAINDUMP-STORE`: brain_dumps é tabela Dexie (não
+    // estado transitório) — o `status` é uma máquina de estados que atravessa
+    // sessões (parse → aprovação item-a-item, FR48/FR49). As 4 tabelas do Epic 5
+    // (journal_entries, knowledge_*) já existiam em version(1) — NÃO recriadas.
+    // Aditivo: Dexie preserva as 20 tabelas de version(4) → 21. brain_dumps é a
+    // única tabela nova desta story.
+    // - createdAt: índice para `listBrainDumps` ordenado DESC (historial, FR47).
+    // - status: índice para os filtros do approval flow (Story 5.8).
+    this.version(5).stores({
+      brain_dumps: 'id, createdAt, status',
     });
   }
 }

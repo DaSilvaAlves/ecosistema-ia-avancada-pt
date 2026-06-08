@@ -349,3 +349,117 @@ export const ReminderSchema = z.object({
 
 export type ReminderChannel = z.infer<typeof ReminderChannelSchema>;
 export type ReminderStatus = z.infer<typeof ReminderStatusSchema>;
+
+// ═══════════════════════════════════════════════════════════════════
+// Epic 5 — Diário / Conhecimento (Story 5.1)
+//
+// Espelho fiel de types/db.ts:223-252. Constitution Article IV — sem invenção.
+//
+// As 4 tabelas (journal_entries, knowledge_areas, knowledge_notebooks,
+// knowledge_notes) já existem em version(1) (client.ts:93-96). A Story 5.1 NÃO
+// recria tabelas — adiciona apenas a camada de acesso (schemas Zod + repos +
+// hooks). brain_dumps (FR47-49) foi ratificada pelo @architect como tabela Dexie
+// `version(5)` (decisão `D-BRAINDUMP-STORE`, [GAP-5.1b]) — BrainDumpSchema está
+// definido no fim desta secção.
+//
+// `JournalEntry.date` usa um regex date-only `YYYY-MM-DD` (mais estrito que o
+// ISO_DATE_REGEX que aceita datetime): o índice Dexie `date` e o heatmap por dia
+// (FR44) chaveiam por dia-calendário, não por instante. `KnowledgeNote.sourceUrl`
+// é validado como URL quando presente (FR55/FR56 — notas criadas por pesquisa web).
+// ═══════════════════════════════════════════════════════════════════
+
+/** Data de calendário `YYYY-MM-DD` (sem componente de tempo). FR42/FR44. */
+const ISO_DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+// ─── JournalEntry ───
+
+export const JournalMoodSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+]);
+
+/**
+ * Estrutura AI opcional (FR43 — "o que aconteceu / o que aprendi / o que senti").
+ * Todos os sub-campos opcionais: a Story 5.4 (AI estrutura diário) preenche-os;
+ * uma entrada manual sem AI tem `structuredAI` undefined.
+ */
+export const JournalStructuredAISchema = z.object({
+  whatHappened: z.string().optional(),
+  whatLearned: z.string().optional(),
+  whatFelt: z.string().optional(),
+});
+
+export const JournalEntrySchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  date: z
+    .string()
+    .regex(ISO_DATE_ONLY_REGEX, 'Data deve estar em formato YYYY-MM-DD (ex: 2026-06-07)'),
+  mood: JournalMoodSchema,
+  bodyMarkdown: z.string().min(1, 'O corpo da entrada de diário é obrigatório'),
+  structuredAI: JournalStructuredAISchema.optional(),
+});
+
+export type JournalMood = z.infer<typeof JournalMoodSchema>;
+
+// ─── KnowledgeArea ───
+
+export const KnowledgeAreaSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  name: z.string().min(1, 'Nome da área é obrigatório'),
+  color: z.string().min(1, 'Cor da área é obrigatória'),
+  icon: z.string().min(1, 'Ícone da área é obrigatório'),
+});
+
+// ─── KnowledgeNotebook ───
+
+export const KnowledgeNotebookSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  areaId: z.string().uuid('areaId deve ser UUID válido'),
+  name: z.string().min(1, 'Nome do caderno é obrigatório'),
+});
+
+// ─── KnowledgeNote ───
+//
+// `tags` é string[] de IDs de tags (padrão Task.tags — Epic 2). Reutiliza a
+// tabela `tags` de version(2); NÃO há sistema de tags separado (R4). `sourceUrl`
+// validado como URL quando presente (FR55/FR56). `updatedAt` epoch ms positivo
+// (índice de ordenação).
+
+export const KnowledgeNoteSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  notebookId: z.string().uuid('notebookId deve ser UUID válido'),
+  title: z.string().min(1, 'Título da nota é obrigatório'),
+  bodyMarkdown: z.string(),
+  tags: z.array(z.string()),
+  sourceUrl: z.string().url('sourceUrl deve ser uma URL válida').optional(),
+  updatedAt: z.number().int().positive('updatedAt deve ser epoch ms positivo'),
+});
+
+// ─── BrainDump ───
+//
+// Decisão @architect `D-BRAINDUMP-STORE` (AC2/[GAP-5.1b]): tabela Dexie
+// `version(5)`. O `status` é a máquina de estados que atravessa sessões
+// (FR48/FR49 — parse → aprovação item-a-item). `parsedOutput` é `z.unknown()`
+// deliberado — o tipo exacto dos 4 buckets AI é definido na Story 5.7 (parser),
+// evitando coupling nesta story de schema. `createdAt` epoch ms positivo serve
+// o índice de historial DESC (FR47).
+
+export const BrainDumpStatusSchema = z.enum([
+  'pending',
+  'parsed',
+  'partially_approved',
+  'fully_approved',
+]);
+
+export const BrainDumpSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  createdAt: z.number().int().positive('createdAt deve ser epoch ms positivo'),
+  bodyMarkdown: z.string().min(1, 'O corpo do brain dump é obrigatório'),
+  parsedOutput: z.unknown().optional(),
+  status: BrainDumpStatusSchema,
+});
+
+export type BrainDumpStatus = z.infer<typeof BrainDumpStatusSchema>;
