@@ -75,6 +75,11 @@ export default defineConfig({
         'components/ui/TabStrip.tsx',
         'hooks/useHabits.ts',
         'hooks/useHabitLogs.ts',
+        // Story 5.2 — Editor markdown (Tiptap 2). Precedente Stories 2.3/3.3/4.2
+        // — adiciona paths à allowlist do report; thresholds globais inalterados;
+        // sem alteração comportamental do test runner.
+        'lib/editor/**',
+        'components/ui/MarkdownEditor.tsx',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)
