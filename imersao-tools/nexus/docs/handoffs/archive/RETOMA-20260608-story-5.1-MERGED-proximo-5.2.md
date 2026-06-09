@@ -7,7 +7,9 @@
 - **from_agent:** Gage (`@devops`) + cadeia 5.1 (River → Pax → Dara → Aria → Gage)
 - **to_agent:** `any` — quem retomar o Epic 5 (provável `@sm` para draft da 5.2)
 - **created:** 2026-06-08
-- **status:** pending
+- **status:** consumed
+- **consumed_at:** 2026-06-09
+- **consumed_by:** cadeia 5.2 (River→Pax→Dex→Quinn→Gage) — Story 5.2 draftada→validada→implementada→gate PASS→PR #60
 - **Prioridade:** NORMAL — 5.1 fechada e em produção; é o arranque da próxima story do Epic 5
 
 ---
