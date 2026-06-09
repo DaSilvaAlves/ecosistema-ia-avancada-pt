@@ -54,8 +54,19 @@ export const NO_ENTRY_STYLE = {
   border: '1px solid rgba(255, 255, 255, 0.08)',
 } as const;
 
-/** `YYYY-MM-DD` → `DD/MM/YYYY` (PT-PT) para aria-labels legíveis. */
+/**
+ * `YYYY-MM-DD` → `DD/MM/YYYY` (PT-PT) para aria-labels legíveis.
+ *
+ * Pré-requisito: `iso` é uma data ISO bem-formada `YYYY-MM-DD` (é sempre o caso
+ * nos consumidores — `day.date`/`entry.date` vêm do data layer da 5.1). Defensivo:
+ * se o input não corresponder a esse formato, devolve a string original em vez de
+ * produzir `"undefined/undefined/undefined"`.
+ */
 export function formatPtDate(iso: string): string {
-  const [y, m, d] = iso.split('-');
+  const parts = iso.split('-');
+  if (parts.length !== 3 || parts.some((p) => p === '')) {
+    return iso;
+  }
+  const [y, m, d] = parts;
   return `${d}/${m}/${y}`;
 }
