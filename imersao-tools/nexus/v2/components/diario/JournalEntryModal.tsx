@@ -13,6 +13,12 @@ import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
 import { FormField, fieldInputStyle } from '@/components/ui/FormField';
 import { MOOD_SCALE, MOODS } from '@/lib/diario/mood-scale';
 import type { Mood } from '@/lib/diario/mood-heatmap';
+import {
+  shouldSuggestStructure,
+  hasStructuredContent,
+  type StructuredDiarioResponse,
+} from '@/lib/diario/ai-estrutura';
+import { estruturarDiario } from '@/lib/diario/estruturar-cliente';
 
 /**
  * Nexus v2 — JournalEntryModal (Story 5.3 — AC2, FR42)
@@ -34,8 +40,16 @@ import type { Mood } from '@/lib/diario/mood-heatmap';
  * `getJournalEntryByDate` na persistência (R1) — o modal só recolhe o payload.
  * Eliminar (só em edição) pede confirmação (padrão `HabitFormModal`).
  *
- * 3+ estados de render (`react-component-test-criteria.md`): criar vazio / editar
- * pré-preenchido / submissão com erro de validação (mood ou corpo em falta).
+ * Estados de render (`react-component-test-criteria.md`):
+ *   (5.3) criar vazio / editar pré-preenchido / erro de validação;
+ *   (5.4) estruturação AI — idle / loading / preview / error (máquina de estados
+ *         união-discriminada `AiState`, `internal-state-contract-gate.md` eixo a).
+ *
+ * Estruturação AI (Story 5.4 — FR43, `[D-5.4-ENDPOINT]`): botão "Estruturar com AI"
+ * activo SÓ em modo edição (entrada já persistida em Dexie) E com `bodyMarkdown`
+ * > 100 chars (`shouldSuggestStructure`). Estruturar uma entrada não-guardada
+ * chamaria `onAcceptStructure` com um id inexistente → `updateJournalEntry` lança
+ * (`journal-entries.ts:92-97`) — por isso o botão só aparece em edição (eixo b).
  */
 
 interface JournalEntryModalProps {
@@ -57,7 +71,26 @@ interface JournalEntryModalProps {
   }) => Promise<void>;
   /** Elimina a entrada existente (só em edição). */
   onDelete: (id: string) => Promise<void>;
+  /**
+   * Persiste a estrutura AI aceite na entrada existente (Story 5.4 — AC3). O
+   * parent chama `updateJournalEntry(id, { structuredAI })`. Só é invocado em
+   * modo edição (o botão "Estruturar com AI" não aparece em criação — eixo b).
+   * Opcional: sem ele a feature de estruturação fica inactiva (retrocompat 5.3).
+   */
+  onAcceptStructure?: (id: string, structuredAI: StructuredDiarioResponse) => Promise<void>;
 }
+
+/**
+ * Máquina de estados da estruturação AI (`internal-state-contract-gate.md` eixo a).
+ * União discriminada — evita estados impossíveis (ex: loading+preview em simultâneo)
+ * que múltiplos booleanos soltos permitiriam. `accepted`/`ignored` NÃO são estados
+ * parados: são transições que regressam a `idle` (ou fecham o preview).
+ */
+type AiState =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | { kind: 'preview'; proposal: StructuredDiarioResponse }
+  | { kind: 'error'; message: string };
 
 export function JournalEntryModal({
   date,
@@ -67,6 +100,7 @@ export function JournalEntryModal({
   onClose,
   onSubmit,
   onDelete,
+  onAcceptStructure,
 }: JournalEntryModalProps): React.ReactElement {
   const isEdit = existingEntry !== undefined;
 
@@ -75,6 +109,18 @@ export function JournalEntryModal({
   const [body, setBody] = useState<string>(existingEntry?.bodyMarkdown ?? '');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Estruturação AI (Story 5.4). `aiState` é a máquina de estados; `savedStructure`
+  // guarda a estrutura já persistida (mostrada quando preenchida — leitura).
+  const [aiState, setAiState] = useState<AiState>({ kind: 'idle' });
+  const [savedStructure, setSavedStructure] = useState<StructuredDiarioResponse | null>(
+    existingEntry?.structuredAI ?? null,
+  );
+
+  // O botão "Estruturar com AI" só faz sentido em modo edição (entrada persistida
+  // — eixo b), com o callback disponível, e com texto > 100 chars (AC1).
+  const canStructure =
+    isEdit && onAcceptStructure !== undefined && shouldSuggestStructure(body);
 
   const modalRef = useRef<HTMLDivElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -194,6 +240,65 @@ export function JournalEntryModal({
     } catch {
       setSubmitting(false);
     }
+  }
+
+  // ── Estruturação AI (Story 5.4 — AC2/AC3/AC4) ──
+
+  /** Clica "Estruturar com AI": fetch ao proxy → preview, ou error PT-PT (AC4). */
+  async function handleStructure(): Promise<void> {
+    if (!canStructure || aiState.kind === 'loading') return;
+    setAiState({ kind: 'loading' });
+    try {
+      const proposal = await estruturarDiario(body);
+      if (!hasStructuredContent(proposal)) {
+        // Proposta vazia não é preview útil — informa, não mostra buckets vazios.
+        setAiState({
+          kind: 'error',
+          message: 'A AI não encontrou estrutura para este texto. Tenta com mais detalhe.',
+        });
+        return;
+      }
+      setAiState({ kind: 'preview', proposal });
+    } catch (e) {
+      // `internal-state-contract-gate.md` eixo c: falha não silencia.
+      setAiState({
+        kind: 'error',
+        message:
+          e instanceof Error ? e.message : 'Não foi possível estruturar a entrada.',
+      });
+    }
+  }
+
+  /** "Aceitar": persiste via parent → guarda localmente → volta a idle (AC3). */
+  async function handleAcceptStructure(): Promise<void> {
+    if (
+      aiState.kind !== 'preview' ||
+      existingEntry === undefined ||
+      onAcceptStructure === undefined
+    ) {
+      return;
+    }
+    const proposal = aiState.proposal;
+    try {
+      await onAcceptStructure(existingEntry.id, proposal);
+      setSavedStructure(proposal);
+      setAiState({ kind: 'idle' });
+    } catch (e) {
+      // Entrada apagada noutra tab durante o preview → updateJournalEntry lança
+      // (eixo b). NÃO silenciar: mapear a error PT-PT, sem persistir nada localmente.
+      setAiState({
+        kind: 'error',
+        message:
+          e instanceof Error
+            ? e.message
+            : 'Não foi possível guardar a estrutura — tenta novamente.',
+      });
+    }
+  }
+
+  /** "Ignorar": descarta a proposta, volta a idle, sem qualquer escrita (AC3). */
+  function handleIgnoreStructure(): void {
+    setAiState({ kind: 'idle' });
   }
 
   return (
@@ -373,6 +478,234 @@ export function JournalEntryModal({
               ariaLabel="Corpo da entrada de diário"
             />
           </div>
+
+          {/* Estruturação AI (Story 5.4 — FR43, AC1/AC3/AC7) — só em modo edição. */}
+          {isEdit && onAcceptStructure !== undefined && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* Botão "Estruturar com AI" — activo só com > 100 chars (AC1). */}
+              {aiState.kind !== 'preview' && (
+                <button
+                  type="button"
+                  onClick={handleStructure}
+                  disabled={!canStructure || aiState.kind === 'loading'}
+                  aria-busy={aiState.kind === 'loading'}
+                  aria-label={
+                    canStructure
+                      ? 'Estruturar a entrada com AI'
+                      : 'Estruturar com AI (desactivado — escreve mais de 100 caracteres)'
+                  }
+                  style={{
+                    alignSelf: 'flex-start',
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    color: canStructure ? '#9D00FF' : '#4A5568',
+                    background: canStructure
+                      ? 'rgba(157, 0, 255, 0.08)'
+                      : 'rgba(255, 255, 255, 0.03)',
+                    border: `1px solid ${
+                      canStructure ? 'rgba(157, 0, 255, 0.3)' : 'rgba(255, 255, 255, 0.08)'
+                    }`,
+                    borderRadius: 20,
+                    padding: '0.4rem 1rem',
+                    cursor:
+                      aiState.kind === 'loading'
+                        ? 'wait'
+                        : canStructure
+                          ? 'pointer'
+                          : 'not-allowed',
+                  }}
+                >
+                  {aiState.kind === 'loading' ? 'A estruturar…' : 'Estruturar com AI'}
+                </button>
+              )}
+
+              {/* Estado loading — feedback acessível. */}
+              {aiState.kind === 'loading' && (
+                <span
+                  role="status"
+                  aria-live="polite"
+                  style={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '0.75rem',
+                    color: '#8892A4',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  O cérebro está a organizar a tua entrada…
+                </span>
+              )}
+
+              {/* Estado error — mensagem PT-PT (AC4), volta a idle ao clicar. */}
+              {aiState.kind === 'error' && (
+                <span
+                  role="alert"
+                  data-testid="ai-error"
+                  style={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: '#FF006E',
+                  }}
+                >
+                  {aiState.message}
+                </span>
+              )}
+
+              {/* Estado preview — 3 buckets + Aceitar/Ignorar (AC3). */}
+              {aiState.kind === 'preview' && (
+                <section
+                  aria-label="Estrutura proposta pela AI"
+                  aria-live="polite"
+                  data-testid="ai-preview"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                    background: 'rgba(157, 0, 255, 0.06)',
+                    border: '1px solid rgba(157, 0, 255, 0.2)',
+                    borderRadius: 12,
+                    padding: '1rem',
+                    backdropFilter: 'blur(12px)',
+                  }}
+                >
+                  {(
+                    [
+                      ['O que aconteceu', aiState.proposal.whatHappened],
+                      ['O que aprendi', aiState.proposal.whatLearned],
+                      ['O que senti', aiState.proposal.whatFelt],
+                    ] as const
+                  )
+                    .filter(([, value]) => (value?.trim().length ?? 0) > 0)
+                    .map(([label, value]) => (
+                      <div
+                        key={label}
+                        style={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: 'JetBrains Mono, monospace',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.08em',
+                            color: '#9D00FF',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {label}
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: 'Inter, sans-serif',
+                            fontSize: '0.85rem',
+                            color: '#F0F4FF',
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          {value}
+                        </span>
+                      </div>
+                    ))}
+                  <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
+                    <button
+                      type="button"
+                      onClick={handleAcceptStructure}
+                      aria-label="Aceitar estrutura proposta"
+                      style={{
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        color: '#04040A',
+                        background: '#39FF14',
+                        border: 'none',
+                        borderRadius: 6,
+                        padding: '0.45rem 1rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Aceitar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleIgnoreStructure}
+                      aria-label="Ignorar estrutura proposta"
+                      style={{
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        color: '#F0F4FF',
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: 6,
+                        padding: '0.45rem 1rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Ignorar
+                    </button>
+                  </div>
+                </section>
+              )}
+
+              {/* Estrutura já guardada (leitura) — mostrada quando preenchida e
+                  não há preview activo. */}
+              {aiState.kind !== 'preview' &&
+                savedStructure !== null &&
+                hasStructuredContent(savedStructure) && (
+                  <section
+                    aria-label="Estrutura guardada"
+                    data-testid="ai-saved"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                      background: 'rgba(255, 255, 255, 0.025)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: 12,
+                      padding: '0.9rem',
+                    }}
+                  >
+                    {(
+                      [
+                        ['O que aconteceu', savedStructure.whatHappened],
+                        ['O que aprendi', savedStructure.whatLearned],
+                        ['O que senti', savedStructure.whatFelt],
+                      ] as const
+                    )
+                      .filter(([, value]) => (value?.trim().length ?? 0) > 0)
+                      .map(([label, value]) => (
+                        <div
+                          key={label}
+                          style={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: 'JetBrains Mono, monospace',
+                              fontSize: '0.6rem',
+                              fontWeight: 700,
+                              letterSpacing: '0.08em',
+                              color: '#8892A4',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            {label}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: 'Inter, sans-serif',
+                              fontSize: '0.82rem',
+                              color: '#F0F4FF',
+                              lineHeight: 1.6,
+                            }}
+                          >
+                            {value}
+                          </span>
+                        </div>
+                      ))}
+                  </section>
+                )}
+            </div>
+          )}
 
           {error !== null && (
             <span
