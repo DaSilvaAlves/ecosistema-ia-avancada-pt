@@ -15,7 +15,7 @@
  * no browser sem montar o componente. Cada chamada cria e destrói o editor.
  */
 import { Editor } from '@tiptap/core';
-import { createBaseEditorExtensions } from './extensions';
+import { createBaseEditorExtensions } from '@/lib/editor/extensions';
 
 /**
  * Normaliza markdown fazendo o round-trip completo markdown → documento Tiptap →
