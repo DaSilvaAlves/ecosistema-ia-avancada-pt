@@ -10,9 +10,11 @@ import {
   deleteJournalEntry,
 } from '@/lib/db/repos/journal-entries';
 import { getLast6MonthsRange, type Mood } from '@/lib/diario/mood-heatmap';
+import { searchJournalEntries } from '@/lib/db/repos/journal-entries';
 import { MoodHeatmap } from '@/components/diario/MoodHeatmap';
 import { JournalEntriesList } from '@/components/diario/JournalEntriesList';
 import { JournalEntryModal } from '@/components/diario/JournalEntryModal';
+import { DiarioSearchResults } from '@/components/diario/DiarioSearchResults';
 import type { StructuredDiarioResponse } from '@/lib/diario/ai-estrutura';
 import type { JournalEntry } from '@/types/db';
 
@@ -53,15 +55,70 @@ export default function DiarioPage(): React.ReactElement {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [openerEl, setOpenerEl] = useState<HTMLElement | null>(null);
 
-  // Escape global → router.back (só com o modal fechado; o modal trata o seu Escape).
+  // Pesquisa (Story 5.5 — AC3): query crua + query "debounced" (≤300ms) que
+  // dispara a pesquisa. `searchResults` inicia como `[]` (lista vazia) e só é
+  // preenchido quando a 1.ª pesquisa resolve.
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<JournalEntry[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const isSearchMode = searchQuery.trim() !== '';
+
+  // Debounce do input — só actualiza `debouncedQuery` 300ms após a última tecla.
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Executa a pesquisa quando `debouncedQuery` muda. Query vazia → limpa estado.
+  useEffect(() => {
+    if (debouncedQuery === '') {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+    let cancelled = false;
+    setIsSearching(true);
+    searchJournalEntries(debouncedQuery)
+      .then((results) => {
+        if (!cancelled) {
+          setSearchResults(results);
+          setIsSearching(false);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error('Erro ao pesquisar entradas de diário', error);
+          setErrorMessage('Erro ao pesquisar — tenta novamente.');
+          setSearchResults([]);
+          setIsSearching(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedQuery]);
+
+  function clearSearch(): void {
+    setSearchQuery('');
+    setDebouncedQuery('');
+  }
+
+  // Escape global → limpa a pesquisa se activa, senão router.back (com o modal
+  // fechado; o modal trata o seu próprio Escape).
   useEffect(() => {
     function handleEscape(e: KeyboardEvent): void {
       if (modal !== null) return;
-      if (e.key === 'Escape') router.back();
+      if (e.key !== 'Escape') return;
+      if (searchQuery !== '') {
+        clearSearch();
+        return;
+      }
+      router.back();
     }
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [router, modal]);
+  }, [router, modal, searchQuery]);
 
   // Auto-dismiss do toast de erro após 4s.
   useEffect(() => {
@@ -99,6 +156,19 @@ export default function DiarioPage(): React.ReactElement {
   const handleNewOrEditToday = useCallback((): void => {
     openDay(today);
   }, [openDay, today]);
+
+  // Pesquisa (5.5 — AC4/T5.5): abre o modal a partir do `id` do resultado. Os
+  // resultados de pesquisa podem cair fora da janela de 6 meses, por isso a
+  // entrada vem da lista de resultados (não de `entries`).
+  const openEntryById = useCallback(
+    (id: string): void => {
+      const entry = searchResults.find((e) => e.id === id);
+      if (entry === undefined) return;
+      rememberOpener();
+      setModal({ date: entry.date, existingEntry: entry });
+    },
+    [searchResults],
+  );
 
   // Persistência (R1): o parent decide create vs update por data, via
   // `getJournalEntryByDate` — robusto mesmo que a data tenha sido alterada no modal.
@@ -199,6 +269,31 @@ export default function DiarioPage(): React.ReactElement {
       </header>
 
       <div
+        role="search"
+        style={{ padding: '0 1.5rem 1rem', position: 'relative' }}
+      >
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          aria-label="Pesquisar nas entradas de diário"
+          placeholder="Pesquisar nas entradas…"
+          style={{
+            width: '100%',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.9rem',
+            color: '#F0F4FF',
+            background: 'rgba(255, 255, 255, 0.025)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: 8,
+            padding: '0.65rem 0.9rem',
+            outline: 'none',
+            backdropFilter: 'blur(12px)',
+          }}
+        />
+      </div>
+
+      <div
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -207,24 +302,37 @@ export default function DiarioPage(): React.ReactElement {
           flex: 1,
         }}
       >
-        <section aria-label="Heatmap de humor">
-          <MoodHeatmap entries={entries} todayISO={today} onSelectDay={openDay} />
-        </section>
+        {isSearchMode ? (
+          <section aria-label="Resultados da pesquisa" style={{ flex: 1 }}>
+            <DiarioSearchResults
+              results={searchResults}
+              query={searchQuery.trim()}
+              isLoading={isSearching}
+              onSelect={openEntryById}
+            />
+          </section>
+        ) : (
+          <>
+            <section aria-label="Heatmap de humor">
+              <MoodHeatmap entries={entries} todayISO={today} onSelectDay={openDay} />
+            </section>
 
-        <section aria-label="Entradas de diário" style={{ flex: 1 }}>
-          <h2
-            style={{
-              margin: '0 0 12px',
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '1.15rem',
-              fontWeight: 700,
-              color: '#F0F4FF',
-            }}
-          >
-            Entradas recentes
-          </h2>
-          <JournalEntriesList entries={entries} onSelect={openDay} />
-        </section>
+            <section aria-label="Entradas de diário" style={{ flex: 1 }}>
+              <h2
+                style={{
+                  margin: '0 0 12px',
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '1.15rem',
+                  fontWeight: 700,
+                  color: '#F0F4FF',
+                }}
+              >
+                Entradas recentes
+              </h2>
+              <JournalEntriesList entries={entries} onSelect={openDay} />
+            </section>
+          </>
+        )}
       </div>
 
       {modal !== null && (
