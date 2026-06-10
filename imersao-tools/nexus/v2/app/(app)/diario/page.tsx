@@ -13,6 +13,7 @@ import { getLast6MonthsRange, type Mood } from '@/lib/diario/mood-heatmap';
 import { MoodHeatmap } from '@/components/diario/MoodHeatmap';
 import { JournalEntriesList } from '@/components/diario/JournalEntriesList';
 import { JournalEntryModal } from '@/components/diario/JournalEntryModal';
+import type { StructuredDiarioResponse } from '@/lib/diario/ai-estrutura';
 import type { JournalEntry } from '@/types/db';
 
 /**
@@ -137,6 +138,22 @@ export default function DiarioPage(): React.ReactElement {
     }
   }, []);
 
+  // Estruturação AI (Story 5.4 — AC3): persiste `structuredAI` na entrada
+  // existente. `updateJournalEntry` lança se a entrada já não existir (apagada
+  // noutra tab) — o throw propaga ao modal, que o mapeia ao estado `error` (AC4).
+  const handleAcceptStructure = useCallback(
+    async (id: string, structuredAI: StructuredDiarioResponse): Promise<void> => {
+      try {
+        await updateJournalEntry(id, { structuredAI });
+      } catch (error) {
+        console.error('Erro ao guardar estrutura AI', error);
+        setErrorMessage('Erro ao guardar a estrutura — tenta novamente.');
+        throw error;
+      }
+    },
+    [],
+  );
+
   const todayEntryExists = entries?.some((e) => e.date === today) ?? false;
 
   return (
@@ -219,6 +236,7 @@ export default function DiarioPage(): React.ReactElement {
           onClose={closeModal}
           onSubmit={handleSubmit}
           onDelete={handleDelete}
+          onAcceptStructure={handleAcceptStructure}
         />
       )}
 
