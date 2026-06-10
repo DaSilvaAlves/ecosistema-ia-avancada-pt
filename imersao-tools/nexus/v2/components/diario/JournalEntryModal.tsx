@@ -245,7 +245,7 @@ export function JournalEntryModal({
   // ── Estruturação AI (Story 5.4 — AC2/AC3/AC4) ──
 
   /** Clica "Estruturar com AI": fetch ao proxy → preview, ou error PT-PT (AC4). */
-  async function handleStructure(): Promise<void> {
+  const handleStructure = useCallback(async (): Promise<void> => {
     if (!canStructure || aiState.kind === 'loading') return;
     setAiState({ kind: 'loading' });
     try {
@@ -267,10 +267,10 @@ export function JournalEntryModal({
           e instanceof Error ? e.message : 'Não foi possível estruturar a entrada.',
       });
     }
-  }
+  }, [canStructure, aiState.kind, body]);
 
   /** "Aceitar": persiste via parent → guarda localmente → volta a idle (AC3). */
-  async function handleAcceptStructure(): Promise<void> {
+  const handleAcceptStructure = useCallback(async (): Promise<void> => {
     if (
       aiState.kind !== 'preview' ||
       existingEntry === undefined ||
@@ -294,12 +294,12 @@ export function JournalEntryModal({
             : 'Não foi possível guardar a estrutura — tenta novamente.',
       });
     }
-  }
+  }, [aiState, existingEntry, onAcceptStructure]);
 
   /** "Ignorar": descarta a proposta, volta a idle, sem qualquer escrita (AC3). */
-  function handleIgnoreStructure(): void {
+  const handleIgnoreStructure = useCallback((): void => {
     setAiState({ kind: 'idle' });
-  }
+  }, []);
 
   return (
     <div
