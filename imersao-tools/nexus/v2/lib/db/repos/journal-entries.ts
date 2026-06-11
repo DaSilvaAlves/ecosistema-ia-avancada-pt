@@ -1,5 +1,6 @@
 import { db } from '@/lib/db/client';
 import { JournalEntrySchema } from '@/lib/db/schemas';
+import { searchEntries } from '@/lib/diario/pesquisa';
 import type { JournalEntry } from '@/types/db';
 
 /**
@@ -58,30 +59,18 @@ export async function listJournalEntriesByDateRange(
 }
 
 /**
- * Pesquisa full-text base (FR45) sobre `bodyMarkdown` e `structuredAI`. Esta é
- * a base que a Story 5.5 (pesquisa full-text) refina. Implementação simples
- * case-insensitive em memória — sem índice full-text dedicado (não há FR42-46
- * que exija indexação de texto livre; o volume de entradas de diário é baixo,
- * 1/dia). A Story 5.5 pode introduzir indexação se o volume o justificar.
+ * Pesquisa full-text (FR45) sobre `bodyMarkdown` e `structuredAI`. Story 5.5:
+ * a lógica de matching/ranking vive no helper PURO `lib/diario/pesquisa.ts`
+ * (`searchEntries`) — tokenização multi-termo AND + normalização NFD para
+ * diacríticos PT-PT. O repo só faz `toArray()` e delega (EPIC-5 §5: "lógica em
+ * helper puro `lib/diario/**`"). Sem índice full-text dedicado: o volume de
+ * entradas é baixo (1/dia), o matching in-memory é suficiente.
+ *
+ * Interface pública inalterada (`query: string → Promise<JournalEntry[]>`).
  */
 export async function searchJournalEntries(query: string): Promise<JournalEntry[]> {
-  const needle = query.trim().toLowerCase();
-  if (needle === '') return [];
   const all = await db.journal_entries.toArray();
-  return all
-    .filter((entry) => {
-      const haystack = [
-        entry.bodyMarkdown,
-        entry.structuredAI?.whatHappened,
-        entry.structuredAI?.whatLearned,
-        entry.structuredAI?.whatFelt,
-      ]
-        .filter((s): s is string => typeof s === 'string')
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(needle);
-    })
-    .sort((a, b) => b.date.localeCompare(a.date));
+  return searchEntries(all, query);
 }
 
 export async function updateJournalEntry(
