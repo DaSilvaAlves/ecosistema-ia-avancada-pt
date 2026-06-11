@@ -1,3 +1,11 @@
+---
+paths:
+  - ".aiox-core/**"
+  - "**/docs/stories/**"
+  - ".github/**"
+description: "Matriz de delegação dos agentes AIOX — autoridades exclusivas e fluxos cross-agent"
+---
+
 # Agent Authority — Detailed Rules
 
 ## Delegation Matrix

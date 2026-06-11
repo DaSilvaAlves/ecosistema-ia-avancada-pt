@@ -1,3 +1,9 @@
+---
+paths:
+  - "imersao-tools/**"
+description: "Copy de respostas WhatsApp para leads da comunidade [IA]AVANÇADA PT"
+---
+
 # WhatsApp Copy Rules — [IA]AVANÇADA PT
 
 ## Quando esta regra se aplica

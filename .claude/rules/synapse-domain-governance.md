@@ -1,4 +1,7 @@
 ---
+paths:
+  - "**/.claude/rules/**"
+  - "**/synapse/**"
 description: "Governança de domínios SYNAPSE — quando criar, autoridade, nomenclatura e activação"
 ---
 

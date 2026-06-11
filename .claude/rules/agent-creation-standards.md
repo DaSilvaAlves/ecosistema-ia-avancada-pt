@@ -1,4 +1,7 @@
 ---
+paths:
+  - ".aiox-core/development/agents/**"
+  - "**/.claude/agents/**"
 description: "Standards para criar agentes AIOX — estrutura YAML, autoridade e validação"
 ---
 

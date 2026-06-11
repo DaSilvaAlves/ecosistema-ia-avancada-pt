@@ -1,3 +1,10 @@
+---
+paths:
+  - "imersao-tools/nexus/**"
+  - "**/docs/stories/**"
+description: "Identificadores que cruzam contratos externos validam-se no draft da story"
+---
+
 # External Contract Identifiers — Regra Obrigatória
 
 ## Origem

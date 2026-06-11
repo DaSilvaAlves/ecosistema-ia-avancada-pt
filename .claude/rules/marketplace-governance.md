@@ -1,3 +1,9 @@
+---
+paths:
+  - "imersao-tools/marketplace/**"
+description: "Governança do marketplace — consultar PRDs antes de qualquer acção"
+---
+
 # Marketplace Governance — Regras para Agentes
 
 ## Regra principal

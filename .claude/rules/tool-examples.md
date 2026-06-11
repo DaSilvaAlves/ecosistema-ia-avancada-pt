@@ -1,3 +1,9 @@
+---
+paths:
+  - ".aiox-core/**"
+description: "Exemplos de input para tools Tier 1/2 do AIOX Tool Mesh"
+---
+
 # Tool Input Examples — Selection Guidance
 
 ## Purpose

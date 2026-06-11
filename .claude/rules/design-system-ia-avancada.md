@@ -1,4 +1,6 @@
 ---
+paths:
+  - "imersao-tools/**"
 description: Design system obrigatório para toda a UI da [IA]AVANÇADA PT comunidade
 ---
 

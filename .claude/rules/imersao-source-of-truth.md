@@ -1,3 +1,9 @@
+---
+paths:
+  - "imersao-tools/**"
+description: "todolist.html é a fonte da verdade da imersão — ler antes de docs internos"
+---
+
 # Imersao — Fonte da Verdade
 
 ## REGRA INEGOCIAVEL

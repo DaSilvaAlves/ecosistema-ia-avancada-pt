@@ -1,3 +1,10 @@
+---
+paths:
+  - "imersao-tools/nexus/**"
+  - "**/docs/stories/**"
+description: "Estado multi-camada exige análise de ciclo de vida no quality gate"
+---
+
 # Internal State Contract Gate — Regra Obrigatória
 
 ## Origem

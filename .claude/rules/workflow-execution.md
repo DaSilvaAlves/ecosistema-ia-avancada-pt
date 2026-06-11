@@ -1,3 +1,10 @@
+---
+paths:
+  - ".aiox-core/**"
+  - "**/docs/stories/**"
+description: "Regras detalhadas dos 4 workflows AIOX — SDC, QA Loop, Spec Pipeline, Brownfield"
+---
+
 # Workflow Execution — Detailed Rules
 
 ## Task-First Principle

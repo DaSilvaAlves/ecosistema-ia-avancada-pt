@@ -1,3 +1,11 @@
+---
+paths:
+  - "**/tests/**"
+  - "**/*.test.*"
+  - "**/mocks/**"
+description: "Mocks de protocolos externos espelham o protocolo real — teste de fidelidade obrigatório"
+---
+
 # Mock Protocol Fidelity — Regra Obrigatória
 
 ## Origem

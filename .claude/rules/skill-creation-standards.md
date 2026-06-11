@@ -1,4 +1,6 @@
 ---
+paths:
+  - "**/.claude/skills/**"
 description: "Standards para criar skills AIOX — estrutura, nomenclatura, autoridade e localização"
 ---
 
