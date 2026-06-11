@@ -2,6 +2,7 @@ import { ChatPanel } from '@/components/chat/ChatPanel';
 import { Sidebar } from '@/components/ui/Sidebar';
 import { Header } from '@/components/ui/Header';
 import { OnboardingModal } from '@/components/chat/OnboardingModal';
+import { BrainDumpLauncher } from '@/components/brain-dump/BrainDumpLauncher';
 import { SidebarWidgets } from '@/components/widgets/SidebarWidgets';
 
 /**
@@ -32,6 +33,7 @@ export default function HomePage(): React.ReactElement {
         </Sidebar>
       </main>
       <OnboardingModal />
+      <BrainDumpLauncher />
       <style>{`
         @media (max-width: 1279px) { .nexus-main { padding-right: 320px; } }
         @media (max-width: 1023px) { .nexus-main { padding-right: 0; } }
