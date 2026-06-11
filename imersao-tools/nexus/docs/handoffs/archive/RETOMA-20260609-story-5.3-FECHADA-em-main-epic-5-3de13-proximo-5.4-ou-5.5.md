@@ -7,9 +7,11 @@
 **De:** Gage (`@devops`) + Pax (`@po`) — ciclo completo de fecho da Story 5.3 (fix CR Iter 1 → push → CR Iter 2 APPROVED → merge → close-story → reconciliação git)
 **Para:** any / Eurico — decidir e arrancar a próxima story do Epic 5 (5.4 ou 5.5)
 **Data:** 09/06/2026
-**Status:** pending
+**Status:** consumed
+**consumed_at:** 2026-06-10
+**consumed_by:** po (Pax) — a Story 5.4 (sucessora) foi implementada e fechada; a decisão "próximo 5.4 ou 5.5" deste handoff está resolvida (escolhida 5.4)
 **Projecto:** Nexus v2 (`imersao-tools/nexus/`)
-**Epic:** 5 — Diário + Brain Dump + Conhecimento (**3/13** Done: 5.1 + 5.2 + 5.3)
+**Epic:** 5 — Diário + Brain Dump + Conhecimento (**3/13** Done à data deste handoff; agora **4/13** após fecho da 5.4)
 
 ---
 

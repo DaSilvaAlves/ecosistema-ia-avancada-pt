@@ -1,5 +1,8 @@
 # RETOMA — Nexus v2 Story 5.5 (Pesquisa full-text diário) MERGED em main, falta só `@po *close-story`
 
+> **CONSUMIDO** — `consumed: true` · `consumed_at: 2026-06-11` · `consumed_by: Pax (@po)` · `status: consumed`
+> `@po *close-story 5.5` executado: Status Ready for Review → Done, `git mv` active→completed, EPIC-5 4/13 → **5/13**, `QA-5.5-C1` ratificado como débito menor não-bloqueante, commit de fecho docs-only directo em `main`. Sub-módulo Diário (5.3-5.5) completo.
+
 > ATENÇÃO — ESTE HANDOFF SEGUE A REGRA OBRIGATÓRIA `handoff-location.md`.
 > ANTES DE CRIAR OU MOVER QUALQUER HANDOFF, CONSULTAR `.claude/rules/handoff-location.md`.
 > HANDOFFS SÓ VIVEM DENTRO DA PASTA DO PROJECTO A QUE SE REFEREM.
