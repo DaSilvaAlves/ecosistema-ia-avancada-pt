@@ -1,3 +1,10 @@
+---
+paths:
+  - "**/*.tsx"
+  - "**/tests/**"
+description: "Critério objectivo: >=3 estados de render exigem teste de componente"
+---
+
 # React Component Test Criteria — Regra Obrigatória
 
 ## Origem

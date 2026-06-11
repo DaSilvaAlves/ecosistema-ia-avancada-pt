@@ -1,4 +1,7 @@
 ---
+paths:
+  - ".aiox-core/**"
+  - "**/aiox-monster/**"
 description: "Protocol for the @monster agent (Rex) — activation rules, operational limits, delegation map, modes of operation, and CLI First enforcement for the IA AVANCADA PT ecosystem"
 ---
 

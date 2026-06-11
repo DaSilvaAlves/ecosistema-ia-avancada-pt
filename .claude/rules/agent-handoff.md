@@ -1,3 +1,10 @@
+---
+paths:
+  - ".aiox/**"
+  - ".aiox-core/**"
+description: "Compactação de contexto ao trocar de agente AIOX in-session"
+---
+
 # Agent Handoff Protocol — Context Compaction
 
 ## Purpose

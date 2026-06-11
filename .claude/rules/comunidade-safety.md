@@ -1,3 +1,9 @@
+---
+paths:
+  - "imersao-tools/comunidade/**"
+description: "Protecção CRÍTICA da comunidade — teste obrigatório antes de push a dashboard.html"
+---
+
 # Comunidade Safety — Regra de Proteccao CRITICA
 
 ## Origem

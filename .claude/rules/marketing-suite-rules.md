@@ -1,4 +1,8 @@
 ---
+paths:
+  - "**/marketing/**"
+  - "**/market-*/**"
+  - "docs/campaigns/**"
 description: "Regras de uso da marketing suite /market-* — âmbito, routing e limites"
 ---
 

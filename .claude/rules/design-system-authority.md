@@ -1,4 +1,7 @@
 ---
+paths:
+  - "**/design-system/**"
+  - "**/design-tokens/**"
 description: "Autoridade e routing dos agentes de design system — quando usar cada especialista"
 ---
 

@@ -1,4 +1,7 @@
 ---
+paths:
+  - "imersao-tools/**"
+  - "imersao-build/**"
 description: "Rules for the Imersao IA Portugal pipeline — 6 mandatory steps in sequence, protected ports (5190-5194, 5196), agent responsibilities per step, integration rules, and data contracts between tools"
 ---
 

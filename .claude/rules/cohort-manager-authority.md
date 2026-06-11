@@ -1,4 +1,6 @@
 ---
+paths:
+  - "**/cohort*/**"
 description: "Rules for the cohort-manager agent — buyer validation and registration authority, security constraints, and MCP tool governance for the Cohort Legendario Master squad"
 ---
 
