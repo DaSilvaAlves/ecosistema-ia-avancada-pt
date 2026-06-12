@@ -8,8 +8,10 @@
 from_agent: aiox-master (Orion)
 to_agent: architect (Aria) — depois po (Pax) + dev (Dex)
 created: "2026-06-12"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-12T00:00:00Z"
+consumed_by: architect (Aria)
 project: nexus-v2
 ```
 

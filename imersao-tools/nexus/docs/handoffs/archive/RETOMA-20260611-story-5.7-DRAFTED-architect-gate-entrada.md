@@ -7,7 +7,7 @@
 **Projecto:** Nexus v2 (`imersao-tools/nexus/`)
 **Data:** 11/06/2026
 **De → Para:** River (`@sm`) → Aria (`@architect`) (Gate de Entrada) → depois Pax (`@po`) + Dex (`@dev`)
-**Status:** PENDING
+**Status:** CONSUMED — 12/06/2026 por Aria (`@architect`): Architect Gate de Entrada (T0) executado, 5 decisões `[D-5.7-*]` ratificadas + AC reconciliados na `5.7.story.md` (v0.2). Continuidade: handoff `RETOMA-20260612-story-5.7-gate-entrada-PASS-proximo-po-validate.md` (→ `@po`).
 **Branch:** `feat/nexus-v2-5.7-brain-dump-parser` (local; **ver Passo 0** — pode precisar de push)
 
 ---
