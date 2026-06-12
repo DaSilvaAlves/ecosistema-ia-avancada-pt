@@ -8,8 +8,10 @@
 from_agent: "orquestrador /sdc 5.7 (po Pax + dev Dex + architect Aria + devops Gage)"
 to_agent: "any — próximo terminal arranca com @sm (draft 5.8) ou /sdc 5.8"
 created: "2026-06-12T16:30:00Z"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-12T18:00:00Z"
+consumed_by: "Orion (@aiox-master) — arranque do ciclo /sdc 5.8 --push"
 project: nexus-v2
 ```
 
