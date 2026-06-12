@@ -8,8 +8,10 @@
 from_agent: architect (Aria)
 to_agent: po (Pax) — depois dev (Dex)
 created: "2026-06-12"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-12T16:30:00Z"
+consumed_by: "orquestrador /sdc 5.7 (po+dev+architect+devops)"
 project: nexus-v2
 ```
 
