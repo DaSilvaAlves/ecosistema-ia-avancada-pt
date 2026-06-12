@@ -80,6 +80,28 @@ describe('parseBrainDumpWire — fidelidade `.strict()` (AC7, mock-protocol-fide
     expect(() => parseBrainDumpWire(emptyItem)).toThrow(/formato inesperado/);
   });
 
+  it('LANÇA se um item for whitespace-only (.trim().min(1))', () => {
+    // Sem o `.trim()` no schema, `"   "` passaria, seria persistido, contado por
+    // `hasParsedContent` e mostrado como linha vazia no preview (CR Iter 1 Major).
+    const whitespaceItem = {
+      tarefas: ['   '],
+      projectos: [],
+      ideias: [],
+      decisoes: [],
+    };
+    expect(() => parseBrainDumpWire(whitespaceItem)).toThrow(/formato inesperado/);
+  });
+
+  it('faz trim dos itens válidos (remove espaços nas pontas)', () => {
+    const padded = {
+      tarefas: ['  comprar tinta  '],
+      projectos: [],
+      ideias: [],
+      decisoes: [],
+    };
+    expect(parseBrainDumpWire(padded).tarefas).toEqual(['comprar tinta']);
+  });
+
   it('LANÇA se um item não for string (a AI devolveu um objecto com id)', () => {
     // Fidelidade do contrato wire: a AI devolve TEXTOS, não ids. Se devolvesse
     // `{ id, texto }` o wire schema rejeita — os ids são do cliente (enrichWithIds).

@@ -15,7 +15,7 @@
 
 ## P0 — urgente
 
-- [x] **P0.1** `npm audit fix` em `v2/` — Next.js 15.5.15 → 15.5.19, high resolvido. **PR #65 MERGED em main** (`9661d6f8`, 12/06/2026), CI+CodeRabbit verdes, gates locais 4/4 PASS (typecheck, 1582/1582 vitest, build, audit). Criticals da cadeia `request` (node-telegram-bot-api) + 12 moderate ficam decididos no Epic 6.
+- [x] **P0.1** `npm audit fix` em `v2/` — Next.js 15.5.15 → 15.5.19, high resolvido. **PR #65 MERGED em main** (`9661d6f8`, 12/06/2026), CI+CodeRabbit verdes, gates locais 4/4 PASS (typecheck, 1582/1582 vitest, build, audit). Criticals da cadeia `request` (node-telegram-bot-api) + 11 moderate ficam decididos no Epic 6.
 - [x] **P0.2** D7 **já estava resolvido** — hotfix executor system prompt PT-PT em main desde 18/05/2026 (PR #26, commit `755375a0`, `lib/agent/prompts/executor-system.ts`). A retro Epic 4 (acção A5) só não tinha a confirmação registada — fica registada aqui.
 - [x] **P0.3** `@architect` ratificou as 5 decisões `[D-5.7-*]` (MECHANISM, SHAPE, TOOLS, SCOPE, PERSIST) — Architect Gate de Entrada da Story 5.7 **EXECUTADO 12/06/2026** (Aria): (A) proxy JSON síncrono, wire/domínio separados (`enrichWithIds`), (A) JSON ad-hoc, scope confirmado, persist pós-sucesso. Registado em `stories/active/5.7.story.md` §Ratificação (v0.2). Epic 5 destrancado — próximo: `@po *validate 5.7` → `@dev`.
 
@@ -53,4 +53,4 @@ Timeline nominal (cadência Epics 1-4): Epic 5 fecha fim de Junho; projecto comp
 ## Referências
 
 - Relatórios de origem: auditoria de scope (PRD `docs/PRD-NEXUS-V2.md` §9-10), auditoria técnica (gates em `v2/`), auditoria de débitos (`docs/EPIC-0-FOLLOW-UP-DEBT.md`, `docs/retrospectives/`, QA gates).
-- Handoff activo: `docs/handoffs/RETOMA-20260611-story-5.7-DRAFTED-architect-gate-entrada.md`.
+- Handoff activo: `docs/handoffs/archive/RETOMA-20260611-story-5.7-DRAFTED-architect-gate-entrada.md`.

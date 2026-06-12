@@ -191,3 +191,19 @@ describe('parseBrainDump — caminhos de falha (AC4, internal-state-contract-gat
     await expect(parseBrainDump('texto', { fetchFn })).rejects.toThrow();
   });
 });
+
+describe('parseBrainDump — short-circuit de input vazio (CR Iter 1 Major)', () => {
+  it('lança PT-PT com input string vazia SEM chamar o fetchFn', async () => {
+    const fetchFn = vi.fn() as unknown as typeof fetch;
+    await expect(parseBrainDump('', { fetchFn })).rejects.toThrow(/vazio/);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('lança PT-PT com input whitespace-only SEM chamar o fetchFn', async () => {
+    // Determinístico e local: não gasta uma chamada/tokens do proxy nem depende
+    // do comportamento do modelo para inputs sem conteúdo.
+    const fetchFn = vi.fn() as unknown as typeof fetch;
+    await expect(parseBrainDump('   \n\t  ', { fetchFn })).rejects.toThrow(/vazio/);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+});

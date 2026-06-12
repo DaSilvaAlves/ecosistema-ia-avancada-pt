@@ -46,8 +46,14 @@ export type BrainDumpBucket = (typeof BRAIN_DUMP_BUCKETS)[number];
 
 /**
  * Wire shape da resposta AI. Os 4 buckets são OBRIGATÓRIOS (arrays vazios
- * permitidos); cada item é uma string não-vazia (`min(1)`) — a AI devolve textos,
+ * permitidos); cada item é uma string não-vazia — a AI devolve textos,
  * NÃO ids (`[D-5.7-SHAPE]`).
+ *
+ * `.trim().min(1)` (não `.min(1)` simples): o `.trim()` transforma a string ANTES
+ * da verificação de comprimento, pelo que um item whitespace-only (`"   "`) é
+ * rejeitado e os itens válidos ficam sem espaços nas pontas. Sem o trim, um item
+ * em branco passava o schema, era persistido, contado por `hasParsedContent` e
+ * mostrado como linha vazia no preview read-only (CR Iter 1 Major).
  *
  * `.strict()` (não `.passthrough()`): um bucket renomeado (ex: `tasks` em vez de
  * `tarefas`) ou um campo extra faz o parse FALHAR. É o mecanismo que satisfaz AC7
@@ -55,21 +61,25 @@ export type BrainDumpBucket = (typeof BRAIN_DUMP_BUCKETS)[number];
  */
 export const BrainDumpWireSchema = z
   .object({
-    tarefas: z.array(z.string().min(1)),
-    projectos: z.array(z.string().min(1)),
-    ideias: z.array(z.string().min(1)),
-    decisoes: z.array(z.string().min(1)),
+    tarefas: z.array(z.string().trim().min(1)),
+    projectos: z.array(z.string().trim().min(1)),
+    ideias: z.array(z.string().trim().min(1)),
+    decisoes: z.array(z.string().trim().min(1)),
   })
   .strict();
 
 /** Wire shape inferido (resposta crua da AI, antes do enriquecimento de ids). */
 export type BrainDumpWire = z.infer<typeof BrainDumpWireSchema>;
 
-/** Item de domínio: id (atribuído no cliente) + texto (gerado pela AI). */
+/**
+ * Item de domínio: id (atribuído no cliente) + texto (gerado pela AI). O `texto`
+ * usa `.trim().min(1)` (mesma razão do wire): rejeita whitespace-only no shape
+ * persistido/consumido pela 5.8 (CR Iter 1 Major).
+ */
 export const BrainDumpItemSchema = z
   .object({
     id: z.string().min(1),
-    texto: z.string().min(1),
+    texto: z.string().trim().min(1),
   })
   .strict();
 

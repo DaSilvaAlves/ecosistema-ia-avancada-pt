@@ -121,13 +121,25 @@ export interface ParseBrainDumpOpts {
  * síncrono). Devolve `BrainDumpParsed` (4 buckets com itens `{ id, texto }`)
  * pronto para `createBrainDump({ ..., parsedOutput, status: 'parsed' })`.
  *
- * Lança PT-PT em qualquer falha (rede, `!res.ok`, body sem `text`, JSON inválido,
- * shape inválido) — a UI mapeia ao estado `error` (AC4).
+ * Lança PT-PT em qualquer falha (input vazio, rede, `!res.ok`, body sem `text`,
+ * JSON inválido, shape inválido) — a UI mapeia ao estado `error` (AC4).
+ *
+ * Short-circuit determinístico (CR Iter 1 Major): um `bodyMarkdown` vazio ou
+ * whitespace-only não pode produzir estrutura útil — rejeita-se localmente ANTES
+ * de chamar o proxy, sem gastar uma chamada/tokens e sem fazer o resultado
+ * depender do comportamento do modelo. Defensivo: a UI da 5.6 já desactiva o botão
+ * "Estruturar" com texto vazio, mas o helper não confia nessa garantia.
  */
 export async function parseBrainDump(
   bodyMarkdown: string,
   opts: ParseBrainDumpOpts = {},
 ): Promise<BrainDumpParsed> {
+  if (!bodyMarkdown.trim()) {
+    throw new Error(
+      'O brain dump está vazio — escreve algum texto antes de estruturar.',
+    );
+  }
+
   const fetchFn = opts.fetchFn ?? globalThis.fetch.bind(globalThis);
 
   const res = await fetchFn(PROXY_URL, {
