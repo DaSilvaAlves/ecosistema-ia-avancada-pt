@@ -150,7 +150,7 @@ describe('BrainDumpModal — estados aiState (Story 5.7, AC4/AC5/AC6)', () => {
   });
 
   it('(parsed) mostra os 4 buckets com contadores correctos', () => {
-    setup({ aiState: { kind: 'parsed', parsed: parsedFixture() } });
+    setup({ aiState: { kind: 'parsed', id: 'bd-1', parsed: parsedFixture() } });
     expect(screen.getByTestId('brain-dump-buckets')).toBeInTheDocument();
     expect(screen.getByTestId('brain-dump-count-tarefas')).toHaveTextContent('(2)');
     expect(screen.getByTestId('brain-dump-count-projectos')).toHaveTextContent('(1)');
@@ -159,14 +159,14 @@ describe('BrainDumpModal — estados aiState (Story 5.7, AC4/AC5/AC6)', () => {
   });
 
   it('(parsed) lista os itens de um bucket não-vazio', () => {
-    setup({ aiState: { kind: 'parsed', parsed: parsedFixture() } });
+    setup({ aiState: { kind: 'parsed', id: 'bd-1', parsed: parsedFixture() } });
     expect(screen.getByText('ligar ao contabilista')).toBeInTheDocument();
     expect(screen.getByText('comprar tinta')).toBeInTheDocument();
     expect(screen.getByText('renovar o escritório')).toBeInTheDocument();
   });
 
   it('(parsed, a11y) bucket não-vazio default expandido, vazio default colapsado', () => {
-    setup({ aiState: { kind: 'parsed', parsed: parsedFixture() } });
+    setup({ aiState: { kind: 'parsed', id: 'bd-1', parsed: parsedFixture() } });
     const tarefasToggle = screen.getByRole('button', { name: /tarefas propostas/i });
     const ideiasToggle = screen.getByRole('button', { name: /ideias soltas/i });
     expect(tarefasToggle).toHaveAttribute('aria-expanded', 'true');
@@ -174,7 +174,7 @@ describe('BrainDumpModal — estados aiState (Story 5.7, AC4/AC5/AC6)', () => {
   });
 
   it('(parsed, a11y) clicar no cabeçalho alterna aria-expanded', () => {
-    setup({ aiState: { kind: 'parsed', parsed: parsedFixture() } });
+    setup({ aiState: { kind: 'parsed', id: 'bd-1', parsed: parsedFixture() } });
     const ideiasToggle = screen.getByRole('button', { name: /ideias soltas/i });
     expect(ideiasToggle).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(ideiasToggle);
@@ -188,17 +188,52 @@ describe('BrainDumpModal — estados aiState (Story 5.7, AC4/AC5/AC6)', () => {
       ideias: [],
       decisoes: [],
     };
-    setup({ aiState: { kind: 'parsed', parsed: empty } });
+    setup({ aiState: { kind: 'parsed', id: 'bd-1', parsed: empty } });
     expect(screen.getByTestId('brain-dump-empty-hint')).toHaveTextContent(
       /não encontrou itens/i,
     );
   });
 
   it('(parsed) NÃO mostra controlos item-a-item (checkbox/editar/guardar) — isso é a 5.8', () => {
-    setup({ aiState: { kind: 'parsed', parsed: parsedFixture() } });
+    setup({ aiState: { kind: 'parsed', id: 'bd-1', parsed: parsedFixture() } });
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /guardar \d+ itens/i }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('BrainDumpModal — approval flow (Story 5.8, AC2/AC5)', () => {
+  it('(approving) mostra os controlos de aprovação e esconde a textarea de input', () => {
+    setup({ aiState: { kind: 'approving', id: 'bd-1', parsed: parsedFixture() } });
+    expect(screen.getByTestId('brain-dump-approval')).toBeInTheDocument();
+    expect(screen.getByTestId('brain-dump-save-button')).toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox').length).toBeGreaterThan(0);
+    // A fase de input (5.6) fica escondida durante a aprovação.
+    expect(screen.queryByTestId('brain-dump-textarea')).not.toBeInTheDocument();
+  });
+
+  it('(saving) mostra overlay "A guardar…" com role=status e botão Guardar desactivado', () => {
+    setup({ aiState: { kind: 'saving', id: 'bd-1', parsed: parsedFixture() } });
+    const overlay = screen.getByTestId('brain-dump-saving-overlay');
+    expect(overlay).toHaveAttribute('role', 'status');
+    expect(overlay).toHaveTextContent('A guardar…');
+    expect(screen.getByTestId('brain-dump-save-button')).toBeDisabled();
+  });
+
+  it('(approvalError) mostra a mensagem PT-PT com role=alert e mantém os controlos', () => {
+    setup({
+      aiState: {
+        kind: 'approvalError',
+        id: 'bd-1',
+        parsed: parsedFixture(),
+        message: 'O brain dump foi eliminado.',
+      },
+    });
+    const error = screen.getByTestId('brain-dump-approval-error');
+    expect(error).toHaveAttribute('role', 'alert');
+    expect(error).toHaveTextContent(/foi eliminado/i);
+    // Os controlos continuam para "Tentar novamente".
+    expect(screen.getByTestId('brain-dump-save-button')).toBeInTheDocument();
   });
 });
