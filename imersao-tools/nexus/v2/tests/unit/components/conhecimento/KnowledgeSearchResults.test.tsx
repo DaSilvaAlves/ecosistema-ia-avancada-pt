@@ -160,4 +160,18 @@ describe('KnowledgeSearchResults (Story 5.10 / AC7)', () => {
     const list = screen.getByTestId('knowledge-search-results');
     expect(within(list).getByText('—')).toBeInTheDocument();
   });
+
+  // ── data inválida → epoch negativo: branch `< 0` de formatDate (complementa o caso NaN) ──
+  it('updatedAt inválido (epoch negativo) → data renderiza placeholder "—"', () => {
+    render(
+      <KnowledgeSearchResults
+        results={[makeResult({ title: 'Nota', bodyMarkdown: 'corpo alvo', updatedAt: -1 })]}
+        query="alvo"
+        isLoading={false}
+        onSelect={vi.fn()}
+      />,
+    );
+    const list = screen.getByTestId('knowledge-search-results');
+    expect(within(list).getByText('—')).toBeInTheDocument();
+  });
 });
