@@ -293,33 +293,44 @@ export default function KnowledgePage(): React.ReactElement {
     if (selectedNotebook === null) {
       throw new Error('Nenhum caderno seleccionado.');
     }
-    if (creatingNote) {
-      const created = await createKnowledgeNote({
-        id: crypto.randomUUID(),
-        notebookId: selectedNotebook.id,
-        title: draft.title,
-        bodyMarkdown: draft.bodyMarkdown,
-        tags: draft.tags,
-        updatedAt: Date.now(),
-      });
-      setSelectedNote(created);
-      setCreatingNote(false);
-      setEditingNote(false);
-    } else if (selectedNote !== null) {
-      await updateKnowledgeNote(selectedNote.id, {
-        title: draft.title,
-        bodyMarkdown: draft.bodyMarkdown,
-        tags: draft.tags,
-        updatedAt: Date.now(),
-      });
-      setSelectedNote({
-        ...selectedNote,
-        title: draft.title,
-        bodyMarkdown: draft.bodyMarkdown,
-        tags: draft.tags,
-        updatedAt: Date.now(),
-      });
-      setEditingNote(false);
+    // createKnowledgeNote/updateKnowledgeNote podem lançar (ex: caderno removido
+    // entretanto, validação). Mesmo padrão de falha consistente das handlers de
+    // área/caderno (CR Iter 1 do PR #70): toast + re-throw para o NoteEditor
+    // poder reagir, sem alterar `selectedNote` no caminho de falha.
+    try {
+      const now = Date.now();
+      if (creatingNote) {
+        const created = await createKnowledgeNote({
+          id: crypto.randomUUID(),
+          notebookId: selectedNotebook.id,
+          title: draft.title,
+          bodyMarkdown: draft.bodyMarkdown,
+          tags: draft.tags,
+          updatedAt: now,
+        });
+        setSelectedNote(created);
+        setCreatingNote(false);
+        setEditingNote(false);
+      } else if (selectedNote !== null) {
+        await updateKnowledgeNote(selectedNote.id, {
+          title: draft.title,
+          bodyMarkdown: draft.bodyMarkdown,
+          tags: draft.tags,
+          updatedAt: now,
+        });
+        setSelectedNote({
+          ...selectedNote,
+          title: draft.title,
+          bodyMarkdown: draft.bodyMarkdown,
+          tags: draft.tags,
+          updatedAt: now,
+        });
+        setEditingNote(false);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      setToast(`Não foi possível guardar a nota. ${message}`);
+      throw err;
     }
   }
 
