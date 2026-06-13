@@ -114,6 +114,13 @@ export async function estruturarDiario(
   bodyMarkdown: string,
   opts: EstruturarOpts = {},
 ): Promise<StructuredDiarioResponse> {
+  // Short-circuit de input vazio (dívida da 5.7/5.8, mesma classe do CR Major 2
+  // da 5.7): se não há texto, lança PT-PT ANTES do fetch — não desperdiça uma
+  // chamada ao proxy nem `max_tokens` com uma entrada que a AI não pode estruturar.
+  if (!bodyMarkdown.trim()) {
+    throw new Error('Não há texto para estruturar.');
+  }
+
   const fetchFn = opts.fetchFn ?? globalThis.fetch.bind(globalThis);
 
   const res = await fetchFn(PROXY_URL, {
