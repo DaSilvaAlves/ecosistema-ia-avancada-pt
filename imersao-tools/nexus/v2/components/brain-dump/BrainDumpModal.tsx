@@ -8,6 +8,10 @@ import {
   type BrainDumpBucket,
   type BrainDumpParsed,
 } from '@/lib/brain-dump/ai-parser';
+import {
+  BrainDumpApprovalView,
+  type ApprovedItemPayload,
+} from '@/components/brain-dump/BrainDumpApprovalView';
 
 /**
  * Nexus v2 — BrainDumpModal (Stories 5.6 + 5.7)
@@ -27,24 +31,40 @@ import {
  * `BrainDumpLauncher` (AC3); este componente é controlado por `aiState` (prop).
  *   - `loading` → overlay "A estruturar…" + spinner Cyan + textarea readonly (AC4).
  *   - `error`   → mensagem PT-PT, sem buckets vazios silenciosos (AC4).
- *   - `parsed`  → 4 secções colapsáveis (não-vazias expandidas, vazias "(0)"
- *                  colapsadas) com contador + itens, read-only (AC5/AC6). Sem
- *                  checkboxes/editar/rejeitar/guardar (isso é a Story 5.8).
+ *   - `parsed`  → 4 secções colapsáveis read-only (AC5/AC6 da 5.7). Usado para um
+ *                  dump já processado reaberto em modo leitura (Story 5.8 eixo b).
  *
- * Estados de render (`react-component-test-criteria.md`): fechado (null) / idle
- * (input) / loading (overlay) / parsed (buckets) / error (mensagem) ⇒ ≥3 ⇒ teste
+ * Story 5.8 (`[D-5.8-*]`): acrescenta o approval flow item-a-item. O modal
+ * renderiza controlos interactivos (`BrainDumpApprovalView`) e os estados de
+ * persistência. Continua controlado por `aiState` (prop); o `BrainDumpLauncher` é
+ * dono do estado e orquestra a persistência (`persistApprovedItems`).
+ *   - `approving` → controlos por item (checkbox/✏️/✗/bulk) + botão "Guardar N" (AC2).
+ *   - `saving`    → overlay "A guardar…" `role="status"` + botão desactivado (AC5).
+ *   - `approvalError` → mensagem PT-PT + "Tentar novamente" (AC5); zero estado parcial.
+ *
+ * Em sucesso o launcher fecha o modal e repõe `idle` + mostra toast Lime (AC5;
+ * `[D-5.8-CHAT-RETRO]` DIFERIDA — sem mensagem no chat). Não há estado `saved` no
+ * modal: o sucesso é o toast + fecho.
+ *
+ * Estados de render (`react-component-test-criteria.md`): fechado (null) / idle /
+ * loading / parsed / error / approving / saving / approvalError ⇒ ≥3 ⇒ teste
  * de componente obrigatório.
  */
 
 /**
- * Máquina de estados do parsing AI (união discriminada — padrão `AiState` da 5.4,
- * `internal-state-contract-gate.md` eixo c). O `BrainDumpLauncher` é dono do
- * estado; o modal apenas o renderiza.
+ * Máquina de estados do parsing AI + approval flow (união discriminada — padrão
+ * `AiState` da 5.4, `internal-state-contract-gate.md` eixo c). O `BrainDumpLauncher`
+ * é dono do estado; o modal apenas o renderiza. O `id` no `parsed`/`approving` é o id
+ * do brain dump em `db.brain_dumps` (necessário para `getBrainDump`/`updateBrainDump`
+ * — `[D-5.8-REREAD]`).
  */
 export type BrainDumpAiState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'parsed'; parsed: BrainDumpParsed }
+  | { kind: 'parsed'; id: string; parsed: BrainDumpParsed }
+  | { kind: 'approving'; id: string; parsed: BrainDumpParsed }
+  | { kind: 'saving'; id: string; parsed: BrainDumpParsed }
+  | { kind: 'approvalError'; id: string; parsed: BrainDumpParsed; message: string }
   | { kind: 'error'; message: string };
 
 interface BrainDumpModalProps {
@@ -59,10 +79,16 @@ interface BrainDumpModalProps {
    */
   onStructure: (markdown: string) => void;
   /**
-   * Estado do parsing AI (controlado pelo `BrainDumpLauncher`). Default `idle`
-   * para compatibilidade com chamadas que só testam a parte de input (5.6).
+   * Estado do parsing AI + approval (controlado pelo `BrainDumpLauncher`). Default
+   * `idle` para compatibilidade com chamadas que só testam a parte de input (5.6).
    */
   aiState?: BrainDumpAiState;
+  /**
+   * Seam de persistência do approval flow (Story 5.8): recebe os itens aprovados
+   * (bucket + texto final) ao clicar "Guardar N". O `BrainDumpLauncher` liga isto a
+   * `persistApprovedItems`. Opcional para compatibilidade com 5.6/5.7.
+   */
+  onSave?: (items: ApprovedItemPayload[]) => void;
 }
 
 const PLACEHOLDER =
@@ -86,6 +112,7 @@ export function BrainDumpModal({
   onClose,
   onStructure,
   aiState = { kind: 'idle' },
+  onSave,
 }: BrainDumpModalProps): React.ReactElement | null {
   const [text, setText] = useState('');
 
@@ -95,6 +122,13 @@ export function BrainDumpModal({
   const titleId = 'brain-dump-modal-title';
 
   const isLoading = aiState.kind === 'loading';
+  const isSaving = aiState.kind === 'saving';
+  // Estados do approval flow (5.8) escondem a textarea de input (5.6): após o parse
+  // o paradigma muda de captura para aprovação.
+  const isApprovalPhase =
+    aiState.kind === 'approving' ||
+    aiState.kind === 'saving' ||
+    aiState.kind === 'approvalError';
 
   // Foco inicial na textarea + restauro do foco ao opener + focus trap + Escape
   // (padrão JournalEntryModal 5.3). Reset do texto a cada abertura (dump fresco).
@@ -246,99 +280,179 @@ export function BrainDumpModal({
           [data-testid="brain-dump-textarea"]::placeholder { color: #4A5568; opacity: 1; }
           @keyframes brain-dump-spin { to { transform: rotate(360deg); } }
         `}</style>
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={PLACEHOLDER}
-          readOnly={isLoading}
-          aria-label="Texto do brain dump"
-          data-testid="brain-dump-textarea"
-          style={{
-            flex: 1,
-            width: '100%',
-            resize: 'none',
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: 8,
-            padding: '1rem',
-            color: '#F0F4FF',
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '1rem',
-            lineHeight: 1.8,
-            outline: 'none',
-          }}
-        />
+        {/* Fase de INPUT (5.6/5.7) — escondida durante o approval flow (5.8). */}
+        {!isApprovalPhase && (
+          <>
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={PLACEHOLDER}
+              readOnly={isLoading}
+              aria-label="Texto do brain dump"
+              data-testid="brain-dump-textarea"
+              style={{
+                flex: 1,
+                width: '100%',
+                resize: 'none',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 8,
+                padding: '1rem',
+                color: '#F0F4FF',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '1rem',
+                lineHeight: 1.8,
+                outline: 'none',
+              }}
+            />
 
-        {/* Display dos 4 buckets / mensagem de erro (AC4/AC5/AC6) — só após o parse. */}
-        {aiState.kind === 'parsed' && <BucketDisplay parsed={aiState.parsed} />}
-        {aiState.kind === 'error' && (
-          <p
-            role="alert"
-            data-testid="brain-dump-error"
-            style={{
-              margin: 0,
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '0.9rem',
-              color: '#FF006E',
-              background: 'rgba(255, 0, 110, 0.08)',
-              border: '1px solid rgba(255, 0, 110, 0.25)',
-              borderRadius: 6,
-              padding: '0.75rem 1rem',
-            }}
-          >
-            {aiState.message}
-          </p>
+            {/* Display read-only dos 4 buckets / erro de parse (AC4/AC5/AC6 da 5.7). */}
+            {aiState.kind === 'parsed' && <BucketDisplay parsed={aiState.parsed} />}
+            {aiState.kind === 'error' && (
+              <p
+                role="alert"
+                data-testid="brain-dump-error"
+                style={{
+                  margin: 0,
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '0.9rem',
+                  color: '#FF006E',
+                  background: 'rgba(255, 0, 110, 0.08)',
+                  border: '1px solid rgba(255, 0, 110, 0.25)',
+                  borderRadius: 6,
+                  padding: '0.75rem 1rem',
+                }}
+              >
+                {aiState.message}
+              </p>
+            )}
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
+            >
+              <span
+                data-testid="brain-dump-word-count"
+                aria-live="polite"
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  color: '#8892A4',
+                }}
+              >
+                {words} {words === 1 ? 'palavra' : 'palavras'}
+              </span>
+              <button
+                type="button"
+                onClick={handleStructure}
+                disabled={!structurable}
+                aria-disabled={!structurable || undefined}
+                aria-label={
+                  structurable
+                    ? 'Estruturar com AI'
+                    : 'Estruturar com AI (desactivado — escreve pelo menos 50 caracteres)'
+                }
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  color: structurable ? '#04040A' : '#4A5568',
+                  background: structurable ? '#00F5FF' : 'rgba(255, 255, 255, 0.04)',
+                  border: structurable ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: 6,
+                  padding: '0.65rem 1.4rem',
+                  cursor: structurable ? 'pointer' : 'not-allowed',
+                  boxShadow: structurable ? '0 0 20px rgba(0, 245, 255, 0.4)' : 'none',
+                  transition: '0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              >
+                Estruturar com AI
+              </button>
+            </div>
+          </>
         )}
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}
-        >
-          <span
-            data-testid="brain-dump-word-count"
+        {/* Fase de APROVAÇÃO (5.8) — controlos interactivos item-a-item (AC2/AC5). */}
+        {isApprovalPhase && (
+          <>
+            {aiState.kind === 'approvalError' && (
+              <p
+                role="alert"
+                data-testid="brain-dump-approval-error"
+                style={{
+                  margin: 0,
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '0.9rem',
+                  color: '#FF006E',
+                  background: 'rgba(255, 0, 110, 0.08)',
+                  border: '1px solid rgba(255, 0, 110, 0.25)',
+                  borderRadius: 6,
+                  padding: '0.75rem 1rem',
+                }}
+              >
+                {aiState.message}
+              </p>
+            )}
+            <BrainDumpApprovalView
+              parsed={aiState.parsed}
+              saving={isSaving}
+              onSave={(items) => onSave?.(items)}
+            />
+          </>
+        )}
+
+        {/* Overlay "A guardar…" (AC5) — cobre o modal durante a persistência. */}
+        {isSaving && (
+          <div
+            role="status"
             aria-live="polite"
+            data-testid="brain-dump-saving-overlay"
             style={{
-              fontFamily: 'JetBrains Mono, monospace',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              color: '#8892A4',
+              position: 'absolute',
+              inset: 0,
+              borderRadius: 12,
+              background: 'rgba(4, 4, 10, 0.78)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 16,
+              zIndex: 1,
             }}
           >
-            {words} {words === 1 ? 'palavra' : 'palavras'}
-          </span>
-          <button
-            type="button"
-            onClick={handleStructure}
-            disabled={!structurable}
-            aria-disabled={!structurable || undefined}
-            aria-label={
-              structurable
-                ? 'Estruturar com AI'
-                : 'Estruturar com AI (desactivado — escreve pelo menos 50 caracteres)'
-            }
-            style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '0.9rem',
-              fontWeight: 700,
-              color: structurable ? '#04040A' : '#4A5568',
-              background: structurable ? '#00F5FF' : 'rgba(255, 255, 255, 0.04)',
-              border: structurable ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: 6,
-              padding: '0.65rem 1.4rem',
-              cursor: structurable ? 'pointer' : 'not-allowed',
-              boxShadow: structurable ? '0 0 20px rgba(0, 245, 255, 0.4)' : 'none',
-              transition: '0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
-            Estruturar com AI
-          </button>
-        </div>
+            <span
+              aria-hidden="true"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                border: '3px solid rgba(57, 255, 20, 0.2)',
+                borderTopColor: '#39FF14',
+                animation: 'brain-dump-spin 0.8s linear infinite',
+              }}
+            />
+            <span
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                color: '#F0F4FF',
+                letterSpacing: '0.01em',
+              }}
+            >
+              A guardar…
+            </span>
+          </div>
+        )}
 
         {/* Overlay "A estruturar…" (AC4, FE [4] §1014) — cobre o modal em loading. */}
         {isLoading && (
