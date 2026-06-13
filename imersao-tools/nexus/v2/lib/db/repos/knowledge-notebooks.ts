@@ -55,6 +55,17 @@ export async function listNotebooksByArea(
   return notebooks.sort((a, b) => a.name.localeCompare(b.name, 'pt-PT'));
 }
 
+/**
+ * Lista todos os cadernos (Story 5.10 — resolução de breadcrumb da pesquisa). Um
+ * read único reactivo na `page.tsx` constrói o mapa `notebookId → {nome, área}`
+ * para o `KnowledgeSearchResults`, evitando reads Dexie no caminho hot
+ * per-keystroke da pesquisa (R3). Ordenado alfabeticamente por nome (PT-PT).
+ */
+export async function listAllNotebooks(): Promise<KnowledgeNotebook[]> {
+  const notebooks = await db.knowledge_notebooks.toArray();
+  return notebooks.sort((a, b) => a.name.localeCompare(b.name, 'pt-PT'));
+}
+
 export async function updateKnowledgeNotebook(
   id: string,
   patch: Partial<KnowledgeNotebook>,

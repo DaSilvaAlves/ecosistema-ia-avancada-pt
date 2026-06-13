@@ -89,6 +89,11 @@ export default defineConfig({
         'hooks/useKnowledgeAreas.ts',
         'hooks/useKnowledgeNotebooks.ts',
         'hooks/useKnowledgeNotes.ts',
+        // Story 5.10 — Pesquisa full-text conhecimento (helper puro). Precedente
+        // Stories 2.3/3.3/4.2/5.2/5.9 — adiciona path à allowlist do report;
+        // thresholds globais inalterados; sem alteração comportamental do test
+        // runner.
+        'lib/conhecimento/**',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold 60% (P1.1 — roadmap de conclusão, architecture §5.4).

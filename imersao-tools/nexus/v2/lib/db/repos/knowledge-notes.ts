@@ -1,5 +1,6 @@
 import { db } from '@/lib/db/client';
 import { KnowledgeNoteSchema } from '@/lib/db/schemas';
+import { searchKnowledgeNotes } from '@/lib/conhecimento/pesquisa';
 import type { KnowledgeNote } from '@/types/db';
 
 /**
@@ -67,21 +68,17 @@ export async function listNotesByTag(tagId: string): Promise<KnowledgeNote[]> {
 }
 
 /**
- * Pesquisa full-text base (FR53) sobre `title` e `bodyMarkdown`. Base que a
- * Story 5.10 (pesquisa full-text conhecimento) refina. Implementação simples
- * case-insensitive em memória — sem índice full-text dedicado nesta story de
- * schema (nenhum FR42-57 exige indexação de texto livre na 5.1). Ordenado
- * descendente por `updatedAt`.
+ * Pesquisa full-text (FR53). Story 5.10 refina a base da 5.1: delega o
+ * matching/ranking ao helper PURO `searchKnowledgeNotes` (`lib/conhecimento/
+ * pesquisa.ts`) — tokenização multi-termo AND, normalização de diacríticos
+ * PT-PT (`"area"` bate `"Área"`) e haystack alargado a `sourceUrl`. O repo
+ * mantém-se só com o `toArray()`; a lógica testável vive no helper. Interface
+ * pública inalterada (`query: string → Promise<KnowledgeNote[]>`); query vazia
+ * → `[]` (garantido pelo helper). Ordenado descendente por `updatedAt`.
  */
 export async function searchNotes(query: string): Promise<KnowledgeNote[]> {
-  const needle = query.trim().toLowerCase();
-  if (needle === '') return [];
   const all = await db.knowledge_notes.toArray();
-  return all
-    .filter((note) =>
-      `${note.title} ${note.bodyMarkdown}`.toLowerCase().includes(needle),
-    )
-    .sort((a, b) => b.updatedAt - a.updatedAt);
+  return searchKnowledgeNotes(all, query);
 }
 
 export async function updateKnowledgeNote(
