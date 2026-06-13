@@ -11,6 +11,7 @@ import { createBrainDump, getBrainDump } from '@/lib/db/repos/brain-dumps';
 import {
   BRAIN_DUMP_BUCKETS,
   BrainDumpParsedSchema,
+  type BrainDumpParsed,
 } from '@/lib/brain-dump/ai-parser';
 import {
   persistApprovedItems,
@@ -36,6 +37,29 @@ import {
  * inalterado), com "Tentar novamente".
  */
 
+/**
+ * Estilo do toast Lime de sucesso "N itens guardados" (AC5) — extraído do render
+ * (objecto estável, não recriado a cada render). Design system: Lime #39FF14,
+ * glassmorphism, Inter (`design-system-ia-avancada.md`).
+ */
+const TOAST_STYLE: React.CSSProperties = {
+  position: 'fixed',
+  bottom: 24,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: 80,
+  background: 'rgba(57, 255, 20, 0.12)',
+  border: '1px solid rgba(57, 255, 20, 0.4)',
+  borderRadius: 8,
+  padding: '0.75rem 1.25rem',
+  color: '#39FF14',
+  fontFamily: 'Inter, sans-serif',
+  fontSize: '0.9rem',
+  fontWeight: 700,
+  boxShadow: '0 0 24px rgba(57, 255, 20, 0.2)',
+  backdropFilter: 'blur(8px)',
+};
+
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   const tag = target.tagName;
@@ -44,7 +68,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 /** Soma dos itens propostos nos 4 buckets (denominador da transição de status). */
-function countProposed(parsed: import('@/lib/brain-dump/ai-parser').BrainDumpParsed): number {
+function countProposed(parsed: BrainDumpParsed): number {
   return BRAIN_DUMP_BUCKETS.reduce((sum, bucket) => sum + parsed[bucket].length, 0);
 }
 
@@ -184,23 +208,7 @@ export function BrainDumpLauncher(): React.ReactElement {
           role="status"
           aria-live="polite"
           data-testid="brain-dump-toast"
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 80,
-            background: 'rgba(57, 255, 20, 0.12)',
-            border: '1px solid rgba(57, 255, 20, 0.4)',
-            borderRadius: 8,
-            padding: '0.75rem 1.25rem',
-            color: '#39FF14',
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '0.9rem',
-            fontWeight: 700,
-            boxShadow: '0 0 24px rgba(57, 255, 20, 0.2)',
-            backdropFilter: 'blur(8px)',
-          }}
+          style={TOAST_STYLE}
         >
           {toast}
         </div>

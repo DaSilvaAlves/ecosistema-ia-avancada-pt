@@ -236,4 +236,23 @@ describe('BrainDumpModal — approval flow (Story 5.8, AC2/AC5)', () => {
     // Os controlos continuam para "Tentar novamente".
     expect(screen.getByTestId('brain-dump-save-button')).toBeInTheDocument();
   });
+
+  it('(seam onSave) clicar "Guardar" no estado approving propaga o payload ao onSave do modal', () => {
+    const onSave = vi.fn();
+    render(
+      <BrainDumpModal
+        isOpen
+        onClose={vi.fn()}
+        onStructure={vi.fn()}
+        aiState={{ kind: 'approving', id: 'bd-1', parsed: parsedFixture() }}
+        onSave={onSave}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('brain-dump-save-button'));
+    expect(onSave).toHaveBeenCalledTimes(1);
+    // O modal repassa os itens aprovados (todos seleccionados por default = 4).
+    const payload = onSave.mock.calls[0][0] as { bucket: string; texto: string }[];
+    expect(payload).toHaveLength(4);
+    expect(payload).toContainEqual({ bucket: 'tarefas', texto: 'ligar ao contabilista' });
+  });
 });

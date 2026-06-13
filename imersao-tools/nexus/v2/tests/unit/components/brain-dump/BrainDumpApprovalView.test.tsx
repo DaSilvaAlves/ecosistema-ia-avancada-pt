@@ -167,6 +167,41 @@ describe('BrainDumpApprovalView', () => {
     );
   });
 
+  it('(edição inline → vazio, CR Iter 1 Major) desmarca o item (aria-checked=false) e mantém nome acessível', () => {
+    setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar item: comprar tinta' }));
+    const input = screen.getByTestId('brain-dump-approval-edit-t1');
+    fireEvent.change(input, { target: { value: '  ' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    // O checkbox do item editado para vazio fica desmarcado (não `checked` com texto
+    // vazio) — coerência entre contador e estado real (`[D-5.8-EDIT-INLINE]`).
+    const emptyCheckbox = screen.getByRole('checkbox', { name: '(item sem texto)' });
+    expect(emptyCheckbox).toHaveAttribute('aria-checked', 'false');
+    // O nome acessível dos controlos não fica vazio (fallback PT-PT).
+    expect(
+      screen.getByRole('button', { name: 'Rejeitar item: (item sem texto)' }),
+    ).toBeInTheDocument();
+  });
+
+  it('(edição inline → vazio, CR Iter 1 Major) o item desmarcado NÃO é persistido', () => {
+    const { onSave } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar item: comprar tinta' }));
+    const input = screen.getByTestId('brain-dump-approval-edit-t1');
+    fireEvent.change(input, { target: { value: '   ' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    fireEvent.click(screen.getByTestId('brain-dump-save-button'));
+    expect(onSave).toHaveBeenCalledTimes(1);
+    const payload = onSave.mock.calls[0][0] as ApprovedItemPayload[];
+    // O contador diz 3 e guarda exactamente 3 — o item vazio não entra no payload.
+    expect(payload).toHaveLength(3);
+    expect(payload.some((p) => p.texto.trim().length === 0)).toBe(false);
+    expect(payload.some((p) => p.bucket === 'tarefas' && p.texto === 'comprar tinta')).toBe(
+      false,
+    );
+  });
+
   it('onSave recebe os itens seleccionados com bucket + texto', () => {
     const { onSave } = setup();
     // Desmarca a decisão; guarda os 3 restantes.

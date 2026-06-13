@@ -113,8 +113,18 @@ export function BrainDumpApprovalView({
   }
 
   function commitEdit(id: string, texto: string): void {
+    // `[D-5.8-EDIT-INLINE]` (vazio→desmarca): o texto é sempre trimado; se ficar
+    // vazio/whitespace, o item é desmarcado (`checked: false`) — coerente com o
+    // contador (`selectedCount` deixa de o contar) e com a persistência (que filtra
+    // texto vazio). Sem desmarcar, o item ficaria `checked` com texto vazio e o
+    // contador diria N mas guardaria N-1 (finding CR Iter 1).
+    const trimmed = texto.trim();
     setItems((prev) =>
-      prev.map((it) => (it.id === id ? { ...it, texto } : it)),
+      prev.map((it) =>
+        it.id === id
+          ? { ...it, texto: trimmed, checked: trimmed.length > 0 && it.checked }
+          : it,
+      ),
     );
     setEditingId(null);
   }
@@ -348,6 +358,11 @@ function ApprovalItemRow({
 }: ApprovalItemRowProps): React.ReactElement {
   const [draft, setDraft] = useState(item.texto);
 
+  // Nome acessível do item: o `texto` editado para vazio (item desmarcado por
+  // `[D-5.8-EDIT-INLINE]`) deixaria os `aria-label` vazios — fallback PT-PT mantém
+  // os controlos nomeados (a11y / AC6).
+  const itemLabel = item.texto.trim().length > 0 ? item.texto : '(item sem texto)';
+
   // Resync do draft com o `texto` actual ao (re)entrar em edição: o commit trima o
   // texto no estado do pai, mas o `draft` local manter-se-ia com o valor antigo
   // não-trimado — ao reabrir o editor, o input mostraria o valor desactualizado
@@ -357,7 +372,8 @@ function ApprovalItemRow({
   }, [isEditing, item.texto]);
 
   function commit(): void {
-    onCommitEdit(item.id, draft.trim());
+    // O trim (e o desmarcar quando vazio) vive em `commitEdit` no pai — fonte única.
+    onCommitEdit(item.id, draft);
   }
 
   return (
@@ -374,7 +390,7 @@ function ApprovalItemRow({
         type="button"
         role="checkbox"
         aria-checked={item.checked}
-        aria-label={item.texto}
+        aria-label={itemLabel}
         disabled={saving}
         onClick={() => onToggle(item.id)}
         style={{
@@ -445,7 +461,7 @@ function ApprovalItemRow({
           type="button"
           onClick={() => onStartEdit(item.id)}
           disabled={saving}
-          aria-label={`Editar item: ${item.texto}`}
+          aria-label={`Editar item: ${itemLabel}`}
           style={iconButtonStyle(saving)}
         >
           ✏️
@@ -455,7 +471,7 @@ function ApprovalItemRow({
         type="button"
         onClick={() => onReject(item.id)}
         disabled={saving}
-        aria-label={`Rejeitar item: ${item.texto}`}
+        aria-label={`Rejeitar item: ${itemLabel}`}
         style={iconButtonStyle(saving)}
       >
         ✗
