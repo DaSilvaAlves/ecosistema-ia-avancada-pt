@@ -80,6 +80,15 @@ export default defineConfig({
         // sem alteração comportamental do test runner.
         'lib/editor/**',
         'components/ui/MarkdownEditor.tsx',
+        // Story 5.9 — CRUD áreas/cadernos/notas (Conhecimento). Precedente
+        // Stories 2.3/3.3/4.2/5.2 — adiciona paths à allowlist do report;
+        // thresholds globais inalterados; sem alteração comportamental do test
+        // runner.
+        'app/(app)/knowledge/**',
+        'components/conhecimento/**',
+        'hooks/useKnowledgeAreas.ts',
+        'hooks/useKnowledgeNotebooks.ts',
+        'hooks/useKnowledgeNotes.ts',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold 60% (P1.1 — roadmap de conclusão, architecture §5.4).
