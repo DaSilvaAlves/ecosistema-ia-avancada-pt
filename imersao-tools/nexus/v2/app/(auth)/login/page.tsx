@@ -142,6 +142,7 @@ export default function LoginPage(): React.ReactElement {
         {error && (
           <p
             role="alert"
+            data-testid="login-error"
             style={{
               marginTop: '12px',
               marginBottom: 0,

@@ -21,8 +21,8 @@
 
 ## P1 — qualidade (antes de fechar Epic 5)
 
-- [ ] **P1.1** F.1 (Epic 0): coverage threshold 25% → 60% — testes em `lib/shared/env.ts`, `format.ts`, `recurrence.ts`, `themes.ts`.
-- [ ] **P1.2** F.2 (Epic 0): reactivar 2 testes E2E skipped em `auth.spec.ts` (fix `getByRole('alert')` strict mode + KV mock em CI).
+- [x] **P1.1** F.1 (Epic 0): coverage threshold 25% → 60% — **FECHADO PR #68** (`cd734cf2` em main, 13/06/2026). Testes próprios para `env.ts`/`format.ts`/`themes.ts` (os 3 estavam a 0% → 100% lines); `recurrence.ts` já estava a 97,7%. Coverage global real 91,81%, `lib/shared` 98,55%. Threshold subido a 60% (32pp de margem). **Dívida `estruturarDiario` (5.7/5.8) resolvida na mesma PR** — short-circuit de input vazio antes do fetch. Suite 1700/1700. Gate independente (code-reviewer) PASS, CR Iter 0 APPROVED, 0 waivers. Modo directo orquestrado (sem SDC formal).
+- [x] **P1.2** F.2 (Epic 0): reactivar 2 testes E2E skipped em `auth.spec.ts` — **FECHADO 13/06/2026** (mesma PR da Fase 2). (1) "password errada": `getByRole('alert')` colidia com o route announcer do Next (strict mode) → resolvido com `data-testid="login-error"` no componente. (2) "proxy sem cookie": o teste original esperava 401 do handler, mas o `middleware.ts` intercepta `/api/anthropic/proxy` ANTES do handler → `redirect 307 /login` (barreira de segurança real e determinística). O 401 do handler (cookie+sessão KV inválida) fica como **débito menor** — inacessível em local/CI sem KV mock (`getSession` aceita qualquer cookie não-vazio sem KV). 4/4 E2E passam localmente.
 - [ ] **P1.3** Limpeza menor: import não utilizado `v2/app/api/auth/logout/route.ts:1`; migrar `next lint` → ESLint CLI (deprecated no Next 16); `outputFileTracingRoot` no `next.config`.
 
 ## P2 — débitos agrupáveis
