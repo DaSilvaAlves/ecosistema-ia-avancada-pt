@@ -126,6 +126,24 @@ describe('estruturarDiario — fidelidade de protocolo (AC5, mock-protocol-fidel
   });
 });
 
+describe('estruturarDiario — short-circuit de input vazio (dívida 5.7/5.8)', () => {
+  it('LANÇA PT-PT sem tocar no fetch quando o texto é vazio', async () => {
+    const fetchFn = vi.fn() as unknown as typeof fetch;
+    await expect(estruturarDiario('', { fetchFn })).rejects.toThrow(
+      /Não há texto para estruturar/,
+    );
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('LANÇA sem tocar no fetch quando o texto é só whitespace', async () => {
+    const fetchFn = vi.fn() as unknown as typeof fetch;
+    await expect(estruturarDiario('   \n\t  ', { fetchFn })).rejects.toThrow(
+      /Não há texto para estruturar/,
+    );
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+});
+
 describe('estruturarDiario — caminhos de falha (AC4, internal-state-contract-gate eixo c)', () => {
   it('verifica res.ok ANTES do body — proxy 429 lança PT-PT', async () => {
     const { fetchFn } = mockFetch(

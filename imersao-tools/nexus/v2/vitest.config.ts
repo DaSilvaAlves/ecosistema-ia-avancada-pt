@@ -82,12 +82,15 @@ export default defineConfig({
         'components/ui/MarkdownEditor.tsx',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
-      // Coverage threshold: 25% temporary baseline. Raise to 60%+ in Epic 1 (follow-up Story F.1)
+      // Coverage threshold 60% (P1.1 — roadmap de conclusão, architecture §5.4).
+      // Sobe o baseline temporário de 25%: a coverage global real está a ~91%, e
+      // os 3 ficheiros `lib/shared` outrora a 0% (env/format/themes) passaram a ter
+      // testes próprios. 60% dá margem confortável sem ser frágil a código novo.
       thresholds: {
-        lines: 25,
-        functions: 25,
-        branches: 25,
-        statements: 25,
+        lines: 60,
+        functions: 60,
+        branches: 60,
+        statements: 60,
       },
     },
   },
