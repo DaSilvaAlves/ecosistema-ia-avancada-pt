@@ -15,6 +15,7 @@ import {
   updateKnowledgeNotebook,
   deleteKnowledgeNotebook,
   listNotebooksByArea,
+  listAllNotebooks,
 } from '@/lib/db/repos/knowledge-notebooks';
 import {
   createKnowledgeNote,
@@ -22,12 +23,17 @@ import {
   deleteKnowledgeNote,
   listNotesByNotebook,
   listNotesByTag,
+  searchNotes,
 } from '@/lib/db/repos/knowledge-notes';
 import { AreaTree } from '@/components/conhecimento/AreaTree';
 import { AreaForm } from '@/components/conhecimento/AreaForm';
 import { NotebookForm } from '@/components/conhecimento/NotebookForm';
 import { NoteList } from '@/components/conhecimento/NoteList';
 import { NoteEditor, type NoteDraft } from '@/components/conhecimento/NoteEditor';
+import {
+  KnowledgeSearchResults,
+  type KnowledgeSearchResult,
+} from '@/components/conhecimento/KnowledgeSearchResults';
 import type {
   KnowledgeArea,
   KnowledgeNotebook,
@@ -95,6 +101,83 @@ export default function KnowledgePage(): React.ReactElement {
     return () => window.clearTimeout(id);
   }, [toast]);
 
+  // ─── Pesquisa (Story 5.10 — FR53) ──────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<KnowledgeNote[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const isSearchMode = searchQuery.trim() !== '';
+
+  // Debounce 300ms (padrão 5.5 — sem biblioteca).
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => window.clearTimeout(id);
+  }, [searchQuery]);
+
+  // Pesquisa com cancelamento de race (padrão 5.5). Só corre após o debounce —
+  // NÃO está no caminho hot per-keystroke.
+  useEffect(() => {
+    let cancelled = false;
+    if (debouncedQuery.trim() === '') {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    searchNotes(debouncedQuery)
+      .then((results) => {
+        if (!cancelled) setSearchResults(results);
+      })
+      .catch((err) => {
+        // searchNotes pode rejeitar (ex: Dexie indisponível). Não deixar a vista
+        // presa em "loading" nem gerar unhandled rejection (CR Iter 1 CRITICAL).
+        if (!cancelled) {
+          setSearchResults([]);
+          const message = err instanceof Error ? err.message : 'Erro desconhecido';
+          setToast(`Não foi possível pesquisar. ${message}`);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsSearching(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedQuery]);
+
+  // Mapa global notebookId → { nome do caderno, nome da área } para resolver o
+  // breadcrumb da pesquisa sem reads Dexie no caminho hot (R3, AC5). Read único
+  // reactivo (re-corre só quando cadernos/áreas mudam, não por keystroke).
+  const allNotebooks = useLiveQuery(() => listAllNotebooks(), []);
+  const breadcrumbByNotebook = useMemo<
+    Map<string, { areaName: string; notebookName: string }>
+  >(() => {
+    const areaNames = new Map<string, string>();
+    (areas ?? []).forEach((a) => areaNames.set(a.id, a.name));
+    const map = new Map<string, { areaName: string; notebookName: string }>();
+    (allNotebooks ?? []).forEach((nb) => {
+      map.set(nb.id, {
+        notebookName: nb.name,
+        areaName: areaNames.get(nb.areaId) ?? 'Área desconhecida',
+      });
+    });
+    return map;
+  }, [areas, allNotebooks]);
+
+  // Resultados de pesquisa com breadcrumb pré-resolvido (componente puro).
+  const searchResultsWithBreadcrumb = useMemo<KnowledgeSearchResult[]>(
+    () =>
+      searchResults.map((note) => {
+        const crumb = breadcrumbByNotebook.get(note.notebookId);
+        return {
+          note,
+          areaName: crumb?.areaName ?? 'Área desconhecida',
+          notebookName: crumb?.notebookName ?? 'Caderno desconhecido',
+        };
+      }),
+    [searchResults, breadcrumbByNotebook],
+  );
+
   // Cadernos por área expandida (read reactivo). Re-corre quando o conjunto de
   // áreas expandidas muda.
   const expandedKey = useMemo(
@@ -125,11 +208,12 @@ export default function KnowledgePage(): React.ReactElement {
     return map;
   }, [tags]);
 
-  // Escape global → router.back (precedente tarefas/page.tsx). Suprimido quando
-  // um modal está aberto (o modal trata o seu próprio Escape) E quando se está a
-  // criar/editar uma nota — caso contrário o Escape fecharia a vista e perderia o
-  // rascunho da nota em curso (CR Iter 1 F1). Nesses estados o utilizador sai via
-  // Cancelar/Guardar no `NoteEditor`, não via Escape global.
+  // Escape global → em modo pesquisa, limpa a query (volta ao master-detail,
+  // AC3/AC6); caso contrário `router.back` (precedente tarefas/page.tsx).
+  // Suprimido quando um modal está aberto (o modal trata o seu próprio Escape) E
+  // quando se está a criar/editar uma nota — caso contrário o Escape fecharia a
+  // vista e perderia o rascunho da nota em curso (CR Iter 1 F1). Nesses estados o
+  // utilizador sai via Cancelar/Guardar no `NoteEditor`, não via Escape global.
   useEffect(() => {
     if (
       areaModal.kind !== 'closed' ||
@@ -139,11 +223,23 @@ export default function KnowledgePage(): React.ReactElement {
     )
       return;
     function handleEscape(e: KeyboardEvent): void {
-      if (e.key === 'Escape') router.back();
+      if (e.key !== 'Escape') return;
+      if (isSearchMode) {
+        setSearchQuery('');
+        return;
+      }
+      router.back();
     }
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [router, areaModal.kind, notebookModal.kind, creatingNote, editingNote]);
+  }, [
+    router,
+    areaModal.kind,
+    notebookModal.kind,
+    creatingNote,
+    editingNote,
+    isSearchMode,
+  ]);
 
   // ─── Áreas ─────────────────────────────────────────────────────────
 
@@ -353,6 +449,26 @@ export default function KnowledgePage(): React.ReactElement {
     }
   }
 
+  // ─── Pesquisa: navegação para a nota ───────────────────────────────
+
+  // Fecha o modo pesquisa e navega para a nota no master-detail: expande a área,
+  // selecciona o caderno e selecciona a nota (AC5/T5.5). Usa os dados já em
+  // memória (`searchResults`, `allNotebooks`) — sem reads Dexie extra.
+  function handleSelectSearchResult(noteId: string): void {
+    const note = searchResults.find((n) => n.id === noteId);
+    if (note === undefined) return;
+    const notebook = (allNotebooks ?? []).find((nb) => nb.id === note.notebookId);
+    setSearchQuery('');
+    if (notebook !== undefined) {
+      setExpandedAreaIds((prev) => new Set(prev).add(notebook.areaId));
+      setSelectedNotebook(notebook);
+      setTagFilter(null);
+    }
+    setSelectedNote(note);
+    setCreatingNote(false);
+    setEditingNote(false);
+  }
+
   // ─── Render ────────────────────────────────────────────────────────
 
   return (
@@ -378,70 +494,112 @@ export default function KnowledgePage(): React.ReactElement {
         >
           Conhecimento
         </h1>
-        <button
-          type="button"
-          onClick={() => router.back()}
-          aria-label="Fechar Conhecimento"
-          style={{
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '0.65rem',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            color: '#8892A4',
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: 6,
-            padding: '0.4rem 0.7rem',
-            cursor: 'pointer',
-          }}
-        >
-          ESC · VOLTAR
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            role="search"
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <span aria-hidden="true" style={{ fontSize: '0.85rem' }}>
+              🔍
+            </span>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Pesquisar nas notas"
+              placeholder="Pesquisar notas…"
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.85rem',
+                color: '#F0F4FF',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 6,
+                padding: '0.4rem 0.7rem',
+                width: 220,
+                maxWidth: '40vw',
+              }}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            aria-label="Fechar Conhecimento"
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              color: '#8892A4',
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: 6,
+              padding: '0.4rem 0.7rem',
+              cursor: 'pointer',
+            }}
+          >
+            ESC · VOLTAR
+          </button>
+        </div>
       </header>
 
-      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-        <AreaTree
-          areas={areas}
-          expandedAreaIds={expandedAreaIds}
-          notebooksByArea={notebooksByArea ?? new Map()}
-          selectedNotebookId={selectedNotebook?.id ?? null}
-          onToggleArea={handleToggleArea}
-          onSelectNotebook={handleSelectNotebook}
-          onCreateArea={() => setAreaModal({ kind: 'create' })}
-          onEditArea={(area) => setAreaModal({ kind: 'edit', area })}
-          onDeleteArea={handleDeleteArea}
-          onCreateNotebook={(area) =>
-            setNotebookModal({ kind: 'create', areaId: area.id })
-          }
-          onEditNotebook={(notebook) =>
-            setNotebookModal({ kind: 'edit', notebook })
-          }
-          onDeleteNotebook={handleDeleteNotebook}
-        />
+      {isSearchMode ? (
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '1rem 1.5rem' }}>
+          <KnowledgeSearchResults
+            results={searchResultsWithBreadcrumb}
+            query={debouncedQuery}
+            // `isLoading` também enquanto o debounce está pendente (query imediata
+            // ainda não propagou) — evita um flash do estado "empty" nos primeiros
+            // ~300ms de digitação.
+            isLoading={isSearching || searchQuery.trim() !== debouncedQuery.trim()}
+            onSelect={handleSelectSearchResult}
+          />
+        </div>
+      ) : (
+        <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+          <AreaTree
+            areas={areas}
+            expandedAreaIds={expandedAreaIds}
+            notebooksByArea={notebooksByArea ?? new Map()}
+            selectedNotebookId={selectedNotebook?.id ?? null}
+            onToggleArea={handleToggleArea}
+            onSelectNotebook={handleSelectNotebook}
+            onCreateArea={() => setAreaModal({ kind: 'create' })}
+            onEditArea={(area) => setAreaModal({ kind: 'edit', area })}
+            onDeleteArea={handleDeleteArea}
+            onCreateNotebook={(area) =>
+              setNotebookModal({ kind: 'create', areaId: area.id })
+            }
+            onEditNotebook={(notebook) =>
+              setNotebookModal({ kind: 'edit', notebook })
+            }
+            onDeleteNotebook={handleDeleteNotebook}
+          />
 
-        <NoteList
-          notes={notes}
-          hasNotebookSelected={selectedNotebook !== null}
-          selectedNoteId={selectedNote?.id ?? null}
-          tagsLookup={tagsLookup}
-          tags={tags}
-          tagFilter={tagFilter}
-          onTagFilterChange={setTagFilter}
-          onSelectNote={handleSelectNote}
-          onCreateNote={handleCreateNote}
-        />
+          <NoteList
+            notes={notes}
+            hasNotebookSelected={selectedNotebook !== null}
+            selectedNoteId={selectedNote?.id ?? null}
+            tagsLookup={tagsLookup}
+            tags={tags}
+            tagFilter={tagFilter}
+            onTagFilterChange={setTagFilter}
+            onSelectNote={handleSelectNote}
+            onCreateNote={handleCreateNote}
+          />
 
-        <NoteEditor
-          note={selectedNote}
-          creating={creatingNote}
-          editing={editingNote}
-          tags={tags}
-          onStartEdit={() => setEditingNote(true)}
-          onCancelEdit={() => setEditingNote(false)}
-          onSave={handleSaveNote}
-          onDelete={handleDeleteNote}
-        />
-      </div>
+          <NoteEditor
+            note={selectedNote}
+            creating={creatingNote}
+            editing={editingNote}
+            tags={tags}
+            onStartEdit={() => setEditingNote(true)}
+            onCancelEdit={() => setEditingNote(false)}
+            onSave={handleSaveNote}
+            onDelete={handleDeleteNote}
+          />
+        </div>
+      )}
 
       {areaModal.kind === 'create' && (
         <AreaForm
