@@ -38,19 +38,41 @@ const MAX_EXCERPT_LENGTH = 150;
  * títulos/snippets de resultados de pesquisa.
  */
 function decodeHtmlEntities(input: string): string {
+  // `&amp;` é descodificado por ÚLTIMO, depois de todas as outras entidades.
+  // Se fosse primeiro, um input como `&amp;lt;` viraria `&lt;` → `<` (double-
+  // unescape, `js/double-escaping`): o `&amp;` descodificado para `&` seria
+  // re-interpretado pela regra `&lt;` seguinte. Descodificando `&amp;` no fim,
+  // `&amp;lt;` → `&lt;` (nível de escape preservado). O HTML do DDG é externo e
+  // arbitrário (R2), por isso esta ordem é de segurança, não cosmética.
   return input
-    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#x27;/gi, "'")
     .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ');
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&');
 }
 
-/** Remove tags HTML (ex: `<b>` de termos destacados pelo DDG no snippet). */
+/**
+ * Remove tags HTML (ex: `<b>` de termos destacados pelo DDG no snippet).
+ *
+ * A remoção corre em LOOP até a string estabilizar. Uma única passagem é
+ * incompleta (`js/incomplete-multi-character-sanitization`): tags aninhadas ou
+ * sobrepostas reintroduzem uma tag depois da remoção — ex: `<scr<script>ipt>`
+ * remove o `<script>` interno e re-forma `<script>` a partir dos restos. Como o
+ * HTML do DDG é externo/arbitrário (R2), repetimos o replace enquanto a string
+ * continuar a mudar, garantindo que nenhum `<…>` residual sobrevive.
+ */
 function stripTags(input: string): string {
-  return input.replace(/<[^>]*>/g, '');
+  const tagRe = /<[^>]*>/g;
+  let previous: string;
+  let current = input;
+  do {
+    previous = current;
+    current = current.replace(tagRe, '');
+  } while (current !== previous);
+  return current;
 }
 
 /** Normaliza espaços em branco (incl. quebras de linha do HTML) para um único espaço. */

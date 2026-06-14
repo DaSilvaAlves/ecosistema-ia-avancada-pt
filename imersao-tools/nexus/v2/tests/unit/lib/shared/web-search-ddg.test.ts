@@ -148,3 +148,67 @@ describe('parseDdgHtml (Story 5.11 / AC1)', () => {
     expect(parseDdgHtml(undefined)).toEqual([]);
   });
 });
+
+/**
+ * Correcções de segurança CodeQL Iter 1 (PR #72). O HTML do DDG é externo e
+ * arbitrário (R2), por isso a limpeza de texto tem de ser à prova de double-
+ * unescape e de tags aninhadas. Estes testes FALHARIAM com o código antigo:
+ *
+ *  - `js/double-escaping`: `decodeHtmlEntities` descodificava `&amp;` PRIMEIRO,
+ *    o que tornava `&amp;lt;` em `<` (double-unescape).
+ *  - `js/incomplete-multi-character-sanitization`: `stripTags` corria uma única
+ *    passagem, deixando tags aninhadas reformarem `<script>` após a remoção.
+ *
+ * O comportamento legítimo (entidades normais e tags simples) é exercido pelos
+ * testes do bloco acima — aqui prova-se o caso adversarial.
+ */
+describe('parseDdgHtml — segurança (CodeQL Iter 1, R2)', () => {
+  it('double-escaping: `&amp;amp;lt;` descodifica para `&amp;lt;` (um nível), NUNCA `<`', () => {
+    // No HTML bruto, `&amp;amp;lt;` deve descodificar UM nível → `&amp;lt;`
+    // (texto literal de uma entidade escapada). O código antigo (`&amp;`
+    // primeiro) faria `&amp;amp;lt;` → `&amp;lt;` → `&lt;` → `<` (double-unescape).
+    const html = `<a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fok.com">Tag literal: &amp;amp;lt;</a>`;
+    const results = parseDdgHtml(html);
+    expect(results).toHaveLength(1);
+    expect(results[0]!.title).toBe('Tag literal: &amp;lt;');
+    // Propriedade de segurança central: não há double-unescape para `<`.
+    expect(results[0]!.title).not.toContain('<');
+  });
+
+  it('double-escaping: `&amp;amp;` descodifica para `&amp;` (um nível), não para `&`', () => {
+    const html = `<a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fok.com">A &amp;amp; B</a>`;
+    const results = parseDdgHtml(html);
+    expect(results).toHaveLength(1);
+    // Um só nível descodificado: `&amp;amp;` → `&amp;`. O código antigo daria `&`.
+    expect(results[0]!.title).toBe('A &amp; B');
+  });
+
+  it('sanitização incompleta: tag aninhada `<scr<script>ipt>` não reforma `<script>` nem deixa `<`', () => {
+    const snippet = '<scr<script>ipt>alert(1)';
+    const html = `
+      <a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fok.com">Resultado</a>
+      <a class="result__snippet">${snippet}</a>
+    `;
+    const results = parseDdgHtml(html);
+    expect(results).toHaveLength(1);
+    // Propriedade de segurança central: a tag `<script>` NÃO sobrevive e nenhum
+    // `<` (abertura de tag) residual permanece. O código antigo (passagem única)
+    // deixaria `ipt>` + re-exporia a tag interna. O `>` solto é texto inócuo.
+    expect(results[0]!.excerpt).not.toContain('<script>');
+    expect(results[0]!.excerpt).not.toContain('<');
+    expect(results[0]!.excerpt).toBe('ipt>alert(1)');
+  });
+
+  it('sanitização incompleta: `<<script>script>` sobreposto não reforma `<script>` nem deixa `<`', () => {
+    const snippet = '<<script>script>conteudo';
+    const html = `
+      <a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fok.com">Resultado</a>
+      <a class="result__snippet">${snippet}</a>
+    `;
+    const results = parseDdgHtml(html);
+    expect(results).toHaveLength(1);
+    expect(results[0]!.excerpt).not.toContain('<script>');
+    expect(results[0]!.excerpt).not.toContain('<');
+    expect(results[0]!.excerpt).toBe('script>conteudo');
+  });
+});
