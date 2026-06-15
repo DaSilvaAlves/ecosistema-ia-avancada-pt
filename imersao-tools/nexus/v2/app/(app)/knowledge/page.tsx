@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useKnowledgeAreas } from '@/hooks/useKnowledgeAreas';
@@ -34,6 +34,15 @@ import {
   KnowledgeSearchResults,
   type KnowledgeSearchResult,
 } from '@/components/conhecimento/KnowledgeSearchResults';
+import {
+  WebSearchResults,
+  type WebSearchProvider,
+} from '@/components/conhecimento/WebSearchResults';
+import {
+  WebSearchSaveModal,
+  type WebSearchNoteDraft,
+} from '@/components/conhecimento/WebSearchSaveModal';
+import type { WebSearchResult } from '@/lib/shared/web-search-ddg';
 import type {
   KnowledgeArea,
   KnowledgeNotebook,
@@ -178,6 +187,116 @@ export default function KnowledgePage(): React.ReactElement {
     [searchResults, breadcrumbByNotebook],
   );
 
+  // ─── Pesquisa web (Story 5.11 — FR55) ─────────────────────────────
+  // Modo paralelo, distinto da pesquisa de notas (5.10): toggle no header. A
+  // pesquisa web é uma acção explícita (submit, não debounce — é mais cara que
+  // a pesquisa local e custa tokens, R1/`[D-5.11-NO-CACHE]`).
+  const [webSearchMode, setWebSearchMode] = useState(false);
+  const [webQuery, setWebQuery] = useState('');
+  const [webSubmittedQuery, setWebSubmittedQuery] = useState('');
+  const [webResults, setWebResults] = useState<WebSearchResult[]>([]);
+  const [webSource, setWebSource] = useState<WebSearchProvider | null>(null);
+  const [webIsSearching, setWebIsSearching] = useState(false);
+  const [webHasSearched, setWebHasSearched] = useState(false);
+  const [webError, setWebError] = useState<string | null>(null);
+  const [saveTarget, setSaveTarget] = useState<WebSearchResult | null>(null);
+  const webAbortRef = useRef<AbortController | null>(null);
+
+  // Cancela qualquer pesquisa web em curso ao desmontar (evita setState
+  // após-unmount / unhandled rejection).
+  useEffect(() => () => webAbortRef.current?.abort(), []);
+
+  // Cancela qualquer pesquisa web em curso ao desligar o modo web (toggle ou
+  // Escape, AC3/AC6). Sem isto, um request Anthropic/DDG iniciado ficaria a
+  // correr após o utilizador sair do modo — desperdício de chamada externa e
+  // risco de `setState` sobre estado já escondido. O efeito é reactivo a
+  // `webSearchMode` e só actua na transição para `false` com request activo,
+  // pelo que não corre ao ligar o modo nem entra em loop.
+  useEffect(() => {
+    if (!webSearchMode && webAbortRef.current !== null) {
+      webAbortRef.current.abort();
+      webAbortRef.current = null;
+      setWebIsSearching(false);
+    }
+  }, [webSearchMode]);
+
+  // Submete a pesquisa web a `/api/conhecimento/web-search` com cancelamento de
+  // race (só o último submit actualiza o estado). A falha NUNCA silencia
+  // (`[D-5.11-FALLBACK]`): erro de rede ou 503 → estado `error` com mensagem
+  // PT-PT.
+  function handleWebSearch(): void {
+    const query = webQuery.trim();
+    if (query === '') return;
+    setWebSubmittedQuery(query);
+    setWebIsSearching(true);
+    setWebHasSearched(true);
+    setWebError(null);
+
+    const controller = new AbortController();
+    webAbortRef.current?.abort();
+    webAbortRef.current = controller;
+
+    fetch('/api/conhecimento/web-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+      signal: controller.signal,
+    })
+      .then(async (resp) => {
+        const data = (await resp.json().catch(() => null)) as
+          | { results?: WebSearchResult[]; source?: WebSearchProvider; error?: string }
+          | null;
+        if (controller.signal.aborted) return;
+        if (!resp.ok || data === null || !Array.isArray(data.results)) {
+          setWebResults([]);
+          setWebSource(null);
+          setWebError(
+            data?.error ?? 'Não foi possível pesquisar agora. Tenta de novo mais tarde.',
+          );
+          return;
+        }
+        setWebResults(data.results);
+        setWebSource(data.source ?? null);
+        setWebError(null);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        setWebResults([]);
+        setWebSource(null);
+        const message = err instanceof Error ? err.message : 'Erro de rede';
+        setWebError(`Não foi possível pesquisar agora. ${message}`);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setWebIsSearching(false);
+      });
+  }
+
+  // Guarda um resultado web como nota (acção manual, `[D-5.11-MANUAL-SAVE]`).
+  // Reutiliza o contrato `createKnowledgeNote(KnowledgeNote)` com `id`+`updatedAt`
+  // (V7) + `sourceUrl`. Saves independentes (UUID novo por nota,
+  // `[D-5.11-SAVE-INDEPENDENT]`). Falha (caderno removido entretanto →
+  // `createKnowledgeNote` lança) → toast + re-throw para o modal mostrar o erro.
+  async function handleSaveWebResult(draft: WebSearchNoteDraft): Promise<void> {
+    try {
+      await createKnowledgeNote({
+        id: crypto.randomUUID(),
+        notebookId: draft.notebookId,
+        title: draft.title,
+        bodyMarkdown: draft.bodyMarkdown,
+        tags: [],
+        sourceUrl: draft.sourceUrl,
+        updatedAt: Date.now(),
+      });
+      const notebook = (allNotebooks ?? []).find((nb) => nb.id === draft.notebookId);
+      setSaveTarget(null);
+      setToast(`Nota guardada em ${notebook?.name ?? 'caderno'}.`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      setToast(`Não foi possível guardar a nota. ${message}`);
+      throw err;
+    }
+  }
+
   // Cadernos por área expandida (read reactivo). Re-corre quando o conjunto de
   // áreas expandidas muda.
   const expandedKey = useMemo(
@@ -219,11 +338,23 @@ export default function KnowledgePage(): React.ReactElement {
       areaModal.kind !== 'closed' ||
       notebookModal.kind !== 'closed' ||
       creatingNote ||
-      editingNote
+      editingNote ||
+      // O modal de guardar trata o seu próprio Escape; não interferir.
+      saveTarget !== null
     )
       return;
     function handleEscape(e: KeyboardEvent): void {
       if (e.key !== 'Escape') return;
+      // Em modo de pesquisa web: Escape limpa a query web; se já vazia, sai do
+      // modo web (AC3/AC6) — antes de `router.back`.
+      if (webSearchMode) {
+        if (webQuery.trim() !== '') {
+          setWebQuery('');
+          return;
+        }
+        setWebSearchMode(false);
+        return;
+      }
       if (isSearchMode) {
         setSearchQuery('');
         return;
@@ -239,6 +370,9 @@ export default function KnowledgePage(): React.ReactElement {
     creatingNote,
     editingNote,
     isSearchMode,
+    webSearchMode,
+    webQuery,
+    saveTarget,
   ]);
 
   // ─── Áreas ─────────────────────────────────────────────────────────
@@ -495,32 +629,59 @@ export default function KnowledgePage(): React.ReactElement {
           Conhecimento
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
-            role="search"
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          {!webSearchMode && (
+            <div
+              role="search"
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <span aria-hidden="true" style={{ fontSize: '0.85rem' }}>
+                🔍
+              </span>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Pesquisar nas notas"
+                placeholder="Pesquisar notas…"
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '0.85rem',
+                  color: '#F0F4FF',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 6,
+                  padding: '0.4rem 0.7rem',
+                  width: 220,
+                  maxWidth: '40vw',
+                }}
+              />
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setWebSearchMode((prev) => !prev);
+              // Ao entrar em modo web, limpa a pesquisa de notas; ao sair, mantém
+              // o histórico de resultados web mas fecha a vista.
+              setSearchQuery('');
+            }}
+            aria-pressed={webSearchMode}
+            aria-label="Alternar pesquisa web"
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              color: webSearchMode ? '#04040A' : '#00F5FF',
+              background: webSearchMode ? '#00F5FF' : 'rgba(0, 245, 255, 0.08)',
+              border: '1px solid rgba(0, 245, 255, 0.2)',
+              borderRadius: 6,
+              padding: '0.4rem 0.7rem',
+              cursor: 'pointer',
+            }}
           >
-            <span aria-hidden="true" style={{ fontSize: '0.85rem' }}>
-              🔍
-            </span>
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Pesquisar nas notas"
-              placeholder="Pesquisar notas…"
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '0.85rem',
-                color: '#F0F4FF',
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 6,
-                padding: '0.4rem 0.7rem',
-                width: 220,
-                maxWidth: '40vw',
-              }}
-            />
-          </div>
+            PESQUISA WEB
+          </button>
           <button
             type="button"
             onClick={() => router.back()}
@@ -543,7 +704,78 @@ export default function KnowledgePage(): React.ReactElement {
         </div>
       </header>
 
-      {isSearchMode ? (
+      {webSearchMode ? (
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            padding: '1rem 1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+          }}
+        >
+          <form
+            role="search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleWebSearch();
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+          >
+            <input
+              type="search"
+              value={webQuery}
+              onChange={(e) => setWebQuery(e.target.value)}
+              aria-label="Pesquisar na web"
+              placeholder="Pesquisar na web…"
+              autoFocus
+              style={{
+                flex: 1,
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.9rem',
+                color: '#F0F4FF',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 6,
+                padding: '0.55rem 0.8rem',
+              }}
+            />
+            <button
+              type="submit"
+              disabled={webIsSearching || webQuery.trim() === ''}
+              aria-label="Pesquisar"
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                color: '#04040A',
+                background: '#00F5FF',
+                border: 'none',
+                borderRadius: 6,
+                padding: '0.55rem 1.2rem',
+                cursor:
+                  webIsSearching || webQuery.trim() === '' ? 'not-allowed' : 'pointer',
+                opacity: webIsSearching || webQuery.trim() === '' ? 0.6 : 1,
+                boxShadow: '0 0 12px rgba(0, 245, 255, 0.3)',
+              }}
+            >
+              Pesquisar
+            </button>
+          </form>
+
+          <WebSearchResults
+            results={webResults}
+            source={webSource}
+            query={webSubmittedQuery}
+            isSearching={webIsSearching}
+            hasSearched={webHasSearched}
+            error={webError}
+            onSave={(result) => setSaveTarget(result)}
+          />
+        </div>
+      ) : isSearchMode ? (
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '1rem 1.5rem' }}>
           <KnowledgeSearchResults
             results={searchResultsWithBreadcrumb}
@@ -632,6 +864,16 @@ export default function KnowledgePage(): React.ReactElement {
           initialValue={notebookModal.notebook}
           onClose={() => setNotebookModal({ kind: 'closed' })}
           onSubmit={handleSubmitNotebook}
+        />
+      )}
+
+      {saveTarget !== null && (
+        <WebSearchSaveModal
+          result={saveTarget}
+          areas={areas}
+          notebooks={allNotebooks}
+          onClose={() => setSaveTarget(null)}
+          onSubmit={handleSaveWebResult}
         />
       )}
 
