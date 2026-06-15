@@ -8,10 +8,13 @@
 from_agent: "Pax (@po) — sessão que fechou Stories 5.10 + 5.11"
 to_agent: "any — próximo terminal corre /sdc 5.12 --push (ciclo completo SM→Architect entrada→PO→DEV→Architect saída→DEVOPS)"
 created: "2026-06-15T19:00:00Z"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-15T21:45:00Z"
+consumed_by: "orquestrador /sdc 5.12 --push (River @sm + Aria @architect + Pax @po + Dex @dev + Gage @devops)"
 project: nexus-v2
 next_action: "/sdc 5.12 --push"
+outcome: "Story 5.12 DONE em main (merge squash aa385a04, PR #73, fecho 8f11220e). Epic 5 12/13, Conhecimento 4/5. Opção C client-side (Tool Registry intocado), 0 waivers, 2 iter CR. Próximo: /sdc 5.13 --push (fecha o epic 13/13)."
 ```
 
 ## Summary
