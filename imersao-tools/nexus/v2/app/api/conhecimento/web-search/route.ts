@@ -38,16 +38,37 @@ const DDG_HTML_URL = 'https://html.duckduckgo.com/html/';
 const DDG_USER_AGENT = 'Mozilla/5.0 (compatible; NexusBot/1.0)';
 
 /**
- * Hosts de confiança para o fetch interno Node→Edge ao proxy Anthropic
- * (`[D-5.11-SSRF-FIX]`). A origin de destino do cookie de sessão NUNCA pode
- * derivar do header `Host` (controlável pelo cliente → host-header SSRF +
- * exfiltração de cookie). O destino é validado contra esta allowlist fixa.
+ * Origins de confiança (COMPLETAS: scheme + host + porta) para o fetch interno
+ * Node→Edge ao proxy Anthropic (`[D-5.11-SSRF-FIX]`). A origin de destino do
+ * cookie de sessão NUNCA pode derivar do header `Host` (controlável pelo cliente
+ * → host-header SSRF + exfiltração de cookie). O destino é validado contra esta
+ * allowlist fixa.
+ *
+ * A allowlist é por ORIGIN COMPLETA, não por hostname (CR Major PR #72, Iter 3):
+ * validar só o hostname aceitaria `http://localhost:<porta-arbitrária>` — um
+ * atacante que controle o header Host poderia apontar para um listener local
+ * numa porta à sua escolha e exfiltrar o cookie. O scheme e a porta fazem parte
+ * do contrato de confiança (defence-in-depth no caminho de exfiltração).
  */
-const TRUSTED_PROXY_HOSTS = new Set<string>([
-  'imersao.ia.expressia.pt', // produção (V4)
-  'localhost',
-  '127.0.0.1',
+const TRUSTED_PROXY_ORIGINS = new Set<string>([
+  'https://imersao.ia.expressia.pt', // produção (V4)
+  'http://localhost:3001', // dev local (next dev -p 3001)
+  'http://127.0.0.1:3001', // dev local (loopback IPv4, mesma porta)
 ]);
+
+/**
+ * Normaliza uma origin para comparação canónica contra a allowlist. `new URL`
+ * descarta uma porta explícita que coincida com a porta default do scheme
+ * (`https://h:443` → `https://h`), pelo que a comparação é feita sempre sobre a
+ * forma normalizada — tanto da allowlist como da origin candidata.
+ */
+function normalizeOrigin(origin: string): string {
+  return new URL(origin).origin;
+}
+
+const NORMALIZED_TRUSTED_ORIGINS = new Set<string>(
+  Array.from(TRUSTED_PROXY_ORIGINS, (origin) => normalizeOrigin(origin)),
+);
 
 /**
  * Resolve a origin de confiança para o fetch interno ao proxy Anthropic.
@@ -58,8 +79,10 @@ const TRUSTED_PROXY_HOSTS = new Set<string>([
  *
  * Preferência: `VERCEL_PROJECT_PRODUCTION_URL` (env Vercel built-in injectada em
  * runtime, NÃO controlável pelo header Host) → `https://<host>`. Em falta, valida
- * o host de `req.nextUrl.origin` contra a allowlist `TRUSTED_PROXY_HOSTS`; se o
- * host não estiver na allowlist devolve `null` (fail-safe para DDG).
+ * a ORIGIN COMPLETA (scheme + host + porta) de `req.nextUrl.origin` contra a
+ * allowlist `NORMALIZED_TRUSTED_ORIGINS`; se a origin não estiver na allowlist
+ * devolve `null` (fail-safe para DDG). Validar a origin completa — e não apenas o
+ * hostname — fecha o vector de uma porta arbitrária num host de confiança.
  */
 function resolveTrustedProxyOrigin(req: NextRequest): string | null {
   const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
@@ -67,13 +90,13 @@ function resolveTrustedProxyOrigin(req: NextRequest): string | null {
     return `https://${vercelHost.trim()}`;
   }
 
-  // Sem env de produção confirmada: validar o host do request contra a allowlist.
-  // O host só é de confiança se ESTIVER na allowlist — caso contrário `null`
-  // (nunca reenviar cookie a um host derivado de header não-validado).
+  // Sem env de produção confirmada: validar a origin COMPLETA do request contra a
+  // allowlist. A origin só é de confiança se ESTIVER na allowlist (scheme + host +
+  // porta) — caso contrário `null` (nunca reenviar cookie a uma origin derivada de
+  // um header não-validado, seja qual for a porta).
   try {
-    const origin = req.nextUrl.origin;
-    const host = new URL(origin).hostname;
-    if (TRUSTED_PROXY_HOSTS.has(host)) return origin;
+    const origin = normalizeOrigin(req.nextUrl.origin);
+    if (NORMALIZED_TRUSTED_ORIGINS.has(origin)) return origin;
   } catch {
     // origin malformado → trata-se como não-confiável.
   }

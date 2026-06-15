@@ -301,6 +301,34 @@ describe('POST /api/conhecimento/web-search — SSRF / host-header (CR Critical 
     expect(data.source).toBe('duckduckgo');
   });
 
+  // ANTI-TAUTOLÓGICO (CR Major PR #72 Iter 3): a allowlist é por ORIGIN COMPLETA
+  // (scheme + host + porta), não por hostname. Uma porta arbitrária num host de
+  // confiança (`localhost`) NÃO é de confiança. Este teste FALHARIA com a
+  // validação só-por-hostname antiga, que aceitaria `localhost:1234` e
+  // exfiltraria o cookie para o listener do atacante nessa porta.
+  it('localhost com porta NÃO-allowlisted → proxy NÃO contactado com cookie; cai em DDG', async () => {
+    let proxyCalledWithCookie = false;
+    let anyProxyCall = false;
+    installFetch(async (url, init) => {
+      if (url.includes('/api/anthropic/proxy')) {
+        anyProxyCall = true;
+        if (new Headers(init?.headers).get('Cookie')) proxyCalledWithCookie = true;
+        return jsonResponse(ANTHROPIC_SUCCESS_BODY);
+      }
+      if (url.includes('duckduckgo')) return new Response(DDG_HTML, { status: 200 });
+      return jsonResponse({}, 500);
+    });
+
+    // Mesmo hostname de confiança, porta arbitrária controlada pelo atacante.
+    const resp = await call({ query: 'teste' }, true, 'http://localhost:1234');
+
+    expect(proxyCalledWithCookie).toBe(false);
+    expect(anyProxyCall).toBe(false);
+    expect(resp.status).toBe(200);
+    const data = (await resp.json()) as { source: string };
+    expect(data.source).toBe('duckduckgo');
+  });
+
   it('Host de confiança (allowlist) → proxy É chamado com o cookie (caminho feliz inalterado, c3)', async () => {
     let proxyCookie: string | null = null;
     installFetch(async (url, init) => {
