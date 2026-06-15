@@ -42,6 +42,14 @@ import {
   WebSearchSaveModal,
   type WebSearchNoteDraft,
 } from '@/components/conhecimento/WebSearchSaveModal';
+import {
+  WebSearchCreateProposal,
+  type WebSearchCreateState,
+} from '@/components/conhecimento/WebSearchCreateProposal';
+import {
+  proposeWebSearchCreate,
+  persistProposal,
+} from '@/lib/conhecimento/web-search-create';
 import type { WebSearchResult } from '@/lib/shared/web-search-ddg';
 import type {
   KnowledgeArea,
@@ -297,6 +305,95 @@ export default function KnowledgePage(): React.ReactElement {
     }
   }
 
+  // ─── Pesquisar e criar (Story 5.12 — FR56) ───────────────────────
+  // Modo especial da página `/knowledge` (`[D-5.12-SCOPE-vs-5.13]`=Opção C):
+  // pesquisa web → proposta consolidada (área+caderno+nota) → preview → criação
+  // atómica. Fluxo client-side, análogo ao Brain Dump (5.7/5.8) — NÃO passa pelo
+  // classifier nem pelo executor (isso é a 5.13). O acionamento via chat chega
+  // na 5.13.
+  const [createMode, setCreateMode] = useState(false);
+  const [createQuery, setCreateQuery] = useState('');
+  const [createAreaName, setCreateAreaName] = useState('');
+  const [createNotebookName, setCreateNotebookName] = useState('');
+  const [createState, setCreateState] = useState<WebSearchCreateState>({
+    kind: 'idle',
+  });
+  const createAbortRef = useRef<AbortController | null>(null);
+
+  // Cancela qualquer pesquisa em curso ao desmontar / ao sair do modo criar.
+  useEffect(() => () => createAbortRef.current?.abort(), []);
+  useEffect(() => {
+    if (!createMode && createAbortRef.current !== null) {
+      createAbortRef.current.abort();
+      createAbortRef.current = null;
+      setCreateState({ kind: 'idle' });
+    }
+  }, [createMode]);
+
+  // Submete a pesquisa e formula a proposta (não persiste — só preview, AC1/AC3).
+  // A falha de fetch (C5 — inspecciona o body no orquestrador) NUNCA silencia:
+  // a proposta nunca aparece, estado `error`.
+  async function handleProposeCreate(): Promise<void> {
+    const query = createQuery.trim();
+    if (query === '') return;
+    setCreateState({ kind: 'searching' });
+
+    const controller = new AbortController();
+    createAbortRef.current?.abort();
+    createAbortRef.current = controller;
+
+    try {
+      const proposal = await proposeWebSearchCreate(query, {
+        areaName: createAreaName,
+        notebookName: createNotebookName,
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      setCreateState({ kind: 'proposing', proposal });
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      setCreateState({ kind: 'error', message });
+    }
+  }
+
+  // Confirma a proposta → persistência atómica em cascata (AC4, C1). Guarda de
+  // dupla submissão (C4/`[D-5.12-FAILURE]` eixo b): clicar 2× em `confirming` é
+  // ignorado (estado já não é `proposing`); o botão também fica `disabled`.
+  async function handleConfirmCreate(): Promise<void> {
+    if (createState.kind !== 'proposing') return;
+    const { proposal } = createState;
+    setCreateState({ kind: 'confirming', proposal });
+    try {
+      const result = await persistProposal(proposal, true);
+      if (!result.persisted) {
+        setCreateState({ kind: 'idle' });
+        return;
+      }
+      setCreateState({
+        kind: 'done',
+        notebookName: proposal.notebook.name,
+        noteTitle: proposal.note.title,
+      });
+      // Limpa o formulário para uma próxima pesquisa.
+      setCreateQuery('');
+      setCreateAreaName('');
+      setCreateNotebookName('');
+    } catch (err) {
+      // Rollback total já garantido pela transacção atómica (zero parcial).
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      setCreateState({
+        kind: 'error',
+        message: `Não foi possível criar a nota. ${message}`,
+      });
+    }
+  }
+
+  // Cancela a proposta → sem persistência, sem resíduo (`[D-5.12-FAILURE]`).
+  function handleCancelCreate(): void {
+    setCreateState({ kind: 'idle' });
+  }
+
   // Cadernos por área expandida (read reactivo). Re-corre quando o conjunto de
   // áreas expandidas muda.
   const expandedKey = useMemo(
@@ -345,6 +442,17 @@ export default function KnowledgePage(): React.ReactElement {
       return;
     function handleEscape(e: KeyboardEvent): void {
       if (e.key !== 'Escape') return;
+      // Em modo "pesquisar e criar" (5.12): Escape com proposta visível cancela
+      // a proposta (sem persistir); senão sai do modo. Nunca `router.back` directo
+      // a meio do fluxo (não perde o trabalho do utilizador).
+      if (createMode) {
+        if (createState.kind === 'proposing' || createState.kind === 'confirming') {
+          if (createState.kind === 'proposing') handleCancelCreate();
+          return;
+        }
+        setCreateMode(false);
+        return;
+      }
       // Em modo de pesquisa web: Escape limpa a query web; se já vazia, sai do
       // modo web (AC3/AC6) — antes de `router.back`.
       if (webSearchMode) {
@@ -373,6 +481,8 @@ export default function KnowledgePage(): React.ReactElement {
     webSearchMode,
     webQuery,
     saveTarget,
+    createMode,
+    createState.kind,
   ]);
 
   // ─── Áreas ─────────────────────────────────────────────────────────
@@ -629,7 +739,7 @@ export default function KnowledgePage(): React.ReactElement {
           Conhecimento
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {!webSearchMode && (
+          {!webSearchMode && !createMode && (
             <div
               role="search"
               style={{ display: 'flex', alignItems: 'center', gap: 6 }}
@@ -662,8 +772,10 @@ export default function KnowledgePage(): React.ReactElement {
             onClick={() => {
               setWebSearchMode((prev) => !prev);
               // Ao entrar em modo web, limpa a pesquisa de notas; ao sair, mantém
-              // o histórico de resultados web mas fecha a vista.
+              // o histórico de resultados web mas fecha a vista. Modos mutuamente
+              // exclusivos: sair do modo criar.
               setSearchQuery('');
+              setCreateMode(false);
             }}
             aria-pressed={webSearchMode}
             aria-label="Alternar pesquisa web"
@@ -681,6 +793,31 @@ export default function KnowledgePage(): React.ReactElement {
             }}
           >
             PESQUISA WEB
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setCreateMode((prev) => !prev);
+              // Modos mutuamente exclusivos: sair da pesquisa de notas e web.
+              setSearchQuery('');
+              setWebSearchMode(false);
+            }}
+            aria-pressed={createMode}
+            aria-label="Alternar pesquisar e criar nota"
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              color: createMode ? '#04040A' : '#B6FF3C',
+              background: createMode ? '#B6FF3C' : 'rgba(182, 255, 60, 0.08)',
+              border: '1px solid rgba(182, 255, 60, 0.2)',
+              borderRadius: 6,
+              padding: '0.4rem 0.7rem',
+              cursor: 'pointer',
+            }}
+          >
+            PESQUISAR E CRIAR
           </button>
           <button
             type="button"
@@ -704,7 +841,128 @@ export default function KnowledgePage(): React.ReactElement {
         </div>
       </header>
 
-      {webSearchMode ? (
+      {createMode ? (
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            padding: '1rem 1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+          }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleProposeCreate();
+            }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+          >
+            <input
+              type="search"
+              value={createQuery}
+              onChange={(e) => setCreateQuery(e.target.value)}
+              aria-label="Tema a pesquisar"
+              placeholder="O que pesquisar na web…"
+              autoFocus
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.9rem',
+                color: '#F0F4FF',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 6,
+                padding: '0.55rem 0.8rem',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                value={createAreaName}
+                onChange={(e) => setCreateAreaName(e.target.value)}
+                aria-label="Nome da área"
+                placeholder="Área (ex: Espaço)"
+                style={{
+                  flex: 1,
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '0.85rem',
+                  color: '#F0F4FF',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 6,
+                  padding: '0.55rem 0.8rem',
+                }}
+              />
+              <input
+                type="text"
+                value={createNotebookName}
+                onChange={(e) => setCreateNotebookName(e.target.value)}
+                aria-label="Nome do caderno"
+                placeholder="Caderno (ex: Artemis 2)"
+                style={{
+                  flex: 1,
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '0.85rem',
+                  color: '#F0F4FF',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 6,
+                  padding: '0.55rem 0.8rem',
+                }}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={
+                createState.kind === 'searching' ||
+                createState.kind === 'confirming' ||
+                createQuery.trim() === '' ||
+                createAreaName.trim() === '' ||
+                createNotebookName.trim() === ''
+              }
+              aria-label="Pesquisar e propor nota"
+              style={{
+                alignSelf: 'flex-start',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                color: '#04040A',
+                background: '#B6FF3C',
+                border: 'none',
+                borderRadius: 6,
+                padding: '0.55rem 1.2rem',
+                cursor:
+                  createState.kind === 'searching' ||
+                  createState.kind === 'confirming' ||
+                  createQuery.trim() === '' ||
+                  createAreaName.trim() === '' ||
+                  createNotebookName.trim() === ''
+                    ? 'not-allowed'
+                    : 'pointer',
+                opacity:
+                  createState.kind === 'searching' ||
+                  createState.kind === 'confirming' ||
+                  createQuery.trim() === '' ||
+                  createAreaName.trim() === '' ||
+                  createNotebookName.trim() === ''
+                    ? 0.6
+                    : 1,
+                boxShadow: '0 0 12px rgba(182, 255, 60, 0.3)',
+              }}
+            >
+              Pesquisar e propor
+            </button>
+          </form>
+
+          <WebSearchCreateProposal
+            state={createState}
+            onConfirm={() => void handleConfirmCreate()}
+            onCancel={handleCancelCreate}
+          />
+        </div>
+      ) : webSearchMode ? (
         <div
           style={{
             flex: 1,
