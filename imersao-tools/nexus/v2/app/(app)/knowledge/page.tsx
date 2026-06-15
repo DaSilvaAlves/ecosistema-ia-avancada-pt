@@ -206,6 +206,20 @@ export default function KnowledgePage(): React.ReactElement {
   // após-unmount / unhandled rejection).
   useEffect(() => () => webAbortRef.current?.abort(), []);
 
+  // Cancela qualquer pesquisa web em curso ao desligar o modo web (toggle ou
+  // Escape, AC3/AC6). Sem isto, um request Anthropic/DDG iniciado ficaria a
+  // correr após o utilizador sair do modo — desperdício de chamada externa e
+  // risco de `setState` sobre estado já escondido. O efeito é reactivo a
+  // `webSearchMode` e só actua na transição para `false` com request activo,
+  // pelo que não corre ao ligar o modo nem entra em loop.
+  useEffect(() => {
+    if (!webSearchMode && webAbortRef.current !== null) {
+      webAbortRef.current.abort();
+      webAbortRef.current = null;
+      setWebIsSearching(false);
+    }
+  }, [webSearchMode]);
+
   // Submete a pesquisa web a `/api/conhecimento/web-search` com cancelamento de
   // race (só o último submit actualiza o estado). A falha NUNCA silencia
   // (`[D-5.11-FALLBACK]`): erro de rede ou 503 → estado `error` com mensagem
