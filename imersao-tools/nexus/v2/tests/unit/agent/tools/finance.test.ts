@@ -550,11 +550,12 @@ describe('consultar_categoria', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 describe('registo no toolRegistry', () => {
-  it('T19 — 22 tools registadas após import do barrel (7 + 6 + 9)', () => {
+  it('T19 — 31 tools registadas após import do barrel (7 + 6 + 9 + 9)', () => {
     // Story 4.10: o barrel passou a importar habits/goals/reminders (9 tools
-    // domínio 'habits' — D-DOMAIN Opção A). Finanças permanece 6.
+    // domínio 'habits' — D-DOMAIN Opção A). Story 5.13: + journal/knowledge (9
+    // tools — D-5.13-DOMAIN Opção A). Finanças permanece 6.
     expect(toolRegistry.byDomain('finance')).toHaveLength(6);
-    expect(toolRegistry.all().length).toBe(22);
+    expect(toolRegistry.all().length).toBe(31);
   });
 
   it('T20 — toAnthropicTools não lança para as 6 tools de finanças', () => {
