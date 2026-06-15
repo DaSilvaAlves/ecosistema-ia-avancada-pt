@@ -46,6 +46,15 @@ function registar<TArgs, TResult>(def: ToolDefinition<TArgs, TResult>): void {
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * Sentinelas ISO para o lado ausente de um intervalo aberto em `consultar_diario`
+ * (Finding 1 CR Iter 1, Aria 16/06/2026). `date` é sempre `YYYY-MM-DD`, logo a
+ * comparação lexicográfica = comparação cronológica; estas sentinelas ficam fora
+ * de qualquer data real plausível sem truncar resultados.
+ */
+const SENTINEL_MIN = '0000-01-01';
+const SENTINEL_MAX = '9999-12-31';
+
 /** Comprimento do excerto devolvido nas consultas/pesquisas (AC1). */
 const EXCERPT_LENGTH = 150;
 
@@ -62,7 +71,7 @@ const CriarEntradaDiarioArgs = z.object({
     .string()
     .regex(ISO_DATE_RE, 'data deve ser YYYY-MM-DD')
     .default(() => new Date().toISOString().slice(0, 10)),
-  bodyMarkdown: z.string().min(1, 'o corpo da entrada é obrigatório'),
+  bodyMarkdown: z.string().trim().min(1, 'o corpo da entrada é obrigatório'),
   mood: z.number().int().min(1).max(5),
 });
 
@@ -72,12 +81,13 @@ const ConsultarDiarioArgs = z.object({
 });
 
 const PesquisarDiarioArgs = z.object({
-  query: z.string().min(1, 'a pesquisa não pode estar vazia'),
+  query: z.string().trim().min(1, 'a pesquisa não pode estar vazia'),
 });
 
 const BrainDumpArgs = z.object({
   texto: z
     .string()
+    .trim()
     .min(1, 'o texto do brain dump é obrigatório')
     .describe('Texto livre do brain dump (ideias, pensamentos, tarefas não estruturadas)'),
 });
@@ -176,11 +186,17 @@ registar(
     requiresPreview: false,
     reversible: false,
     execute: async (args, ctx) => {
+      // Intervalo aberto (Finding 1 CR Iter 1): usa `.between(...)` sempre que
+      // PELO MENOS UM dos limites estiver presente — o lado ausente usa a
+      // sentinela ISO. Só cai nas "últimas 7" quando AMBOS são null (fallback).
+      // Preserva a intenção unilateral do utilizador ("desde Maio", "até 10 Jun").
       let entries: JournalEntry[];
-      if (args.dataInicio !== null && args.dataFim !== null) {
+      if (args.dataInicio !== null || args.dataFim !== null) {
+        const lo = args.dataInicio ?? SENTINEL_MIN;
+        const hi = args.dataFim ?? SENTINEL_MAX;
         entries = await ctx.db.journal_entries
           .where('date')
-          .between(args.dataInicio, args.dataFim, true, true)
+          .between(lo, hi, true, true)
           .sortBy('date');
       } else {
         entries = await ctx.db.journal_entries

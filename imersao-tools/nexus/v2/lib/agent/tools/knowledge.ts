@@ -97,14 +97,23 @@ async function resolveAreaByNome(
   return match;
 }
 
+/**
+ * Schema de validação por item da resposta web (Finding 4 CR Iter 1, Aria
+ * 16/06/2026). A resposta web é uma fronteira de confiança externa (endpoint
+ * 5.11 → provider Anthropic/DuckDuckGo); um item com `title` vazio ou `url`
+ * malformada não deve nem fazer crash nem persistir uma nota lixo. Itens
+ * inválidos são descartados (skip); só se NÃO sobrar nenhum válido é que aborta.
+ */
+const WebSearchResultSchema = z.object({
+  title: z.string().trim().min(1),
+  url: z.string().trim().url(),
+  excerpt: z.string().default(''),
+});
+
 /** Shape da resposta do endpoint 5.11 (reutiliza o shape validado da 5.12). */
-interface WebSearchResultShape {
-  title: string;
-  url: string;
-  excerpt: string;
-}
+type WebSearchResultShape = z.infer<typeof WebSearchResultSchema>;
 interface WebSearchResponseBody {
-  results?: WebSearchResultShape[];
+  results?: unknown[];
   source?: 'anthropic' | 'duckduckgo';
   error?: string;
 }
@@ -126,34 +135,39 @@ function buildNoteBody(result: WebSearchResultShape): string {
 // argsSchemas + resultSchemas
 // ═══════════════════════════════════════════════════════════════════
 
+// Finding 2 CR Iter 1 (Aria 16/06/2026): `.trim().min(1)` nos campos de texto
+// obrigatórios — `z.string().min(1)` aceitaria `"   "` (whitespace-only), que
+// depois persistia como `.trim()` vazio na BD. `.trim()` é transform antes de
+// `.min`, logo rejeita whitespace-only na fronteira do schema. `cor`/`icone` NÃO
+// mudam (têm regex/default próprios).
 const CriarAreaArgs = z.object({
-  nome: z.string().min(1).max(200),
+  nome: z.string().trim().min(1).max(200),
   cor: z.string().regex(HEX_COLOR_RE, 'cor deve ser hex #rrggbb').default(DEFAULT_AREA_COLOR),
   icone: z.string().default('📁'),
 });
 
 const CriarCadernoArgs = z.object({
-  nomeArea: z.string().min(1),
-  nomeCaderno: z.string().min(1).max(200),
+  nomeArea: z.string().trim().min(1),
+  nomeCaderno: z.string().trim().min(1).max(200),
 });
 
 const CriarNotaArgs = z.object({
-  nomeArea: z.string().min(1),
-  nomeCaderno: z.string().min(1),
-  titulo: z.string().min(1).max(500),
-  conteudo: z.string().min(1),
+  nomeArea: z.string().trim().min(1),
+  nomeCaderno: z.string().trim().min(1),
+  titulo: z.string().trim().min(1).max(500),
+  conteudo: z.string().trim().min(1),
   tags: z.array(z.string()).default([]),
 });
 
 const PesquisarConhecimentoArgs = z.object({
-  query: z.string().min(1),
+  query: z.string().trim().min(1),
   nomeArea: z.string().nullable().default(null),
 });
 
 const PesquisarWebECriarNotaArgs = z.object({
-  query: z.string().min(1),
-  nomeArea: z.string().min(1),
-  nomeCaderno: z.string().min(1),
+  query: z.string().trim().min(1),
+  nomeArea: z.string().trim().min(1),
+  nomeCaderno: z.string().trim().min(1),
   tituloNota: z.string().nullable().default(null),
 });
 
@@ -261,8 +275,20 @@ registar(
       return { id, nome: args.nome, mensagem: `Área "${args.nome}" criada.` };
     },
     reverse: async (_args, result, ctx) => {
-      // Reverse sobre uma área recém-criada (sem filhos). NÃO aplica a cascata
-      // `deleteKnowledgeArea` — se entretanto ganhou filhos, só apaga a área.
+      // Finding 3 CR Iter 1 (Aria 16/06/2026): o reverse só desfaz a criação de
+      // UMA área folha. Se a área já ganhou cadernos entretanto, recusa com Error
+      // PT-PT — a cascata destrutiva de 2 níveis é exclusiva de `deleteKnowledgeArea`
+      // (5.9), accionada pela UI de gestão com confirmação. Um reverse que
+      // cascateasse apagaria dados sem consentimento.
+      const filhos = await ctx.db.knowledge_notebooks
+        .where('areaId')
+        .equals(result.id)
+        .count();
+      if (filhos > 0) {
+        throw new Error(
+          `Não posso desfazer: a área "${result.nome}" já tem ${filhos} caderno(s). Usa a gestão de conhecimento para a eliminar com os seus conteúdos.`,
+        );
+      }
       await ctx.db.knowledge_areas.delete(result.id);
     },
   }),
@@ -309,6 +335,18 @@ registar(
       };
     },
     reverse: async (_args, result, ctx) => {
+      // Finding 3 CR Iter 1 (Aria 16/06/2026): mesma semântica de `criar_area` —
+      // recusa o reverse se o caderno já tiver notas filhas. A eliminação com
+      // conteúdo é exclusiva da UI de gestão (5.9).
+      const filhos = await ctx.db.knowledge_notes
+        .where('notebookId')
+        .equals(result.id)
+        .count();
+      if (filhos > 0) {
+        throw new Error(
+          `Não posso desfazer: o caderno "${result.nomeCaderno}" já tem ${filhos} nota(s). Usa a gestão de conhecimento para o eliminar com os seus conteúdos.`,
+        );
+      }
       await ctx.db.knowledge_notebooks.delete(result.id);
     },
   }),
@@ -467,7 +505,20 @@ registar(
         );
       }
 
-      const top = data.results[0];
+      // Finding 4 CR Iter 1: valida cada item; descarta os inválidos; escolhe o
+      // primeiro VÁLIDO. Se a filtragem esvaziar a lista → Error PT-PT + zero
+      // writes (mesmo path que `results.length === 0`, coerente com C2).
+      const validos = data.results.flatMap((r) => {
+        const parsed = WebSearchResultSchema.safeParse(r);
+        return parsed.success ? [parsed.data] : [];
+      });
+      if (validos.length === 0) {
+        throw new Error(
+          `Os resultados de «${args.query}» não têm título/URL válidos — não há conteúdo para criar a nota.`,
+        );
+      }
+
+      const top = validos[0];
       const noteTitle = (args.tituloNota ?? top.title).trim() || top.title;
       const noteBody = buildNoteBody(top);
       const sourceUrl = top.url;

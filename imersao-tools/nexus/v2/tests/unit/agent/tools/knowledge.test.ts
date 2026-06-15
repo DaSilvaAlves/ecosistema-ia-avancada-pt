@@ -140,6 +140,31 @@ describe('criar_area (T12-T14)', () => {
     await t.reverse!(args, result, ctx);
     expect(await db.knowledge_areas.get(result.id)).toBeUndefined();
   });
+
+  it('T14b — reverse recusa se a área já tiver cadernos (Finding 3): Error, área e caderno intactos', async () => {
+    const tArea = tool('criar_area');
+    const argsArea = tArea.argsSchema.parse({ nome: 'Temp' });
+    const resultArea = (await tArea.execute(argsArea, ctx)) as {
+      id: string;
+      nome: string;
+      mensagem: string;
+    };
+    // entretanto a área ganha um caderno filho
+    const tCaderno = tool('criar_caderno');
+    const argsCaderno = tCaderno.argsSchema.parse({ nomeArea: 'Temp', nomeCaderno: 'Filho' });
+    const resultCaderno = (await tCaderno.execute(argsCaderno, ctx)) as { id: string };
+    // reverse da área recusa (alinhado com cascata 5.9 — exclusiva da UI de gestão)
+    await expect(tArea.reverse!(argsArea, resultArea, ctx)).rejects.toThrow(
+      /não posso desfazer/i,
+    );
+    expect(await db.knowledge_areas.get(resultArea.id)).toBeDefined();
+    expect(await db.knowledge_notebooks.get(resultCaderno.id)).toBeDefined();
+  });
+
+  it('T13b — nome só com espaços: Zod lança (.trim().min(1), Finding 2)', () => {
+    const t = tool('criar_area');
+    expect(() => t.argsSchema.parse({ nome: '   ' })).toThrow();
+  });
 });
 
 describe('criar_caderno (T15-T17)', () => {
@@ -178,6 +203,32 @@ describe('criar_caderno (T15-T17)', () => {
     const result = (await t.execute(args, ctx)) as { id: string; areaId: string; nomeCaderno: string; mensagem: string };
     await t.reverse!(args, result, ctx);
     expect(await db.knowledge_notebooks.get(result.id)).toBeUndefined();
+  });
+
+  it('T17b — reverse recusa se o caderno já tiver notas (Finding 3): Error, caderno e nota intactos', async () => {
+    await seedAreaCaderno('IA', 'Outro');
+    const tCaderno = tool('criar_caderno');
+    const argsCaderno = tCaderno.argsSchema.parse({ nomeArea: 'IA', nomeCaderno: 'Novo' });
+    const resultCaderno = (await tCaderno.execute(argsCaderno, ctx)) as {
+      id: string;
+      areaId: string;
+      nomeCaderno: string;
+      mensagem: string;
+    };
+    // o caderno ganha uma nota filha
+    const tNota = tool('criar_nota');
+    const argsNota = tNota.argsSchema.parse({
+      nomeArea: 'IA',
+      nomeCaderno: 'Novo',
+      titulo: 'Filha',
+      conteudo: 'corpo',
+    });
+    const resultNota = (await tNota.execute(argsNota, ctx)) as { id: string };
+    await expect(tCaderno.reverse!(argsCaderno, resultCaderno, ctx)).rejects.toThrow(
+      /não posso desfazer/i,
+    );
+    expect(await db.knowledge_notebooks.get(resultCaderno.id)).toBeDefined();
+    expect(await db.knowledge_notes.get(resultNota.id)).toBeDefined();
   });
 });
 
@@ -405,6 +456,53 @@ describe('pesquisar_web_e_criar_nota (T23-T25 — W1)', () => {
     await expect(
       t.execute(args, ctxWithFetch({ results: [], source: 'duckduckgo' }, 200)),
     ).rejects.toThrow(/nenhum resultado/i);
+    expect(await db.knowledge_notes.count()).toBe(0);
+  });
+
+  it('T25c — item malformado filtrado (Finding 4): 1 item title:"" + 1 válido → cria a nota do válido', async () => {
+    const t = tool('pesquisar_web_e_criar_nota');
+    const args = t.argsSchema.parse({
+      query: 'Artemis 2',
+      nomeArea: 'Espaço',
+      nomeCaderno: 'Artemis 2',
+    });
+    const mixedBody = {
+      results: [
+        { title: '', url: 'https://example.com/lixo', excerpt: 'sem título' }, // inválido (title vazio)
+        {
+          title: 'Artemis 2 válido',
+          url: 'https://example.com/artemis',
+          excerpt: 'A missão Artemis 2.',
+        },
+      ],
+      source: 'duckduckgo' as const,
+    };
+    const result = (await t.execute(args, ctxWithFetch(mixedBody))) as {
+      noteId: string;
+      sourceUrl: string;
+    };
+    // escolheu o primeiro VÁLIDO (não o malformado)
+    expect(result.sourceUrl).toBe('https://example.com/artemis');
+    const n = (await db.knowledge_notes.get(result.noteId)) as KnowledgeNote;
+    expect(n.title).toBe('Artemis 2 válido');
+    expect(await db.knowledge_notes.count()).toBe(1);
+  });
+
+  it('T25d — todos os itens inválidos (Finding 4): url malformada → Error + zero writes', async () => {
+    const t = tool('pesquisar_web_e_criar_nota');
+    const args = t.argsSchema.parse({ query: 'x', nomeArea: 'A', nomeCaderno: 'B' });
+    const allInvalidBody = {
+      results: [
+        { title: 'Sem URL', url: 'não-é-url', excerpt: 'a' },
+        { title: '', url: 'https://ok.com', excerpt: 'b' },
+      ],
+      source: 'duckduckgo' as const,
+    };
+    await expect(t.execute(args, ctxWithFetch(allInvalidBody))).rejects.toThrow(
+      /não têm título\/url válidos/i,
+    );
+    expect(await db.knowledge_areas.count()).toBe(0);
+    expect(await db.knowledge_notebooks.count()).toBe(0);
     expect(await db.knowledge_notes.count()).toBe(0);
   });
 });

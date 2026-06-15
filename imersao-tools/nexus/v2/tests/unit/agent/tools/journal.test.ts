@@ -49,6 +49,9 @@ function makeEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
 beforeEach(async () => {
   await db.journal_entries.clear();
   await db.brain_dumps.clear();
+  // Finding 5 CR Iter 1 (Aria 16/06/2026): T11 assenta em chat_messages.count()===0;
+  // sem este clear, contaminação order-dependent de outra suite faria T11 falhar.
+  await db.chat_messages.clear();
 });
 
 afterEach(() => {
@@ -143,6 +146,38 @@ describe('consultar_diario (T5-T6)', () => {
     expect(result.entradas).toHaveLength(3);
   });
 
+  it('T5b — só dataInicio: intervalo aberto à direita (≥ dataInicio até hoje), NÃO cai nas últimas 7', async () => {
+    await db.journal_entries.bulkAdd([
+      makeEntry({ date: '2026-04-30' }), // anterior ao limite → excluída
+      makeEntry({ date: '2026-05-01' }), // = limite → incluída
+      makeEntry({ date: '2026-05-15' }), // posterior → incluída
+    ]);
+    const t = tool('consultar_diario');
+    const args = t.argsSchema.parse({ dataInicio: '2026-05-01' });
+    const result = (await t.execute(args, ctx)) as {
+      entradas: Array<{ date: string }>;
+      total: number;
+    };
+    expect(result.total).toBe(2);
+    expect(result.entradas.map((e) => e.date)).toEqual(['2026-05-01', '2026-05-15']);
+  });
+
+  it('T5c — só dataFim: intervalo aberto à esquerda (do início até ≤ dataFim), NÃO cai nas últimas 7', async () => {
+    await db.journal_entries.bulkAdd([
+      makeEntry({ date: '2026-05-01' }), // anterior ao limite → incluída
+      makeEntry({ date: '2026-05-31' }), // = limite → incluída
+      makeEntry({ date: '2026-06-10' }), // posterior → excluída
+    ]);
+    const t = tool('consultar_diario');
+    const args = t.argsSchema.parse({ dataFim: '2026-05-31' });
+    const result = (await t.execute(args, ctx)) as {
+      entradas: Array<{ date: string }>;
+      total: number;
+    };
+    expect(result.total).toBe(2);
+    expect(result.entradas.map((e) => e.date)).toEqual(['2026-05-01', '2026-05-31']);
+  });
+
   it('T6 — sem args: últimas 7 (ou menos se DB pequena)', async () => {
     await db.journal_entries.bulkAdd([
       makeEntry({ date: '2026-01-01' }),
@@ -222,6 +257,20 @@ describe('brain_dump (T9-T11 — B1 + R1)', () => {
   it('T10 — texto vazio: Zod lança (.min(1))', () => {
     const t = tool('brain_dump');
     expect(() => t.argsSchema.parse({ texto: '' })).toThrow();
+  });
+
+  it('T10b — texto só com espaços: Zod lança (.trim().min(1), Finding 2)', () => {
+    const t = tool('brain_dump');
+    expect(() => t.argsSchema.parse({ texto: '   ' })).toThrow();
+    // simetria: bodyMarkdown de criar_entrada_diario e query de pesquisar_diario
+    expect(() =>
+      tool('criar_entrada_diario').argsSchema.parse({
+        data: '2026-06-01',
+        bodyMarkdown: '   ',
+        mood: 3,
+      }),
+    ).toThrow();
+    expect(() => tool('pesquisar_diario').argsSchema.parse({ query: '   ' })).toThrow();
   });
 
   it('T11 — mock-fidelidade: o resultado tem a forma exacta do resultSchema (flui para tool_result)', async () => {
