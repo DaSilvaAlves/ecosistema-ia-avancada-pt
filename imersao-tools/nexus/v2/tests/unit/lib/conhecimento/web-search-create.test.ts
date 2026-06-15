@@ -225,6 +225,10 @@ describe('persistProposal (Story 5.12 / AC4 / C1)', () => {
     const areas = await listKnowledgeAreas();
     expect(areas).toHaveLength(1); // área NÃO duplicada
     expect(await listNotebooksByArea(areas[0].id)).toHaveLength(1); // caderno NÃO duplicado
+    // A nota é SEMPRE nova (sem dedupe por sourceUrl — `[D-5.12-PERSIST]`): 2×
+    // confirmar → 1 persistência por chamada → exactamente 2 notas. Contar prova
+    // o "2 notas máx" do título (antes não era verificado — tautologia).
+    expect(await db.knowledge_notes.count()).toBe(2);
   });
 
   it('falha parcial → rollback total: caderno lança → ZERO entidades persistidas', async () => {
@@ -236,9 +240,13 @@ describe('persistProposal (Story 5.12 / AC4 / C1)', () => {
 
     await expect(persistProposal(makeProposal(), true, seqId)).rejects.toThrow();
 
-    // Rollback: a área NÃO ficou persistida (atomicidade — `[D-5.12-FAILURE]` eixo c).
-    expect(await listKnowledgeAreas()).toHaveLength(0);
-    expect(await listNotebooksByArea(AREA_ID)).toHaveLength(0);
+    // Rollback TOTAL: zero entidades em qualquer store (atomicidade —
+    // `[D-5.12-FAILURE]` eixo c). Contagem TOTAL por store (não consulta por
+    // AREA_ID fixo: os ids reais vêm de `seqId()`, logo um filtro por id fixo
+    // passaria mesmo sem rollback — asserção sem significado).
+    expect(await db.knowledge_areas.count()).toBe(0);
+    expect(await db.knowledge_notebooks.count()).toBe(0);
+    expect(await db.knowledge_notes.count()).toBe(0);
     spy.mockRestore();
   });
 });

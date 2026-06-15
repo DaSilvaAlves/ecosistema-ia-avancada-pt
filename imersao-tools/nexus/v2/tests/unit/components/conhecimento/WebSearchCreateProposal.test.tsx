@@ -92,10 +92,13 @@ describe('WebSearchCreateProposal (Story 5.12 / AC8)', () => {
     expect(screen.getByLabelText('Cancelar criação da nota')).toBeDisabled();
   });
 
-  it('I5 — done: sucesso PT-PT com nome da nota e caderno', () => {
-    renderState({ kind: 'done', notebookName: 'Artemis 2', noteTitle: 'Artemis 2' });
+  it('I5 — done: sucesso PT-PT com nome da nota E caderno (distintos)', () => {
+    // Strings DISTINTAS p/ caderno e título: a asserção só passa se AMBOS forem
+    // renderizados (render real: «{noteTitle}» criada em {notebookName}).
+    renderState({ kind: 'done', notebookName: 'Artemis 2', noteTitle: 'Missão lunar tripulada' });
     const done = screen.getByTestId('wsc-done');
-    expect(done).toHaveTextContent('Artemis 2');
+    expect(done).toHaveTextContent('Missão lunar tripulada'); // título da nota
+    expect(done).toHaveTextContent('Artemis 2'); // nome do caderno
     expect(done).toHaveTextContent('criada em');
     expect(done).toHaveAttribute('role', 'status');
   });
