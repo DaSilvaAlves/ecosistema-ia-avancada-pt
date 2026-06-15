@@ -21,6 +21,8 @@
  * estrutura mudar (mock-protocol-fidelity.md, AC6).
  */
 
+import { isSafeHttpUrl } from '@/lib/shared/web-search-url';
+
 /** Resultado de pesquisa web — shape comum a ambos os providers (AC1). */
 export interface WebSearchResult {
   title: string;
@@ -134,21 +136,44 @@ export function parseDdgHtml(html: string): WebSearchResult[] {
   const snippetRe =
     /<(?:a|span|div)\b[^>]*\bclass="[^"]*\bresult__snippet\b[^"]*"[^>]*>([\s\S]*?)<\/(?:a|span|div)>/i;
 
+  // 1.ª passagem: recolhe o título, o URL e o índice (início/fim) de cada link
+  // de resultado. Os índices delimitam o bloco de cada resultado para o snippet
+  // ser procurado SÓ dentro do bloco do próprio resultado (CR Major PR #72,
+  // finding 3 — sem isto, um resultado sem snippet herdava o do seguinte).
+  interface RawMatch {
+    title: string;
+    url: string;
+    start: number;
+    end: number;
+  }
+  const raw: RawMatch[] = [];
   let match: RegExpExecArray | null;
   while ((match = titleLinkRe.exec(html)) !== null) {
     const rawHref = match[1] ?? '';
     const rawTitle = match[2] ?? '';
 
     const title = cleanText(rawTitle);
-    const url = resolveDdgUrl(rawHref);
+    // Allowlist de esquema partilhada (A2 — mesmo helper do parser Anthropic):
+    // descarta resultados sem URL http(s) seguro (CAPTCHA, links internos do DDG,
+    // `javascript:`/`data:` num `uddg` malicioso descodificado).
+    const url = isSafeHttpUrl(resolveDdgUrl(rawHref));
 
-    // Descarta resultados sem título ou sem URL http(s) válido (CAPTCHA, links
-    // internos do DDG, anúncios sem conteúdo). Um resultado tem de ter ambos.
-    if (title === '' || !/^https?:\/\//i.test(url)) continue;
+    // Um resultado tem de ter título E URL seguro. Mesmo descartado, regista-se
+    // `start`/`end` para que o bloco do resultado VÁLIDO seguinte fique bem
+    // delimitado (o bloco termina no INÍCIO do link de título seguinte).
+    raw.push({ title, url: url ?? '', start: match.index, end: titleLinkRe.lastIndex });
+  }
 
-    // Procura o snippet no HTML que se segue a este título (mesma `.result`).
-    const rest = html.slice(titleLinkRe.lastIndex);
-    const snippetMatch = rest.match(snippetRe);
+  for (let i = 0; i < raw.length; i++) {
+    const { title, url, end } = raw[i]!;
+    if (title === '' || url === '') continue;
+
+    // O bloco deste resultado vai do fim do seu link de título até ao início do
+    // próximo link de título (ou ao fim do HTML, se for o último).
+    const blockEnd = i + 1 < raw.length ? raw[i + 1]!.start : html.length;
+    const block = html.slice(end, blockEnd);
+
+    const snippetMatch = block.match(snippetRe);
     const excerptRaw = snippetMatch?.[1] ? cleanText(snippetMatch[1]) : '';
     const excerpt =
       excerptRaw.length > MAX_EXCERPT_LENGTH

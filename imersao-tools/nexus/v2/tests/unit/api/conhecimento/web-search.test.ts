@@ -78,12 +78,16 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-async function call(body?: unknown, withCookie = true): Promise<Response> {
+async function call(
+  body?: unknown,
+  withCookie = true,
+  origin = 'http://localhost:3001',
+): Promise<Response> {
   const { POST } = await import('@/app/api/conhecimento/web-search/route');
   const headers = new Headers({ 'Content-Type': 'application/json' });
   if (withCookie) headers.set('Cookie', 'nexus_session=test-session-id');
   const { NextRequest } = await import('next/server');
-  const req = new NextRequest('http://localhost:3001/api/conhecimento/web-search', {
+  const req = new NextRequest(`${origin}/api/conhecimento/web-search`, {
     method: 'POST',
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -128,6 +132,22 @@ describe('POST /api/conhecimento/web-search — auth + validação', () => {
     installFetch(async () => jsonResponse({}));
     const resp = await call({ query: '   ' });
     expect(resp.status).toBe(400);
+  });
+
+  it('400 com query não-string (CR PR #72, finding 4)', async () => {
+    installFetch(async () => jsonResponse({}));
+    const resp = await call({ query: 123 });
+    expect(resp.status).toBe(400);
+    const data = (await resp.json()) as { error: string };
+    expect(data.error).toContain('Indica um termo de pesquisa');
+  });
+
+  it('400 com query acima do limite (> MAX_QUERY_LENGTH) (CR PR #72, finding 4)', async () => {
+    installFetch(async () => jsonResponse({}));
+    const resp = await call({ query: 'a'.repeat(501) });
+    expect(resp.status).toBe(400);
+    const data = (await resp.json()) as { error: string };
+    expect(data.error).toContain('demasiado longa');
   });
 });
 
@@ -234,6 +254,91 @@ describe('POST /api/conhecimento/web-search — cascata', () => {
     });
     const resp = await call({ query: 'teste' });
     expect(resp.status).toBe(503);
+  });
+});
+
+// TESTE ANTI-TAUTOLÓGICO OBRIGATÓRIO (`[D-5.11-SSRF-FIX]`, eixo c). Sem o fix,
+// `route.ts` construiria o `proxyUrl` a partir de `req.nextUrl.origin` (host
+// spoofado) e reenviaria o cookie de sessão para o host do atacante. Estes testes
+// FALHARIAM com o código antigo: o proxy seria chamado no host malicioso COM o
+// cookie. Com o fix, o host não-allowlisted salta o path Anthropic e cai em DDG.
+describe('POST /api/conhecimento/web-search — SSRF / host-header (CR Critical PR #72)', () => {
+  const originalVercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+
+  beforeEach(() => {
+    // Garante o caminho da allowlist (sem env Vercel a curto-circuitar a decisão).
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  });
+
+  afterEach(() => {
+    if (originalVercel === undefined) delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    else process.env.VERCEL_PROJECT_PRODUCTION_URL = originalVercel;
+  });
+
+  it('Host malicioso (não-allowlisted) → proxy NÃO é chamado com o cookie; cai em DDG', async () => {
+    let proxyCalledWithCookie = false;
+    let anyProxyCall = false;
+    installFetch(async (url, init) => {
+      if (url.includes('/api/anthropic/proxy')) {
+        anyProxyCall = true;
+        const headers = new Headers(init?.headers);
+        if (headers.get('Cookie')) proxyCalledWithCookie = true;
+        return jsonResponse(ANTHROPIC_SUCCESS_BODY);
+      }
+      if (url.includes('duckduckgo')) return new Response(DDG_HTML, { status: 200 });
+      return jsonResponse({}, 500);
+    });
+
+    const resp = await call({ query: 'teste' }, true, 'https://attacker.example');
+
+    // O cookie de sessão NÃO foi exfiltrado para o host do atacante.
+    expect(proxyCalledWithCookie).toBe(false);
+    // O proxy nem sequer é contactado no host malicioso — salta direto para DDG.
+    expect(anyProxyCall).toBe(false);
+    // Resultado degradado seguro: DDG (sem cookie), nunca fuga silenciosa.
+    expect(resp.status).toBe(200);
+    const data = (await resp.json()) as { source: string };
+    expect(data.source).toBe('duckduckgo');
+  });
+
+  it('Host de confiança (allowlist) → proxy É chamado com o cookie (caminho feliz inalterado, c3)', async () => {
+    let proxyCookie: string | null = null;
+    installFetch(async (url, init) => {
+      if (url.includes('/api/anthropic/proxy')) {
+        proxyCookie = new Headers(init?.headers).get('Cookie');
+        return jsonResponse(ANTHROPIC_SUCCESS_BODY);
+      }
+      return new Response(DDG_HTML, { status: 200 });
+    });
+
+    // `localhost` está na allowlist → comportamento idêntico ao actual.
+    const resp = await call({ query: 'teste' }, true, 'http://localhost:3001');
+    expect(proxyCookie).toBe('nexus_session=test-session-id');
+    expect(resp.status).toBe(200);
+    const data = (await resp.json()) as { source: string };
+    expect(data.source).toBe('anthropic');
+  });
+
+  it('VERCEL_PROJECT_PRODUCTION_URL presente → proxy contactado nessa origin de confiança', async () => {
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = 'nexus.vercel.app';
+    let proxyHost: string | null = null;
+    installFetch(async (url, init) => {
+      if (url.includes('/api/anthropic/proxy')) {
+        proxyHost = new URL(url).host;
+        const cookie = new Headers(init?.headers).get('Cookie');
+        // O cookie só viaja para a origin de confiança da env (não o Host spoofado).
+        expect(cookie).toBe('nexus_session=test-session-id');
+        return jsonResponse(ANTHROPIC_SUCCESS_BODY);
+      }
+      return new Response(DDG_HTML, { status: 200 });
+    });
+
+    // Mesmo com Host malicioso, a env de confiança prevalece (não o nextUrl.origin).
+    const resp = await call({ query: 'teste' }, true, 'https://attacker.example');
+    expect(proxyHost).toBe('nexus.vercel.app');
+    expect(resp.status).toBe(200);
+    const data = (await resp.json()) as { source: string };
+    expect(data.source).toBe('anthropic');
   });
 });
 

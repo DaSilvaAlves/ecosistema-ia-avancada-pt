@@ -25,6 +25,7 @@
  */
 
 import type { WebSearchResult } from '@/lib/shared/web-search-ddg';
+import { isSafeHttpUrl } from '@/lib/shared/web-search-url';
 
 const MAX_EXCERPT_LENGTH = 150;
 
@@ -118,13 +119,19 @@ export function parseAnthropicWebSearch(body: unknown): AnthropicWebSearchOutcom
     if (!Array.isArray(inner)) continue;
     for (const item of inner as WebSearchResultBlock[]) {
       if (!isObject(item) || item.type !== 'web_search_result') continue;
-      const url = asString(item.url);
-      const title = asString(item.title);
-      if (url === '' || title === '') continue;
-      const citedText = citationsByUrl.get(url) ?? '';
+      // Allowlist de esquema: só http(s) (CR Major PR #72, finding 2). Uma URL
+      // `javascript:`/`data:` viraria `sourceUrl` da nota e link clicável → XSS.
+      const safeUrl = isSafeHttpUrl(item.url);
+      // `title` validado APÓS `trim` (um título só de espaços é vazio).
+      const title = asString(item.title).trim();
+      if (safeUrl === null || title === '') continue;
+      // A citação foi indexada pelo URL bruto da resposta; tenta ambas as formas
+      // (bruta e normalizada) para não perder o excerto após a normalização.
+      const citedText =
+        citationsByUrl.get(asString(item.url)) ?? citationsByUrl.get(safeUrl) ?? '';
       results.push({
-        title: title.trim(),
-        url,
+        title,
+        url: safeUrl,
         excerpt: truncateExcerpt(citedText),
       });
     }

@@ -118,7 +118,8 @@ describe('parseDdgHtml (Story 5.11 / AC1)', () => {
     `;
     const results = parseDdgHtml(html);
     expect(results).toHaveLength(1);
-    expect(results[0]!.url).toBe('https://ok.com');
+    // Normalizado por `isSafeHttpUrl` (`new URL().toString()` → trailing slash).
+    expect(results[0]!.url).toBe('https://ok.com/');
   });
 
   it('aceita href absoluto sem redirect uddg (degrada graciosamente)', () => {
@@ -146,6 +147,41 @@ describe('parseDdgHtml (Story 5.11 / AC1)', () => {
     expect(parseDdgHtml(null)).toEqual([]);
     // @ts-expect-error — teste defensivo de input inválido em runtime.
     expect(parseDdgHtml(undefined)).toEqual([]);
+  });
+
+  // CR Major PR #72, finding 3 — snippet por resultado. FALHARIA com o código
+  // antigo (`html.slice(lastIndex).match(snippetRe)`): o 1.º resultado, sem
+  // snippet próprio, herdava o snippet do 2.º (excerto cruzado).
+  it('snippet scope por resultado — 1.º sem snippet não herda o do 2.º', () => {
+    const html = `
+      <div class="result"><div class="links_main">
+        <a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fprimeiro.com">Primeiro</a>
+      </div></div>
+      <div class="result"><div class="links_main">
+        <a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fsegundo.com">Segundo</a>
+        <a class="result__snippet">Snippet só do segundo resultado.</a>
+      </div></div>
+    `;
+    const results = parseDdgHtml(html);
+    expect(results).toHaveLength(2);
+    // O 1.º NÃO tem snippet próprio → excerto vazio (não o do 2.º).
+    expect(results[0]!.title).toBe('Primeiro');
+    expect(results[0]!.excerpt).toBe('');
+    // O 2.º mantém o seu snippet.
+    expect(results[1]!.title).toBe('Segundo');
+    expect(results[1]!.excerpt).toBe('Snippet só do segundo resultado.');
+  });
+
+  // CR Major PR #72, finding 2 — allowlist de esquema partilhada. Um `uddg` que
+  // descodifica para `javascript:` é descartado (nunca vira link/sourceUrl).
+  it('descarta resultado cujo uddg descodifica para esquema perigoso (javascript:)', () => {
+    const html = `
+      <a class="result__a" href="//duckduckgo.com/l/?uddg=javascript%3Aalert(1)">Malicioso</a>
+      <a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fseguro.com">Seguro</a>
+    `;
+    const results = parseDdgHtml(html);
+    expect(results).toHaveLength(1);
+    expect(results[0]!.url).toBe('https://seguro.com/');
   });
 });
 

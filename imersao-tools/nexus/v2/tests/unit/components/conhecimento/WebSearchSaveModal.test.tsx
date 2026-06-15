@@ -150,4 +150,57 @@ describe('WebSearchSaveModal (Story 5.11 / AC5)', () => {
     );
     expect(screen.getByText(/Ainda não tens áreas/)).toBeInTheDocument();
   });
+
+  // Cobertura adicional exigida na re-abertura do gate de SAÍDA (CR Major PR #72,
+  // finding 5): Escape, backdrop click e validação de título vazio.
+  it('Escape fecha o modal (onClose)', () => {
+    const onClose = vi.fn();
+    render(
+      <WebSearchSaveModal
+        result={RESULT}
+        areas={AREAS}
+        notebooks={NOTEBOOKS}
+        onClose={onClose}
+        onSubmit={vi.fn()}
+      />,
+    );
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('click no backdrop fecha; click no conteúdo interno NÃO fecha (stopPropagation)', () => {
+    const onClose = vi.fn();
+    render(
+      <WebSearchSaveModal
+        result={RESULT}
+        areas={AREAS}
+        notebooks={NOTEBOOKS}
+        onClose={onClose}
+        onSubmit={vi.fn()}
+      />,
+    );
+    // Click no conteúdo interno (heading) não propaga para o backdrop.
+    fireEvent.click(screen.getByRole('heading', { name: 'Guardar como nota' }));
+    expect(onClose).not.toHaveBeenCalled();
+    // Click no backdrop (o overlay do dialog) fecha.
+    fireEvent.click(screen.getByRole('dialog'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('título vazio/só-espaços → erro PT-PT, onSubmit não chamado', () => {
+    const onSubmit = vi.fn();
+    render(
+      <WebSearchSaveModal
+        result={RESULT}
+        areas={AREAS}
+        notebooks={NOTEBOOKS}
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('Título da nota'), { target: { value: '   ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar nota' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('O título da nota é obrigatório.');
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });

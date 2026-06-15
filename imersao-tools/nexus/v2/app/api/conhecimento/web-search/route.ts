@@ -37,6 +37,49 @@ const MAX_QUERY_LENGTH = 500;
 const DDG_HTML_URL = 'https://html.duckduckgo.com/html/';
 const DDG_USER_AGENT = 'Mozilla/5.0 (compatible; NexusBot/1.0)';
 
+/**
+ * Hosts de confiança para o fetch interno Node→Edge ao proxy Anthropic
+ * (`[D-5.11-SSRF-FIX]`). A origin de destino do cookie de sessão NUNCA pode
+ * derivar do header `Host` (controlável pelo cliente → host-header SSRF +
+ * exfiltração de cookie). O destino é validado contra esta allowlist fixa.
+ */
+const TRUSTED_PROXY_HOSTS = new Set<string>([
+  'imersao.ia.expressia.pt', // produção (V4)
+  'localhost',
+  '127.0.0.1',
+]);
+
+/**
+ * Resolve a origin de confiança para o fetch interno ao proxy Anthropic.
+ * Devolve `null` quando não é possível determinar uma origin de confiança — nesse
+ * caso o caller SALTA o path Anthropic (que reenvia o cookie) e cai directo no
+ * DDG (que não usa cookie). É PROIBIDO fazer fail-open para `req.nextUrl.origin`
+ * sem validação — isso reabriria o SSRF (`[D-5.11-SSRF-FIX]` eixo c, c2).
+ *
+ * Preferência: `VERCEL_PROJECT_PRODUCTION_URL` (env Vercel built-in injectada em
+ * runtime, NÃO controlável pelo header Host) → `https://<host>`. Em falta, valida
+ * o host de `req.nextUrl.origin` contra a allowlist `TRUSTED_PROXY_HOSTS`; se o
+ * host não estiver na allowlist devolve `null` (fail-safe para DDG).
+ */
+function resolveTrustedProxyOrigin(req: NextRequest): string | null {
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (typeof vercelHost === 'string' && vercelHost.trim() !== '') {
+    return `https://${vercelHost.trim()}`;
+  }
+
+  // Sem env de produção confirmada: validar o host do request contra a allowlist.
+  // O host só é de confiança se ESTIVER na allowlist — caso contrário `null`
+  // (nunca reenviar cookie a um host derivado de header não-validado).
+  try {
+    const origin = req.nextUrl.origin;
+    const host = new URL(origin).hostname;
+    if (TRUSTED_PROXY_HOSTS.has(host)) return origin;
+  } catch {
+    // origin malformado → trata-se como não-confiável.
+  }
+  return null;
+}
+
 interface WebSearchRequestBody {
   query?: unknown;
 }
@@ -172,16 +215,23 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   // 3. Cascata Anthropic → DDG → 503.
-  const proxyUrl = new URL('/api/anthropic/proxy', req.nextUrl.origin).toString();
-  const cookie = req.headers.get('cookie');
+  // A origin de destino do cookie de sessão NUNCA deriva do header Host sem
+  // validação (`[D-5.11-SSRF-FIX]`). Se não houver origin de confiança, o path
+  // Anthropic é SALTADO (não se reenvia cookie) e cai-se directo no DDG — que
+  // faz fetch externo sem cookie, logo é seguro. Fail-safe, NUNCA fail-open.
+  const trustedOrigin = resolveTrustedProxyOrigin(req);
+  if (trustedOrigin !== null) {
+    const proxyUrl = new URL('/api/anthropic/proxy', trustedOrigin).toString();
+    const cookie = req.headers.get('cookie');
 
-  const anthropicResults = await tryAnthropic(query, proxyUrl, cookie);
-  if (anthropicResults) {
-    const success: WebSearchSuccessBody = {
-      results: anthropicResults,
-      source: 'anthropic',
-    };
-    return NextResponse.json(success, { status: 200 });
+    const anthropicResults = await tryAnthropic(query, proxyUrl, cookie);
+    if (anthropicResults) {
+      const success: WebSearchSuccessBody = {
+        results: anthropicResults,
+        source: 'anthropic',
+      };
+      return NextResponse.json(success, { status: 200 });
+    }
   }
 
   const ddgResults = await tryDuckDuckGo(query);

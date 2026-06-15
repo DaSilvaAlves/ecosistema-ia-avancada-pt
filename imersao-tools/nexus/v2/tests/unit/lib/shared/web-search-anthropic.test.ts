@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { parseAnthropicWebSearch } from '@/lib/shared/web-search-anthropic';
+import {
+  parseAnthropicWebSearch,
+  MAX_EXCERPT_LENGTH,
+} from '@/lib/shared/web-search-anthropic';
 
 /**
  * Nexus v2 — parseAnthropicWebSearch tests (Story 5.11 — AC2, AC6)
@@ -144,6 +147,81 @@ describe('parseAnthropicWebSearch (Story 5.11 / AC2, AC6)', () => {
     }
   });
 
+  // Truncagem do excerto (CR Major PR #72, finding 6): um `cited_text` com mais de
+  // MAX_EXCERPT_LENGTH chars é cortado e termina em `…`. Falharia se a truncagem
+  // não corresse.
+  it('trunca cited_text > MAX_EXCERPT_LENGTH com reticências', () => {
+    const longCitedText = 'palavra '.repeat(40).trim(); // > 150 chars
+    expect(longCitedText.length).toBeGreaterThan(MAX_EXCERPT_LENGTH);
+    const body = {
+      content: [
+        {
+          type: 'web_search_tool_result',
+          content: [
+            {
+              type: 'web_search_result',
+              url: 'https://longo.com',
+              title: 'Resultado longo',
+            },
+          ],
+        },
+        {
+          type: 'text',
+          text: '...',
+          citations: [{ url: 'https://longo.com/', cited_text: longCitedText }],
+        },
+      ],
+    };
+    const outcome = parseAnthropicWebSearch(body);
+    expect(outcome.kind).toBe('ok');
+    if (outcome.kind !== 'ok') throw new Error('esperado ok');
+    const excerpt = outcome.results[0]!.excerpt;
+    expect(excerpt.endsWith('…')).toBe(true);
+    expect(excerpt.length).toBeLessThanOrEqual(MAX_EXCERPT_LENGTH + 1); // +1 pelo '…'
+  });
+
+  // Allowlist de esquema (CR Major PR #72, finding 2): um `web_search_result` com
+  // URL `javascript:`/`data:` é descartado — nunca vira `sourceUrl` da nota.
+  it('descarta web_search_result com esquema perigoso (javascript:/data:)', () => {
+    const body = {
+      content: [
+        {
+          type: 'web_search_tool_result',
+          content: [
+            { type: 'web_search_result', url: 'javascript:alert(1)', title: 'XSS' },
+            { type: 'web_search_result', url: 'data:text/html,<script>', title: 'Data' },
+            { type: 'web_search_result', url: 'https://seguro.com', title: 'Seguro' },
+          ],
+        },
+      ],
+    };
+    const outcome = parseAnthropicWebSearch(body);
+    expect(outcome.kind).toBe('ok');
+    if (outcome.kind !== 'ok') throw new Error('esperado ok');
+    expect(outcome.results).toHaveLength(1);
+    expect(outcome.results[0]!.url).toBe('https://seguro.com/');
+  });
+
+  // `title` validado APÓS `trim`: um título só de espaços é vazio → descartado.
+  it('descarta web_search_result com title só de espaços (validado pós-trim)', () => {
+    const body = {
+      content: [
+        {
+          type: 'web_search_tool_result',
+          content: [
+            { type: 'web_search_result', url: 'https://a.com', title: '   ' },
+            { type: 'web_search_result', url: 'https://b.com', title: 'Válido' },
+          ],
+        },
+      ],
+    };
+    const outcome = parseAnthropicWebSearch(body);
+    expect(outcome.kind).toBe('ok');
+    if (outcome.kind !== 'ok') throw new Error('esperado ok');
+    expect(outcome.results).toHaveLength(1);
+    expect(outcome.results[0]!.url).toBe('https://b.com/');
+  });
+
   // Fidelidade de shape: se um `web_search_result` perdesse o campo `title` ou
   // `url`, é descartado (não produz resultado meio-vazio).
   it('descarta web_search_result sem url ou sem title', () => {
@@ -163,6 +241,6 @@ describe('parseAnthropicWebSearch (Story 5.11 / AC2, AC6)', () => {
     expect(outcome.kind).toBe('ok');
     if (outcome.kind !== 'ok') throw new Error('esperado ok');
     expect(outcome.results).toHaveLength(1);
-    expect(outcome.results[0]!.url).toBe('https://valido.com');
+    expect(outcome.results[0]!.url).toBe('https://valido.com/');
   });
 });
