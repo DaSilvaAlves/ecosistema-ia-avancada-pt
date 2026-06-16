@@ -8,8 +8,10 @@
 from_agent: "orquestrador /sdc 6.1 — sessão que implementou a Story 6.1 e fechou os Gates 3 e 4"
 to_agent: "any — próximo terminal: @devops via `/sdc 6.1 --push` (criar branch+commit, CR --base main, PR, auto-merge)"
 created: "2026-06-16T00:00:00Z"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-17T00:00:00Z"
+consumed_by: "@devops Gage via /sdc 6.1 --push (close-story @po)"
 project: nexus-v2
 next_action: "/sdc 6.1 --push  (fase devops: branch+commit, CodeRabbit --base main OBRIGATÓRIO, PR, auto-merge se 6 condições merge-authority verdes; depois Eurico provisiona credenciais Google P1/P2/P3 e verifica AC1/AC5 em produção)"
 ```
