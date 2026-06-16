@@ -94,6 +94,15 @@ export default defineConfig({
         // thresholds globais inalterados; sem alteração comportamental do test
         // runner.
         'lib/conhecimento/**',
+        // Story 6.1 — OAuth flow Google (Calendar scope). Precedente Stories
+        // 2.3/3.3/4.2/5.2/5.9/5.10 — adiciona paths à allowlist do report;
+        // thresholds globais inalterados; sem alteração comportamental do test
+        // runner. Cobre o wrapper OAuth2, o seam token-store, o state assinado, as
+        // routes start/callback/status e a UI de definições.
+        'lib/google/**',
+        'app/api/google/**',
+        'app/(app)/settings/**',
+        'components/settings/**',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold 60% (P1.1 — roadmap de conclusão, architecture §5.4).
