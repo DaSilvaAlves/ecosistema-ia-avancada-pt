@@ -8,8 +8,10 @@
 from_agent: "orquestrador /sdc 5.12 --push — sessão que fechou a Story 5.12"
 to_agent: "any — próximo terminal corre /sdc 5.13 --push (ÚLTIMA story do Epic 5)"
 created: "2026-06-15T21:50:00Z"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-16T00:00:00Z"
+consumed_by: "orquestrador /sdc 5.13 --push — ciclo completo SM→PO→Architect(entrada+saída)→DEV→DEVOPS; PR #74 merged squash 79626969; Story 5.13 Done; Epic 5 COMPLETO 13/13"
 project: nexus-v2
 next_action: "/sdc 5.13 --push"
 ```
