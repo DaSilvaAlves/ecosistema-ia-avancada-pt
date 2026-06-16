@@ -160,37 +160,50 @@ describe('consultar_projecto', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 describe('toolRegistry integration', () => {
-  it('T22 — 22 tools registadas após import do barrel (7 Epic 2 + 6 Epic 3 + 9 Epic 4)', () => {
+  it('T22 — 31 tools registadas após import do barrel (7 Epic 2 + 6 Epic 3 + 9 Epic 4 + 9 Epic 5)', () => {
     // Story 3.11: o barrel importa `./finance` (6 tools domínio 'finance').
     // Story 4.10: o barrel importa habits/goals/reminders (9 tools domínio
     // 'habits' — D-DOMAIN Opção A: metas/lembretes partilham o bucket 'habits').
-    expect(toolRegistry.all()).toHaveLength(22);
+    // Story 5.13: o barrel importa journal/knowledge (9 tools — D-5.13-DOMAIN
+    // Opção A: 4 'journal' incl. brain_dump + 5 'knowledge').
+    expect(toolRegistry.all()).toHaveLength(31);
     expect(toolRegistry.byDomain('tasks')).toHaveLength(7);
     expect(toolRegistry.byDomain('finance')).toHaveLength(6);
     expect(toolRegistry.byDomain('habits')).toHaveLength(9);
+    expect(toolRegistry.byDomain('journal')).toHaveLength(4);
+    expect(toolRegistry.byDomain('knowledge')).toHaveLength(5);
 
     const nomes = toolRegistry.all().map((t) => t.name).sort();
     expect(nomes).toEqual([
       'actualizar_meta',
+      'brain_dump',
       'cancelar_lembrete',
       'completar_tarefa',
       'consultar_balanco',
       'consultar_categoria',
+      'consultar_diario',
       'consultar_evolucao_habito',
       'consultar_metas',
       'consultar_projecto',
+      'criar_area',
+      'criar_caderno',
       'criar_cartao',
+      'criar_entrada_diario',
       'criar_financa_recorrente',
       'criar_financa_variavel',
       'criar_habito',
       'criar_lembrete',
       'criar_meta',
+      'criar_nota',
       'criar_parcelada',
       'criar_projecto',
       'criar_tarefa',
       'listar_atrasadas',
       'listar_lembretes',
       'listar_tarefas',
+      'pesquisar_conhecimento',
+      'pesquisar_diario',
+      'pesquisar_web_e_criar_nota',
       'registar_habito_concluido',
       'vincular_tarefa_projecto',
     ]);
