@@ -49,6 +49,22 @@ export class TokenExchangeError extends Error {
 }
 
 /**
+ * Erro tipado de revogação falhada por indisponibilidade do Google
+ * (transporte/5xx) — distinto de uma rejeição do token (400, idempotente).
+ * Story 6.2 [D-6.2-REVOKE-PARTIAL]: quando isto é lançado, o KV NÃO deve ser
+ * apagado (preserva a coerência — o token pode continuar activo no Google).
+ */
+export class TokenRevokeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TokenRevokeError';
+  }
+}
+
+/** Endpoint real de revogação Google OAuth2 (POST form-urlencoded `token=`). */
+const GOOGLE_REVOKE_ENDPOINT = 'https://oauth2.googleapis.com/revoke';
+
+/**
  * Instancia o `OAuth2Client` com as credenciais lidas via `getServerEnv()`
  * (validadas por Zod em `env.ts:19-21`). NÃO acede a `process.env` cru.
  *
@@ -158,14 +174,56 @@ export async function exchangeCode(code: string): Promise<GoogleTokens> {
 }
 
 /**
- * Stub de revogação — implementação completa na 6.2 (REC-6.1-ENCRYPT / GAP-6.2:
- * revogação + refresh flow). A 6.1 não expõe o flow de "Desligar" funcional; o
- * botão da UI fica preparado mas a revogação real é da 6.2.
+ * Revoga um token Google OAuth2 (Story 6.2, T3, AC3 — [D-6.2-REVOKE]).
  *
- * Lança para sinalizar claramente que não está implementado — nenhum caller da
- * 6.1 o invoca em produção.
+ * O fluxo canónico (`[D-6.2-REVOKE]=(A)`) revoga o `refreshToken` — invalida a
+ * autorização completa (todos os access tokens derivados). O caller passa o
+ * `refreshToken` desencriptado lido de KV.
+ *
+ * Protocolo real (contrato externo validado no draft da story):
+ *   `POST https://oauth2.googleapis.com/revoke`
+ *   Content-Type: application/x-www-form-urlencoded
+ *   body: `token=<refreshToken>`
+ *   → 200 OK (sem body) em sucesso; 400 se o token já é inválido/revogado.
+ *
+ * Usa o `fetch` global (que o MSW intercepta nos testes) — fidelidade de
+ * protocolo determinística, igual ao padrão de `createOAuth2Client`.
+ *
+ * Semântica de falha ([D-6.2-REVOKE-PARTIAL]=(A)) — o caller distingue dois ramos:
+ *   - **200 OK** → sucesso (resolve sem erro).
+ *   - **400** (token já inválido/revogado) → tratado como SUCESSO idempotente
+ *     (do ponto de vista do utilizador a autorização já não vale) — resolve sem
+ *     erro. A route (T4) prossegue para apagar o KV.
+ *   - **5xx / rede / timeout** (Google indisponível, não uma rejeição do token) →
+ *     lança `TokenRevokeError`. A route (T4) NÃO apaga o KV (preserva coerência).
+ *
+ * Segurança: o `token` NUNCA é logado (AC6/NFR11).
+ *
+ * @throws TokenRevokeError apenas em indisponibilidade do Google (transporte/5xx).
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function revokeToken(token: string): Promise<void> {
-  throw new Error('revokeToken: implementação completa na Story 6.2 (GAP-6.2).');
+  const body = new URLSearchParams({ token });
+
+  let res: Response;
+  try {
+    res = await fetch(GOOGLE_REVOKE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+  } catch (err) {
+    // Falha de transporte (rede/timeout) — não logar o token.
+    const message = err instanceof Error ? err.message : 'erro desconhecido';
+    throw new TokenRevokeError(`Falha de rede ao revogar o token Google: ${message}`);
+  }
+
+  // 200 OK → sucesso. 400 → token já inválido/revogado → idempotente (sucesso do
+  // ponto de vista do utilizador; a autorização já não vale). Ambos resolvem.
+  if (res.ok || res.status === 400) {
+    return;
+  }
+
+  // 5xx / 401 / 429 / outros → Google indisponível ou recusa não-idempotente →
+  // não sabemos o estado da autorização; sinaliza erro de transporte.
+  throw new TokenRevokeError(`Revogação recusada pelo Google (HTTP ${res.status}).`);
 }

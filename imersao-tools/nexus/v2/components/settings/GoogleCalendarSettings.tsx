@@ -3,27 +3,37 @@
 import { useCallback, useEffect, useState } from 'react';
 
 /**
- * Nexus v2 — Definições da ligação Google Calendar (Story 6.1, T4, AC4)
+ * Nexus v2 — Definições da ligação Google Calendar
+ * (Story 6.1, T4 + Story 6.2, T5, AC4)
  *
  * Máquina de estados de render (`react-component-test-criteria.md` → ≥3 estados →
  * teste de componente obrigatório):
- *   - `nao-ligado`  — botão "Ligar ao Google Calendar" activo; sem conta.
- *   - `a-autorizar` — durante a verificação de estado / redirect (spinner).
- *   - `ligado`      — calendário ligado (sem expor token); botão "Desligar"
- *                     (revogação real é da 6.2 — desactivado com nota).
- *   - `erro`        — mensagem PT-PT por tipo + CTA de retentar ([D-6.1-ERROR]).
+ *   Estados base (6.1):
+ *     - `nao-ligado`  — botão "Ligar ao Google Calendar" activo; sem conta.
+ *     - `a-autorizar` — durante a verificação de estado / redirect (spinner).
+ *     - `ligado`      — calendário ligado; botão "Desligar" funcional (6.2).
+ *     - `erro`        — mensagem PT-PT por tipo + CTA de retentar ([D-6.1-ERROR]).
+ *   Estados adicionados pela 6.2 (AC4):
+ *     - `a-revogar`        — loading durante a revogação ("Desligar").
+ *     - `revogado-externo` — o `refreshToken` foi revogado fora do Nexus
+ *                            (`invalid_grant`); requer NOVA autorização OAuth (CTA).
  *
- * As strings de erro PT-PT vivem AQUI, no componente — o handler só passa o tipo
- * via `?error=<tipo>` (condição [D-6.1-ERROR] 3). O componente lê o estado
- * `ligado` via `/api/google/oauth/status` (props `statusEndpoint`/`fetchImpl`
- * injectáveis para teste; sem injecção usa o fetch global e o endpoint real).
+ * Nota ([D-6.2-REFRESH], reconciliação R1): `expirado-renovável` é TRANSPARENTE —
+ * o refresh do accessToken é proactivo e automático no servidor
+ * (`getValidAccessToken`); o utilizador NÃO precisa de fazer nada e o estado
+ * apresentado continua `ligado`. Só `revogado-externo` (refreshToken inválido)
+ * exige acção do utilizador. O estado transitório existente chama-se `a-autorizar`.
+ *
+ * As strings de erro PT-PT vivem AQUI, no componente. O componente lê o estado
+ * `ligado` via `/api/google/oauth/status` e revoga via `POST /api/google/oauth/revoke`
+ * (props `*Endpoint`/`fetchImpl` injectáveis para teste).
  *
  * Design system (`design-system-ia-avancada.md`): fundo `#04040A`, glassmorphism,
  * Inter, Cyan `#00F5FF`, Lime `#39FF14`, Magenta `#FF006E`. `aria-live` nos
  * estados transitórios; botões com nomes acessíveis.
  *
- * Trace: AC4, AC6 (não expõe token), [D-6.1-ERROR]; padrão prop-driven +
- * fetch-injectável de `PushPermissionPrompt`/Story 5.11.
+ * Trace: AC4, AC6 (não expõe token); [D-6.1-ERROR]; [D-6.2-REVOKE];
+ * [D-6.2-REFRESH]; `internal-state-contract-gate.md` eixo a.
  */
 
 /** Tipos de erro fechados ([D-6.1-ERROR]) + fallback genérico. */
@@ -50,7 +60,21 @@ const ERROR_MESSAGES: Record<GoogleOAuthError, string> = {
 const GENERIC_ERROR =
   'Ocorreu um erro a ligar o Google Calendar. Tenta novamente.';
 
-type RenderState = 'nao-ligado' | 'a-autorizar' | 'ligado' | 'erro';
+/** Mensagem do estado `revogado-externo` (refreshToken inválido — requer re-auth). */
+const REVOKED_EXTERNAL_MESSAGE =
+  'A ligação ao Google deixou de ser válida (foi revogada ou expirou). Para continuar, autoriza novamente o acesso ao calendário.';
+
+/** Mensagem de falha da revogação (Google indisponível — KV preservado). */
+const REVOKE_FAILED_MESSAGE =
+  'Não foi possível desligar a ligação ao Google neste momento. Tenta novamente dentro de momentos.';
+
+type RenderState =
+  | 'nao-ligado'
+  | 'a-autorizar'
+  | 'ligado'
+  | 'a-revogar'
+  | 'revogado-externo'
+  | 'erro';
 
 export interface GoogleCalendarSettingsProps {
   /** Tipo de erro vindo do query param `?error=` (callback). `null` se ausente. */
@@ -59,6 +83,8 @@ export interface GoogleCalendarSettingsProps {
   statusEndpoint?: string;
   /** Endpoint de início do fluxo (redirect). Default: rota real. */
   startEndpoint?: string;
+  /** Endpoint de revogação ("Desligar"). Default: rota real. */
+  revokeEndpoint?: string;
   /** `fetch` injectável para teste. Default: `globalThis.fetch`. */
   fetchImpl?: typeof fetch;
   /**
@@ -66,6 +92,13 @@ export interface GoogleCalendarSettingsProps {
    * fornecido, o componente NÃO faz o fetch de estado.
    */
   initialConnected?: boolean;
+  /**
+   * Sinaliza que o `refreshToken` foi revogado externamente (`invalid_grant`):
+   * o componente arranca em `revogado-externo` com CTA de re-autorização.
+   * Derivado pela página (resultado de `getValidAccessToken`) — não é um estado
+   * persistido no componente.
+   */
+  initialRevokedExternal?: boolean;
 }
 
 const CARD_STYLE: React.CSSProperties = {
@@ -118,18 +151,24 @@ export function GoogleCalendarSettings({
   initialError = null,
   statusEndpoint = '/api/google/oauth/status',
   startEndpoint = '/api/google/oauth/start',
+  revokeEndpoint = '/api/google/oauth/revoke',
   fetchImpl,
   initialConnected,
+  initialRevokedExternal = false,
 }: GoogleCalendarSettingsProps): React.ReactElement {
   const hasInitialConnected = typeof initialConnected === 'boolean';
   const [connected, setConnected] = useState<boolean>(initialConnected ?? false);
-  // Se já temos o erro ou o estado de ligação, não há fetch pendente.
+  // Se já temos o erro, o estado de ligação ou a revogação externa, não há fetch.
   const [checking, setChecking] = useState<boolean>(
-    !initialError && !hasInitialConnected,
+    !initialError && !hasInitialConnected && !initialRevokedExternal,
   );
+  // Estado de revogação ("Desligar"): idle | revoking | failed (mantém-se ligado).
+  const [revoking, setRevoking] = useState<boolean>(false);
+  const [revokedExternal, setRevokedExternal] = useState<boolean>(initialRevokedExternal);
+  const [revokeFailed, setRevokeFailed] = useState<boolean>(false);
 
   useEffect(() => {
-    if (initialError || hasInitialConnected) return;
+    if (initialError || hasInitialConnected || initialRevokedExternal) return;
 
     let cancelled = false;
     const doFetch = fetchImpl ?? globalThis.fetch;
@@ -154,20 +193,49 @@ export function GoogleCalendarSettings({
     return () => {
       cancelled = true;
     };
-  }, [initialError, hasInitialConnected, statusEndpoint, fetchImpl]);
+  }, [initialError, hasInitialConnected, initialRevokedExternal, statusEndpoint, fetchImpl]);
 
   const handleConnect = useCallback(() => {
     // Navegação full-page para a route de início (que redirige ao Google).
     window.location.assign(startEndpoint);
   }, [startEndpoint]);
 
+  const handleRevoke = useCallback(async () => {
+    const doFetch = fetchImpl ?? globalThis.fetch;
+    setRevokeFailed(false);
+    setRevoking(true);
+    try {
+      const res = await doFetch(revokeEndpoint, {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+      if (res.ok) {
+        // Revogação completa → transição para `não-ligado`.
+        setConnected(false);
+        setRevokedExternal(false);
+      } else {
+        // Google indisponível ([D-6.2-REVOKE-PARTIAL]: KV preservado) → mantém
+        // `ligado` e mostra aviso de retentar.
+        setRevokeFailed(true);
+      }
+    } catch {
+      setRevokeFailed(true);
+    } finally {
+      setRevoking(false);
+    }
+  }, [revokeEndpoint, fetchImpl]);
+
   const state: RenderState = initialError
     ? 'erro'
-    : checking
-      ? 'a-autorizar'
-      : connected
-        ? 'ligado'
-        : 'nao-ligado';
+    : revoking
+      ? 'a-revogar'
+      : revokedExternal
+        ? 'revogado-externo'
+        : checking
+          ? 'a-autorizar'
+          : connected
+            ? 'ligado'
+            : 'nao-ligado';
 
   return (
     <section style={CARD_STYLE} aria-labelledby="google-calendar-heading">
@@ -194,6 +262,34 @@ export function GoogleCalendarSettings({
             Tentar novamente
           </button>
         </div>
+      )}
+
+      {state === 'revogado-externo' && (
+        <div role="alert" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p
+            style={{
+              margin: 0,
+              lineHeight: 1.8,
+              fontSize: '0.95rem',
+              color: '#FF006E',
+            }}
+          >
+            {REVOKED_EXTERNAL_MESSAGE}
+          </p>
+          <button type="button" style={PRIMARY_BUTTON_STYLE} onClick={handleConnect}>
+            Autorizar novamente
+          </button>
+        </div>
+      )}
+
+      {state === 'a-revogar' && (
+        <p
+          role="status"
+          aria-live="polite"
+          style={{ margin: 0, lineHeight: 1.8, fontSize: '0.95rem', color: '#8892A4' }}
+        >
+          A desligar a ligação ao Google Calendar…
+        </p>
       )}
 
       {state === 'a-autorizar' && (
@@ -225,11 +321,18 @@ export function GoogleCalendarSettings({
           >
             Calendário ligado
           </span>
+          {revokeFailed && (
+            <p
+              role="alert"
+              style={{ margin: 0, lineHeight: 1.8, fontSize: '0.9rem', color: '#FF006E' }}
+            >
+              {REVOKE_FAILED_MESSAGE}
+            </p>
+          )}
           <button
             type="button"
-            style={{ ...SECONDARY_BUTTON_STYLE, cursor: 'not-allowed', opacity: 0.5 }}
-            disabled
-            title="A revogação chega numa próxima atualização."
+            style={SECONDARY_BUTTON_STYLE}
+            onClick={handleRevoke}
           >
             Desligar
           </button>
