@@ -8,10 +8,18 @@
 from_agent: "@devops Gage — sessão que fechou a Story 6.1 (/sdc 6.1 --push: branch, CR --base main, PR #75, merge, close-story)"
 to_agent: "any — próximo terminal: orquestrador `/sdc 6.2` (SM→PO→Architect Gate Entrada→DEV→Architect Gate Saída→DEVOPS)"
 created: "2026-06-17T00:00:00Z"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-17T00:00:00Z"
+consumed_by: "Pax (@po) — close-story 6.2"
 project: nexus-v2
 next_action: "/sdc 6.2  (refresh token storage Vercel KV, FR60, GAP-6.2; gate @architect; Architect Gate de Entrada obrigatório por ser story de segurança de tokens). Acrescentar --push quando se quiser fechar até ao merge."
+
+# CONSUMIDO 17/06/2026 por Pax (@po). Ciclo /sdc 6.2 completo: SM draft → PO GO 9/10 →
+# Architect Gate Entrada PASS-COM-CONDIÇÕES (5 [D-6.2-*]) → DEV (vitest 1965/1965, +27) →
+# Architect Gate Saída PASS High (6/6 + 3 eixos internal-state-contract-gate) →
+# @devops CR --base main 0 actionable → PR #76 auto-merge squash 1621e8a6 → close-story
+# (Status Done, git mv completed/, EPIC-6 1/17→2/17, waiver 0). Story 6.2 DONE.
 ```
 
 ## Estado — sem trabalho uncommitted (migração segura para qualquer máquina)
