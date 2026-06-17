@@ -463,3 +463,25 @@ export const BrainDumpSchema = z.object({
 });
 
 export type BrainDumpStatus = z.infer<typeof BrainDumpStatusSchema>;
+
+// ─── CalendarEvent (Story 6.3 — FR59 PULL) ───
+//
+// Decisão @architect `[D-6.3-SCHEMA]`: evento sincronizado do Google Calendar.
+// `id` é UUID Nexus (crypto.randomUUID). `googleId` é o `items[].id` do Google
+// (não-vazio, índice ÚNICO p/ idempotência). `startAt`/`endAt`/`updatedAt` em
+// epoch ms (int, padrão `Reminder.fireAt` — `.positive()`, convenção única do
+// codebase: epoch 0 nunca é um timestamp legítimo). `title` aceita string vazia
+// (Google permite eventos sem `summary` → default ''). Não impomos `endAt >=
+// startAt` (all-day usa `end.date` exclusivo; eventos de fronteira não devem
+// falhar o upsert da reconciliação). Eventos confirmed sem `start`/`end` válido
+// (epoch 0) são malformados — o helper `reconcilePage` faz skip gracioso ANTES
+// do `parse`, pelo que `.positive()` nunca rejeita um evento legítimo aqui.
+export const CalendarEventSchema = z.object({
+  id: z.string().uuid('id deve ser UUID válido'),
+  googleId: z.string().min(1, 'googleId é obrigatório'),
+  title: z.string(),
+  startAt: z.number().int().positive('startAt deve ser epoch ms positivo'),
+  endAt: z.number().int().positive('endAt deve ser epoch ms positivo'),
+  allDay: z.boolean(),
+  updatedAt: z.number().int().positive('updatedAt deve ser epoch ms positivo'),
+});

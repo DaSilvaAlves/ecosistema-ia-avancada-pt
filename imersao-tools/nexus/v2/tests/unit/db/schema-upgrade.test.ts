@@ -110,10 +110,11 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
     oldDB.close();
 
     // 2. Reabrir como NexusDB completa — Dexie detecta upgrade aditivo desde v1.
-    //    Story 5.1: NexusDB está agora em version(5); o upgrade aplica v1→v2→v3→v4→v5.
+    //    Story 6.3: NexusDB está agora em version(6); o upgrade aplica
+    //    v1→v2→v3→v4→v5→v6 (calendarEvents).
     const newDB = new NexusDB();
     await newDB.open();
-    expect(newDB.verno).toBe(5);
+    expect(newDB.verno).toBe(6);
 
     // 3. Dados originais sobrevivem.
     expect(await newDB.tasks.count()).toBe(1);
@@ -128,6 +129,7 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
     expect(await newDB.recurrences.count()).toBe(0);
     expect(await newDB.tags.count()).toBe(0);
     expect(await newDB.financeRecurrences.count()).toBe(0);
+    expect(await newDB.calendarEvents.count()).toBe(0);
 
     newDB.close();
   });
@@ -174,15 +176,15 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
     newDB.close();
   });
 
-  it('NexusDB em base limpa abre directamente em version(5) com todas as 21 tabelas', async () => {
+  it('NexusDB em base limpa abre directamente em version(6) com todas as 22 tabelas', async () => {
     const db = new NexusDB();
     await db.open();
-    expect(db.verno).toBe(5);
+    expect(db.verno).toBe(6);
 
     // 13 de version(1) + 2 de version(2) + 4 de version(3) + 1 de version(4)
-    // + 1 de version(5) = 21 tabelas. Story 5.1 — asserção de contagem total: o
-    // título afirma "21 tabelas" e a verificação prova-o explicitamente.
-    expect(db.tables).toHaveLength(21);
+    // + 1 de version(5) + 1 de version(6) = 22 tabelas. Story 6.3 — asserção de
+    // contagem total: o título afirma "22 tabelas" e a verificação prova-o.
+    expect(db.tables).toHaveLength(22);
 
     // As 15 tabelas de version(2) (13 de version(1) + 2 de version(2)).
     expect(await db.tasks.count()).toBe(0);
@@ -212,6 +214,9 @@ describe('schema upgrade v1 → v2 (Story 2.1, AC13)', () => {
 
     // A tabela nova de version(5) — Story 5.1 (brain dumps).
     expect(await db.brain_dumps.count()).toBe(0);
+
+    // A tabela nova de version(6) — Story 6.3 (Google Calendar sync pull).
+    expect(await db.calendarEvents.count()).toBe(0);
 
     db.close();
   });
