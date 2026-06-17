@@ -265,3 +265,27 @@ export interface BrainDump {
   parsedOutput?: unknown; // 4 buckets AI (FR48); tipo exacto definido na Story 5.7
   status: 'pending' | 'parsed' | 'partially_approved' | 'fully_approved';
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Epic 6 — Google Calendar (sync pull)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Evento de calendário sincronizado do Google Calendar (Story 6.3 — FR59 PULL).
+ * Decisão @architect `[D-6.3-SCHEMA]`: tabela Dexie `version(6)` com índice ÚNICO
+ * `&googleId` para idempotência (re-sync do mesmo evento não cria duplicados).
+ *
+ * Campos temporais em `number` (epoch ms), padrão `Reminder.fireAt` — NÃO string.
+ * `startAt`/`endAt` derivam de `start.dateTime`/`end.dateTime` (com hora) ou de
+ * `start.date`/`end.date` (dia inteiro → `allDay: true`). `updatedAt` (de
+ * `items[].updated`) suporta a reconciliação última-escrita-vence.
+ */
+export interface CalendarEvent {
+  id: string; // PK Nexus (crypto.randomUUID — mesmo gerador dos repos existentes)
+  googleId: string; // items[].id — índice ÚNICO &googleId p/ idempotência
+  title: string; // items[].summary (default '' se vazio)
+  startAt: number; // epoch ms — de start.dateTime OU start.date (allDay)
+  endAt: number; // epoch ms — de end.dateTime OU end.date
+  allDay: boolean; // true quando o Google devolve start.date (sem dateTime)
+  updatedAt: number; // epoch ms de items[].updated (reconciliação)
+}

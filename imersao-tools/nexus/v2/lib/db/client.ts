@@ -21,6 +21,7 @@ import type {
   BrainDump,
   AgentRun,
   ChatMessage,
+  CalendarEvent,
 } from '@/types/db';
 
 /**
@@ -81,6 +82,7 @@ export class NexusDB extends Dexie {
   brain_dumps!: Table<BrainDump, string>;
   agent_runs!: Table<AgentRun, string>;
   chat_messages!: Table<ChatMessage, string>;
+  calendarEvents!: Table<CalendarEvent, string>;
 
   constructor() {
     super('nexus_v2');
@@ -158,6 +160,20 @@ export class NexusDB extends Dexie {
     // - status: índice para os filtros do approval flow (Story 5.8).
     this.version(5).stores({
       brain_dumps: 'id, createdAt, status',
+    });
+    // Story 6.3 — Epic 6 schema increment (Google Calendar sync pull, FR59).
+    // Decisão @architect `[D-6.3-SCHEMA]`: tabela `calendarEvents` para os eventos
+    // sincronizados do Google Calendar (direcção PULL). Aditivo: Dexie preserva as
+    // 21 tabelas de version(5) → 22. Única tabela nova desta story.
+    // - &googleId: índice ÚNICO (idempotência por googleId — re-sync do mesmo
+    //   evento faz upsert, nunca duplica; AC3). O delete de cancelados (AC4) e o
+    //   upsert resolvem o registo Nexus via este índice.
+    // - startAt/endAt: índices para queries da Story 6.6 (tool listar_eventos).
+    // - updatedAt: reconciliação última-escrita-vence (items[].updated).
+    // - [startAt+endAt]: índice composto para queries de range (eventos num
+    //   intervalo) que a 6.6 vai precisar.
+    this.version(6).stores({
+      calendarEvents: 'id, &googleId, startAt, endAt, updatedAt, [startAt+endAt]',
     });
   }
 }

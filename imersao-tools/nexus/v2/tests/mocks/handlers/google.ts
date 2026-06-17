@@ -25,6 +25,20 @@ import { http, HttpResponse } from 'msw';
 const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
 const GOOGLE_REVOKE_ENDPOINT = 'https://oauth2.googleapis.com/revoke';
 
+/**
+ * Endpoint real de `events.list` da Google Calendar API v3 (Story 6.3).
+ * O helper `lib/google/calendar.ts` chama este endpoint com `fetch` directo
+ * (mesmo padrão do refresh em `token-store.ts`) para o MSW o poder interceptar.
+ */
+const GOOGLE_CALENDAR_EVENTS_ENDPOINT =
+  'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+
+/**
+ * syncToken que o handler de `events.list` trata como expirado → HTTP 410 Gone
+ * (Story 6.3, AC5). Permite testar o caminho de full resync automático.
+ */
+export const EXPIRED_SYNC_TOKEN = 'expired-sync-token';
+
 /** Code que o handler trata como `invalid_grant` (replay/expirado) na troca de code. */
 export const INVALID_GRANT_CODE = 'invalid-grant-code';
 
@@ -138,5 +152,125 @@ export const googleHandlers = [
 
     // Sucesso: o Google devolve 200 OK sem body.
     return new HttpResponse(null, { status: 200 });
+  }),
+
+  // ---------------------------------------------------------------------------
+  // Endpoint de LISTAGEM DE EVENTOS (Story 6.3): GET
+  // /calendar/v3/calendars/primary/events. Reflecte o protocolo real da Google
+  // Calendar API v3 (`mock-protocol-fidelity.md`):
+  //   - resposta: `{ kind, items[], nextSyncToken }` (camelCase REAL do wire JSON
+  //     da Calendar API — distinto do snake_case do OAuth2 token endpoint);
+  //   - `items[].id` (ID único), `items[].status` ('confirmed' | 'cancelled'),
+  //     `items[].summary`, `items[].start`/`items[].end`
+  //     (`dateTime` ISO com hora OU `date` YYYY-MM-DD all-day), `items[].updated`;
+  //   - sync incremental (com `syncToken`): devolve apenas alterações + um item
+  //     `cancelled`;
+  //   - full resync (sem `syncToken`): paginação por `pageToken` → última página
+  //     traz `nextSyncToken`;
+  //   - `syncToken` expirado → HTTP 410 Gone com o body de erro real.
+  //
+  // Fidelidade falsificável CRÍTICA (AC7): a chave é `nextSyncToken` (camelCase).
+  // Se o helper esperar `next_sync_token` (snake_case errado), não persiste o
+  // cursor e o sync incremental nunca funciona — o teste de fidelidade falha.
+  // ---------------------------------------------------------------------------
+  http.get(GOOGLE_CALENDAR_EVENTS_ENDPOINT, ({ request }) => {
+    const url = new URL(request.url);
+    const syncToken = url.searchParams.get('syncToken');
+    const pageToken = url.searchParams.get('pageToken');
+
+    // syncToken expirado → 410 Gone (shape de erro real do Google).
+    if (syncToken === EXPIRED_SYNC_TOKEN) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 410,
+            message: 'Sync token is no longer valid, a full sync is required.',
+            errors: [
+              {
+                domain: 'calendar',
+                reason: 'fullSyncRequired',
+                message: 'Sync token is no longer valid, a full sync is required.',
+              },
+            ],
+          },
+        },
+        { status: 410 },
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Sync INCREMENTAL (com syncToken válido): devolve um evento confirmado
+    // (actualizado), um evento all-day, e um evento cancelado (para AC4).
+    // Última página → `nextSyncToken` presente, sem `nextPageToken`.
+    // -------------------------------------------------------------------------
+    if (syncToken) {
+      return HttpResponse.json({
+        kind: 'calendar#events',
+        summary: 'Eurico',
+        items: [
+          {
+            id: 'google_event_incremental_1',
+            status: 'confirmed',
+            summary: 'Reunião com Paulo (actualizada)',
+            start: { dateTime: '2026-06-20T15:00:00+01:00' },
+            end: { dateTime: '2026-06-20T16:00:00+01:00' },
+            updated: '2026-06-17T10:00:00.000Z',
+          },
+          {
+            id: 'google_event_allday_1',
+            status: 'confirmed',
+            summary: 'Feriado',
+            start: { date: '2026-06-25' },
+            end: { date: '2026-06-26' },
+            updated: '2026-06-17T11:00:00.000Z',
+          },
+          {
+            id: 'google_event_cancelled_1',
+            status: 'cancelled',
+          },
+        ],
+        nextSyncToken: 'sync-token-after-incremental',
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // FULL RESYNC (sem syncToken): paginação de 2 páginas.
+    //   - sem pageToken → página 1 com `nextPageToken`;
+    //   - pageToken='page-2-token' → página 2 final com `nextSyncToken`.
+    // -------------------------------------------------------------------------
+    if (pageToken === 'page-2-token') {
+      return HttpResponse.json({
+        kind: 'calendar#events',
+        summary: 'Eurico',
+        items: [
+          {
+            id: 'google_event_full_2',
+            status: 'confirmed',
+            summary: 'Almoço de equipa',
+            start: { dateTime: '2026-07-02T12:30:00+01:00' },
+            end: { dateTime: '2026-07-02T13:30:00+01:00' },
+            updated: '2026-06-17T09:00:00.000Z',
+          },
+        ],
+        nextSyncToken: 'sync-token-after-full-resync',
+      });
+    }
+
+    // Página 1 do full resync.
+    return HttpResponse.json({
+      kind: 'calendar#events',
+      summary: 'Eurico',
+      items: [
+        {
+          id: 'google_event_full_1',
+          status: 'confirmed',
+          summary: 'Consulta médica',
+          start: { dateTime: '2026-07-01T09:00:00+01:00' },
+          end: { dateTime: '2026-07-01T09:30:00+01:00' },
+          updated: '2026-06-16T08:00:00.000Z',
+        },
+      ],
+      nextPageToken: 'page-2-token',
+    });
   }),
 ];
