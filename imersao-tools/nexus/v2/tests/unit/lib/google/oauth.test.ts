@@ -9,7 +9,11 @@ import {
 } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../../mocks/server';
-import { INVALID_GRANT_CODE } from '../../../mocks/handlers/google';
+import {
+  INVALID_GRANT_CODE,
+  ALREADY_REVOKED_TOKEN,
+  REVOKE_SERVER_ERROR_TOKEN,
+} from '../../../mocks/handlers/google';
 
 /**
  * Story 6.1 — testes do wrapper OAuth2 `lib/google/oauth.ts` (T1, AC1/AC7).
@@ -25,7 +29,11 @@ import { INVALID_GRANT_CODE } from '../../../mocks/handlers/google';
  *   - exchangeCode: invalid_grant → TokenExchangeError (eixo c)
  *   - exchangeCode: resposta sem access_token → TokenExchangeError (eixo b/AC3)
  *   - fidelidade: resposta com camelCase → TokenExchangeError (mock-protocol-fidelity)
- *   - revokeToken: stub lança (6.2)
+ *
+ * Story 6.2 (T3, AC3, [D-6.2-REVOKE]/[D-6.2-REVOKE-PARTIAL]):
+ *   - revokeToken: 200 OK → resolve (sucesso)
+ *   - revokeToken: 400 (token já inválido) → resolve (idempotente)
+ *   - revokeToken: 5xx → TokenRevokeError (transporte/indisponibilidade)
  */
 
 vi.mock('@/lib/shared/env', () => ({
@@ -41,6 +49,7 @@ import {
   generateAuthUrl,
   revokeToken,
   TokenExchangeError,
+  TokenRevokeError,
   GOOGLE_CALENDAR_SCOPE,
 } from '@/lib/google/oauth';
 
@@ -124,8 +133,29 @@ describe('exchangeCode — FIDELIDADE de protocolo (mock-protocol-fidelity.md)',
   });
 });
 
-describe('revokeToken — stub 6.2', () => {
-  it('lança (implementação completa na 6.2)', async () => {
-    await expect(revokeToken('any')).rejects.toThrow();
+describe('revokeToken — implementação 6.2 ([D-6.2-REVOKE]/[D-6.2-REVOKE-PARTIAL])', () => {
+  it('200 OK → resolve (revogação bem-sucedida)', async () => {
+    await expect(revokeToken('1//refresh-valido')).resolves.toBeUndefined();
+  });
+
+  it('400 (token já inválido/revogado) → resolve idempotente (não lança)', async () => {
+    // [D-6.2-REVOKE-PARTIAL]: 400 = o token já não vale → sucesso do ponto de
+    // vista do utilizador. A route prossegue para apagar o KV.
+    await expect(revokeToken(ALREADY_REVOKED_TOKEN)).resolves.toBeUndefined();
+  });
+
+  it('5xx (Google indisponível) → TokenRevokeError (transporte, KV preservado)', async () => {
+    await expect(revokeToken(REVOKE_SERVER_ERROR_TOKEN)).rejects.toBeInstanceOf(
+      TokenRevokeError,
+    );
+  });
+
+  it('falha de rede (fetch lança) → TokenRevokeError', async () => {
+    server.use(
+      http.post('https://oauth2.googleapis.com/revoke', () => {
+        throw new Error('network down');
+      }),
+    );
+    await expect(revokeToken('1//qualquer')).rejects.toBeInstanceOf(TokenRevokeError);
   });
 });
