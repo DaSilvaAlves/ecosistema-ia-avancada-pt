@@ -115,6 +115,7 @@ export async function POST(req: Request): Promise<Response> {
     eventsProcessed: result.upserted + result.deleted,
     upserted: result.upserted,
     deleted: result.deleted,
+    skipped: result.skipped,
     fullResync: result.fullResync,
   });
 }

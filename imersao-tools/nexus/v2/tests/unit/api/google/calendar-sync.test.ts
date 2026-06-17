@@ -65,6 +65,7 @@ vi.mock('@/lib/google/token-store', async (importOriginal) => {
 let syncResult: SyncResult = {
   upserted: 2,
   deleted: 1,
+  skipped: 0,
   nextSyncToken: 'new-cursor',
   fullResync: false,
 };
@@ -95,7 +96,7 @@ beforeEach(() => {
   mockSessionValid = true;
   accessTokenResult = 'ya29.valid';
   accessTokenError = null;
-  syncResult = { upserted: 2, deleted: 1, nextSyncToken: 'new-cursor', fullResync: false };
+  syncResult = { upserted: 2, deleted: 1, skipped: 0, nextSyncToken: 'new-cursor', fullResync: false };
   syncError = null;
 });
 
@@ -138,6 +139,7 @@ describe('calendar/sync — sucesso + persistência do cursor (AC2)', () => {
       eventsProcessed: 3,
       upserted: 2,
       deleted: 1,
+      skipped: 0,
       fullResync: false,
     });
     // Cursor gravado na chave KV DEDICADA ([D-6.3-SYNC-TOKEN]).
@@ -160,6 +162,7 @@ describe('calendar/sync — full resync apaga cursor antigo antes de gravar (AC5
     syncResult = {
       upserted: 5,
       deleted: 0,
+      skipped: 0,
       nextSyncToken: 'cursor-pos-full-resync',
       fullResync: true,
     };

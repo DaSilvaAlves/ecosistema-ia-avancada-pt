@@ -115,6 +115,59 @@ describe('syncCalendarEvents — cancelado de googleId inexistente (AC4, eixo b)
   });
 });
 
+describe('syncCalendarEvents — evento confirmed malformado sem datas → skip gracioso (CR Iter 1)', () => {
+  it('confirmed SEM start/end (shape real do Google) é ignorado: não persistido, contabilizado em skipped, sem throw', async () => {
+    // Shape REAL: o Google pode devolver um confirmed sem `start`/`end` (evento
+    // mal-formado / cancelado por outro participante / sincronização parcial).
+    // ANTES do fix: `toEpochMs(undefined) → { ms: 0 }` → `put` silencioso com
+    // epoch 0. DEPOIS: `.positive()` no schema rejeitaria epoch 0 com ZodError,
+    // por isso `mapEvent` devolve null e o evento é skipped graciosamente.
+    server.use(
+      http.get(CALENDAR_EVENTS_ENDPOINT, () =>
+        HttpResponse.json({
+          kind: 'calendar#events',
+          items: [
+            {
+              id: 'malformed-no-dates',
+              status: 'confirmed',
+              summary: 'Evento sem datas',
+              // start/end AUSENTES — malformado.
+              updated: '2026-06-16T08:00:00.000Z',
+            },
+            {
+              id: 'valid-with-dates',
+              status: 'confirmed',
+              summary: 'Evento válido',
+              start: { dateTime: '2026-07-01T09:00:00Z' },
+              end: { dateTime: '2026-07-01T10:00:00Z' },
+              updated: '2026-06-16T08:00:00.000Z',
+            },
+          ],
+          nextSyncToken: 'tok-after-skip',
+        }),
+      ),
+    );
+
+    // NÃO lança (sem ZodError a propagar até à route como 500).
+    const result = await syncCalendarEvents('ya29.token', 'valid-sync-token');
+
+    // O malformado é skipped; o válido é upserted.
+    expect(result.skipped).toBe(1);
+    expect(result.upserted).toBe(1);
+    expect(result.deleted).toBe(0);
+    expect(result.nextSyncToken).toBe('tok-after-skip');
+
+    // SÓ o evento válido foi persistido — o malformado nunca tocou em Dexie.
+    expect(await db.calendarEvents.count()).toBe(1);
+    expect(
+      await db.calendarEvents.where('googleId').equals('malformed-no-dates').first(),
+    ).toBeUndefined();
+    expect(
+      await db.calendarEvents.where('googleId').equals('valid-with-dates').first(),
+    ).toBeDefined();
+  });
+});
+
 describe('syncCalendarEvents — full resync com paginação (AC1)', () => {
   it('sem syncToken → itera nextPageToken até nextSyncToken final', async () => {
     const result = await syncCalendarEvents('ya29.token', null);

@@ -69,6 +69,13 @@ export interface SyncResult {
   upserted: number;
   /** Eventos `cancelled` removidos de Dexie (inclui no-ops de googleId inexistente). */
   deleted: number;
+  /**
+   * Eventos malformados ignorados graciosamente (sem `id`, ou `confirmed` sem
+   * `start`/`end` válido → epoch 0). Não persistidos, contabilizados, sem throw
+   * (mesmo padrão de `recurrence.ts`/`v1-to-v2.ts`). Um evento de calendário sem
+   * datas não é um timestamp legítimo — epoch 0 nunca o é.
+   */
+  skipped: number;
   /** Cursor a persistir para o próximo sync. `null` se o Google não o devolveu. */
   nextSyncToken: string | null;
   /** `true` se este sync foi (ou degradou para) um full resync — a route apaga o cursor antigo antes de gravar o novo. */
@@ -112,8 +119,11 @@ class SyncTokenExpired extends Error {}
  * Converte `start`/`end` (dateTime OU date) para epoch ms + flag allDay.
  * - `dateTime` (ISO com hora) → `Date.parse`, `allDay: false`.
  * - `date` (YYYY-MM-DD, all-day) → meia-noite UTC desse dia, `allDay: true`.
- * - ausente → 0 (evento sem hora definida; defensivo, não deve ocorrer em
- *   eventos confirmed com singleEvents=true).
+ * - ausente OU não parseável → `ms: NaN` (sentinela de malformado; `mapEvent`
+ *   detecta e devolve `null` → o evento é ignorado graciosamente, ver
+ *   `reconcilePage`). NÃO devolvemos 0: epoch 0 (1970) é um timestamp legítimo
+ *   em teoria mas nunca para um evento real, e `CalendarEventSchema` exige
+ *   `.positive()` — um 0 lançaria `ZodError` não tratado.
  */
 function toEpochMs(dt: GoogleEventDateTime | undefined): { ms: number; allDay: boolean } {
   if (dt?.dateTime) {
@@ -123,18 +133,36 @@ function toEpochMs(dt: GoogleEventDateTime | undefined): { ms: number; allDay: b
     // `YYYY-MM-DD` interpretado como meia-noite UTC (estável, sem fuso local).
     return { ms: Date.parse(`${dt.date}T00:00:00.000Z`), allDay: true };
   }
-  return { ms: 0, allDay: false };
+  return { ms: NaN, allDay: false };
 }
 
 /**
- * Mapeia um `GoogleEvent` confirmado para o modelo `CalendarEvent` Nexus. O `id`
- * Nexus é determinístico-por-reconciliação: se o evento já existe (por `googleId`),
- * preserva-se o `id` Nexus existente; senão gera-se um novo UUID. Idempotência
- * (AC3): re-sync do mesmo evento actualiza, nunca duplica.
+ * Mapeia um `GoogleEvent` confirmado para o modelo `CalendarEvent` Nexus, ou
+ * `null` se o evento for malformado (sem `start`/`end` válido → epoch não
+ * positivo/NaN). O `id` Nexus é determinístico-por-reconciliação: se o evento já
+ * existe (por `googleId`), preserva-se o `id` Nexus existente; senão gera-se um
+ * novo UUID. Idempotência (AC3): re-sync do mesmo evento actualiza, nunca duplica.
+ *
+ * Devolver `null` em vez de persistir com epoch 0 garante que `.positive()` no
+ * `CalendarEventSchema` nunca lança `ZodError` na reconciliação — o evento
+ * malformado é contabilizado como `skipped` pelo caller, não como erro.
  */
-function mapEvent(event: GoogleEvent, existingId: string | undefined): CalendarEvent {
+function mapEvent(event: GoogleEvent, existingId: string | undefined): CalendarEvent | null {
   const start = toEpochMs(event.start);
   const end = toEpochMs(event.end);
+
+  // Um evento confirmed precisa de `start` e `end` válidos (epoch ms positivo).
+  // NaN (ausente/não parseável) ou ≤ 0 → malformado → skip gracioso.
+  if (!Number.isFinite(start.ms) || start.ms <= 0 || !Number.isFinite(end.ms) || end.ms <= 0) {
+    return null;
+  }
+
+  // `updated` ausente → agora (sempre positivo); presente mas não parseável → NaN.
+  const updatedAt = event.updated ? Date.parse(event.updated) : Date.now();
+  if (!Number.isFinite(updatedAt) || updatedAt <= 0) {
+    return null;
+  }
+
   return {
     id: existingId ?? crypto.randomUUID(),
     googleId: event.id,
@@ -143,7 +171,7 @@ function mapEvent(event: GoogleEvent, existingId: string | undefined): CalendarE
     // all-day: o Google usa `end.date` exclusivo; o flag vem do start (fonte de verdade).
     endAt: end.ms,
     allDay: start.allDay,
-    updatedAt: event.updated ? Date.parse(event.updated) : Date.now(),
+    updatedAt,
   };
 }
 
@@ -158,13 +186,18 @@ function mapEvent(event: GoogleEvent, existingId: string | undefined): CalendarE
  */
 async function reconcilePage(
   items: GoogleEvent[],
-): Promise<{ upserted: number; deleted: number }> {
+): Promise<{ upserted: number; deleted: number; skipped: number }> {
   let upserted = 0;
   let deleted = 0;
+  let skipped = 0;
 
   await db.transaction('rw', db.calendarEvents, async () => {
     for (const event of items) {
-      if (!event.id) continue; // defensivo — item sem id é ignorado.
+      if (!event.id) {
+        // Item sem id é malformado — ignorado graciosamente, contabilizado.
+        skipped++;
+        continue;
+      }
 
       if (event.status === 'cancelled') {
         // [D-6.3-CANCELLED]: apagar a linha por googleId. Delete de 0 linhas
@@ -181,13 +214,22 @@ async function reconcilePage(
         .equals(event.id)
         .first();
       const mapped = mapEvent(event, existing?.id);
+      if (mapped === null) {
+        // confirmed sem `start`/`end` válido (epoch 0/NaN) → malformado. Skip
+        // gracioso (mesmo padrão de `!event.id`): NÃO persiste, NÃO lança o
+        // `ZodError` que `.positive()` produziria com epoch 0, contabiliza.
+        skipped++;
+        continue;
+      }
+      // Defesa em profundidade: o schema valida o shape final antes do put. Com
+      // `mapEvent` a filtrar epoch não-positivo, este parse nunca falha por datas.
       CalendarEventSchema.parse(mapped);
       await db.calendarEvents.put(mapped);
       upserted++;
     }
   });
 
-  return { upserted, deleted };
+  return { upserted, deleted, skipped };
 }
 
 // ---------------------------------------------------------------------------
@@ -249,9 +291,10 @@ async function listEventsPage(
 async function runSync(
   accessToken: string,
   startSyncToken: string | null,
-): Promise<{ upserted: number; deleted: number; nextSyncToken: string | null }> {
+): Promise<{ upserted: number; deleted: number; skipped: number; nextSyncToken: string | null }> {
   let upserted = 0;
   let deleted = 0;
+  let skipped = 0;
   let pageToken: string | undefined;
   let nextSyncToken: string | null = null;
 
@@ -265,6 +308,7 @@ async function runSync(
     const result = await reconcilePage(page.items ?? []);
     upserted += result.upserted;
     deleted += result.deleted;
+    skipped += result.skipped;
 
     pageToken = page.nextPageToken;
     if (page.nextSyncToken) {
@@ -272,7 +316,7 @@ async function runSync(
     }
   } while (pageToken);
 
-  return { upserted, deleted, nextSyncToken };
+  return { upserted, deleted, skipped, nextSyncToken };
 }
 
 /**
@@ -300,6 +344,7 @@ export async function syncCalendarEvents(
     return {
       upserted: result.upserted,
       deleted: result.deleted,
+      skipped: result.skipped,
       nextSyncToken: result.nextSyncToken,
       fullResync,
     };
@@ -312,6 +357,7 @@ export async function syncCalendarEvents(
       return {
         upserted: result.upserted,
         deleted: result.deleted,
+        skipped: result.skipped,
         nextSyncToken: result.nextSyncToken,
         fullResync,
       };
