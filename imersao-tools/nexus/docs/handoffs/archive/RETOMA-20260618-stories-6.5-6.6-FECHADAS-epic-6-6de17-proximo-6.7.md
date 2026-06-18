@@ -8,8 +8,10 @@
 from_agent: "orquestrador /sdc (sessão 18/06/2026) — aterrou a 6.6 (implementada+PASS mas não commitada) e correu o ciclo /sdc completo da 6.5 (SM→PO→Architect Entrada→DEV→Architect Saída→DEVOPS push+merge+close)"
 to_agent: "any — próximo terminal: orquestrador `/sdc 6.7 --push` (OAuth Gmail scope, inicia sub-módulo Gmail) OU `/sdc 6.11 --push` (Telegram setup, paralelo independente)"
 created: "2026-06-18T00:00:00Z"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-18T23:10:00Z"
+consumed_by: "orquestrador /sdc 6.7 --push (sessão 18/06/2026)"
 project: nexus-v2
 next_action: "/sdc 6.7 --push   (OAuth incremental Google scope gmail.modify, FR63 — reutiliza o fluxo OAuth da 6.1/6.2 com scope adicional; executor @dev, gate @architect). Sub-módulo Calendar (6.1-6.6) está COMPLETO; o sub-módulo Gmail começa na 6.7. Alternativa paralelizável: /sdc 6.11 --push (Telegram bot setup, sub-módulo independente — atenção GAP-6.4: decisão de SDK Telegram + 2 criticals npm audit). Sem --push o pipeline pára antes do merge."
 ```
