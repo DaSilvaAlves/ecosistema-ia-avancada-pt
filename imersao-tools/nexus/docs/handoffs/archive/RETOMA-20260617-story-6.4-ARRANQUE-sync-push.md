@@ -8,8 +8,10 @@
 from_agent: "orquestrador /sdc 6.3 --push (SM→PO→Architect ratificação GAPs→DEV→QA→DEVOPS CR Iter1→merge→close)"
 to_agent: "any — próximo terminal: orquestrador `/sdc 6.4 --push` (SM→PO→Architect Gate Entrada→DEV→Architect Gate Saída→DEVOPS→PO close)"
 created: "2026-06-17T00:00:00Z"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-18T00:00:00Z"
+consumed_by: "Pax (@po) — close-story 6.4"
 project: nexus-v2
 next_action: "/sdc 6.4 --push   (sync calendário push Nexus → Google, completa o 2-way FR59; gate @architect; Architect Gate de Entrada OBRIGATÓRIO por estado distribuído criado/sincronizado/conflito — internal-state-contract-gate.md). Sem --push o pipeline pára antes do merge."
 ```
