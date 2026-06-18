@@ -160,21 +160,25 @@ describe('consultar_projecto', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 describe('toolRegistry integration', () => {
-  it('T22 — 31 tools registadas após import do barrel (7 Epic 2 + 6 Epic 3 + 9 Epic 4 + 9 Epic 5)', () => {
+  it('T22 — 34 tools registadas após import do barrel (7 Epic 2 + 6 Epic 3 + 9 Epic 4 + 9 Epic 5 + 3 Epic 6)', () => {
     // Story 3.11: o barrel importa `./finance` (6 tools domínio 'finance').
     // Story 4.10: o barrel importa habits/goals/reminders (9 tools domínio
     // 'habits' — D-DOMAIN Opção A: metas/lembretes partilham o bucket 'habits').
     // Story 5.13: o barrel importa journal/knowledge (9 tools — D-5.13-DOMAIN
     // Opção A: 4 'journal' incl. brain_dump + 5 'knowledge').
-    expect(toolRegistry.all()).toHaveLength(31);
+    // Story 6.6: o barrel importa `./calendar` (3 tools domínio 'calendar' —
+    // D-6.6-GAP65-DOMAIN standalone).
+    expect(toolRegistry.all()).toHaveLength(34);
     expect(toolRegistry.byDomain('tasks')).toHaveLength(7);
     expect(toolRegistry.byDomain('finance')).toHaveLength(6);
     expect(toolRegistry.byDomain('habits')).toHaveLength(9);
     expect(toolRegistry.byDomain('journal')).toHaveLength(4);
     expect(toolRegistry.byDomain('knowledge')).toHaveLength(5);
+    expect(toolRegistry.byDomain('calendar')).toHaveLength(3);
 
     const nomes = toolRegistry.all().map((t) => t.name).sort();
     expect(nomes).toEqual([
+      'actualizar_evento_calendar',
       'actualizar_meta',
       'brain_dump',
       'cancelar_lembrete',
@@ -189,6 +193,7 @@ describe('toolRegistry integration', () => {
       'criar_caderno',
       'criar_cartao',
       'criar_entrada_diario',
+      'criar_evento_calendar',
       'criar_financa_recorrente',
       'criar_financa_variavel',
       'criar_habito',
@@ -199,6 +204,7 @@ describe('toolRegistry integration', () => {
       'criar_projecto',
       'criar_tarefa',
       'listar_atrasadas',
+      'listar_eventos',
       'listar_lembretes',
       'listar_tarefas',
       'pesquisar_conhecimento',
