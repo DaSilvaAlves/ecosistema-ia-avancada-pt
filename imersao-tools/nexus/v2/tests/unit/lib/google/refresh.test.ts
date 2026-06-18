@@ -147,6 +147,41 @@ describe('getValidAccessToken — FALSIFICÁVEL: refreshToken nunca sobrescrito 
   });
 });
 
+describe('getValidAccessToken — Story 6.7: preservação de scopes no refresh (C2, REC-6.7-REFRESH-SCOPES)', () => {
+  const COMBINED_SCOPES =
+    'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.modify';
+
+  it('FALSIFICÁVEL: um refresh de um token Gmail PRESERVA o scopes (gmail.modify não regride para calendar-só)', async () => {
+    // O handler de refresh (`google.ts:138`) devolve `scope: '…/auth/calendar'`
+    // (calendar-só, protocolo real — o Google ecoa o scope concedido). Se o
+    // `getValidAccessToken` gravasse o `data.scope` da resposta em vez de
+    // PRESERVAR o `tokens.scopes` existente, o marcador `gmail.modify`
+    // desapareceria e o `/status` regrediria gmailConnected→false.
+    // Este teste falha se a preservação (`token-store.ts:410-411`) for removida.
+    await seed({ scopes: COMBINED_SCOPES });
+    await getValidAccessToken();
+    const persisted = await getTokens();
+    expect(persisted).not.toBeNull();
+    // accessToken renovado, refreshToken preservado (eixo b).
+    expect(persisted!.accessToken).toBe('ya29.refreshed-access-token');
+    expect(persisted!.refreshToken).toBe(ORIGINAL_REFRESH);
+    // CRÍTICO: scopes combinado preservado — gmail.modify NÃO foi perdido no refresh.
+    expect(persisted!.scopes).toBe(COMBINED_SCOPES);
+    expect(persisted!.scopes).toContain('gmail.modify');
+  });
+
+  it('registo 6.1 SEM scopes → refresh cai no fallback do data.scope da resposta', async () => {
+    // Sem `scopes` no registo (legado 6.1), o fallback usa o `data.scope` da
+    // resposta de refresh (calendar-só, `google.ts:138`) — comportamento honesto:
+    // o refresh não inventa gmail.modify se o registo nunca o teve.
+    await seed(); // sem scopes
+    await getValidAccessToken();
+    const persisted = await getTokens();
+    expect(persisted!.scopes).toBe('https://www.googleapis.com/auth/calendar');
+    expect(persisted!.scopes).not.toContain('gmail.modify');
+  });
+});
+
 describe('getValidAccessToken — caminhos de falha (eixo c)', () => {
   it('invalid_grant (revogado externamente) → apaga KV + lança TokenRevokedError', async () => {
     await seed({ refreshToken: INVALID_GRANT_REFRESH_TOKEN });
