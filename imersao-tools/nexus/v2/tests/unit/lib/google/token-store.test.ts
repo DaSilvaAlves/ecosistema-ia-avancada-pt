@@ -147,3 +147,56 @@ describe('deleteTokens', () => {
     expect(await getTokens()).toBeNull();
   });
 });
+
+describe('Story 6.7 — campo scopes aditivo (C2/C3)', () => {
+  const COMBINED: GoogleTokenRecord = {
+    accessToken: 'ya29.combined',
+    refreshToken: '1//combined-refresh',
+    expiresAt: 1717200000000,
+    scopes:
+      'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.modify',
+  };
+
+  it('round-trip preserva o campo scopes quando presente', async () => {
+    await saveTokens(COMBINED);
+    expect(await getTokens()).toEqual(COMBINED);
+  });
+
+  it('scopes é persistido EM CLARO (não-sensível, como expiresAt)', async () => {
+    await saveTokens(COMBINED);
+    const serialized = JSON.stringify(store.get(GOOGLE_TOKENS_KEY));
+    expect(serialized).toContain('gmail.modify');
+    // Os tokens continuam encriptados (não em claro).
+    expect(serialized).not.toContain('ya29.combined');
+    expect(serialized).not.toContain('1//combined-refresh');
+  });
+
+  it('registo 6.1 SEM scopes continua a ler-se (fallback retro-compatível)', async () => {
+    // SAMPLE não tem `scopes` — simula um registo 6.1 encriptado pela 6.2.
+    await saveTokens(SAMPLE);
+    const got = await getTokens();
+    expect(got).toEqual(SAMPLE);
+    expect(got?.scopes).toBeUndefined();
+  });
+
+  it('(C3) sobrescrever calendar-só por token combinado → refreshToken NÃO-VAZIO + scopes Gmail', async () => {
+    // Estado inicial: registo calendar-só da 6.1.
+    await saveTokens(SAMPLE);
+    // OAuth incremental Gmail SOBRESCREVE com o token combinado (novo refresh).
+    await saveTokens(COMBINED);
+    const got = await getTokens();
+    // Invariante C3: refreshToken não-vazio (o novo combinado), NÃO igual ao da 6.1.
+    expect(got?.refreshToken).toBe('1//combined-refresh');
+    expect(got?.refreshToken).not.toBe(SAMPLE.refreshToken);
+    expect((got?.refreshToken ?? '').length).toBeGreaterThan(0);
+    expect(got?.scopes).toContain('gmail.modify');
+  });
+
+  it('registo persistido com scopes de tipo errado → getTokens null (defesa anti-corrupção)', async () => {
+    await saveTokens(COMBINED);
+    const persisted = store.get(GOOGLE_TOKENS_KEY) as Record<string, unknown>;
+    persisted.scopes = 12345; // tipo errado
+    store.set(GOOGLE_TOKENS_KEY, persisted);
+    expect(await getTokens()).toBeNull();
+  });
+});

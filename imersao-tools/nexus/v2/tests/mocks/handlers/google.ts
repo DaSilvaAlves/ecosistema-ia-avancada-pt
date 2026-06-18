@@ -61,6 +61,31 @@ export const DELETED_GOOGLE_EVENT_ID = 'deleted-google-event-id';
 export const INVALID_GRANT_CODE = 'invalid-grant-code';
 
 /**
+ * Story 6.7 — code do fluxo OAuth INCREMENTAL Gmail. A resposta de troca reflecte
+ * o protocolo real Google (`mock-protocol-fidelity.md`): com `include_granted_scopes`
+ * + `prompt=consent`, o Google devolve um token COMBINADO que cobre `calendar` +
+ * `gmail.modify` no campo `scope` (espaço-separado) E um NOVO `refresh_token`
+ * (distinto do da 6.1 — `prompt=consent` força nova emissão). Fidelidade
+ * falsificável (AC5/AC7): o teste falha se este `scope` não incluir `gmail.modify`.
+ */
+export const GMAIL_INCREMENTAL_CODE = 'gmail-incremental-code';
+
+/** `scope` combinado devolvido no fluxo incremental Gmail (wire real, espaço-separado). */
+export const GMAIL_INCREMENTAL_SCOPE =
+  'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.modify';
+
+/** Refresh token NOVO emitido no 2.º consent (combinado) — distinto do da 6.1 (C3). */
+export const GMAIL_INCREMENTAL_REFRESH_TOKEN = '1//mock-combined-refresh-token';
+
+/**
+ * Story 6.7 — code do cenário em que o utilizador só concede `calendar` no consent
+ * Gmail (scope parcialmente concedido, eixo c). A resposta NÃO inclui `gmail.modify`
+ * no `scope` → o callback redirige `?connected=calendar` e o `/status` reporta
+ * `gmailConnected:false` (honesto — o scope não foi concedido).
+ */
+export const GMAIL_PARTIAL_GRANT_CODE = 'gmail-partial-grant-code';
+
+/**
  * Refresh token que o handler de refresh trata como `invalid_grant` (revogado
  * externamente). Permite testar o cenário `revogado-externo` do ciclo de vida.
  */
@@ -131,8 +156,39 @@ export const googleHandlers = [
       );
     }
 
-    // Cenário feliz da troca: shape REAL do wire (snake_case). Aqui SIM o Google
-    // devolve `refresh_token` (é a autorização inicial).
+    // -------------------------------------------------------------------------
+    // Story 6.7 — Cenário OAuth INCREMENTAL Gmail: o `scope` da resposta cobre
+    // `calendar` + `gmail.modify` (espaço-separado) e o `refresh_token` é NOVO
+    // (combinado — `prompt=consent` força nova emissão). Fidelidade falsificável:
+    // se este `scope` não incluir `gmail.modify`, o teste de fidelidade falha.
+    // -------------------------------------------------------------------------
+    if (code === GMAIL_INCREMENTAL_CODE) {
+      return HttpResponse.json({
+        access_token: 'ya29.mock-combined-access-token',
+        refresh_token: GMAIL_INCREMENTAL_REFRESH_TOKEN,
+        expires_in: 3599,
+        scope: GMAIL_INCREMENTAL_SCOPE,
+        token_type: 'Bearer',
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // Story 6.7 — Cenário de scope PARCIALMENTE concedido: o utilizador só aceitou
+    // `calendar` no consent Gmail. O `scope` NÃO inclui `gmail.modify` → o callback
+    // redirige `?connected=calendar` e `gmailConnected` fica false (eixo c).
+    // -------------------------------------------------------------------------
+    if (code === GMAIL_PARTIAL_GRANT_CODE) {
+      return HttpResponse.json({
+        access_token: 'ya29.mock-partial-access-token',
+        refresh_token: '1//mock-partial-refresh-token',
+        expires_in: 3599,
+        scope: 'https://www.googleapis.com/auth/calendar',
+        token_type: 'Bearer',
+      });
+    }
+
+    // Cenário feliz da troca (6.1 — Calendar): shape REAL do wire (snake_case).
+    // Aqui SIM o Google devolve `refresh_token` (é a autorização inicial).
     return HttpResponse.json({
       access_token: 'ya29.mock-access-token',
       refresh_token: '1//mock-refresh-token',

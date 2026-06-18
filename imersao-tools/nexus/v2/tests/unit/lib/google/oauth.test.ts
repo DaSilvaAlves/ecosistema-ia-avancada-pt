@@ -13,6 +13,8 @@ import {
   INVALID_GRANT_CODE,
   ALREADY_REVOKED_TOKEN,
   REVOKE_SERVER_ERROR_TOKEN,
+  GMAIL_INCREMENTAL_CODE,
+  GMAIL_INCREMENTAL_REFRESH_TOKEN,
 } from '../../../mocks/handlers/google';
 
 /**
@@ -47,10 +49,12 @@ vi.mock('@/lib/shared/env', () => ({
 import {
   exchangeCode,
   generateAuthUrl,
+  generateGmailAuthUrl,
   revokeToken,
   TokenExchangeError,
   TokenRevokeError,
   GOOGLE_CALENDAR_SCOPE,
+  GMAIL_MODIFY_SCOPE,
 } from '@/lib/google/oauth';
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
@@ -69,6 +73,30 @@ describe('generateAuthUrl', () => {
   });
 });
 
+describe('generateGmailAuthUrl — OAuth incremental (Story 6.7, C1, AC1)', () => {
+  it('inclui include_granted_scopes=true, scope gmail.modify, prompt=consent e access_type offline', () => {
+    const url = generateGmailAuthUrl('state-gmail');
+    const decoded = decodeURIComponent(url);
+    expect(url).toContain('accounts.google.com');
+    // C1 — teste falsificável: se `include_granted_scopes` faltar no URL, FALHA.
+    expect(url).toContain('include_granted_scopes=true');
+    expect(decoded).toContain(GMAIL_MODIFY_SCOPE);
+    expect(url).toContain('access_type=offline');
+    // prompt=consent garante o NOVO refresh_token combinado (C3).
+    expect(url).toContain('prompt=consent');
+    expect(url).toContain('state=state-gmail');
+  });
+
+  it('NÃO altera generateAuthUrl (Calendar-only continua sem include_granted_scopes)', () => {
+    // Prova de não-regressão: o caminho Calendar da 6.1 não ganha o parâmetro
+    // incremental nem o scope Gmail (assinatura/comportamento intocados).
+    const calendarUrl = generateAuthUrl('state-cal');
+    expect(calendarUrl).not.toContain('include_granted_scopes');
+    expect(decodeURIComponent(calendarUrl)).not.toContain(GMAIL_MODIFY_SCOPE);
+    expect(decodeURIComponent(calendarUrl)).toContain(GOOGLE_CALENDAR_SCOPE);
+  });
+});
+
 describe('exchangeCode — caminho feliz (shape real Google)', () => {
   it('troca o code e normaliza para GoogleTokens (camelCase) (AC2/AC7)', async () => {
     const tokens = await exchangeCode('valid-code');
@@ -78,6 +106,19 @@ describe('exchangeCode — caminho feliz (shape real Google)', () => {
     // expiry_date é derivado pelo googleapis a partir de expires_in → epoch ms futuro.
     expect(typeof tokens.expiresAt).toBe('number');
     expect(tokens.expiresAt).toBeGreaterThan(Date.now());
+    // Story 6.7 (C5): o `scope` da resposta é exposto (calendar-só na troca 6.1).
+    expect(tokens.scope).toBe(GOOGLE_CALENDAR_SCOPE);
+  });
+
+  it('(Story 6.7, C3/C5) troca incremental Gmail → scope combinado + refresh NOVO não-vazio', async () => {
+    const tokens = await exchangeCode(GMAIL_INCREMENTAL_CODE);
+
+    // C3 — o invariante é refreshToken NÃO-VAZIO (novo combinado), NÃO "igual ao da 6.1".
+    expect(tokens.refreshToken).toBe(GMAIL_INCREMENTAL_REFRESH_TOKEN);
+    expect(tokens.refreshToken.length).toBeGreaterThan(0);
+    // C5/AC7 — fidelidade falsificável: o scope combinado inclui gmail.modify.
+    expect(tokens.scope).toContain('gmail.modify');
+    expect(tokens.scope).toContain('calendar');
   });
 });
 
