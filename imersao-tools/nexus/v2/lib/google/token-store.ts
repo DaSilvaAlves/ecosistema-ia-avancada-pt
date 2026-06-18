@@ -58,6 +58,14 @@ export interface GoogleTokenRecord {
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
+  /**
+   * Scopes autorizados (string espaço-separada, wire real Google — Story 6.7,
+   * [D-6.7-STATUS]/C2). Campo ADITIVO opcional: registos da 6.1 (Calendar) não o
+   * têm → tratados como calendar-só pelo `/status` (fallback). Persistido EM CLARO
+   * (não-sensível, igual a `expiresAt`) — não precisa de desencriptar para derivar
+   * o estado `gmailConnected`/`calendarConnected`.
+   */
+  scopes?: string;
 }
 
 /** Chave KV singleton dos tokens Google (arch §6). */
@@ -98,11 +106,16 @@ interface EncryptedField {
   ct: string;
 }
 
-/** Forma exacta do registo persistido em KV após a 6.2. `expiresAt` em claro. */
+/**
+ * Forma exacta do registo persistido em KV após a 6.2. `expiresAt` em claro.
+ * Story 6.7 (C2): `scopes` ADITIVO em claro e OPCIONAL — registos 6.1 sem este
+ * campo continuam válidos (o type guard `isStoredRecord` não o exige).
+ */
 interface StoredTokenRecord {
   accessToken: EncryptedField;
   refreshToken: EncryptedField;
   expiresAt: number;
+  scopes?: string;
 }
 
 /**
@@ -165,10 +178,16 @@ function isEncryptedField(value: unknown): value is EncryptedField {
   );
 }
 
-/** Type guard do registo persistido (encriptado). */
+/**
+ * Type guard do registo persistido (encriptado). Story 6.7 (C2): `scopes` é
+ * OPCIONAL — aceita registos 6.1 SEM o campo (ausente) E registos 6.7 COM o campo
+ * (string). Só rejeita se `scopes` estiver presente mas com tipo errado (defesa
+ * contra dados corrompidos), nunca pela sua ausência.
+ */
 function isStoredRecord(value: unknown): value is StoredTokenRecord {
   if (typeof value !== 'object' || value === null) return false;
   const r = value as Record<string, unknown>;
+  if (r.scopes !== undefined && typeof r.scopes !== 'string') return false;
   return (
     isEncryptedField(r.accessToken) &&
     isEncryptedField(r.refreshToken) &&
@@ -193,6 +212,11 @@ export async function saveTokens(record: GoogleTokenRecord): Promise<void> {
     accessToken: encryptField(record.accessToken),
     refreshToken: encryptField(record.refreshToken),
     expiresAt: record.expiresAt,
+    // Story 6.7 (C2/C3): persiste os scopes em claro quando presentes. No fluxo
+    // incremental Gmail, `kv.set` é uma escrita ATÓMICA de objecto único — ou o
+    // registo novo combinado (com `scopes` incluindo gmail.modify e um refreshToken
+    // não-vazio) entra inteiro, ou fica o anterior; nunca um híbrido parcial.
+    ...(record.scopes !== undefined ? { scopes: record.scopes } : {}),
   };
   await kv.set(GOOGLE_TOKENS_KEY, stored);
 }
@@ -218,6 +242,9 @@ export async function getTokens(): Promise<GoogleTokenRecord | null> {
       accessToken: decryptField(raw.accessToken),
       refreshToken: decryptField(raw.refreshToken),
       expiresAt: raw.expiresAt,
+      // Story 6.7 (C2): devolve `scopes` se presente (registos 6.7); ausente para
+      // registos 6.1 (legado) → o caller trata como calendar-só.
+      ...(typeof raw.scopes === 'string' ? { scopes: raw.scopes } : {}),
     };
   } catch {
     // Desencriptação falhou (chave mudou / ciphertext corrompido). NÃO logar o
@@ -375,6 +402,16 @@ export async function getValidAccessToken(): Promise<string | null> {
     accessToken: data.access_token,
     refreshToken: tokens.refreshToken,
     expiresAt,
+    // Story 6.7 (C2): PRESERVA os `scopes` já autorizados. A resposta de refresh
+    // pode trazer `scope` (Google ecoa-o), mas a fonte de verdade é o registo
+    // existente — o refresh não altera os scopes concedidos. Sem isto, um refresh
+    // apagaria silenciosamente o marcador `gmail.modify` e o `/status` regrediria
+    // para calendar-só. Fallback para o `data.scope` se o registo não o tiver.
+    ...(tokens.scopes !== undefined
+      ? { scopes: tokens.scopes }
+      : typeof data.scope === 'string'
+        ? { scopes: data.scope }
+        : {}),
   });
 
   return data.access_token;

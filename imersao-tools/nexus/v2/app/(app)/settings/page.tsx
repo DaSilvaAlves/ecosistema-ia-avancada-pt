@@ -1,7 +1,8 @@
+import { GmailSettings } from '@/components/settings/GmailSettings';
 import { GoogleCalendarSettings } from '@/components/settings/GoogleCalendarSettings';
 
 /**
- * Nexus v2 — Página de definições /settings (Story 6.1, T4)
+ * Nexus v2 — Página de definições /settings (Story 6.1, T4 + Story 6.7, T4)
  *
  * Rota NOVA: a pasta `(app)/settings/` não existia (as 9 reais eram diario,
  * financas, habitos, knowledge, lembretes, metas, projectos, tags, tarefas). O
@@ -9,12 +10,20 @@ import { GoogleCalendarSettings } from '@/components/settings/GoogleCalendarSett
  * destino.
  *
  * Server component: lê o query param `?error=<tipo>` (vindo do callback OAuth,
- * [D-6.1-ERROR]) e `?connected=calendar` (sucesso) e passa o tipo de erro ao
- * componente client `GoogleCalendarSettings`. O componente apresenta a mensagem
- * PT-PT + CTA de retentar; as strings de erro vivem no componente, não aqui nem no
- * handler.
+ * [D-6.1-ERROR]) e `?connected=calendar|gmail` (sucesso) e passa o tipo de erro
+ * aos componentes client `GoogleCalendarSettings` e `GmailSettings` (Story 6.7).
+ * Os componentes apresentam a mensagem PT-PT + CTA de retentar; as strings de erro
+ * vivem nos componentes, não aqui nem no handler.
  *
- * Trace: AC1, AC4; [D-6.1-ERROR]; padrão de leitura de searchParams App Router.
+ * Story 6.7 (C5): o erro do callback aplica-se ao fluxo que falhou. Como o callback
+ * é único e o erro não distingue o scope, o tipo de erro é passado a ambos os
+ * cartões (o utilizador vê o aviso no cartão relevante e em ambos no caso de
+ * `access_denied`/`storage_failed`/`invalid_state` — aceitável: a autorização
+ * Google é partilhada). O `?connected=gmail|calendar` é o sinal de sucesso (lido
+ * pelos componentes via fetch de estado).
+ *
+ * Trace: AC1, AC3, AC4; [D-6.1-ERROR]; [D-6.7-UI-COMPONENT]; padrão de leitura de
+ * searchParams App Router.
  */
 
 interface SettingsPageProps {
@@ -64,6 +73,7 @@ export default async function SettingsPage({
           Integrações
         </h2>
         <GoogleCalendarSettings initialError={error} />
+        <GmailSettings initialError={error} />
       </section>
     </main>
   );

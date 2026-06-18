@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
-import { exchangeCode, TokenExchangeError } from '@/lib/google/oauth';
+import {
+  exchangeCode,
+  GMAIL_MODIFY_SCOPE_FRAGMENT,
+  TokenExchangeError,
+} from '@/lib/google/oauth';
 import { verifyAndConsumeState } from '@/lib/google/oauth-state';
 import { saveTokens } from '@/lib/google/token-store';
 
@@ -46,8 +50,17 @@ function redirectWithError(req: Request, error: OAuthErrorType): Response {
   });
 }
 
-function redirectConnected(req: Request): Response {
-  return NextResponse.redirect(new URL('/settings?connected=calendar', req.url), {
+/**
+ * Sinal de sucesso. Story 6.7 (C5, SF-2): deriva `?connected=gmail` quando o scope
+ * devolvido pelo Google inclui `gmail.modify` (fluxo incremental Gmail concluído);
+ * caso contrário `?connected=calendar` (fluxo Calendar da 6.1, comportamento
+ * INALTERADO). A fonte de verdade é o `scope` da resposta de token — o que o
+ * utilizador REALMENTE concedeu — NÃO o query param do `start` (que poderia
+ * divergir se o Google só concedesse calendar). Zero alteração ao `oauth-state.ts`.
+ */
+function redirectConnected(req: Request, scope: string | undefined): Response {
+  const target = scope?.includes(GMAIL_MODIFY_SCOPE_FRAGMENT) ? 'gmail' : 'calendar';
+  return NextResponse.redirect(new URL(`/settings?connected=${target}`, req.url), {
     status: 302,
   });
 }
@@ -105,6 +118,12 @@ export async function GET(req: Request): Promise<Response> {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
       expiresAt: tokens.expiresAt,
+      // Story 6.7 (C2/C3): persiste os scopes concedidos (espaço-separado). No
+      // fluxo incremental Gmail (`prompt=consent`), o Google emite um NOVO
+      // refresh_token combinado calendar+gmail → o registo é SOBRESCRITO com o
+      // token combinado (não "preservar o antigo"); o invariante é refreshToken
+      // não-vazio + scopes combinado. `kv.set` atómico → sem híbrido parcial.
+      ...(tokens.scope !== undefined ? { scopes: tokens.scope } : {}),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'erro desconhecido';
@@ -112,6 +131,8 @@ export async function GET(req: Request): Promise<Response> {
     return redirectWithError(req, 'storage_failed');
   }
 
-  // Sucesso — transição não-existente → válido completa.
-  return redirectConnected(req);
+  // Sucesso — transição não-existente → válido completa. O sinal `?connected=`
+  // deriva do scope concedido (C5): `gmail` se o token cobre `gmail.modify`,
+  // `calendar` caso contrário.
+  return redirectConnected(req, tokens.scope);
 }

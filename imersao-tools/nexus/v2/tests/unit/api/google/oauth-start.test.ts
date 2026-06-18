@@ -35,17 +35,24 @@ vi.mock('@/lib/google/oauth', () => ({
     (state: string) =>
       `https://accounts.google.com/o/oauth2/v2/auth?state=${state}&scope=calendar`,
   ),
+  generateGmailAuthUrl: vi.fn(
+    (state: string) =>
+      `https://accounts.google.com/o/oauth2/v2/auth?state=${state}&scope=gmail.modify&include_granted_scopes=true`,
+  ),
 }));
 
-import { generateAuthUrl } from '@/lib/google/oauth';
+import { generateAuthUrl, generateGmailAuthUrl } from '@/lib/google/oauth';
 
 const genMock = generateAuthUrl as unknown as ReturnType<typeof vi.fn>;
+const genGmailMock = generateGmailAuthUrl as unknown as ReturnType<typeof vi.fn>;
 
-async function call(withCookie = true): Promise<Response> {
+async function call(withCookie = true, scope?: string): Promise<Response> {
   const { GET } = await import('@/app/api/google/oauth/start/route');
   const headers = new Headers();
   if (withCookie) headers.set('Cookie', 'nexus_session=sess');
-  return GET(new Request('http://localhost:3001/api/google/oauth/start', { headers }));
+  const url = new URL('http://localhost:3001/api/google/oauth/start');
+  if (scope) url.searchParams.set('scope', scope);
+  return GET(new Request(url, { headers }));
 }
 
 beforeEach(() => {
@@ -71,6 +78,32 @@ describe('start — fluxo (AC1)', () => {
     expect(loc).toContain('accounts.google.com');
     expect(loc).toContain('state=nonce.signature');
     expect(genMock).toHaveBeenCalledWith('nonce.signature');
+  });
+
+  it('sem ?scope → fluxo Calendar (generateAuthUrl), NÃO Gmail', async () => {
+    await call();
+    expect(genMock).toHaveBeenCalledTimes(1);
+    expect(genGmailMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('start — fluxo incremental Gmail (Story 6.7, C1, AC1)', () => {
+  it('?scope=gmail → 302 para o consent Gmail (generateGmailAuthUrl), com include_granted_scopes', async () => {
+    const res = await call(true, 'gmail');
+    expect(res.status).toBe(302);
+    const loc = res.headers.get('Location') ?? '';
+    expect(loc).toContain('accounts.google.com');
+    expect(loc).toContain('include_granted_scopes=true');
+    expect(loc).toContain('scope=gmail.modify');
+    // C1 — chamou a função NOVA (não a Calendar).
+    expect(genGmailMock).toHaveBeenCalledWith('nonce.signature');
+    expect(genMock).not.toHaveBeenCalled();
+  });
+
+  it('?scope=qualquer-outro → cai no fluxo Calendar (default seguro)', async () => {
+    await call(true, 'desconhecido');
+    expect(genMock).toHaveBeenCalledTimes(1);
+    expect(genGmailMock).not.toHaveBeenCalled();
   });
 });
 

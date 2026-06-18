@@ -10,7 +10,12 @@ import {
 } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../../mocks/server';
-import { INVALID_GRANT_CODE } from '../../../mocks/handlers/google';
+import {
+  INVALID_GRANT_CODE,
+  GMAIL_INCREMENTAL_CODE,
+  GMAIL_INCREMENTAL_REFRESH_TOKEN,
+  GMAIL_PARTIAL_GRANT_CODE,
+} from '../../../mocks/handlers/google';
 
 /**
  * Story 6.1 — testes de integração do callback OAuth `GET /api/google/oauth/callback`
@@ -95,6 +100,34 @@ describe('callback — caminho feliz (AC2/AC3, eixo a)', () => {
   });
 });
 
+describe('callback — Story 6.7 sinal de sucesso por scope (C5, AC2, eixo b/c)', () => {
+  it('fluxo incremental Gmail → grava scopes combinado + redirige ?connected=gmail', async () => {
+    const res = await call({ code: GMAIL_INCREMENTAL_CODE, state: 'good.state' });
+
+    expect(res.status).toBe(302);
+    // C5 — sinal derivado do scope concedido (gmail.modify presente).
+    expect(locationOf(res)).toContain('/settings?connected=gmail');
+
+    // C3 — o registo gravado tem o refreshToken NOVO combinado (não-vazio) e os
+    // scopes incluem gmail.modify (sobrescreve, não preserva o antigo).
+    expect(saveMock).toHaveBeenCalledTimes(1);
+    const saved = saveMock.mock.calls[0][0];
+    expect(saved.refreshToken).toBe(GMAIL_INCREMENTAL_REFRESH_TOKEN);
+    expect(saved.refreshToken.length).toBeGreaterThan(0);
+    expect(saved.scopes).toContain('gmail.modify');
+  });
+
+  it('scope parcialmente concedido (só calendar no consent Gmail) → ?connected=calendar, gmail não marcado (eixo c)', async () => {
+    const res = await call({ code: GMAIL_PARTIAL_GRANT_CODE, state: 'good.state' });
+
+    expect(res.status).toBe(302);
+    // O scope concedido NÃO inclui gmail.modify → honesto: connected=calendar.
+    expect(locationOf(res)).toContain('/settings?connected=calendar');
+    const saved = saveMock.mock.calls[0][0];
+    expect(saved.scopes).not.toContain('gmail.modify');
+  });
+});
+
 describe('callback — AC6 (state inválido → 302 UI de erro, sem troca)', () => {
   it('state inválido → 302 para ?error=invalid_state e NÃO grava tokens', async () => {
     mockStateValid = false;
@@ -126,6 +159,14 @@ describe('callback — caminhos de falha (eixo c)', () => {
     // Short-circuit: NÃO consome o state válido (senão um retry falharia com
     // invalid_state) nem troca o code.
     expect(verifyMock).not.toHaveBeenCalled();
+    expect(saveMock).not.toHaveBeenCalled();
+  });
+
+  it('(Story 6.7, C4) access_denied no consent Gmail → NÃO chama saveTokens (token Calendar preservado)', async () => {
+    // Cenário: utilizador cancela o consent Gmail. O token Calendar existente em KV
+    // NÃO pode ser destruído — o callback NUNCA chega ao saveTokens (eixo c).
+    const res = await call({ error: 'access_denied', state: 'good.state' });
+    expect(locationOf(res)).toContain('error=access_denied');
     expect(saveMock).not.toHaveBeenCalled();
   });
 
