@@ -39,6 +39,24 @@ const GOOGLE_CALENDAR_EVENTS_ENDPOINT =
  */
 export const EXPIRED_SYNC_TOKEN = 'expired-sync-token';
 
+/**
+ * Story 6.4 — sentinelas de push (`events.insert`/`events.update`).
+ *
+ * O handler de insert/update reflecte o `summary` recebido no corpo para certos
+ * sentinelas dispararem caminhos de falha controlados:
+ *   - `PUSH_NOT_FOUND_SUMMARY` → o `PUT` (update) devolve 404 (evento apagado no
+ *     Google entre o read e o push, AC4 i);
+ *   - `PUSH_RATE_LIMIT_SUMMARY` → 429 com `Retry-After` (AC4 ii);
+ *   - `PUSH_SERVER_ERROR_SUMMARY` → 5xx (Google indisponível, AC4 iii).
+ * Qualquer outro `summary` segue o caminho feliz (201 insert / 200 update).
+ */
+export const PUSH_NOT_FOUND_SUMMARY = '__push_not_found__';
+export const PUSH_RATE_LIMIT_SUMMARY = '__push_rate_limit__';
+export const PUSH_SERVER_ERROR_SUMMARY = '__push_server_error__';
+
+/** googleId que o handler de `PUT` (update) trata como apagado no Google → 404. */
+export const DELETED_GOOGLE_EVENT_ID = 'deleted-google-event-id';
+
 /** Code que o handler trata como `invalid_grant` (replay/expirado) na troca de code. */
 export const INVALID_GRANT_CODE = 'invalid-grant-code';
 
@@ -271,6 +289,135 @@ export const googleHandlers = [
         },
       ],
       nextPageToken: 'page-2-token',
+    });
+  }),
+
+  // ---------------------------------------------------------------------------
+  // Endpoint de CRIAÇÃO DE EVENTO (Story 6.4): POST
+  // /calendar/v3/calendars/primary/events (`events.insert`). Reflecte o protocolo
+  // real da Google Calendar API v3 (`mock-protocol-fidelity.md`):
+  //   - corpo de pedido: `{ summary, start, end }` (start/end com `dateTime` OU
+  //     `date` all-day);
+  //   - resposta 201: `{ id, etag, status: 'confirmed', updated, summary, start,
+  //     end }` (camelCase REAL do wire JSON — `id` é o googleId a persistir).
+  //
+  // Fidelidade falsificável CRÍTICA (AC7): a chave do ID na resposta é `id`
+  // (camelCase, não `eventId`/`event_id`). Se o handler usar o nome errado, o
+  // helper `pushCalendarEvent` não extrai o `googleId` e a idempotência (AC2)
+  // falha — o teste de fidelidade falha.
+  // ---------------------------------------------------------------------------
+  http.post(GOOGLE_CALENDAR_EVENTS_ENDPOINT, async ({ request }) => {
+    const body = (await request.json()) as {
+      summary?: string;
+      start?: unknown;
+      end?: unknown;
+    };
+    const summary = body.summary ?? '';
+
+    // Sentinela de rate limit (429 com Retry-After — shape real do Google).
+    if (summary === PUSH_RATE_LIMIT_SUMMARY) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 429,
+            message: 'Rate Limit Exceeded',
+            errors: [
+              { domain: 'usageLimits', reason: 'rateLimitExceeded', message: 'Rate Limit Exceeded' },
+            ],
+          },
+        },
+        { status: 429, headers: { 'Retry-After': '60' } },
+      );
+    }
+
+    // Sentinela de 5xx (Google indisponível).
+    if (summary === PUSH_SERVER_ERROR_SUMMARY) {
+      return HttpResponse.json(
+        { error: { code: 500, message: 'Backend Error' } },
+        { status: 500 },
+      );
+    }
+
+    // Caminho feliz: 201 Created com o shape REAL (camelCase). Devolve o `start`/
+    // `end` recebidos no corpo (o Google ecoa-os) para o teste poder asserir o
+    // mapeamento epoch→ISO.
+    return HttpResponse.json(
+      {
+        id: 'google_event_inserted_1',
+        etag: '"insert-etag-3387"',
+        status: 'confirmed',
+        updated: '2026-06-17T12:00:00.000Z',
+        summary,
+        start: body.start,
+        end: body.end,
+      },
+      { status: 201 },
+    );
+  }),
+
+  // ---------------------------------------------------------------------------
+  // Endpoint de ACTUALIZAÇÃO DE EVENTO (Story 6.4): PUT
+  // /calendar/v3/calendars/primary/events/:eventId (`events.update`, full replace
+  // — [D-6.4-INSERT-OR-UPDATE]). Resposta análoga ao insert (200 OK).
+  //   - 404 se o evento foi apagado no Google entre o read e o `PUT` (AC4 i);
+  //   - mesmos sentinelas 429/5xx do insert (via summary).
+  // ---------------------------------------------------------------------------
+  http.put(`${GOOGLE_CALENDAR_EVENTS_ENDPOINT}/:eventId`, async ({ request, params }) => {
+    const eventId = params.eventId as string;
+    const body = (await request.json()) as {
+      summary?: string;
+      start?: unknown;
+      end?: unknown;
+    };
+    const summary = body.summary ?? '';
+
+    // Evento apagado no Google entre o read e o push → 404 (shape de erro real).
+    if (eventId === DELETED_GOOGLE_EVENT_ID || summary === PUSH_NOT_FOUND_SUMMARY) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 404,
+            message: 'Resource Not Found: events',
+            errors: [
+              { domain: 'global', reason: 'notFound', message: 'Resource Not Found: events' },
+            ],
+          },
+        },
+        { status: 404 },
+      );
+    }
+
+    if (summary === PUSH_RATE_LIMIT_SUMMARY) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 429,
+            message: 'Rate Limit Exceeded',
+            errors: [
+              { domain: 'usageLimits', reason: 'rateLimitExceeded', message: 'Rate Limit Exceeded' },
+            ],
+          },
+        },
+        { status: 429, headers: { 'Retry-After': '60' } },
+      );
+    }
+
+    if (summary === PUSH_SERVER_ERROR_SUMMARY) {
+      return HttpResponse.json(
+        { error: { code: 500, message: 'Backend Error' } },
+        { status: 500 },
+      );
+    }
+
+    // Caminho feliz: 200 OK, mesmo shape do insert; `id` ecoa o eventId do path.
+    return HttpResponse.json({
+      id: eventId,
+      etag: '"update-etag-9912"',
+      status: 'confirmed',
+      updated: '2026-06-17T13:30:00.000Z',
+      summary,
+      start: body.start,
+      end: body.end,
     });
   }),
 ];

@@ -478,7 +478,12 @@ export type BrainDumpStatus = z.infer<typeof BrainDumpStatusSchema>;
 // do `parse`, pelo que `.positive()` nunca rejeita um evento legítimo aqui.
 export const CalendarEventSchema = z.object({
   id: z.string().uuid('id deve ser UUID válido'),
-  googleId: z.string().min(1, 'googleId é obrigatório'),
+  // Story 6.4 (C2 / [D-6.4-SYNCSTATUS]): `googleId` é OPCIONAL — ausente para a
+  // classe "local-pendente" (evento criado no Nexus ainda não sincronizado).
+  // Quando presente, continua a exigir-se não-vazio (`.min(1)`). Esta relaxação é
+  // aditiva (não rejeita nenhum registo que o pull já valida) — SEM version bump
+  // Dexie. O `&googleId` mantém-se único e esparso.
+  googleId: z.string().min(1, 'googleId deve ser não-vazio quando presente').optional(),
   title: z.string(),
   startAt: z.number().int().positive('startAt deve ser epoch ms positivo'),
   endAt: z.number().int().positive('endAt deve ser epoch ms positivo'),

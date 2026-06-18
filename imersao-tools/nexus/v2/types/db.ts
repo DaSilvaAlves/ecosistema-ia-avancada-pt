@@ -282,7 +282,14 @@ export interface BrainDump {
  */
 export interface CalendarEvent {
   id: string; // PK Nexus (crypto.randomUUID — mesmo gerador dos repos existentes)
-  googleId: string; // items[].id — índice ÚNICO &googleId p/ idempotência
+  // Story 6.4 (C2 / [D-6.4-SYNCSTATUS]): `googleId` passa a OPCIONAL para
+  // representar a classe "local-pendente" — evento criado no Nexus ainda não
+  // sincronizado com o Google (ausente = local-pendente; presente = sincronizado).
+  // O índice `&googleId` mantém-se único e ESPARSO (Dexie não indexa registos
+  // sem a property → não colidem). Alteração aditiva-relaxante: SEM version bump
+  // (não toca `client.ts`). O produtor de eventos locais é a Story 6.6 (Draft);
+  // o pull (6.3, `calendar.ts:168`) continua a escrever sempre `googleId`.
+  googleId?: string; // items[].id — índice ÚNICO esparso &googleId p/ idempotência
   title: string; // items[].summary (default '' se vazio)
   startAt: number; // epoch ms — de start.dateTime OU start.date (allDay)
   endAt: number; // epoch ms — de end.dateTime OU end.date
