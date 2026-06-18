@@ -8,8 +8,10 @@
 from_agent: "Pax (@po) — close-story 6.4 (Review→Done, move active→completed, EPIC-6 3/17→4/17, consome handoff 6.4)"
 to_agent: "any — próximo terminal: orquestrador `/sdc 6.6` (SM draft→Architect Gate Entrada→PO validate→DEV→Architect Gate Saída→DEVOPS→PO close); alternativas paralelas 6.5 ou 6.11"
 created: "2026-06-18T00:00:00Z"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-18T00:00:00Z"
+consumed_by: "orquestrador /sdc (sessão 18/06/2026) — ciclo 6.6 completo: aterrada via PR #79 squash eead5486, close b2baf3da, Epic 6 5/17. Continuidade na Pending RETOMA-20260618-stories-6.5-6.6-FECHADAS-epic-6-6de17-proximo-6.7.md"
 project: nexus-v2
 next_action: "/sdc 6.6   (tools cérebro calendário: criar_evento_calendar/actualizar_evento_calendar/listar_eventos no Tool Registry, domínio calendar; FR61+FR62; é o PRODUTOR de eventos locais que dá vida à route push da 6.4, hoje idempotente-vazia). Gate @architect. Sem --push o pipeline pára antes do merge. Alternativas paralelizáveis: /sdc 6.5 (cron sync delta, executor @devops) ou /sdc 6.11 (Telegram setup, sub-módulo independente)."
 ```
