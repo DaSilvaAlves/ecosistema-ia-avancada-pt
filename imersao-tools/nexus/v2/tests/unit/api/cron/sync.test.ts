@@ -72,8 +72,8 @@ vi.mock('@/lib/google/calendar-push', async (importOriginal) => {
 // top-level comuns — `vi.hoisted` resolve isto criando-as antes do hoist.
 const { kvStore, pendentesRef, updateMock } = vi.hoisted(() => ({
   kvStore: new Map<string, unknown>(),
-  pendentesRef: { current: [] as Array<{ id: string; googleId?: string }> },
-  updateMock: vi.fn(async () => 1),
+  pendentesRef: { current: [] as Array<{ id: string; googleId?: string; updatedAt?: number }> },
+  updateMock: vi.fn(),
 }));
 
 // Cursor KV — Map real para provar persistência atómica do cursor sem @vercel/kv.
@@ -144,6 +144,17 @@ beforeEach(() => {
   accessTokenResult = 'ya29.valid';
   accessTokenError = null;
   pendentesRef.current = [];
+  // `updateMock` reflecte a persistência REAL do route: muta o evento pendente
+  // com o `googleId`/`updatedAt` recebidos. Assim o teste de idempotência depende
+  // da chamada real a `db.calendarEvents.update()` (não de injecção manual).
+  updateMock.mockImplementation(
+    async (id: string, changes: { googleId?: string; updatedAt?: number }) => {
+      const event = pendentesRef.current.find((e) => e.id === id);
+      if (!event) return 0;
+      Object.assign(event, changes);
+      return 1;
+    },
+  );
   // Defaults: pull e push "vazios" bem-sucedidos.
   pullMock.mockResolvedValue(pullOk());
   pushMock.mockResolvedValue({
@@ -161,6 +172,16 @@ afterEach(() => {
 describe('cron/sync — auth (AC2 i)', () => {
   it('503 quando CRON_SECRET ausente (fail-closed)', async () => {
     mockCronSecret = undefined;
+    const res = await callCron(`Bearer ${SECRET}`);
+    expect(res.status).toBe(503);
+    expect(tokenMock).not.toHaveBeenCalled();
+  });
+
+  it('503 quando getServerEnv lança na validação do ambiente (fail-closed)', async () => {
+    const { getServerEnv } = await import('@/lib/shared/env');
+    (getServerEnv as unknown as ReturnType<typeof vi.fn>).mockImplementationOnce(() => {
+      throw new Error('env inválido (Zod)');
+    });
     const res = await callCron(`Bearer ${SECRET}`);
     expect(res.status).toBe(503);
     expect(tokenMock).not.toHaveBeenCalled();
@@ -230,6 +251,28 @@ describe('cron/sync — pull OK + push OK (AC2/AC3)', () => {
     await callCron(`Bearer ${SECRET}`);
     expect(kvStore.get('nexus:google:calendar:syncToken')).toBe('cursor-novo');
   });
+
+  it('apaga o cursor antigo quando o pull termina sem nextSyncToken', async () => {
+    kvStore.set('nexus:google:calendar:syncToken', 'cursor-antigo');
+    pullMock.mockResolvedValue(pullOk({ nextSyncToken: null }));
+    await callCron(`Bearer ${SECRET}`);
+    expect(kvStore.has('nexus:google:calendar:syncToken')).toBe(false);
+  });
+
+  it('apaga o cursor antigo em fullResync (degradação 410)', async () => {
+    kvStore.set('nexus:google:calendar:syncToken', 'cursor-antigo');
+    pullMock.mockResolvedValue(pullOk({ fullResync: true, nextSyncToken: 'cursor-pos-resync' }));
+    await callCron(`Bearer ${SECRET}`);
+    // fullResync apaga o antigo e grava o novo (atómico só no fim).
+    expect(kvStore.get('nexus:google:calendar:syncToken')).toBe('cursor-pos-resync');
+  });
+
+  it('mantém o cursor antigo quando o pull falha antes da persistência final', async () => {
+    kvStore.set('nexus:google:calendar:syncToken', 'cursor-antigo');
+    pullMock.mockRejectedValue(new CalendarSyncError('Google 503'));
+    await callCron(`Bearer ${SECRET}`);
+    expect(kvStore.get('nexus:google:calendar:syncToken')).toBe('cursor-antigo');
+  });
 });
 
 describe('cron/sync — idempotência (AC3)', () => {
@@ -248,15 +291,19 @@ describe('cron/sync — idempotência (AC3)', () => {
   });
 
   it('dupla invocação imediata → segunda corrida produz zeros sem efeito colateral', async () => {
-    // 1.ª: um local-pendente é empurrado e ganha googleId (simulado removendo-o da lista).
+    // 1.ª: um local-pendente é empurrado e o route persiste o googleId via
+    // `db.calendarEvents.update()` — o `updateMock` (beforeEach) muta o evento.
     pendentesRef.current = [{ id: 'a' }];
     pushMock.mockResolvedValue({ googleId: 'g-a', etag: 'e', updatedAt: 1, inserted: true });
     const res1 = await callCron(`Bearer ${SECRET}`);
     const json1 = (await res1.json()) as { calendar: { push: { pushed: number } } };
     expect(json1.calendar.push.pushed).toBe(1);
 
-    // Simula que o evento passou a sincronizado (a route real persiste googleId).
-    pendentesRef.current = [{ id: 'a', googleId: 'g-a' }];
+    // A idempotência depende da persistência REAL: o route chamou update('a', …)
+    // e o evento ganhou `googleId` → sai do filtro `!googleId` na 2.ª corrida.
+    expect(updateMock).toHaveBeenCalledWith('a', { googleId: 'g-a', updatedAt: 1 });
+    expect(pendentesRef.current[0].googleId).toBe('g-a');
+
     const res2 = await callCron(`Bearer ${SECRET}`);
     const json2 = (await res2.json()) as { calendar: { push: { pushed: number; updated: number; failed: number } } };
     expect(json2.calendar.push).toEqual({ pushed: 0, updated: 0, failed: 0 });

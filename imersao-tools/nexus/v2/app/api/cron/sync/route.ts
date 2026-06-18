@@ -204,7 +204,20 @@ function hasError(outcome: PullOutcome | PushOutcome): outcome is { error: strin
 export async function POST(req: Request): Promise<Response> {
   // (AC2 i) Auth do cron — `CRON_SECRET` Bearer timing-safe, fail-closed sem secret
   // (padrão dispatch/route.ts:73-86). Lê via getServerEnv (não process.env directo).
-  const cronSecret = getServerEnv().CRON_SECRET;
+  // `getServerEnv()` pode LANÇAR na validação Zod do env em produção (env inválido);
+  // o try/catch garante que tanto config ausente (`!cronSecret`) como config inválida
+  // (throw) terminam IDENTICAMENTE no mesmo 503 fail-closed, fora do try principal.
+  let cronSecret: string | undefined;
+  try {
+    cronSecret = getServerEnv().CRON_SECRET;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'erro desconhecido';
+    console.error('[cron/sync] configuração de ambiente inválida:', message);
+    return NextResponse.json(
+      { error: 'Serviço de sync indisponível.' },
+      { status: 503 },
+    );
+  }
   if (!cronSecret) {
     console.error('[cron/sync] CRON_SECRET ausente na configuração');
     return NextResponse.json(
