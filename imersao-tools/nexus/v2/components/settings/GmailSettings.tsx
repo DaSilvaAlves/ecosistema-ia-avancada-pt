@@ -123,7 +123,10 @@ const SECONDARY_BUTTON_STYLE: React.CSSProperties = {
 };
 
 function resolveErrorMessage(error: string): string {
-  if (error in ERROR_MESSAGES) {
+  // `hasOwnProperty.call` (não `in`): evita que chaves do prototype (ex.: `toString`,
+  // `constructor`) num `?error=` manipulado devolvam um valor não-mensagem e partam
+  // a vista de erro. Só códigos próprios mapeiam; o resto cai no genérico.
+  if (Object.prototype.hasOwnProperty.call(ERROR_MESSAGES, error)) {
     return ERROR_MESSAGES[error as GmailOAuthError];
   }
   return GENERIC_ERROR;
