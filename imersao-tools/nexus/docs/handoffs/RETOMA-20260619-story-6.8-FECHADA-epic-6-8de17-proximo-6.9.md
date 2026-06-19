@@ -19,8 +19,10 @@ next_action: "@sm *draft 6.9 (vista Gmail no dashboard — consome os buckets cl
 ```bash
 cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt"
 git checkout main && git pull --ff-only origin main
-git rev-parse --short HEAD   # esperado: o commit de fecho docs-only da 6.8 (ver abaixo), main sincronizado 0/0
+git rev-parse --short HEAD   # esperado: 15b11fa9 (close-story 6.8 docs-only) ou posterior; main sincronizado 0/0
 ```
+
+**SHAs de referência da 6.8:** PR #82 squash em `main` = `010f1db4` (código da feature); commit de fecho docs-only @po = `15b11fa9` (story→`completed/`, EPIC-6 8/17, bookkeeping handoffs). Working tree limpa na app (`imersao-tools/nexus/v2/`) — restam apenas untracked fora-scope pré-existentes (PR-BODY-*.md, submódulos), que NÃO se committam.
 
 ## Resumo (1 parágrafo)
 
