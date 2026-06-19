@@ -576,6 +576,13 @@ export const googleHandlers = [
       );
     }
 
+    if (auth.includes(GMAIL_SERVER_ERROR_ACCESS_TOKEN)) {
+      return HttpResponse.json(
+        { error: { code: 500, message: 'Backend Error' } },
+        { status: 500 },
+      );
+    }
+
     // Assuntos/remetentes coerentes com o bucket que o nome do id sugere — o
     // handler Anthropic usa o `subject` para classificar de forma determinística.
     const subjectByIdFragment: Record<string, { subject: string; from: string }> = {
