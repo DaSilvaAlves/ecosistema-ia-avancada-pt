@@ -210,6 +210,41 @@ describe('listar_emails_importantes (AC2)', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
+// Falha de transporte (ctx.fetch rejeita) — C3 (nunca erro cru)
+// ═══════════════════════════════════════════════════════════════════
+
+describe('gmail tools — falha de transporte do ctx.fetch (C3)', () => {
+  /** ctx cujo fetch REJEITA (rede caiu / abort) em vez de devolver uma Response. */
+  function ctxRejecting(): ExecutionContext {
+    const fakeFetch = vi.fn(async () => {
+      throw new TypeError('Failed to fetch');
+    }) as unknown as typeof fetch;
+    return { ...baseCtx, db: undefined as never, fetch: fakeFetch };
+  }
+
+  it('listar_emails_importantes: fetch rejeita → erro PT-PT de ligação (não erro cru)', async () => {
+    await expect(
+      tool('listar_emails_importantes').execute({}, ctxRejecting()),
+    ).rejects.toThrow(/falha de ligação/);
+  });
+
+  it('criar_draft_gmail: fetch rejeita → erro PT-PT de ligação', async () => {
+    await expect(
+      tool('criar_draft_gmail').execute(
+        { to: 'a@x.pt', subject: 'S', body: 'b' },
+        ctxRejecting(),
+      ),
+    ).rejects.toThrow(/falha de ligação/);
+  });
+
+  it('arquivar_email: fetch rejeita → erro PT-PT de ligação', async () => {
+    await expect(
+      tool('arquivar_email').execute({ msgId: 'm1' }, ctxRejecting()),
+    ).rejects.toThrow(/falha de ligação/);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
 // criar_draft_gmail (AC3)
 // ═══════════════════════════════════════════════════════════════════
 
