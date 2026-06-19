@@ -554,9 +554,10 @@ describe('registo no toolRegistry', () => {
     // Story 4.10: o barrel passou a importar habits/goals/reminders (9 tools
     // domínio 'habits' — D-DOMAIN Opção A). Story 5.13: + journal/knowledge (9
     // tools — D-5.13-DOMAIN Opção A). Story 6.6: + calendar (3 tools —
-    // D-6.6-GAP65-DOMAIN standalone). Finanças permanece 6.
+    // D-6.6-GAP65-DOMAIN standalone). Story 6.10: + gmail (3 tools —
+    // D-6.10-GAP-DOMAIN standalone). Finanças permanece 6.
     expect(toolRegistry.byDomain('finance')).toHaveLength(6);
-    expect(toolRegistry.all().length).toBe(34);
+    expect(toolRegistry.all().length).toBe(37);
   });
 
   it('T20 — toAnthropicTools não lança para as 6 tools de finanças', () => {

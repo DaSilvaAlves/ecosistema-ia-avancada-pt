@@ -42,6 +42,14 @@ const GMAIL_MESSAGES_ENDPOINT =
   'https://www.googleapis.com/gmail/v1/users/me/messages';
 
 /**
+ * Endpoint real de `users.drafts.create` da Gmail API v1 (Story 6.10). A route
+ * server-side `POST /api/google/gmail/draft` chama-o com `fetch` directo (mesmo
+ * padrão de `inbox/route.ts`) para o MSW o poder interceptar.
+ */
+const GMAIL_DRAFTS_ENDPOINT =
+  'https://www.googleapis.com/gmail/v1/users/me/drafts';
+
+/**
  * Story 6.8 — access token que o handler Gmail trata como revogado → 401
  * `invalid_grant`. Permite testar `GmailAuthError` (eixo c). Distinto de um token
  * de caminho-feliz.
@@ -104,6 +112,25 @@ export const GMAIL_INBOX_MOCK_EMAILS = [
     classifiedAt: 1_750_000_000_001,
   },
 ] as const;
+
+/**
+ * Story 6.10 — `to` que o handler de `drafts.create` trata como rejeitado pela
+ * Gmail API (400 `invalidArgument`). Permite testar a propagação de erro 4xx da
+ * Gmail API que passou o `z.string().email()` local mas o Google rejeita (eixo c).
+ */
+export const GMAIL_DRAFT_BAD_REQUEST_TO = 'rejeitado-pelo-google@exemplo.pt';
+
+/**
+ * Story 6.10 — `msgId` que o handler de `messages.modify` trata como inexistente
+ * (404). Permite testar `GmailMessageNotFoundError` (eixo b — email eliminado).
+ */
+export const GMAIL_ARCHIVE_NOT_FOUND_MSG_ID = 'gmail-msg-nao-existe';
+
+/**
+ * Story 6.10 — `msgId` que o handler de `messages.modify` trata como 5xx (Gmail
+ * indisponível). Permite testar a propagação 503 (eixo c, nunca 200 { ok:false }).
+ */
+export const GMAIL_ARCHIVE_SERVER_ERROR_MSG_ID = 'gmail-msg-5xx';
 
 /**
  * syncToken que o handler de `events.list` trata como expirado → HTTP 410 Gone
@@ -669,5 +696,129 @@ export const googleHandlers = [
       return HttpResponse.json({ emails: [] });
     }
     return HttpResponse.json({ emails: GMAIL_INBOX_MOCK_EMAILS });
+  }),
+
+  // ---------------------------------------------------------------------------
+  // GMAIL — CRIAR DRAFT (Story 6.10): POST /gmail/v1/users/me/drafts
+  // (`users.drafts.create`). Reflecte o protocolo real da Gmail API v1
+  // (`mock-protocol-fidelity.md`):
+  //   - corpo de pedido: `{ message: { raw: base64urlEncodedMIME } }`;
+  //   - resposta 200: `{ id, message: { id, threadId } }` (o `id` do topo é o
+  //     `draftId`; `message.id` é o id da mensagem-rascunho).
+  //
+  // O handler descodifica o `raw` (base64url → utf-8) para o teste poder asserir
+  // que o `Subject` foi codificado em RFC 2047 (`=?utf-8?B?...?=`) quando tem
+  // acentos (C4) — fidelidade falsificável: um `Subject:` cru com acentos no MIME
+  // faria o teste de RFC 2047 falhar.
+  //
+  // Caminho de falha (eixo c): se o `To:` do MIME contém o sentinela
+  // GMAIL_DRAFT_BAD_REQUEST_TO → 400 `invalidArgument` (a Gmail rejeita um
+  // endereço que passou o Zod local).
+  //
+  // Fidelidade falsificável CRÍTICA: a chave do draftId é `id` no topo (não
+  // `draftId`). Se a route esperar `draftId`, não extrai o id e o teste falha.
+  // ---------------------------------------------------------------------------
+  http.post(GMAIL_DRAFTS_ENDPOINT, async ({ request }) => {
+    const auth = request.headers.get('authorization') ?? '';
+
+    if (auth.includes(GMAIL_REVOKED_ACCESS_TOKEN)) {
+      return HttpResponse.json(
+        { error: { code: 401, message: 'Invalid Credentials' } },
+        { status: 401 },
+      );
+    }
+    if (auth.includes(GMAIL_SERVER_ERROR_ACCESS_TOKEN)) {
+      return HttpResponse.json(
+        { error: { code: 500, message: 'Backend Error' } },
+        { status: 500 },
+      );
+    }
+
+    const body = (await request.json()) as {
+      message?: { raw?: string };
+    };
+    const raw = body.message?.raw ?? '';
+    // Descodifica base64url → utf-8 para inspeccionar o MIME (To/Subject).
+    const mime = Buffer.from(
+      raw.replace(/-/g, '+').replace(/_/g, '/'),
+      'base64',
+    ).toString('utf-8');
+    const toLine = mime
+      .split('\r\n')
+      .find((l) => l.toLowerCase().startsWith('to:'));
+
+    if (toLine && toLine.includes(GMAIL_DRAFT_BAD_REQUEST_TO)) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 400,
+            message: 'Invalid to header',
+            errors: [
+              { domain: 'global', reason: 'invalidArgument', message: 'Invalid to header' },
+            ],
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    // Caminho feliz: 200 com o shape REAL (`{ id, message: { id, threadId } }`).
+    return HttpResponse.json({
+      id: 'draft-created-1',
+      message: { id: 'msg-of-draft-1', threadId: 'thread-of-draft-1' },
+    });
+  }),
+
+  // ---------------------------------------------------------------------------
+  // GMAIL — ARQUIVAR (Story 6.10): POST /gmail/v1/users/me/messages/:id/modify
+  // (`users.messages.modify`). Reflecte o protocolo real da Gmail API v1
+  // (`mock-protocol-fidelity.md`):
+  //   - corpo de pedido: `{ removeLabelIds: ['INBOX'] }` (arquivar = remover INBOX);
+  //   - resposta 200: `{ id, labelIds: [...] }` (sem INBOX após arquivar).
+  //
+  // Idempotente: re-arquivar um email já arquivado devolve 200 sem INBOX (a Gmail
+  // trata remover um label ausente como no-op). 404 se o `msgId` não existe
+  // (eixo b → `GmailMessageNotFoundError`). 5xx → propaga 503 (eixo c).
+  //
+  // Fidelidade falsificável: a resposta tem `id` e `labelIds` (array). Se a route
+  // esperar `messageId` ou um shape diferente, o teste de fidelidade falha.
+  // ---------------------------------------------------------------------------
+  http.post(`${GMAIL_MESSAGES_ENDPOINT}/:id/modify`, async ({ params, request }) => {
+    const auth = request.headers.get('authorization') ?? '';
+    const id = params.id as string;
+
+    if (auth.includes(GMAIL_REVOKED_ACCESS_TOKEN)) {
+      return HttpResponse.json(
+        { error: { code: 401, message: 'Invalid Credentials' } },
+        { status: 401 },
+      );
+    }
+    if (id === GMAIL_ARCHIVE_NOT_FOUND_MSG_ID) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 404,
+            message: 'Requested entity was not found.',
+            errors: [
+              { domain: 'global', reason: 'notFound', message: 'Requested entity was not found.' },
+            ],
+          },
+        },
+        { status: 404 },
+      );
+    }
+    if (id === GMAIL_ARCHIVE_SERVER_ERROR_MSG_ID || auth.includes(GMAIL_SERVER_ERROR_ACCESS_TOKEN)) {
+      return HttpResponse.json(
+        { error: { code: 500, message: 'Backend Error' } },
+        { status: 500 },
+      );
+    }
+
+    // Caminho feliz: 200 com `labelIds` SEM `INBOX` (arquivado). Mantém outros
+    // labels comuns para reflectir um email real (ex.: UNREAD/CATEGORY_PERSONAL).
+    return HttpResponse.json({
+      id,
+      labelIds: ['UNREAD', 'CATEGORY_PERSONAL'],
+    });
   }),
 ];
