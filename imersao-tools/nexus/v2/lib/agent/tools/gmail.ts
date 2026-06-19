@@ -86,6 +86,32 @@ async function readError(resp: Response): Promise<string | undefined> {
 }
 
 /**
+ * Mensagem PT-PT para falha de transporte (a `ctx.fetch` rejeitou — rede caiu,
+ * DNS, abort). Tratada explicitamente em todas as tools: uma rejeição do fetch
+ * NUNCA escapa como erro cru — é convertida em erro descritivo (anti-M4).
+ */
+const TRANSPORT_ERROR_MESSAGE =
+  'Não foi possível contactar o Gmail agora (falha de ligação). Tenta de novo daqui a pouco.';
+
+/**
+ * Executa `ctx.fetch` a uma route Gmail tratando a falha de transporte
+ * explicitamente: se o `fetch` rejeitar (não-2xx é tratado a jusante por quem
+ * chama), lança um `Error` PT-PT em vez de propagar a rejeição crua. C3 — falha
+ * de rede é falha, nunca sucesso silencioso.
+ */
+async function gmailRouteFetch(
+  ctx: ExecutionContext,
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  try {
+    return await ctx.fetch(url, init);
+  } catch {
+    throw new Error(TRANSPORT_ERROR_MESSAGE);
+  }
+}
+
+/**
  * Mapeia um código de erro das routes Gmail para uma mensagem PT-PT descritiva.
  * Distingue 401 (sessão/scope), 503 (Gmail indisponível) e genérico. NUNCA trata
  * uma falha como sucesso (anti-M4 da 4.9).
@@ -160,7 +186,7 @@ registar(
 
       // Reutiliza a route 6.9 (já faz messages.list INBOX + kv.get + messages.get
       // lotes ≤10 server-side). Cookie de sessão same-origin automático (ADR-9).
-      const resp = await ctx.fetch(INBOX_URL, { method: 'GET' });
+      const resp = await gmailRouteFetch(ctx, INBOX_URL, { method: 'GET' });
 
       // C3 — inspecciona `resp.ok` E o corpo `{ error }`. KV vazio / zero
       // classificados → a route devolve 200 `{ emails: [] }` (estado VÁLIDO, não erro).
@@ -228,7 +254,7 @@ registar(
       const { to, subject, body } = args;
 
       // Route server-side faz o trabalho Node-only (token + MIME RFC 2047 + Gmail API).
-      const resp = await ctx.fetch(DRAFT_URL, {
+      const resp = await gmailRouteFetch(ctx, DRAFT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to, subject, body }),
@@ -285,7 +311,7 @@ registar(
     execute: async (args, ctx: ExecutionContext) => {
       const { msgId } = args;
 
-      const resp = await ctx.fetch(ARCHIVE_URL, {
+      const resp = await gmailRouteFetch(ctx, ARCHIVE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ msgId }),

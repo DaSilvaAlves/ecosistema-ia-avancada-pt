@@ -91,11 +91,36 @@ function toBase64Url(input: string): string {
 }
 
 /**
+ * Erro de header MIME inseguro: `to`/`subject` contêm CR/LF, o que permitiria
+ * injecção de cabeçalhos arbitrários (ex.: `Bcc:`) na mensagem MIME. Lançado
+ * antes de qualquer chamada ao Gmail (fail-loud).
+ */
+class UnsafeHeaderError extends Error {
+  constructor() {
+    super('header_injection');
+    this.name = 'UnsafeHeaderError';
+  }
+}
+
+/**
+ * Rejeita valores de header com CR ou LF (anti CR/LF header injection). O `to` e
+ * o `subject` são interpolados em headers MIME; um `subject` ASCII como
+ * `"Olá\r\nBcc: x@y.com"` passa o RFC 2047 (só codifica não-ASCII) e injectaria
+ * um header. Defesa: recusar qualquer `\r`/`\n` no valor cru do header.
+ */
+function assertSafeHeaderValue(value: string): void {
+  if (/[\r\n]/.test(value)) throw new UnsafeHeaderError();
+}
+
+/**
  * Constrói a mensagem MIME (texto plano UTF-8). O `Subject` é codificado em RFC
  * 2047 quando tem não-ASCII (C4). O `body` permanece UTF-8 (o `Content-Type`
- * declara `charset=utf-8`).
+ * declara `charset=utf-8`). `to` e `subject` são validados contra CR/LF
+ * (anti header injection) ANTES da composição.
  */
 function buildMimeMessage(to: string, subject: string, body: string): string {
+  assertSafeHeaderValue(to);
+  assertSafeHeaderValue(subject);
   return [
     `To: ${to}`,
     `Subject: ${encodeHeaderRfc2047(subject)}`,
@@ -149,9 +174,20 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'not_connected' }, { status: 401 });
   }
 
+  // (iv) Constrói o MIME e codifica em base64url ([D-6.10-DRAFT-MIME]). A
+  // validação anti CR/LF acontece em `buildMimeMessage`; um valor inseguro →
+  // 400 (nunca chega ao Gmail).
+  let raw: string;
   try {
-    // (iv) Constrói o MIME e codifica em base64url ([D-6.10-DRAFT-MIME]).
-    const raw = toBase64Url(buildMimeMessage(to, subject, body));
+    raw = toBase64Url(buildMimeMessage(to, subject, body));
+  } catch (err) {
+    if (err instanceof UnsafeHeaderError) {
+      return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
+    }
+    throw err;
+  }
+
+  try {
 
     const res = await fetch(GMAIL_DRAFTS_ENDPOINT, {
       method: 'POST',
@@ -174,7 +210,13 @@ export async function POST(req: Request): Promise<Response> {
       return NextResponse.json({ error: 'gmail_unavailable' }, { status: 503 });
     }
 
-    const data = (await res.json()) as GmailDraftCreateResponse;
+    const data = (await res.json().catch(() => null)) as GmailDraftCreateResponse | null;
+    // Defesa em profundidade (anti-M4 4.9): não devolver 200 com `draftId`
+    // ausente se o Gmail responder 2xx com corpo malformado. Sem `id` válido →
+    // 503 (a operação não é confirmável), nunca sucesso silencioso.
+    if (typeof data?.id !== 'string' || data.id.length === 0) {
+      return NextResponse.json({ error: 'gmail_unavailable' }, { status: 503 });
+    }
     const responseBody: DraftCreatedResponse = {
       draftId: data.id,
       subject,

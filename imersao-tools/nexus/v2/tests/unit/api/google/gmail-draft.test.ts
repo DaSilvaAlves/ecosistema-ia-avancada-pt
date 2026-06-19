@@ -135,17 +135,59 @@ describe('gmail/draft — caminho feliz + shape (AC3, C6)', () => {
     expect(json.to).toBe('maria@x.pt');
   });
 
-  it('C6 — fidelidade de shape: se a Gmail devolver sem `id`, o draftId fica undefined', async () => {
+  it('C6 — fidelidade de shape: Gmail 2xx com `id` ausente → 503, NUNCA 200 com draftId undefined', async () => {
     // Falsificável: o handler real usa `id` no topo. Aqui forçamos um shape errado
-    // (`draftId` em vez de `id`) e provamos que a route depende do `id` real.
+    // (`draftId` em vez de `id`). Defesa em profundidade (anti-M4): a route recusa
+    // confirmar um draft sem `id` válido — devolve 503, não 200 silencioso.
     server.use(
       http.post(GMAIL_DRAFTS_ENDPOINT, () =>
         HttpResponse.json({ draftId: 'errado', message: { id: 'm', threadId: 't' } }),
       ),
     );
     const res = await callDraft({ to: 'a@x.pt', subject: 'S', body: 'b' });
-    const json = (await res.json()) as { draftId?: string };
-    expect(json.draftId).toBeUndefined();
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe('gmail_unavailable');
+  });
+});
+
+describe('gmail/draft — anti CR/LF header injection (segurança)', () => {
+  it('subject com CR/LF → 400 invalid_request, NUNCA chega à Gmail API', async () => {
+    let gmailCalled = false;
+    server.use(
+      http.post(GMAIL_DRAFTS_ENDPOINT, () => {
+        gmailCalled = true;
+        return HttpResponse.json({ id: 'd', message: { id: 'm', threadId: 't' } });
+      }),
+    );
+    // Subject ASCII (passa o RFC 2047, que só codifica não-ASCII) com `\r\nBcc:`
+    // injectado — sem a defesa, injectaria um header Bcc na mensagem MIME.
+    const res = await callDraft({
+      to: 'a@x.pt',
+      subject: 'Olá\r\nBcc: vitima@x.com',
+      body: 'b',
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('invalid_request');
+    // FALSIFICÁVEL: a Gmail API nunca é chamada com o header injectado.
+    expect(gmailCalled).toBe(false);
+  });
+
+  it('`to` com CR/LF → 400 invalid_request, NUNCA chega à Gmail API', async () => {
+    let gmailCalled = false;
+    server.use(
+      http.post(GMAIL_DRAFTS_ENDPOINT, () => {
+        gmailCalled = true;
+        return HttpResponse.json({ id: 'd', message: { id: 'm', threadId: 't' } });
+      }),
+    );
+    const res = await callDraft({
+      to: 'a@x.pt\r\nBcc: vitima@x.com',
+      subject: 'S',
+      body: 'b',
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('invalid_request');
+    expect(gmailCalled).toBe(false);
   });
 });
 

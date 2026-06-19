@@ -130,11 +130,20 @@ describe('gmail/archive — caminho feliz + shape (AC4, C6)', () => {
 });
 
 describe('gmail/archive — idempotência e falhas (C3, eixo b)', () => {
-  it('idempotência: re-arquivar email já arquivado → 200 { archived:true }', async () => {
+  it('idempotência: arquivar duas vezes o mesmo email → ambas 200 { archived:true }', async () => {
     // O handler feliz devolve labelIds sem INBOX — re-arquivar é no-op server-side.
-    const res = await callArchive({ msgId: 'gmail-msg-importante-1' });
-    expect(res.status).toBe(200);
-    expect((await res.json()).archived).toBe(true);
+    // Prova a idempotência com DUAS chamadas (não uma): a 2.ª sobre um email já
+    // arquivado tem de devolver o mesmo sucesso, sem erro.
+    const first = await callArchive({ msgId: 'gmail-msg-importante-1' });
+    expect(first.status).toBe(200);
+    expect((await first.json()).archived).toBe(true);
+
+    const second = await callArchive({ msgId: 'gmail-msg-importante-1' });
+    expect(second.status).toBe(200);
+    expect(await second.json()).toEqual({
+      msgId: 'gmail-msg-importante-1',
+      archived: true,
+    });
   });
 
   it('Gmail 404 (email eliminado) → 404 not_found (eixo b)', async () => {
