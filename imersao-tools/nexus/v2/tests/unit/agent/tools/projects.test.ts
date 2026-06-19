@@ -167,19 +167,22 @@ describe('toolRegistry integration', () => {
     // Story 5.13: o barrel importa journal/knowledge (9 tools — D-5.13-DOMAIN
     // Opção A: 4 'journal' incl. brain_dump + 5 'knowledge').
     // Story 6.6: o barrel importa `./calendar` (3 tools domínio 'calendar' —
-    // D-6.6-GAP65-DOMAIN standalone).
-    expect(toolRegistry.all()).toHaveLength(34);
+    // D-6.6-GAP65-DOMAIN standalone). Story 6.10: + `./gmail` (3 tools domínio
+    // 'gmail' — D-6.10-GAP-DOMAIN standalone).
+    expect(toolRegistry.all()).toHaveLength(37);
     expect(toolRegistry.byDomain('tasks')).toHaveLength(7);
     expect(toolRegistry.byDomain('finance')).toHaveLength(6);
     expect(toolRegistry.byDomain('habits')).toHaveLength(9);
     expect(toolRegistry.byDomain('journal')).toHaveLength(4);
     expect(toolRegistry.byDomain('knowledge')).toHaveLength(5);
     expect(toolRegistry.byDomain('calendar')).toHaveLength(3);
+    expect(toolRegistry.byDomain('gmail')).toHaveLength(3);
 
     const nomes = toolRegistry.all().map((t) => t.name).sort();
     expect(nomes).toEqual([
       'actualizar_evento_calendar',
       'actualizar_meta',
+      'arquivar_email',
       'brain_dump',
       'cancelar_lembrete',
       'completar_tarefa',
@@ -192,6 +195,7 @@ describe('toolRegistry integration', () => {
       'criar_area',
       'criar_caderno',
       'criar_cartao',
+      'criar_draft_gmail',
       'criar_entrada_diario',
       'criar_evento_calendar',
       'criar_financa_recorrente',
@@ -204,6 +208,7 @@ describe('toolRegistry integration', () => {
       'criar_projecto',
       'criar_tarefa',
       'listar_atrasadas',
+      'listar_emails_importantes',
       'listar_eventos',
       'listar_lembretes',
       'listar_tarefas',

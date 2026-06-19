@@ -12,8 +12,8 @@
  * Após este import: `toolRegistry.byDomain('tasks').length === 7`,
  * `toolRegistry.byDomain('finance').length === 6`, `toolRegistry.byDomain('habits').length === 9`,
  * `toolRegistry.byDomain('journal').length === 4`, `toolRegistry.byDomain('knowledge').length === 5`,
- * `toolRegistry.byDomain('calendar').length === 3`
- * e `toolRegistry.all().length === 34`.
+ * `toolRegistry.byDomain('calendar').length === 3`, `toolRegistry.byDomain('gmail').length === 3`
+ * e `toolRegistry.all().length === 37`.
  *
  * D-DOMAIN (Story 4.10, Architect Ratification Opção A): as 9 tools do Epic 4
  * (hábitos+metas+lembretes) usam `domain:'habits'` — o classifier mapeia as 3
@@ -35,3 +35,4 @@ import './reminders'; // 3 tools Epic 4 (FR38): criar_lembrete, listar_lembretes
 import './journal'; // 4 tools Epic 5 (FR46+FR50): criar_entrada_diario, consultar_diario, pesquisar_diario, brain_dump (domain:'journal' — D-5.13-DOMAIN Opção A)
 import './knowledge'; // 5 tools Epic 5 (FR57): criar_area, criar_caderno, criar_nota, pesquisar_conhecimento, pesquisar_web_e_criar_nota (domain:'knowledge' — D-5.13-DOMAIN Opção A)
 import './calendar'; // 3 tools Epic 6 (FR61+FR62): criar_evento_calendar, actualizar_evento_calendar, listar_eventos (domain:'calendar' — D-6.6-GAP65-DOMAIN standalone)
+import './gmail'; // 3 tools Epic 6 (FR67+FR68): listar_emails_importantes, criar_draft_gmail, arquivar_email (domain:'gmail' — D-6.10-GAP-DOMAIN standalone; tools client-side via ctx.fetch → routes server-side — D-6.10-RUNTIME)

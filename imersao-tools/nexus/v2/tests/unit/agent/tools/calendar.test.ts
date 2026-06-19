@@ -100,8 +100,8 @@ describe('registo das tools de calendar (AC1/AC5)', () => {
     ]);
   });
 
-  it('o barrel regista 34 tools no total (31 + 3 calendar)', () => {
-    expect(toolRegistry.all()).toHaveLength(34);
+  it('o barrel regista 37 tools no total (31 + 3 calendar + 3 gmail)', () => {
+    expect(toolRegistry.all()).toHaveLength(37);
   });
 
   it('criar/actualizar têm requiresPreview:true e listar requiresPreview:false (D-6.6-PREVIEW)', () => {
