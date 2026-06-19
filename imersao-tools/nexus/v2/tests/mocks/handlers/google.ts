@@ -34,6 +34,40 @@ const GOOGLE_CALENDAR_EVENTS_ENDPOINT =
   'https://www.googleapis.com/calendar/v3/calendars/primary/events';
 
 /**
+ * Endpoint real de `users.messages.list`/`get` da Gmail API v1 (Story 6.8). O
+ * helper `lib/google/gmail.ts` chama estes endpoints com `fetch` directo (mesmo
+ * padrão de `calendar.ts`) para o MSW os poder interceptar.
+ */
+const GMAIL_MESSAGES_ENDPOINT =
+  'https://www.googleapis.com/gmail/v1/users/me/messages';
+
+/**
+ * Story 6.8 — access token que o handler Gmail trata como revogado → 401
+ * `invalid_grant`. Permite testar `GmailAuthError` (eixo c). Distinto de um token
+ * de caminho-feliz.
+ */
+export const GMAIL_REVOKED_ACCESS_TOKEN = 'ya29.gmail-revoked';
+
+/**
+ * Story 6.8 — access token que o handler Gmail trata como 5xx (Google
+ * indisponível) → testa `GmailSyncError` (eixo c).
+ */
+export const GMAIL_SERVER_ERROR_ACCESS_TOKEN = 'ya29.gmail-5xx';
+
+/**
+ * Story 6.8 — `msgId`s base do mock Gmail. O handler de `messages.list` devolve
+ * estes ids; o de `messages.get` devolve metadados coerentes por id. Os assuntos
+ * mapeiam aos 4 buckets para o handler Anthropic produzir uma classificação
+ * determinística (`temperature: 0`).
+ */
+export const GMAIL_MOCK_MESSAGE_IDS = [
+  'gmail-msg-importante-1',
+  'gmail-msg-responder-1',
+  'gmail-msg-esperar-1',
+  'gmail-msg-descartavel-1',
+];
+
+/**
  * syncToken que o handler de `events.list` trata como expirado → HTTP 410 Gone
  * (Story 6.3, AC5). Permite testar o caminho de full resync automático.
  */
@@ -474,6 +508,97 @@ export const googleHandlers = [
       summary,
       start: body.start,
       end: body.end,
+    });
+  }),
+
+  // ---------------------------------------------------------------------------
+  // GMAIL — LISTAGEM (Story 6.8): GET /gmail/v1/users/me/messages. Reflecte o
+  // protocolo real da Gmail API v1 (`mock-protocol-fidelity.md`):
+  //   - resposta: `{ messages: [{ id, threadId }], resultSizeEstimate }`
+  //     (snake_case? NÃO — a Gmail API JSON usa camelCase `threadId`/
+  //     `resultSizeEstimate`/`nextPageToken`; o `id` é o `msgId` da cache KV);
+  //   - lista APENAS ids — os detalhes exigem `messages.get`.
+  //
+  // Caminhos de falha por access token (eixo c): token revogado → 401
+  // `invalid_grant`; token de 5xx → 503.
+  //
+  // Fidelidade falsificável CRÍTICA (AC6): a chave do array é `messages` e o id é
+  // `id`. Se o helper esperar `messageId` (errado), não extrai nenhum `msgId` e a
+  // classificação fica vazia — o teste de fidelidade falha.
+  // ---------------------------------------------------------------------------
+  http.get(GMAIL_MESSAGES_ENDPOINT, ({ request }) => {
+    const auth = request.headers.get('authorization') ?? '';
+
+    if (auth.includes(GMAIL_REVOKED_ACCESS_TOKEN)) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 401,
+            message: 'Invalid Credentials',
+            errors: [{ domain: 'global', reason: 'authError', message: 'Invalid Credentials' }],
+          },
+        },
+        { status: 401 },
+      );
+    }
+
+    if (auth.includes(GMAIL_SERVER_ERROR_ACCESS_TOKEN)) {
+      return HttpResponse.json(
+        { error: { code: 500, message: 'Backend Error' } },
+        { status: 500 },
+      );
+    }
+
+    return HttpResponse.json({
+      messages: GMAIL_MOCK_MESSAGE_IDS.map((id) => ({ id, threadId: `thread-${id}` })),
+      resultSizeEstimate: GMAIL_MOCK_MESSAGE_IDS.length,
+    });
+  }),
+
+  // ---------------------------------------------------------------------------
+  // GMAIL — DETALHE (Story 6.8): GET /gmail/v1/users/me/messages/:id com
+  // `format=metadata&metadataHeaders=Subject,From,Date`. Reflecte o shape real:
+  //   - `{ id, threadId, payload: { headers: [{ name, value }] } }` — os headers
+  //     são um ARRAY de `{ name, value }` (NÃO `subject`/`from` directos no topo).
+  //
+  // Fidelidade falsificável (AC6): se o helper esperar `payload.subject` em vez de
+  // procurar em `payload.headers[]` por `name === 'Subject'`, extrai vazio — o
+  // teste de fidelidade falha. O assunto codifica o bucket esperado (determinístico).
+  // ---------------------------------------------------------------------------
+  http.get(`${GMAIL_MESSAGES_ENDPOINT}/:id`, ({ params, request }) => {
+    const auth = request.headers.get('authorization') ?? '';
+    const id = params.id as string;
+
+    if (auth.includes(GMAIL_REVOKED_ACCESS_TOKEN)) {
+      return HttpResponse.json(
+        { error: { code: 401, message: 'Invalid Credentials' } },
+        { status: 401 },
+      );
+    }
+
+    // Assuntos/remetentes coerentes com o bucket que o nome do id sugere — o
+    // handler Anthropic usa o `subject` para classificar de forma determinística.
+    const subjectByIdFragment: Record<string, { subject: string; from: string }> = {
+      importante: { subject: '[URGENTE] Resposta necessária hoje', from: 'paulo@cliente.pt' },
+      responder: { subject: 'Podes confirmar a reunião de amanhã?', from: 'ana@equipa.pt' },
+      esperar: { subject: 'Atualização mensal do projecto', from: 'gestao@empresa.pt' },
+      descartavel: { subject: 'Promoção: 50% de desconto esta semana!', from: 'newsletter@loja.com' },
+    };
+    const matchKey = Object.keys(subjectByIdFragment).find((k) => id.includes(k));
+    const meta = matchKey
+      ? subjectByIdFragment[matchKey]
+      : { subject: 'Assunto genérico', from: 'alguem@exemplo.pt' };
+
+    return HttpResponse.json({
+      id,
+      threadId: `thread-${id}`,
+      payload: {
+        headers: [
+          { name: 'Subject', value: meta.subject },
+          { name: 'From', value: meta.from },
+          { name: 'Date', value: 'Wed, 18 Jun 2026 09:00:00 +0100' },
+        ],
+      },
     });
   }),
 ];

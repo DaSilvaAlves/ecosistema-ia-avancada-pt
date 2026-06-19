@@ -482,6 +482,46 @@ export const anthropicHandlers = [
     const userMsgText = typeof userMsg?.content === 'string' ? userMsg.content : '';
     const system = body.system ?? '';
 
+    // ── Story 6.8 — Classifier Gmail (síncrono, JSON, 4 buckets) ────────────
+    // O helper `lib/google/gmail.ts` chama a Anthropic API DIRECTAMENTE (C2) com
+    // um prompt marcado por `[NEXUS_GMAIL_CLASSIFIER]`. Reflecte o wire REAL
+    // (`{ content: [{ type: 'text', text: '<json>' }] }`): o `text` é o JSON dos
+    // 4 buckets (arrays de `msgId`). O handler extrai os emails embebidos no
+    // prompt e classifica-os DETERMINISTICAMENTE por assunto (espelha o que um
+    // classifier real faria) para os testes asserirem buckets exactos.
+    if (userMsgText.includes('[NEXUS_GMAIL_CLASSIFIER]')) {
+      const buckets: Record<string, string[]> = {
+        importante: [],
+        responder_hoje: [],
+        pode_esperar: [],
+        descartavel: [],
+      };
+      const emailsMatch = userMsgText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (emailsMatch) {
+        try {
+          const emails = JSON.parse(emailsMatch[0]) as Array<{ id: string; subject: string }>;
+          for (const email of emails) {
+            const s = (email.subject ?? '').toLowerCase();
+            if (s.includes('urgente')) buckets.importante.push(email.id);
+            else if (s.includes('confirmar') || s.includes('reunião')) buckets.responder_hoje.push(email.id);
+            else if (s.includes('promoção') || s.includes('desconto') || s.includes('newsletter')) buckets.descartavel.push(email.id);
+            else buckets.pode_esperar.push(email.id);
+          }
+        } catch {
+          // Prompt sem JSON parseável — buckets vazios (caminho defensivo).
+        }
+      }
+      return HttpResponse.json({
+        id: 'msg_gmail_classify',
+        type: 'message',
+        role: 'assistant',
+        model: body.model,
+        content: [{ type: 'text', text: JSON.stringify(buckets) }],
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 100, output_tokens: 40 },
+      });
+    }
+
     // ── Story 1.2 — Classifier (síncrono, JSON) ────────────────────────────
     // Detectado por system prompt magic string (testes definem-no explicitamente)
     if (system.includes('MOCK_CLASSIFIER_MALFORMED')) {
