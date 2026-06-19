@@ -83,11 +83,11 @@ function encodeHeaderRfc2047(value: string): string {
 
 /** base64url (RFC 4648 §5): base64 com `+`→`-`, `/`→`_`, sem `=` de padding. */
 function toBase64Url(input: string): string {
-  return Buffer.from(input, 'utf-8')
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  // Node suporta base64url nativamente (RFC 4648 §5): aplica a substituição de
+  // alfabeto E remove o padding sem regex. Evita o padrão ReDoS `/=+$/`
+  // (polinomial sobre dados não-controlados — CodeQL HIGH) num caminho que
+  // codifica conteúdo fornecido pelo utilizador (subject/body do draft).
+  return Buffer.from(input, 'utf-8').toString('base64url');
 }
 
 /**
