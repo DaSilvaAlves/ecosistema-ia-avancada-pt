@@ -8,8 +8,10 @@
 from_agent: "Pax (@po) — *close-story 6.8 (após /sdc 6.8 --push: PR #82 auto-merge squash 010f1db4)"
 to_agent: "any — próximo terminal: @sm *draft 6.9 (vista Gmail) ou *draft 6.11 (Telegram, paralelo)"
 created: "2026-06-19T00:00:00Z"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-19T20:30:00Z"
+consumed_by: "Pax (@po) — *close-story 6.9 (a 6.9 foi fechada; continuidade no handoff RETOMA-20260619-story-6.9-FECHADA-epic-6-9de17-proximo-6.10.md)"
 project: nexus-v2
 next_action: "@sm *draft 6.9 (vista Gmail no dashboard — consome os buckets classificados pela 6.8: só Importantes + Para responder hoje, resto oculto por defeito, FR66; múltiplos estados de render → react-component-test-criteria.md) OU *draft 6.11 (Telegram bot setup, paralelo — atenção GAP-6.4: decisão SDK Telegram + 2 criticals npm audit). A 6.8 desbloqueia 6.9 (vista) e 6.10 (tools cérebro Gmail)."
 ```

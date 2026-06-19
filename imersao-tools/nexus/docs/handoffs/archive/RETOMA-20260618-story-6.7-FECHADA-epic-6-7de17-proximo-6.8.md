@@ -8,8 +8,10 @@
 from_agent: "orquestrador /sdc 6.7 --push (sessão 18/06/2026) — correu o ciclo /sdc completo da 6.7 (SM→PO→Architect Entrada→DEV→Architect Saída→DEVOPS push+CR+merge+close+push)"
 to_agent: "any — próximo terminal: orquestrador `/sdc 6.8 --push` (classifier Gmail 4 buckets, 1.ª consumidora do scope gmail.modify) OU `/sdc 6.11 --push` (Telegram setup, paralelo independente)"
 created: "2026-06-18T23:00:00Z"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-19T00:00:00Z"
+consumed_by: "orquestrador /sdc 6.8 (sessão 19/06/2026) — arrancou a 6.8 (SM→PO→Architect Entrada→DEV→Architect Saída, gates internos PASS; falta devops/--push). Continuação em RETOMA-20260619-story-6.8-GATES-PASS-aguarda-push.md"
 project: nexus-v2
 next_action: "/sdc 6.8 --push   (classifier Gmail: lê últimos ~50 emails, AI classifica em 4 buckets — Importante / Para responder hoje / Pode esperar / Descartável; cache por msgId nexus:cache:gmail:classify TTL 7d; FR64+FR65; executor @dev, gate @architect). Depende do scope gmail.modify autorizado pela 6.7 (Done). Alternativa paralelizável: /sdc 6.11 --push (Telegram bot setup, sub-módulo independente — atenção GAP-6.4: decisão SDK Telegram + 2 criticals npm audit no Architect Gate de Entrada). Sem --push o pipeline pára antes do merge."
 ```
