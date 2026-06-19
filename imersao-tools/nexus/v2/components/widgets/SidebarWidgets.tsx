@@ -4,6 +4,7 @@ import { GreetingWidget } from './GreetingWidget';
 import { MarketsWidget } from './MarketsWidget';
 import { PomodoroWidget } from './PomodoroWidget';
 import { GitHubWidget } from './GitHubWidget';
+import { GmailWidget } from './GmailWidget';
 import { QuickLinksWidget } from './QuickLinksWidget';
 import { GoodnightWidget } from './GoodnightWidget';
 import { useFinancasInit } from '@/hooks/useFinancasInit';
@@ -16,8 +17,9 @@ import { useFinancasInit } from '@/hooks/useFinancasInit';
  *  2. Markets (TOPO destaque per UX-4 — substitui MorningBriefingWidget v1)
  *  3. Pomodoro
  *  4. GitHub events
- *  5. Quick Links
- *  6. Goodnight (condicional — só entre 22h-5h)
+ *  5. Gmail (Story 6.9 — Importantes + Para responder hoje; [D-6.9-LOCATION])
+ *  6. Quick Links
+ *  7. Goodnight (condicional — só entre 22h-5h)
  *
  * Story 3.2 (AC5): `useFinancasInit` é montado aqui — client component que
  * renderiza sempre na page de entrada da app autenticada. Semeia as 10
@@ -33,6 +35,7 @@ export function SidebarWidgets(): React.ReactElement {
       <MarketsWidget />
       <PomodoroWidget />
       <GitHubWidget />
+      <GmailWidget />
       <QuickLinksWidget />
       <GoodnightWidget />
     </>

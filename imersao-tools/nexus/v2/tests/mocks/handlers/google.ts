@@ -68,6 +68,44 @@ export const GMAIL_MOCK_MESSAGE_IDS = [
 ];
 
 /**
+ * Story 6.9 — endpoint INTERNO da vista Gmail (`GET /api/google/gmail/inbox`). O
+ * `GmailWidget` chama-o do browser. O handler reflecte o shape REAL da resposta
+ * (`{ emails: EmailSummary[] }`, `mock-protocol-fidelity.md`): cada email tem
+ * `id`/`bucket`/`subject`/`from`/`date`/`classifiedAt`. Apenas buckets
+ * `importante`/`responder_hoje` aparecem (FR66 — resto oculto na origem). O header
+ * `x-gmail-inbox-scenario` selecciona o cenário (content/empty/401/503) sem precisar
+ * de um access token Google real (a route já está coberta por `gmail-inbox.test.ts`).
+ *
+ * Fidelidade falsificável (C5): a chave do array é `emails` e cada item tem `bucket`
+ * com a grafia ASCII (`importante`/`responder_hoje`). Se o widget esperar `messages`
+ * ou um `bucket` traduzido, o render `content` falha.
+ */
+export const GMAIL_INBOX_ENDPOINT = '*/api/google/gmail/inbox';
+
+/** Cenário do handler interno da inbox (via header `x-gmail-inbox-scenario`). */
+export const GMAIL_INBOX_SCENARIO_HEADER = 'x-gmail-inbox-scenario';
+
+/** Emails de exemplo devolvidos pelo cenário `content` (shape real EmailSummary). */
+export const GMAIL_INBOX_MOCK_EMAILS = [
+  {
+    id: 'gmail-msg-importante-1',
+    bucket: 'importante',
+    subject: '[URGENTE] Resposta necessária hoje',
+    from: 'paulo@cliente.pt',
+    date: 'Wed, 18 Jun 2026 09:00:00 +0100',
+    classifiedAt: 1_750_000_000_000,
+  },
+  {
+    id: 'gmail-msg-responder-1',
+    bucket: 'responder_hoje',
+    subject: 'Podes confirmar a reunião de amanhã?',
+    from: 'ana@equipa.pt',
+    date: 'Wed, 18 Jun 2026 08:30:00 +0100',
+    classifiedAt: 1_750_000_000_001,
+  },
+] as const;
+
+/**
  * syncToken que o handler de `events.list` trata como expirado → HTTP 410 Gone
  * (Story 6.3, AC5). Permite testar o caminho de full resync automático.
  */
@@ -607,5 +645,29 @@ export const googleHandlers = [
         ],
       },
     });
+  }),
+
+  // ---------------------------------------------------------------------------
+  // GMAIL — VISTA INTERNA (Story 6.9): GET /api/google/gmail/inbox. Endpoint da
+  // própria app que o `GmailWidget` consome. Shape real `{ emails: EmailSummary[] }`
+  // (mock-protocol-fidelity.md). Cenário escolhido por `x-gmail-inbox-scenario`:
+  //   - ausente / 'content' → 200 com GMAIL_INBOX_MOCK_EMAILS (só 2 buckets visíveis);
+  //   - 'empty'             → 200 { emails: [] } (inbox limpa);
+  //   - 'oauth'             → 401 { error: 'not_connected' };
+  //   - 'fetch'             → 503 { error: 'gmail_unavailable' }.
+  // ---------------------------------------------------------------------------
+  http.get(GMAIL_INBOX_ENDPOINT, ({ request }) => {
+    const scenario = request.headers.get(GMAIL_INBOX_SCENARIO_HEADER) ?? 'content';
+
+    if (scenario === 'oauth') {
+      return HttpResponse.json({ error: 'not_connected' }, { status: 401 });
+    }
+    if (scenario === 'fetch') {
+      return HttpResponse.json({ error: 'gmail_unavailable' }, { status: 503 });
+    }
+    if (scenario === 'empty') {
+      return HttpResponse.json({ emails: [] });
+    }
+    return HttpResponse.json({ emails: GMAIL_INBOX_MOCK_EMAILS });
   }),
 ];
