@@ -19,10 +19,10 @@ next_action: "@sm *draft 6.10 (tools cérebro Gmail — listar_emails_importante
 ```bash
 cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt"
 git checkout main && git pull --ff-only origin main
-git rev-parse --short HEAD   # esperado: commit de fecho docs-only @po (posterior a 04b724b8); main sincronizado 0/0
+git rev-parse --short HEAD   # esperado: 19a88d1d (fecho docs-only @po 6.9) ou posterior; main sincronizado 0/0
 ```
 
-**SHAs de referência da 6.9:** PR #83 squash em `main` = `04b724b8` (código da feature: route inbox + GmailWidget + testes); commit de fecho docs-only @po = este fecho (story→`completed/`, EPIC-6 9/17, bookkeeping handoffs). Working tree limpa na app (`imersao-tools/nexus/v2/`) — restam apenas untracked/submódulos fora-scope pré-existentes, que NÃO se committam.
+**SHAs de referência da 6.9:** PR #83 squash em `main` = `04b724b8` (código da feature: route inbox + GmailWidget + testes); commit de fecho docs-only @po = `19a88d1d` (story→`completed/`, EPIC-6 9/17, bookkeeping handoffs: 6.8 arquivado, INDEX actualizado). Working tree limpa na app (`imersao-tools/nexus/v2/`) — restam apenas untracked/submódulos fora-scope pré-existentes, que NÃO se committam.
 
 ## Resumo (1 parágrafo)
 
@@ -50,6 +50,22 @@ git rev-parse --short HEAD   # esperado: commit de fecho docs-only @po (posterio
 
 - **`@sm *draft 6.10`** (tools cérebro Gmail, FR67/FR68) — **próximo passo natural** (completa o sub-módulo Gmail 4/4). Registar no Tool Registry: `listar_emails_importantes`, `criar_draft_gmail`, `arquivar_email` (domínio `gmail`). `criar_draft_gmail` com `requiresPreview: true` (acção externa — escreve no Gmail do utilizador). Nomes ASCII já validados (nota EPIC-6 §5; `external-contract-identifiers.md`). `listar_emails_importantes` consome o mesmo contrato KV `nexus:cache:gmail:classify:<msgId>` que a vista 6.9 lê / a route inbox re-deriva. Gate `@architect`.
 - **Alternativa paralelizável:** `@sm *draft 6.11` (Telegram bot setup, FR69/FR70) — sub-módulo Telegram independente do Google; **atenção GAP-6.4** (decisão de SDK Telegram + 2 criticals `npm audit`). Gate `@architect` (webhook + segurança).
+
+## Arranque imediato da 6.10 — comando único (terminal novo)
+
+Decisão do Eurico (19/06/2026): seguir com a **6.10**. No terminal novo, depois do Passo 0:
+
+```
+/sdc 6.10 --push
+```
+
+O `/sdc` sem ficheiro de story existente arranca na fase SM (cria a `6.10.story.md`), corre o ciclo completo SM→PO→DEV→QA e, com `--push`, fecha em `main` (CR `--base main` + PR + auto-merge + close-story). **Precedente directo: a Story 6.6** (tools cérebro **calendário** — `criar_evento_calendar`/`actualizar_evento_calendar`/`listar_eventos`, PR #79 `eead5486`) é o molde exacto da 6.10 para o domínio `gmail` — mesmo padrão de registo no Tool Registry, mesmo gate `@architect`. Ler `docs/stories/completed/6.6.story.md` como referência de estrutura/decisões antes do draft.
+
+**Pontos que o `@architect` (Gate de Entrada) deve fechar no draft da 6.10:**
+- **GAP-6.5** (EPIC-6 §7) — confirmar em código se o classifier do Epic 1 trata `gmail` como domínio distinto ou agrupa (precedente D-5.13-DOMAIN da 5.13, D-DOMAIN da 4.10). Verificar, não assumir.
+- **Preview obrigatório** — `criar_draft_gmail` é acção com efeito externo → reutiliza o padrão preview-then-confirm da Story 1.6 (EPIC-6 §3). `arquivar_email` também muta estado no Gmail do utilizador → avaliar `requiresPreview`.
+- **Módulo Node-safe** — as tools Gmail usam `googleapis` (Node), não Edge (ADR-1). O helper de tools vive em `lib/agent/tools/gmail.ts` (padrão dos Epics 3/4/5, testado ~100%).
+- **Reuso open-closed** — `listar_emails_importantes` deve reutilizar o contrato/leitura já existente (route inbox 6.9 / `classifyCacheKey`) sem reabrir `gmail.ts` nem a route classify (mesma disciplina C2 da 6.9).
 
 ## Débitos / deferidos (não-bloqueantes)
 
