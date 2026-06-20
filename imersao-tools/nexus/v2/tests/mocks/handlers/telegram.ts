@@ -70,3 +70,89 @@ export const telegramHandlers: HttpHandler[] = [
     });
   }),
 ];
+
+/**
+ * Story 6.12 (AC6/C4 — `mock-protocol-fidelity.md`) — factories de update fiéis
+ * ao shape REAL da Telegram Bot API, usadas como fixtures nos testes do webhook.
+ *
+ * O webhook handler chama `POST` directamente (não há request externo à Bot API
+ * no caminho de update), por isso estas factories NÃO são `http.post` handlers —
+ * são geradores de body com o shape exacto da Bot API, partilhados pelos testes
+ * (`webhook.test.ts`). Reflectem os identificadores de contrato externo
+ * (`external-contract-identifiers.md`): `update_id`, `message`, `chat`, `id`,
+ * `text`, `voice`, `file_id`, `photo` — nomes EXACTOS. `message.photo` é SEMPRE
+ * um array (múltiplas resoluções). Um teste de fidelidade falha se omitir
+ * `message.chat` de um update de texto válido (C4).
+ *
+ * Aditivo — NÃO substitui os handlers `getMe`/`setWebhook` da 6.11.
+ */
+
+/** chatId default das fixtures (alinhar com `TELEGRAM_CHAT_ID` nos testes). */
+export const TELEGRAM_FIXTURE_CHAT_ID = 987654321;
+
+/** Update de texto — shape real da Bot API (forma mais simples). */
+export function makeTextUpdate(
+  text = 'olá',
+  chatId: number = TELEGRAM_FIXTURE_CHAT_ID,
+) {
+  return {
+    update_id: 123456789,
+    message: {
+      message_id: 1,
+      from: { id: chatId, is_bot: false, first_name: 'Eurico', language_code: 'pt' },
+      chat: { id: chatId, first_name: 'Eurico', type: 'private' },
+      date: 1750425600,
+      text,
+    },
+  };
+}
+
+/** Update de voz — `voice.file_id` é o identificador externo (transcrição 6.14). */
+export function makeVoiceUpdate(chatId: number = TELEGRAM_FIXTURE_CHAT_ID) {
+  return {
+    update_id: 123456790,
+    message: {
+      message_id: 2,
+      from: { id: chatId, is_bot: false, first_name: 'Eurico' },
+      chat: { id: chatId, type: 'private' },
+      date: 1750425601,
+      voice: {
+        file_id: 'AwACAgIAAxkBAAIB',
+        file_unique_id: 'AQADgNaXXXXXXX',
+        duration: 3,
+        mime_type: 'audio/ogg',
+        file_size: 12345,
+      },
+    },
+  };
+}
+
+/** Update de foto — `photo` é SEMPRE um array de resoluções (OCR 6.15). */
+export function makePhotoUpdate(chatId: number = TELEGRAM_FIXTURE_CHAT_ID) {
+  return {
+    update_id: 123456791,
+    message: {
+      message_id: 3,
+      from: { id: chatId, is_bot: false, first_name: 'Eurico' },
+      chat: { id: chatId, type: 'private' },
+      date: 1750425602,
+      photo: [
+        { file_id: 'AgACAgIAAxkBAAIC', file_unique_id: 'AQAD1', width: 320, height: 240, file_size: 11000 },
+        { file_id: 'AgACAgIAAxkBAAID', file_unique_id: 'AQAD2', width: 800, height: 600, file_size: 45000 },
+      ],
+    },
+  };
+}
+
+/** Update sem `message` (ex.: `edited_message`/`channel_post`) → tipo `unknown`. */
+export function makeUnknownUpdate() {
+  return {
+    update_id: 123456792,
+    edited_message: {
+      message_id: 4,
+      chat: { id: TELEGRAM_FIXTURE_CHAT_ID, type: 'private' },
+      date: 1750425603,
+      text: 'editado',
+    },
+  };
+}
