@@ -12,6 +12,29 @@
 
 ---
 
+## Passo 0 — arranque em terminal novo (migração)
+
+Terminal fresco, contexto limpo. Executa por ordem antes de aceitar a tarefa:
+
+```bash
+cd "C:\Users\XPS\Documents\ecosistema-ia-avancada-pt"
+git checkout main && git pull --ff-only origin main
+git rev-parse --short HEAD   # esperado: 6c1757d4 (close-story 6.11 docs) ou posterior; main 0/0 com origin
+```
+
+Ordem de leitura (não saltar):
+1. `CLAUDE.md` + `.claude/rules/` (handoff-location, merge-authority, internal-state-contract-gate, separation-of-roles, not-tested-trailer-rules).
+2. ESTE handoff (decisões `[D-6.11-*]`, débitos, pré-requisitos P1-P4, next_action).
+3. `imersao-tools/nexus/docs/EPIC-6.md` (§5 linha 6.12 + §7 `[GAP-6.4]` + §10) — fonte de verdade do epic (11/17; Telegram 1/7).
+4. `imersao-tools/nexus/docs/stories/completed/6.11.story.md` (esqueleto Edge que a 6.12 estende: webhook valida `secret_token`→403 + stub 200).
+5. `imersao-tools/nexus/docs/PRD-NEXUS-V2.md` §6.13 (FR70).
+
+**Working tree:** limpa nos paths do Nexus (close 6.11 já committed+pushed em `6c1757d4`). Restam apenas untracked/submódulos pré-existentes fora-scope (`comunidade`, `starter-builder`, `.agent/`, `.codex/`, `.antigravity/`, `docs/.claude/`, `PO-VALIDATION-*`/`PR-BODY-*`/`QA-GATE-*` antigos) — NÃO se committam.
+
+**Comando para arrancar o próximo ciclo:** `/sdc 6.12 --push` (cria → Architect Gate Entrada → PO → DEV → Architect Gate Saída → DevOps push/PR/merge). Sem `--push` o pipeline pára antes do push. A 6.12 é território webhook público → gate `@architect` + CR `--base main` no gate de saída (lição 5.11).
+
+---
+
 ## Summary
 
 A Story 6.11 (Telegram bot setup, FR69/FR70) está **FECHADA (Done)** em `main` via **PR #85 (squash `7c6e141c`)**, waiver 0. Abre o sub-módulo Telegram (agora 1/7). O fecho foi **docs-only** (`git mv` `active/` → `completed/`, Status → Done, `EPIC-6.md` 10/17 → **11/17**); o código já estava merged. `main` está em `7c6e141c`, sincronizado 0/0 com origin. As alterações de fecho ficam na working tree (não committed — `@devops` faz o commit do close, ou fica para a próxima janela). **Nada de push.**
