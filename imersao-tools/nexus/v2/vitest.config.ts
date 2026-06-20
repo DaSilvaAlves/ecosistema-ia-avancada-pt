@@ -103,6 +103,12 @@ export default defineConfig({
         'app/api/google/**',
         'app/(app)/settings/**',
         'components/settings/**',
+        // Story 6.11 — setup bot Telegram (helper Bot API por `fetch` + webhook
+        // Edge + setup Node). Precedente Stories 2.3/3.3/4.2/5.2/5.9/6.1 — adiciona
+        // paths à allowlist do report; thresholds globais inalterados; sem
+        // alteração comportamental do test runner.
+        'lib/telegram/**',
+        'app/api/telegram/**',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold 60% (P1.1 — roadmap de conclusão, architecture §5.4).
