@@ -94,6 +94,40 @@ describe('setup — ordem de escrita C3 (Telegram PRIMEIRO, KV DEPOIS)', () => {
     expect(kvSet).not.toHaveBeenCalled();
   });
 
+  // #3 (CR Iter 2): assimetria getMe corrigida — outage/5xx/não-JSON do Telegram
+  // ao validar o token NÃO é "token inválido" (400), é falha de upstream (502),
+  // em simetria com o setWebhook. Estes testes FALHAM sem o fix (o handler antigo
+  // mapeava QUALQUER BotApiError do getMe a 400).
+  it('getMe outage (ok:false sem error_code 401) → 502, KV NÃO escrito (#3)', async () => {
+    server.use(
+      http.post('https://api.telegram.org/bot:token/getMe', () =>
+        HttpResponse.json(
+          { ok: false, error_code: 500, description: 'Internal Server Error' },
+          { status: 500 },
+        ),
+      ),
+    );
+    const res = await callSetup();
+    expect(res.status).toBe(502);
+    expect(kvSet).not.toHaveBeenCalled();
+  });
+
+  it('getMe resposta não-JSON da infra (ex: HTML 5xx) → 502, KV NÃO escrito (#3)', async () => {
+    server.use(
+      http.post(
+        'https://api.telegram.org/bot:token/getMe',
+        () =>
+          new HttpResponse('<html>502 Bad Gateway</html>', {
+            status: 502,
+            headers: { 'Content-Type': 'text/html' },
+          }),
+      ),
+    );
+    const res = await callSetup();
+    expect(res.status).toBe(502);
+    expect(kvSet).not.toHaveBeenCalled();
+  });
+
   it('setWebhook {ok:false} → 502, KV NÃO escrito', async () => {
     server.use(
       http.post('https://api.telegram.org/bot:token/setWebhook', () =>

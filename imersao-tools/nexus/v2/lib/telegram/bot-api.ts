@@ -36,6 +36,15 @@ import { z } from 'zod';
 /** Base da Telegram Bot API. O `<token>` é interpolado por `botApiBaseUrl()`. */
 const TELEGRAM_API_ROOT = 'https://api.telegram.org';
 
+/**
+ * Timeout default (ms) por chamada à Bot API. 10 s alinha com o padrão do repo
+ * (`DDG_TIMEOUT_MS` em `app/api/conhecimento/web-search/route.ts`) e é folgado
+ * para o setup Node, mas continua bem abaixo do tecto da plataforma (~30 s):
+ * sem ele, um `fetch` pendurado esgotaria o orçamento de tempo — crítico quando
+ * o helper é importado pelo webhook Edge (orçamento < 5 s, stories 6.12+).
+ */
+const DEFAULT_BOT_API_TIMEOUT_MS = 10_000;
+
 // ---------------------------------------------------------------------------
 // Erros (classes nomeadas — instanceof estável no caller)
 // ---------------------------------------------------------------------------
@@ -68,6 +77,20 @@ export class BotApiError extends Error {
     this.method = method;
     this.description = description;
     this.errorCode = errorCode;
+  }
+}
+
+/**
+ * O `fetch` à Bot API excedeu o timeout (`AbortController`) ou abortou. É um erro
+ * de transporte/timeout — distinto de `BotApiError` (que significa que o Telegram
+ * respondeu `{ok:false}`). Estende `BotApiError` para que callers que tratam
+ * falhas de upstream com um único `instanceof BotApiError` continuem a funcionar,
+ * mantendo coerência semântica com a Bot API.
+ */
+export class BotApiTimeoutError extends BotApiError {
+  constructor(method: string, timeoutMs: number) {
+    super(method, `tempo-limite (${timeoutMs} ms) excedido ao contactar a Bot API.`);
+    this.name = 'BotApiTimeoutError';
   }
 }
 
@@ -132,17 +155,52 @@ function botApiBaseUrl(): string {
  *
  * O `fetch` nativo é Edge-safe (C1). Um erro de rede do `fetch` é propagado
  * (não engolido) — o caller (setup) aborta e NÃO escreve KV (eixo c ponto 4).
+ *
+ * CR Iter 2 (#4): o `fetch` tem um timeout via `AbortController` (padrão canónico
+ * do repo — `web-search/route.ts`). Sem ele, um `fetch` pendurado esgotaria o
+ * tecto de tempo da plataforma (~30 s) — problemático no webhook Edge (orçamento
+ * < 5 s). O timer é sempre limpo no `finally`. Um abort por timeout é convertido
+ * num `BotApiTimeoutError` (erro de transporte distinto, mas `instanceof
+ * BotApiError`) — nunca silenciado. `AbortController` é Web standard (Edge-safe).
+ *
+ * @param timeoutMs Timeout do `fetch` em ms (default `DEFAULT_BOT_API_TIMEOUT_MS`).
  */
 export async function callBotApi<T>(
   method: string,
   params?: Record<string, unknown>,
+  timeoutMs: number = DEFAULT_BOT_API_TIMEOUT_MS,
 ): Promise<T> {
   const url = `${botApiBaseUrl()}/${method}`;
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: params ? JSON.stringify(params) : undefined,
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  let resp: Response;
+  try {
+    resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: params ? JSON.stringify(params) : undefined,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    // Distinguir timeout/abort de outras falhas de rede. O abort do
+    // `AbortController` propaga-se como `AbortError` — em Node/undici é uma
+    // `DOMException` (NÃO `instanceof Error`), pelo que verificamos o `.name`
+    // directamente (não `instanceof Error`) → `BotApiTimeoutError`. Outras falhas
+    // de transporte propagam-se cruas (o caller aborta e NÃO escreve KV — eixo c
+    // ponto 4).
+    if (
+      typeof err === 'object' &&
+      err !== null &&
+      'name' in err &&
+      (err as { name?: unknown }).name === 'AbortError'
+    ) {
+      throw new BotApiTimeoutError(method, timeoutMs);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 
   // CR Iter 1 (F3): infra intermédia pode devolver não-JSON (ex: HTML de erro
   // 5xx do proxy/CDN). `resp.json()` lançaria um `SyntaxError` cru — convertemo-lo

@@ -118,16 +118,32 @@ export async function POST(req: Request): Promise<Response> {
       return NextResponse.json({ error: err.message }, { status: 503 });
     }
     if (err instanceof BotApiError) {
-      // Token inválido (Bot API `{ok:false, description:"Unauthorized"}`) ou rede.
+      // CR Iter 2 (#3): distinguir token genuinamente inválido de outage/erro de
+      // upstream — simetria com o `setWebhook` abaixo (que já devolve 502 para
+      // falha de upstream). Sem esta distinção, "Telegram down" (5xx, não-JSON,
+      // timeout) era mascarado como "token inválido" (400).
+      //   - Token inválido: o Telegram respondeu `{ok:false, error_code:401,
+      //     description:"Unauthorized"}` → 400 (o chamador tem de corrigir o token).
+      //   - Outage / 5xx / resposta não-JSON / timeout: `BotApiError` sem
+      //     `error_code:401` (inclui `BotApiTimeoutError`) → 502 (upstream falhou;
+      //     o token pode estar correcto). [D-6.11-GET-ME] / eixo c.
+      const isInvalidToken = err.errorCode === 401;
+      if (isInvalidToken) {
+        return NextResponse.json(
+          { error: `Token BotFather inválido: ${err.description}` },
+          { status: 400 },
+        );
+      }
       return NextResponse.json(
-        { error: `Token BotFather inválido ou inacessível: ${err.description}` },
-        { status: 400 },
+        { error: `Telegram indisponível ao validar o token: ${err.description}` },
+        { status: 502 },
       );
     }
-    // Erro de rede do fetch — KV NÃO escrito; estado anterior preservado.
+    // Erro de rede do fetch (não-`BotApiError`) — KV NÃO escrito; estado anterior
+    // preservado. Upstream inacessível → 502 (simetria com o setWebhook).
     return NextResponse.json(
       { error: 'Telegram indisponível ao validar o token.' },
-      { status: 503 },
+      { status: 502 },
     );
   }
 

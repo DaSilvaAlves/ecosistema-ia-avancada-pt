@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, delay } from 'msw';
 import { server } from '@/tests/mocks/server';
 import { TELEGRAM_MOCK_BOT } from '@/tests/mocks/handlers/telegram';
 import {
@@ -8,6 +8,7 @@ import {
   setWebhook,
   BotApiTokenMissingError,
   BotApiError,
+  BotApiTimeoutError,
 } from '@/lib/telegram/bot-api';
 
 /**
@@ -101,6 +102,34 @@ describe('getMe — validação de token', () => {
       ),
     );
     await expect(getMe()).rejects.toBeInstanceOf(BotApiError);
+  });
+});
+
+// #4 (CR Iter 2): o `fetch` da Bot API tem timeout via AbortController. Um fetch
+// pendurado abortaria por timeout → BotApiTimeoutError (instanceof BotApiError,
+// nunca silenciado nem pendurado até ao tecto da plataforma). Este teste FALHA
+// sem o fix (sem AbortController o fetch esperaria o handler lento até ao fim e
+// devolveria a identidade do bot em vez de lançar).
+describe('callBotApi — timeout (AbortController, #4)', () => {
+  it('fetch pendurado além do timeout → BotApiTimeoutError (instanceof BotApiError)', async () => {
+    server.use(
+      http.post('https://api.telegram.org/bot:token/getMe', async () => {
+        // Handler propositadamente mais lento (200 ms) que o timeout (20 ms).
+        await delay(200);
+        return HttpResponse.json({ ok: true, result: TELEGRAM_MOCK_BOT });
+      }),
+    );
+    const err = await callBotApi('getMe', undefined, 20).catch((e) => e);
+    expect(err).toBeInstanceOf(BotApiTimeoutError);
+    expect(err).toBeInstanceOf(BotApiError);
+    expect((err as BotApiError).method).toBe('getMe');
+  });
+
+  it('chamada rápida dentro do timeout → resolve normalmente (o timer não interfere)', async () => {
+    // Timeout folgado (5 s) — o fetch normal resolve muito antes; garante que o
+    // AbortController/timer não aborta chamadas legítimas nem deixa o timer pendente.
+    const me = await callBotApi<typeof TELEGRAM_MOCK_BOT>('getMe', undefined, 5_000);
+    expect(me.id).toBe(TELEGRAM_MOCK_BOT.id);
   });
 });
 
