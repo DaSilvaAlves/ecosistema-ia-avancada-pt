@@ -20,9 +20,26 @@ import { NextRequest, NextResponse } from 'next/server';
  * apenas "salta o redirect de cookie" — mesmo padrão de `/api/auth/login`. Só o
  * dispatch é Bearer-auth cookie-less; `send`/`subscribe`/`schedule` são cookie-auth
  * do browser e mantêm-se protegidos.
+ *
+ * Story 6.12 (C6b — achado `@architect`, paralelo EXACTO ao hotfix 4.8) —
+ * `/api/telegram/webhook` é exemptado do redirect de cookie. O Telegram entrega o
+ * update por POST cookieless (nunca traz `nexus_session`); sem a excepção o
+ * middleware redireccionava-o para `/login` (307) e o handler nunca corria → bot
+ * mudo em produção. A excepção NÃO abre buraco: a auth real é o `secret_token`
+ * (`x-telegram-bot-api-secret-token`) imposto no próprio handler (fail-closed →
+ * 403 incondicional se o segredo estiver ausente), exactamente como o dispatch usa
+ * `CRON_SECRET`. Os testes Vitest chamam `POST` directamente (não passam pelo
+ * middleware) → não apanhariam este caminho (falsa-confiança M4 da 4.9): a
+ * exempção é verificada por revisão de `middleware.ts` + preview manual.
  */
 
-const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/logout', '/api/push/dispatch'];
+const PUBLIC_PATHS = [
+  '/login',
+  '/api/auth/login',
+  '/api/auth/logout',
+  '/api/push/dispatch',
+  '/api/telegram/webhook',
+];
 const PUBLIC_PREFIXES = ['/_next/', '/icons/', '/favicon', '/manifest', '/sw.js', '/api/auth/'];
 
 function isPublic(pathname: string): boolean {

@@ -1,46 +1,109 @@
 /**
- * Nexus v2 — Webhook receiver Telegram (Edge) (Story 6.11 — FR70)
+ * Nexus v2 — Webhook handler Telegram (Edge) (Story 6.12 — FR70)
  *
  * `POST /api/telegram/webhook` — PRIMEIRO endpoint do Nexus que recebe input
- * não-solicitado da internet pública (EPIC-6.md §2/§9, Risco R2/R3). Na 6.11 é um
- * STUB de PORTEIRO DE ORIGEM: valida o `secret_token` e responde 200 `{ok:true}`
- * SEM parsear o body. O parse de texto/voz/foto, o fan-out e o filtro `chatId`
- * são da story 6.12 ([D-6.11-WEBHOOK-STUB]/[D-6.11-CHATID]/C8).
+ * não-solicitado da internet pública (EPIC-6.md §2/§9, Risco R2/R3). A 6.11
+ * entregou o esqueleto (porteiro de origem `secret_token` + stub 200). A 6.12
+ * SUBSTITUI o stub pelo handler completo: parse Zod → filtro `chatId` →
+ * rate-limit KV → detecção de tipo → dispatch stub ([D-6.11-WEBHOOK-STUB]).
  *
- * Edge runtime (ADR-1 / arch §4.1): só leitura de header + comparação de string +
- * `Response`. Zero `node:crypto`, zero `googleapis`, zero API Node-only.
+ * Edge runtime (ADR-1 / arch §4.1 / C3): só leitura de header + `req.json()` +
+ * Zod + `kv.incr`/`kv.expire` + `Response`. Zero `node:crypto`, zero
+ * `googleapis`, zero `getValidAccessToken` (Node-only). `kv` de `@vercel/kv`
+ * (Edge-safe — precedente `confirm/route.ts:1`, ratificado no Architect Gate).
  *
- * Verificação de origem (arch §9.5):
- *   - Telegram envia o header `x-telegram-bot-api-secret-token` igual ao
- *     `secret_token` registado no `setWebhook` (= `TELEGRAM_WEBHOOK_SECRET`).
- *   - Status de recusa: 403 Forbidden ([D-6.11-401-VS-403]/C4 — vinculativo, NÃO
- *     401: o `secret_token` é um segredo fixo partilhado, não uma credencial
- *     negociável; um chamador sem o segredo é um intruso, não um cliente por
- *     autenticar — sem caminho de remediação → 403).
- *   - Comparação `!==` directa, NÃO timing-safe ([D-6.11-TIMING-SAFE]/C4): o Edge
- *     não dispõe de `crypto.timingSafeEqual` (`node:crypto` é Node-only) e o
- *     vector de timing sobre um segredo de ≥32 chars de alta entropia, na rede
- *     pública, é impraticável. Contrasta deliberadamente com `CRON_SECRET`
- *     (`secretsMatch` timing-safe), que corre em Node.
+ * ORDEM DAS GUARDAS (AC7/C6 — inegociável, defesa em profundidade):
+ *   1. `secret_token` (herdada da 6.11 — C1, PRESERVADA byte-a-byte; 1.ª operação)
+ *   2. parse `req.json()` + `TelegramUpdateSchema.safeParse` (AC1/C2 → 400)
+ *   3. filtro `chatId` (AC2/C7 → 200 silencioso se não autorizado)
+ *   4. rate-limit KV (AC3/C5 → 429 se excedido; fail-OPEN com log se KV down — C9)
+ *   5. detecção de tipo + dispatch stub (AC4/AC5 → 200 {ok,routed:false,type})
  *
- * FAIL-CLOSED EXPLÍCITO (C2 CRÍTICA — eixo c ponto 3, anti-padrão M4 da 4.9):
- *   se `TELEGRAM_WEBHOOK_SECRET` estiver ausente/vazio em env, o webhook devolve
- *   403 INCONDICIONAL ANTES de comparar qualquer header. NUNCA aceitar um request
- *   quando o segredo não está configurado — tratar ausência de segredo como
- *   permissão é exactamente o ponto cego que `internal-state-contract-gate.md`
- *   existe para apanhar. Não depender da coincidência frágil `header !== undefined`.
+ * O rate-limit ocorre DEPOIS do filtro `chatId` (C6): não se gastam KV writes em
+ * chatIds não autorizados, e o limite só é atingível pelo chatId legítimo.
  *
- * Trace: AC4/AC5; arch §9.5; [D-6.11-401-VS-403]/[D-6.11-TIMING-SAFE]/[D-6.11-WEBHOOK-STUB]/
- * [D-6.11-CHATID]; C2/C4/C8.
+ * Distinção fail-closed vs fail-open ([D-6.12-RATELIMIT-KV-FAIL]/C9):
+ *   - `secret_token` é AUTENTICAÇÃO → fail-CLOSED (sem segredo → 403 — C1/6.11).
+ *   - rate-limit é HARDENING anti-hammering, NÃO autenticação → fail-OPEN: se o KV
+ *     lançar, processa-se o request MAS regista-se `console.error` (NUNCA
+ *     silencioso — anti-padrão M4 da 4.9). Para single-user, disponibilidade do
+ *     bot ao único utilizador legítimo > defesa marginal.
+ *
+ * Trace: AC1-AC8; C1-C9; [D-6.12-PARSE-STRATEGY]/[D-6.12-CHATID-REJECT]/
+ * [D-6.12-RATELIMIT-ALGO]/[D-6.12-RATELIMIT-RESPONSE]/[D-6.12-FAN-OUT-SCOPE]/
+ * [D-6.12-MISSING-CHATID-ENV]/[D-6.12-RATELIMIT-KV-FAIL]/[D-6.12-CHATID-TYPE].
  */
+
+import { kv } from '@vercel/kv';
+import { TelegramUpdateSchema, type TelegramUpdate } from '@/lib/telegram/types';
 
 export const runtime = 'edge';
 
 const SECRET_HEADER = 'x-telegram-bot-api-secret-token';
 
-/** Resposta 403 (origem não reconhecida — sem caminho de remediação). */
+/** Fixed window 60s — chave `nexus:telegram:ratelimit:${chatId}:${windowId}`. */
+const RATE_LIMIT_WINDOW_MS = 60_000;
+/** Máximo de updates por janela; `count > 60` → 429 ([D-6.12-RATELIMIT-RESPONSE]). */
+const RATE_LIMIT_MAX_REQUESTS = 60;
+/** TTL 70s: 10s de margem sobre a janela de 60s (clock skew / atraso incr→expire). */
+const RATE_LIMIT_TTL_S = 70;
+
+/** Tipo de update detectado (AC4) — passado ao dispatch (AC5). */
+type UpdateType = 'text' | 'voice' | 'photo' | 'unknown';
+
+/** Resposta 403 (origem não reconhecida — sem caminho de remediação). C1/6.11. */
 function forbidden(): Response {
   return new Response('forbidden', { status: 403 });
+}
+
+/** Resposta JSON 200 — `{ok:true}` silencioso ou dispatch `{ok,routed,type}`. */
+function jsonOk(body: Record<string, unknown>): Response {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+/**
+ * Rate-limit KV fixed-window (C5). `kv.incr` + `kv.expire(key, 70)` INCONDICIONAL
+ * (não só em `count===1` — fecha a janela chave-sem-TTL→contador-eterno do eixo b).
+ *
+ * Retorna:
+ *   - `'allowed'`  → `count <= 60` (processar)
+ *   - `'exceeded'` → `count > 60` (429)
+ *   - `'kv_error'` → `kv.incr`/`kv.expire` lançou (fail-OPEN + log — C9)
+ *
+ * Sem `kv.keys()`/`kv.scan()` (D-KV-HASH / C8): chave directa conhecida.
+ */
+async function checkRateLimit(
+  chatId: string,
+): Promise<'allowed' | 'exceeded' | 'kv_error'> {
+  const windowId = Math.floor(Date.now() / RATE_LIMIT_WINDOW_MS);
+  const key = `nexus:telegram:ratelimit:${chatId}:${windowId}`;
+  try {
+    const count = await kv.incr(key);
+    // C5 — expire INCONDICIONAL após cada incr (idempotente; custo desprezável).
+    await kv.expire(key, RATE_LIMIT_TTL_S);
+    return count <= RATE_LIMIT_MAX_REQUESTS ? 'allowed' : 'exceeded';
+  } catch (error) {
+    // C9 — KV indisponível: fail-OPEN (processar) MAS NUNCA silencioso.
+    console.error('[telegram-webhook] rate-limit KV indisponível (fail-open)', error);
+    return 'kv_error';
+  }
+}
+
+/**
+ * Detecção de tipo (AC4) — mutuamente exclusiva por prioridade
+ * `text > voice > photo > unknown`. `message` ausente, ou presente sem nenhum
+ * destes (sticker/location/edited_message/...) → `'unknown'`.
+ */
+function detectUpdateType(update: TelegramUpdate): UpdateType {
+  const message = update.message;
+  if (!message) return 'unknown';
+  if (typeof message.text === 'string' && message.text.length > 0) return 'text';
+  if (message.voice) return 'voice';
+  if (Array.isArray(message.photo) && message.photo.length > 0) return 'photo';
+  return 'unknown';
 }
 
 export async function POST(req: Request): Promise<Response> {
@@ -58,10 +121,52 @@ export async function POST(req: Request): Promise<Response> {
     return forbidden();
   }
 
-  // C8 — stub 6.11: NÃO ler nem parsear o body. Parse + fan-out + filtro chatId
-  // são da 6.12. Responder 200 para que o Telegram não re-tente.
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  // ── A partir daqui: origem AUTENTICADA. Handler completo da 6.12. ──
+
+  // (2) Parse + validação Zod (AC1/C2). `safeParse` com `.passthrough()` (raiz e
+  // sub-objectos) tolera campos extra do Telegram (`entities`/`forward_*`/...).
+  // Body não-JSON OU schema-fail → 400 (nunca 200 nem 500 não-capturado — eixo c).
+  let update: TelegramUpdate;
+  try {
+    const raw = await req.json();
+    const parsed = TelegramUpdateSchema.safeParse(raw);
+    if (!parsed.success) {
+      return new Response('bad request', { status: 400 });
+    }
+    update = parsed.data;
+  } catch {
+    return new Response('bad request', { status: 400 });
+  }
+
+  // (3) Filtro `chatId` (AC2/C7 — [D-6.12-CHATID-REJECT]/[D-6.12-MISSING-CHATID-ENV]).
+  // Três sub-casos de `unauthorized` resolvem TODOS em 200 silencioso `{ok:true}`
+  // sem processar: (a) env `TELEGRAM_CHAT_ID` ausente/falsy → ninguém autorizado;
+  // (b) `message`/`chat`/`id` ausente; (c) `chat.id` ≠ env. O 403 é reservado, por
+  // contrato (6.11), exclusivamente à guarda `secret_token`; responder 200 evita
+  // re-entrega em loop do Telegram e não revela política de autorização.
+  const authorizedChatId = process.env.TELEGRAM_CHAT_ID;
+  if (!authorizedChatId) {
+    return jsonOk({ ok: true });
+  }
+  // [D-6.12-CHATID-TYPE] — `chat.id` é number no JSON; env é string → comparar com
+  // coerção `String(...)`. `?.` cobre `message`/`chat` ausentes (sub-caso b).
+  const incomingChatId = update.message?.chat?.id;
+  if (incomingChatId === undefined || String(incomingChatId) !== authorizedChatId) {
+    return jsonOk({ ok: true });
+  }
+
+  // (4) Rate-limit KV (AC3/C5/C9) — APÓS o filtro chatId (C6: não gastar KV writes
+  // em não-autorizados). `count > 60` → 429; KV down → fail-OPEN + log (processa).
+  const rateLimit = await checkRateLimit(authorizedChatId);
+  if (rateLimit === 'exceeded') {
+    return new Response('rate limit exceeded', { status: 429 });
+  }
+  // `'allowed'` e `'kv_error'` (fail-open) seguem para o dispatch.
+
+  // (5) Detecção de tipo + dispatch stub (AC4/AC5 — [D-6.12-FAN-OUT-SCOPE]).
+  // A 6.12 faz APENAS dispatch stub: `routed:false`. A chamada ao cérebro para
+  // texto é âmbito exclusivo da 6.13 (FR71), que substitui `routed:false`→`true`
+  // para `text` sem quebrar o contrato (open-closed). voz=6.14, foto=6.15.
+  const type = detectUpdateType(update);
+  return jsonOk({ ok: true, routed: false, type });
 }
