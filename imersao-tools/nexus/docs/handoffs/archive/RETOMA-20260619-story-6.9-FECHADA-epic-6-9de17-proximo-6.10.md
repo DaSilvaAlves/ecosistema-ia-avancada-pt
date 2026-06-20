@@ -8,8 +8,10 @@
 from_agent: "Pax (@po) — *close-story 6.9 (após /sdc 6.9 --push: PR #83 auto-merge squash 04b724b8)"
 to_agent: "any — próximo terminal: @sm *draft 6.10 (tools cérebro Gmail) ou *draft 6.11 (Telegram, paralelo)"
 created: "2026-06-19T00:00:00Z"
-status: pending
-consumed: false
+status: consumed
+consumed: true
+consumed_at: "2026-06-20T00:00:00Z"
+consumed_by: "@po (close-story 6.10 via /sdc) — 6.10 já drafted/implementada/fechada; handoff da 6.9 arquivado no fecho da 6.10"
 project: nexus-v2
 next_action: "@sm *draft 6.10 (tools cérebro Gmail — listar_emails_importantes / criar_draft_gmail / arquivar_email, domínio gmail; criar_draft_gmail com requiresPreview:true por ser acção externa; nomes ASCII já validados nota EPIC-6 §5; consome o mesmo contrato KV nexus:cache:gmail:classify:<msgId> que a vista 6.9 lê; fecha o sub-módulo Gmail 4/4; gate @architect) OU *draft 6.11 (Telegram bot setup, paralelo — atenção GAP-6.4: decisão SDK Telegram + 2 criticals npm audit). A 6.9 fecha a vista Gmail; resta só 6.10 para completar o sub-módulo Gmail."
 ```
