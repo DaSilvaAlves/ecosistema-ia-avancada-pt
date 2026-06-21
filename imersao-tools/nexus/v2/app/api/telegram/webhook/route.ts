@@ -29,9 +29,17 @@
  *     silencioso — anti-padrão M4 da 4.9). Para single-user, disponibilidade do
  *     bot ao único utilizador legítimo > defesa marginal.
  *
+ * Story 6.13 (FR71) — o ramo `type==='text'` deixa de ser stub: lança um `fetch`
+ * fire-and-forget ao bridge Node `/api/telegram/process-text` (que invoca o cérebro
+ * multi-intent e responde ao utilizador via `sendMessage`) e devolve `routed:true`.
+ * As guardas C1-C9 da 6.12 ficam INTACTAS (open-closed — AC6); voz/foto/unknown
+ * continuam `routed:false` (6.14/6.15). O ACK ao Telegram é IMEDIATO (não aguarda o
+ * cérebro — [D-6.13-TIMEOUT]=(c), AC4): o `fetch` é iniciado mas NÃO aguardado.
+ *
  * Trace: AC1-AC8; C1-C9; [D-6.12-PARSE-STRATEGY]/[D-6.12-CHATID-REJECT]/
  * [D-6.12-RATELIMIT-ALGO]/[D-6.12-RATELIMIT-RESPONSE]/[D-6.12-FAN-OUT-SCOPE]/
- * [D-6.12-MISSING-CHATID-ENV]/[D-6.12-RATELIMIT-KV-FAIL]/[D-6.12-CHATID-TYPE].
+ * [D-6.12-MISSING-CHATID-ENV]/[D-6.12-RATELIMIT-KV-FAIL]/[D-6.12-CHATID-TYPE];
+ * Story 6.13 [D-6.13-RUNTIME]/[D-6.13-TIMEOUT]; C5/C6/C7 da 6.13.
  */
 
 import { kv } from '@vercel/kv';
@@ -40,6 +48,19 @@ import { TelegramUpdateSchema, type TelegramUpdate } from '@/lib/telegram/types'
 export const runtime = 'edge';
 
 const SECRET_HEADER = 'x-telegram-bot-api-secret-token';
+
+/**
+ * Caminho do bridge Node que invoca o cérebro (Story 6.13). O webhook NÃO importa
+ * o módulo do bridge (`process-text/route.ts`) — esse importa `runAgent` + o barrel
+ * de tools (Node-only, dynamic-import do SDK Anthropic). Importá-lo aqui puxaria
+ * código Node-only para o bundle Edge (viola C7/C3 da 6.12). Por isso o caminho e o
+ * header do shared-secret são duplicados como literais de contrato (como o
+ * `SECRET_HEADER` já é) — strings, não dependências de módulo.
+ */
+const PROCESS_TEXT_PATH = '/api/telegram/process-text';
+
+/** Shared-secret header da chamada interna webhook→bridge (C11 — literal duplicado). */
+const BRIDGE_SECRET_HEADER = 'x-telegram-bridge-secret';
 
 /** Fixed window 60s — chave `nexus:telegram:ratelimit:${chatId}:${windowId}`. */
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -163,10 +184,48 @@ export async function POST(req: Request): Promise<Response> {
   }
   // `'allowed'` e `'kv_error'` (fail-open) seguem para o dispatch.
 
-  // (5) Detecção de tipo + dispatch stub (AC4/AC5 — [D-6.12-FAN-OUT-SCOPE]).
-  // A 6.12 faz APENAS dispatch stub: `routed:false`. A chamada ao cérebro para
-  // texto é âmbito exclusivo da 6.13 (FR71), que substitui `routed:false`→`true`
-  // para `text` sem quebrar o contrato (open-closed). voz=6.14, foto=6.15.
+  // (5) Detecção de tipo + dispatch (AC4/AC5 — [D-6.12-FAN-OUT-SCOPE]).
+  // Story 6.13 (FR71): para `text`, lançar o cérebro via bridge Node
+  // fire-and-forget e responder `routed:true`. voz/foto/unknown continuam stub
+  // `routed:false` (open-closed — 6.14/6.15). O texto da mensagem está garantido
+  // não-vazio quando `type==='text'` (`detectUpdateType` exige `text.length > 0`).
   const type = detectUpdateType(update);
+  if (type === 'text') {
+    dispatchTextToBridge(req, update.message!.text!, authorizedChatId, configuredSecret);
+    return jsonOk({ ok: true, routed: true, type: 'text' });
+  }
   return jsonOk({ ok: true, routed: false, type });
+}
+
+/**
+ * Lança o `fetch` ao bridge Node `/api/telegram/process-text` em fire-and-forget
+ * ([D-6.13-TIMEOUT]=(c), C5) — o cérebro demora 10-30s, incompatível com o orçamento
+ * Edge <5s. O `fetch` é INICIADO (a conexão parte) mas NÃO aguardado: o ACK ao
+ * Telegram é imediato. Um `.catch` no-op evita um unhandled rejection se a conexão
+ * falhar (o bridge é quem entrega a mensagem de erro PT-PT ao utilizador — AC5).
+ *
+ * O bridge é same-origin (mesma deployment) — a base vem de `new URL(req.url).origin`
+ * (padrão de `setup/route.ts`; `req.nextUrl` não está garantido num `Request` cru). A
+ * chamada leva o shared-secret header (C11): o bridge é cookieless e valida-o
+ * fail-closed contra `TELEGRAM_WEBHOOK_SECRET` (o mesmo segredo já aqui validado).
+ */
+function dispatchTextToBridge(
+  req: Request,
+  text: string,
+  chatId: string,
+  sharedSecret: string,
+): void {
+  const bridgeUrl = `${new URL(req.url).origin}${PROCESS_TEXT_PATH}`;
+  void fetch(bridgeUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      [BRIDGE_SECRET_HEADER]: sharedSecret,
+    },
+    body: JSON.stringify({ text, chatId }),
+  }).catch((error) => {
+    // Fire-and-forget: nunca propagar (o ACK ao Telegram já foi/será dado). NUNCA
+    // silencioso (anti-M4 da 4.9) — log para observability.
+    console.error('[telegram-webhook] falha ao despachar texto ao bridge', error);
+  });
 }

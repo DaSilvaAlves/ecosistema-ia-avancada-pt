@@ -45,7 +45,23 @@ vi.mock('@vercel/kv', () => ({
 
 const SECRET = 'segredo-do-webhook-com-mais-de-32-caracteres-aleatorios';
 const SECRET_HEADER = 'x-telegram-bot-api-secret-token';
+const BRIDGE_SECRET_HEADER = 'x-telegram-bridge-secret';
 const CHAT_ID = String(TELEGRAM_FIXTURE_CHAT_ID);
+
+/**
+ * Story 6.13 (T3/T5) — mock de `globalThis.fetch` para o despacho fire-and-forget
+ * ao bridge `/api/telegram/process-text`. O ramo `type==='text'` lança um `fetch`
+ * NÃO aguardado (AC4 — ACK imediato). O mock intercepta-o para:
+ *   - evitar uma chamada de rede real / MSW unhandled nos testes do webhook;
+ *   - permitir asserir que o despacho foi lançado 1× com o shared-secret (T5.1/T5.2);
+ *   - simular um bridge que NUNCA resolve (promise pendente) → prova que o ACK ao
+ *     Telegram NÃO aguarda o cérebro (T5.2 — fire-and-forget).
+ *
+ * Cada teste pode redefinir `fetchImpl` (ex.: promise pendente vs rejeição) ANTES de
+ * chamar o webhook. Default: resolve `{ok:true}` rápido.
+ */
+let fetchImpl: (input: unknown, init?: unknown) => Promise<Response>;
+const fetchSpy = vi.fn((input: unknown, init?: unknown) => fetchImpl(input, init));
 
 function callWebhook(opts: { secretHeader?: string; body?: BodyInit } = {}): Promise<Response> {
   const headers = new Headers({ 'Content-Type': 'application/json' });
@@ -66,6 +82,8 @@ function callWithUpdate(update: unknown): Promise<Response> {
 const ORIGINAL_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET;
 const ORIGINAL_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
+const realFetch = globalThis.fetch;
+
 beforeEach(() => {
   process.env.TELEGRAM_WEBHOOK_SECRET = SECRET;
   process.env.TELEGRAM_CHAT_ID = CHAT_ID;
@@ -73,9 +91,14 @@ beforeEach(() => {
   kvState.incrError = null;
   kvIncr.mockClear();
   kvExpire.mockClear();
+  // Default: bridge resolve rápido `{ok:true}` (o webhook não aguarda — fire-and-forget).
+  fetchImpl = async () => new Response(JSON.stringify({ ok: true }), { status: 200 });
+  fetchSpy.mockClear();
+  globalThis.fetch = fetchSpy as unknown as typeof fetch;
 });
 
 afterEach(() => {
+  globalThis.fetch = realFetch;
   if (ORIGINAL_SECRET === undefined) delete process.env.TELEGRAM_WEBHOOK_SECRET;
   else process.env.TELEGRAM_WEBHOOK_SECRET = ORIGINAL_SECRET;
   if (ORIGINAL_CHAT_ID === undefined) delete process.env.TELEGRAM_CHAT_ID;
@@ -170,7 +193,8 @@ describe('6.12 — parse Zod (AC1/C2)', () => {
     ];
     const res = await callWithUpdate(update);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, routed: false, type: 'text' });
+    // Story 6.13: texto agora despacha ao cérebro → `routed:true` (era stub na 6.12).
+    expect(await res.json()).toEqual({ ok: true, routed: true, type: 'text' });
   });
 });
 
@@ -182,7 +206,8 @@ describe('6.12 — filtro chatId (AC2/C7)', () => {
   it('chatId correcto → processado (200 dispatch)', async () => {
     const res = await callWithUpdate(makeTextUpdate('olá'));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, routed: false, type: 'text' });
+    // Story 6.13: texto autorizado despacha ao cérebro → `routed:true`.
+    expect(await res.json()).toEqual({ ok: true, routed: true, type: 'text' });
   });
 
   it('sub-caso (a) env `TELEGRAM_CHAT_ID` ausente → 200 silencioso {ok:true} sem processar', async () => {
@@ -269,9 +294,9 @@ describe('6.12 — ordem das guardas (AC7/C6)', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('6.12 — detecção de tipo + dispatch (AC4/AC5)', () => {
-  it("texto → {ok:true, routed:false, type:'text'}", async () => {
+  it("texto → {ok:true, routed:true, type:'text'} (Story 6.13 — despacha ao cérebro)", async () => {
     const res = await callWithUpdate(makeTextUpdate('olá'));
-    expect(await res.json()).toEqual({ ok: true, routed: false, type: 'text' });
+    expect(await res.json()).toEqual({ ok: true, routed: true, type: 'text' });
   });
 
   it("voz → {ok:true, routed:false, type:'voice'}", async () => {
@@ -315,7 +340,8 @@ describe('6.12 — KV down: fail-open com log (C9)', () => {
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = await callWithUpdate(makeTextUpdate('olá'));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, routed: false, type: 'text' });
+    // Story 6.13: fail-open processa o texto → despacha ao cérebro (`routed:true`).
+    expect(await res.json()).toEqual({ ok: true, routed: true, type: 'text' });
     expect(errSpy).toHaveBeenCalled();
     errSpy.mockRestore();
   });
@@ -351,5 +377,69 @@ describe('6.12 — fidelidade de shape MSW (AC6/C4)', () => {
       message: { chat: { id: TELEGRAM_FIXTURE_CHAT_ID }, voice: { duration: 3 } },
     };
     expect(TelegramUpdateSchema.safeParse(semFileId).success).toBe(false);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Story 6.13 — AC1/AC4: ramo `type==='text'` despacha ao bridge fire-and-forget
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('6.13 — despacho de texto ao bridge (AC1/AC4)', () => {
+  it('T5.1 — texto autorizado → `fetch` ao bridge 1× com o shared-secret e body {text,chatId}', async () => {
+    await callWithUpdate(makeTextUpdate('olá'));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://nexus.test/api/telegram/process-text');
+    expect(init.method).toBe('POST');
+    const headers = init.headers as Record<string, string>;
+    expect(headers[BRIDGE_SECRET_HEADER]).toBe(SECRET);
+    expect(headers['Content-Type']).toBe('application/json');
+    expect(JSON.parse(init.body as string)).toEqual({ text: 'olá', chatId: CHAT_ID });
+  });
+
+  it('T5.2 — ACK ao Telegram é IMEDIATO mesmo se o bridge NUNCA resolver (fire-and-forget)', async () => {
+    // Bridge pendurado (promise que nunca resolve) — se o webhook aguardasse, o
+    // `await POST(...)` nunca retornaria e o teste daria timeout. O ACK chega.
+    fetchImpl = () => new Promise<Response>(() => {});
+    const res = await callWithUpdate(makeTextUpdate('olá'));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, routed: true, type: 'text' });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('T5.2b — bridge rejeita → ACK na mesma 200 (rejeição é apanhada, não propaga)', async () => {
+    fetchImpl = () => Promise.reject(new Error('bridge unreachable'));
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await callWithUpdate(makeTextUpdate('olá'));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, routed: true, type: 'text' });
+    // Dar uma microtask para o `.catch` correr e registar o erro (anti-M4).
+    await Promise.resolve();
+    errSpy.mockRestore();
+  });
+
+  it('T5.3 — voz NÃO despacha ao bridge (continua stub routed:false)', async () => {
+    const res = await callWithUpdate(makeVoiceUpdate());
+    expect(await res.json()).toEqual({ ok: true, routed: false, type: 'voice' });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('T5.3b — foto NÃO despacha ao bridge (continua stub routed:false)', async () => {
+    const res = await callWithUpdate(makePhotoUpdate());
+    expect(await res.json()).toEqual({ ok: true, routed: false, type: 'photo' });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('T5.3c — texto vazio (type unknown) NÃO despacha ao bridge', async () => {
+    const res = await callWithUpdate(makeTextUpdate(''));
+    expect(await res.json()).toEqual({ ok: true, routed: false, type: 'unknown' });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('T5.3d — chatId não autorizado NÃO despacha ao bridge (filtro antes do dispatch)', async () => {
+    const res = await callWithUpdate(makeTextUpdate('olá', 111222333));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

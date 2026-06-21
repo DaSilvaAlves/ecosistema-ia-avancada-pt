@@ -262,3 +262,28 @@ export async function setWebhook(url: string, secretToken: string): Promise<void
     );
   }
 }
+
+/**
+ * `sendMessage` — envia uma mensagem de texto ao utilizador via Telegram Bot API
+ * (Story 6.13 — FR71, [D-6.13-RESPONSE-MODE]=(c)).
+ *
+ * Envia `POST .../sendMessage` com `{ chat_id, text }` (Bot API method
+ * `sendMessage`). `chat_id`/`text` são identificadores de contrato externo da
+ * Bot API — nomes ASCII EXACTOS (`external-contract-identifiers.md`). O `result`
+ * (objecto `Message` da Bot API) é ignorado nesta story: a 6.13 só precisa de
+ * confirmar a entrega (`callBotApi` lança `BotApiError` em `{ok:false}`); o ack
+ * de mensagem não é persistido.
+ *
+ * Edge-safe (só usa `callBotApi`/`fetch` nativo). Na 6.13 é chamado no bridge
+ * Node (`process-text/route.ts`) — o webhook Edge já respondeu o ACK ao Telegram
+ * (fire-and-forget). O caller (bridge) NUNCA deve invocar `sendMessage` com
+ * `text` vazio (C8 — usa fallback PT-PT); a Bot API rejeitaria `text` vazio com
+ * `{ok:false, description:"message text is empty"}` → `BotApiError`.
+ *
+ * `parse_mode` é DEFERIDO (texto simples na 6.13 — sem Markdown/HTML).
+ *
+ * Trace: AC2; EPIC-6.md §5 row 6.13; [D-6.13-RESPONSE-MODE]; C4.
+ */
+export async function sendMessage(chatId: string | number, text: string): Promise<void> {
+  await callBotApi('sendMessage', { chat_id: chatId, text });
+}
