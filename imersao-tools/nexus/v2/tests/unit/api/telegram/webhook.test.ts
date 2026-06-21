@@ -47,6 +47,8 @@ const SECRET = 'segredo-do-webhook-com-mais-de-32-caracteres-aleatorios';
 const SECRET_HEADER = 'x-telegram-bot-api-secret-token';
 const BRIDGE_SECRET_HEADER = 'x-telegram-bridge-secret';
 const CHAT_ID = String(TELEGRAM_FIXTURE_CHAT_ID);
+const PROCESS_TEXT_PATH = 'https://nexus.test/api/telegram/process-text';
+const PROCESS_VOICE_PATH = 'https://nexus.test/api/telegram/process-voice';
 
 /**
  * Story 6.13 (T3/T5) — mock de `globalThis.fetch` para o despacho fire-and-forget
@@ -299,9 +301,9 @@ describe('6.12 — detecção de tipo + dispatch (AC4/AC5)', () => {
     expect(await res.json()).toEqual({ ok: true, routed: true, type: 'text' });
   });
 
-  it("voz → {ok:true, routed:false, type:'voice'}", async () => {
+  it("voz → {ok:true, routed:true, type:'voice'} (Story 6.14 — despacha ao bridge de voz)", async () => {
     const res = await callWithUpdate(makeVoiceUpdate());
-    expect(await res.json()).toEqual({ ok: true, routed: false, type: 'voice' });
+    expect(await res.json()).toEqual({ ok: true, routed: true, type: 'voice' });
   });
 
   it("foto → {ok:true, routed:false, type:'photo'}", async () => {
@@ -418,12 +420,6 @@ describe('6.13 — despacho de texto ao bridge (AC1/AC4)', () => {
     errSpy.mockRestore();
   });
 
-  it('T5.3 — voz NÃO despacha ao bridge (continua stub routed:false)', async () => {
-    const res = await callWithUpdate(makeVoiceUpdate());
-    expect(await res.json()).toEqual({ ok: true, routed: false, type: 'voice' });
-    expect(fetchSpy).not.toHaveBeenCalled();
-  });
-
   it('T5.3b — foto NÃO despacha ao bridge (continua stub routed:false)', async () => {
     const res = await callWithUpdate(makePhotoUpdate());
     expect(await res.json()).toEqual({ ok: true, routed: false, type: 'photo' });
@@ -438,6 +434,54 @@ describe('6.13 — despacho de texto ao bridge (AC1/AC4)', () => {
 
   it('T5.3d — chatId não autorizado NÃO despacha ao bridge (filtro antes do dispatch)', async () => {
     const res = await callWithUpdate(makeTextUpdate('olá', 111222333));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Story 6.14 — AC5/AC6: ramo `type==='voice'` despacha ao bridge de voz
+// fire-and-forget (stub funcional de diferimento)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('6.14 — despacho de voz ao bridge (AC5/AC6)', () => {
+  it('V1 — voz autorizada → `fetch` ao bridge de VOZ 1× com shared-secret e body {chatId}', async () => {
+    await callWithUpdate(makeVoiceUpdate());
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    // Despacha ao bridge de VOZ (não ao de texto) — caminho exacto.
+    expect(url).toBe(PROCESS_VOICE_PATH);
+    expect(url).not.toBe(PROCESS_TEXT_PATH);
+    expect(init.method).toBe('POST');
+    const headers = init.headers as Record<string, string>;
+    expect(headers[BRIDGE_SECRET_HEADER]).toBe(SECRET);
+    expect(headers['Content-Type']).toBe('application/json');
+    // No stub o corpo leva só `chatId` (sem `text`, sem `file_id`).
+    expect(JSON.parse(init.body as string)).toEqual({ chatId: CHAT_ID });
+  });
+
+  it('V2 — ACK ao Telegram é IMEDIATO mesmo se o bridge de voz NUNCA resolver (fire-and-forget)', async () => {
+    fetchImpl = () => new Promise<Response>(() => {});
+    const res = await callWithUpdate(makeVoiceUpdate());
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, routed: true, type: 'voice' });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('V3 — bridge de voz rejeita → ACK na mesma 200 (rejeição apanhada, não propaga)', async () => {
+    fetchImpl = () => Promise.reject(new Error('bridge unreachable'));
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await callWithUpdate(makeVoiceUpdate());
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, routed: true, type: 'voice' });
+    // Dar uma microtask para o `.catch` correr e registar o erro (anti-M4).
+    await Promise.resolve();
+    errSpy.mockRestore();
+  });
+
+  it('V4 — voz NÃO toca o KV antes de o filtro chatId passar (chatId errado → sem dispatch)', async () => {
+    const res = await callWithUpdate(makeVoiceUpdate(111222333));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
     expect(fetchSpy).not.toHaveBeenCalled();
