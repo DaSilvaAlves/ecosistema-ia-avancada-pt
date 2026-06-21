@@ -31,6 +31,16 @@ import { NextRequest, NextResponse } from 'next/server';
  * `CRON_SECRET`. Os testes Vitest chamam `POST` directamente (não passam pelo
  * middleware) → não apanhariam este caminho (falsa-confiança M4 da 4.9): a
  * exempção é verificada por revisão de `middleware.ts` + preview manual.
+ *
+ * Story 6.13 (C11 — achado `@architect`, paralelo EXACTO ao 4.8/6.12) —
+ * `/api/telegram/process-text` (bridge Node texto → cérebro) é exemptado do
+ * redirect de cookie. O webhook Edge cookieless chama-o fire-and-forget (sem
+ * `nexus_session`); sem a excepção o middleware redireccionava o POST interno para
+ * `/login` (307) e o cérebro nunca corria → bot mudo. A excepção NÃO abre buraco: o
+ * bridge impõe a sua própria auth via shared-secret header (`x-telegram-bridge-secret`
+ * contra `TELEGRAM_WEBHOOK_SECRET`, fail-closed → 403 incondicional se o segredo
+ * estiver ausente), exactamente como o dispatch usa `CRON_SECRET` e o webhook usa o
+ * `secret_token`.
  */
 
 const PUBLIC_PATHS = [
@@ -39,6 +49,7 @@ const PUBLIC_PATHS = [
   '/api/auth/logout',
   '/api/push/dispatch',
   '/api/telegram/webhook',
+  '/api/telegram/process-text',
 ];
 const PUBLIC_PREFIXES = ['/_next/', '/icons/', '/favicon', '/manifest', '/sw.js', '/api/auth/'];
 

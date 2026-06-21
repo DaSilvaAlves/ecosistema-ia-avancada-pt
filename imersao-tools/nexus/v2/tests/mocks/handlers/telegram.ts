@@ -69,6 +69,33 @@ export const telegramHandlers: HttpHandler[] = [
       description: 'Webhook was set',
     });
   }),
+
+  // sendMessage (Story 6.13 — AC2/C4) — entrega de texto ao utilizador. Shape REAL
+  // da Bot API: sucesso → `{ ok:true, result:<Message> }`; texto vazio → a Bot API
+  // responde `{ ok:false, error_code:400, description:"message text is empty" }`
+  // (espelhado para o teste de fidelidade — o bridge NUNCA deve enviar texto vazio,
+  // C8). O `result` é um objecto `Message` mínimo (`message_id`, `chat`, `text`).
+  http.post('https://api.telegram.org/bot:token/sendMessage', async ({ request }) => {
+    if (tokenIsInvalid(request.url)) {
+      return HttpResponse.json(UNAUTHORIZED_RESPONSE, { status: 401 });
+    }
+    const body = (await request.json()) as { chat_id?: unknown; text?: unknown };
+    if (typeof body.text !== 'string' || body.text.length === 0) {
+      return HttpResponse.json(
+        { ok: false, error_code: 400, description: 'message text is empty' },
+        { status: 400 },
+      );
+    }
+    return HttpResponse.json({
+      ok: true,
+      result: {
+        message_id: 42,
+        chat: { id: body.chat_id, type: 'private' },
+        date: 1750425600,
+        text: body.text,
+      },
+    });
+  }),
 ];
 
 /**
