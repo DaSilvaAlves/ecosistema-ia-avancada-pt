@@ -177,6 +177,35 @@ describe('process-text — fallback em erro do cérebro (AC5/C9)', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Idempotência de entrega (CR #87) — NO MÁXIMO 1 sendMessage por request
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('process-text — idempotência de entrega (1 envio outbound por request)', () => {
+  it('cérebro responde mas a ENTREGA falha → 1 só tentativa de sendMessage (sem 2º envio de erro)', async () => {
+    // Cenário CR: o cérebro responde com sucesso, mas o `sendMessage` da resposta
+    // falha (rede). O código antigo entrava no catch e enviava UM SEGUNDO
+    // `sendMessage` (erro PT-PT) → mensagens duplicadas/conflituosas. O fix separa
+    // "cérebro falhou" de "entrega falhou": após o cérebro responder há UMA só
+    // tentativa de entrega — se falhar, NÃO há segundo envio.
+    let attempts = 0;
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    server.use(
+      http.post('https://api.telegram.org/bot:token/sendMessage', () => {
+        attempts += 1;
+        return HttpResponse.error(); // falha de rede em TODAS as tentativas
+      }),
+    );
+    const res = await callBridge();
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, routed: true });
+    // Exactamente 1 tentativa — o 2º envio do código antigo faria attempts === 2.
+    expect(attempts).toBe(1);
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // AC7/C10 — teste de DEGENERAÇÃO de protocolo (falharia se o shape divergisse)
 // ═══════════════════════════════════════════════════════════════════════════
 

@@ -132,26 +132,31 @@ export async function POST(req: Request): Promise<Response> {
     return new Response('bad request', { status: 400 });
   }
 
-  // (3) Invoca o cérebro e envia a resposta. Toda a falha do cérebro/envio é
-  // capturada: o utilizador recebe SEMPRE uma mensagem (resposta ou erro PT-PT);
-  // o bridge devolve SEMPRE 200 ao webhook (que já respondeu 200 ao Telegram).
+  // (3) Invoca o cérebro e envia a resposta. O bridge devolve SEMPRE 200 ao
+  // webhook (que já respondeu 200 ao Telegram). Fases SEPARADAS para garantir
+  // idempotência de entrega: "cérebro falhou" e "entrega falhou" são tratadas
+  // em catches distintos para que ocorra NO MÁXIMO UM `sendMessage` outbound por
+  // request (evita resposta-do-cérebro + erro-PT-PT duplicados quando a entrega
+  // da resposta falha depois de o cérebro ter respondido).
+  let reply: string;
   try {
     const finalText = await collectAgentText(text);
     // C8 — texto vazio do cérebro → fallback PT-PT (NUNCA `sendMessage` com '').
-    const reply = finalText.length > 0 ? finalText : ERROR_MESSAGE_PT;
-    await sendMessage(chatId, reply);
-    return jsonOk({ ok: true, routed: true });
+    reply = finalText.length > 0 ? finalText : ERROR_MESSAGE_PT;
   } catch (error) {
-    // C9/AC5 — cérebro/envio falhou: tentar entregar a mensagem de erro PT-PT.
+    // C9/AC5 — cérebro falhou: a ÚNICA entrega será a mensagem de erro PT-PT.
     // O `console.error` garante observability (anti-M4); o detalhe NÃO vai ao
-    // utilizador (NFR11). Se o próprio `sendMessage` de erro falhar, engolimos
-    // (nada mais a fazer) mas registamos — nunca propagar 5xx ao webhook.
+    // utilizador (NFR11).
     console.error('[telegram-process-text] falha ao processar texto', error);
-    try {
-      await sendMessage(chatId, ERROR_MESSAGE_PT);
-    } catch (sendError) {
-      console.error('[telegram-process-text] falha ao enviar mensagem de erro', sendError);
-    }
-    return jsonOk({ ok: true, routed: true });
+    reply = ERROR_MESSAGE_PT;
   }
+
+  // Entrega única — uma só tentativa outbound. Se falhar, NÃO há segundo envio
+  // (evitar duplicados): só registamos e devolvemos 200 (nunca 5xx ao webhook).
+  try {
+    await sendMessage(chatId, reply);
+  } catch (sendError) {
+    console.error('[telegram-process-text] falha ao enviar mensagem', sendError);
+  }
+  return jsonOk({ ok: true, routed: true });
 }
