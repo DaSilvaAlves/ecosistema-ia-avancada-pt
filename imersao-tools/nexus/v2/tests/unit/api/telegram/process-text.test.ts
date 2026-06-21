@@ -5,7 +5,7 @@ import {
   BRIDGE_SECRET_HEADER,
   ERROR_MESSAGE_PT,
 } from '@/app/api/telegram/process-text/route';
-import { server } from '../../../mocks/server';
+import { server } from '@/tests/mocks/server';
 
 /**
  * Story 6.13 (T5, AC1-AC7) — bridge Node `POST /api/telegram/process-text`.
