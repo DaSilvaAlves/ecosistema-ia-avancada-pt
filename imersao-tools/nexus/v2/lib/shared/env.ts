@@ -31,6 +31,13 @@ const ServerEnvSchema = z.object({
   // a operar se ausente); provisionado pelo @devops em prod. NUNCA logado (NFR5).
   CRON_SECRET: z.string().optional(),
 
+  // Story 6.16 [D-6.16-BRIEFING-SCHEDULE] — janela horária do briefing matinal
+  // (hora local de Lisboa, `[start, end[`). Config estática (não estado) → env,
+  // não KV (evita leitura KV no caminho quente). Default 7/9 quando ausentes.
+  // `z.coerce.number()`: as env vars chegam sempre como string; coerce converte.
+  BRIEFING_HOUR_START: z.coerce.number().int().min(0).max(23).optional(),
+  BRIEFING_HOUR_END: z.coerce.number().int().min(0).max(24).optional(),
+
   KV_REST_API_URL: z.string().url().optional(),
   KV_REST_API_TOKEN: z.string().optional(),
 

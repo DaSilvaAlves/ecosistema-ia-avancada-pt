@@ -18,6 +18,9 @@ const TOUCHED = [
   'NEXUS_PASSWORD_HASH',
   'SESSION_SECRET',
   'NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC',
+  // Story 6.16 — janela do briefing matinal (C15 — teste de parsing).
+  'BRIEFING_HOUR_START',
+  'BRIEFING_HOUR_END',
 ] as const;
 
 const saved: Record<string, string | undefined> = {};
@@ -87,6 +90,44 @@ describe('getServerEnv — modo production', () => {
     delete process.env.SESSION_SECRET;
     const { getServerEnv } = await import('@/lib/shared/env');
     expect(() => getServerEnv()).toThrow(/SESSION_SECRET/);
+  });
+});
+
+describe('getServerEnv — BRIEFING_HOUR_* (Story 6.16, C15 parsing)', () => {
+  it('coerce string→number das horas do briefing (env vars chegam como string)', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-0123456789';
+    process.env.NEXUS_PASSWORD_HASH = 'hash-0123456789';
+    process.env.SESSION_SECRET = 'session-secret-0123456789';
+    process.env.BRIEFING_HOUR_START = '7';
+    process.env.BRIEFING_HOUR_END = '9';
+    const { getServerEnv } = await import('@/lib/shared/env');
+    const env = getServerEnv();
+    expect(env.BRIEFING_HOUR_START).toBe(7);
+    expect(env.BRIEFING_HOUR_END).toBe(9);
+  });
+
+  it('ausentes → undefined (default 7/9 aplicado no endpoint)', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-0123456789';
+    process.env.NEXUS_PASSWORD_HASH = 'hash-0123456789';
+    process.env.SESSION_SECRET = 'session-secret-0123456789';
+    delete process.env.BRIEFING_HOUR_START;
+    delete process.env.BRIEFING_HOUR_END;
+    const { getServerEnv } = await import('@/lib/shared/env');
+    const env = getServerEnv();
+    expect(env.BRIEFING_HOUR_START).toBeUndefined();
+    expect(env.BRIEFING_HOUR_END).toBeUndefined();
+  });
+
+  it('hora fora de 0-23 → rejeita (validação Zod)', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-0123456789';
+    process.env.NEXUS_PASSWORD_HASH = 'hash-0123456789';
+    process.env.SESSION_SECRET = 'session-secret-0123456789';
+    process.env.BRIEFING_HOUR_START = '25';
+    const { getServerEnv } = await import('@/lib/shared/env');
+    expect(() => getServerEnv()).toThrow(/BRIEFING_HOUR_START/);
   });
 });
 

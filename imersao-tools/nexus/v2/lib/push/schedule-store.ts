@@ -47,6 +47,13 @@ export const ScheduleEntrySchema = z.object({
   // D-SNOOZE-CONTRACT: presente ⇔ entrada adiada pelo utilizador via "Snooze".
   // Ausente nas entradas normais escritas pelo CRUD de lembretes (4.8).
   snoozedAt: z.number().int().positive().optional(),
+  // [D-6.16-CHANNEL-COUPLING] (Story 6.16): canais de entrega declarados do
+  // lembrete, espelhados de `Reminder.channels` (Dexie client-only). ADITIVO e
+  // OPCIONAL — entradas escritas pela 4.8 (sem `channels`) continuam válidas
+  // (mesmo precedente de `snoozedAt?`); o dispatcher trata `undefined` como
+  // `['push']` (comportamento Epic 4 byte-a-byte preservado — AC2/C1). O `Zod`
+  // não tem `.strict()`: campos extra são strippados, nunca rejeitados.
+  channels: z.array(z.enum(['push', 'telegram'])).optional(),
 });
 
 export type ScheduleEntry = z.infer<typeof ScheduleEntrySchema>;
