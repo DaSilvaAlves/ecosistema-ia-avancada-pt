@@ -32,9 +32,17 @@
  * Story 6.13 (FR71) — o ramo `type==='text'` deixa de ser stub: lança um `fetch`
  * fire-and-forget ao bridge Node `/api/telegram/process-text` (que invoca o cérebro
  * multi-intent e responde ao utilizador via `sendMessage`) e devolve `routed:true`.
- * As guardas C1-C9 da 6.12 ficam INTACTAS (open-closed — AC6); voz/foto/unknown
- * continuam `routed:false` (6.14/6.15). O ACK ao Telegram é IMEDIATO (não aguarda o
- * cérebro — [D-6.13-TIMEOUT]=(c), AC4): o `fetch` é iniciado mas NÃO aguardado.
+ * As guardas C1-C9 da 6.12 ficam INTACTAS (open-closed — AC6). O ACK ao Telegram é
+ * IMEDIATO (não aguarda o cérebro — [D-6.13-TIMEOUT]=(c), AC4): o `fetch` é iniciado
+ * mas NÃO aguardado.
+ *
+ * Story 6.14 (FR72) — o ramo `type==='voice'` deixa de ser stub: lança um `fetch`
+ * fire-and-forget ao bridge Node `/api/telegram/process-voice` e devolve
+ * `routed:true`. Nesta entrega o bridge é STUB FUNCIONAL DE DIFERIMENTO
+ * ([D-6.14-TRANSCRIPTION-SERVICE]=(c)): responde ao utilizador com uma mensagem
+ * PT-PT a indicar que a transcrição de áudio ainda não está disponível
+ * ([D-6.14-FALLBACK-VOICE] #1). As guardas C1-C9 e o ramo `text` ficam INTACTOS
+ * (open-closed — AC6); foto/unknown continuam `routed:false` (6.15 / sem destino).
  *
  * Trace: AC1-AC8; C1-C9; [D-6.12-PARSE-STRATEGY]/[D-6.12-CHATID-REJECT]/
  * [D-6.12-RATELIMIT-ALGO]/[D-6.12-RATELIMIT-RESPONSE]/[D-6.12-FAN-OUT-SCOPE]/
@@ -58,6 +66,14 @@ const SECRET_HEADER = 'x-telegram-bot-api-secret-token';
  * `SECRET_HEADER` já é) — strings, não dependências de módulo.
  */
 const PROCESS_TEXT_PATH = '/api/telegram/process-text';
+
+/**
+ * Caminho do bridge Node de voz (Story 6.14). Mesmo racional do `PROCESS_TEXT_PATH`:
+ * literal de contrato (string), NÃO import do módulo do bridge — `process-voice`
+ * importa `sendMessage` (e, no futuro, `getFile`/download/transcrição) Node-only;
+ * importá-lo aqui puxaria código Node-only para o bundle Edge (viola C7/C3 da 6.12).
+ */
+const PROCESS_VOICE_PATH = '/api/telegram/process-voice';
 
 /** Shared-secret header da chamada interna webhook→bridge (C11 — literal duplicado). */
 const BRIDGE_SECRET_HEADER = 'x-telegram-bridge-secret';
@@ -194,6 +210,17 @@ export async function POST(req: Request): Promise<Response> {
     dispatchTextToBridge(req, update.message!.text!, authorizedChatId, configuredSecret);
     return jsonOk({ ok: true, routed: true, type: 'text' });
   }
+  // Story 6.14 (FR72): para `voice`, lançar o bridge Node de voz fire-and-forget e
+  // responder `routed:true` (substitui o stub `routed:false` da 6.12). O bridge
+  // responde ao utilizador com a mensagem de diferimento PT-PT
+  // ([D-6.14-FALLBACK-VOICE] #1 — transcrição é stub funcional nesta entrega). Foto/
+  // unknown continuam stub `routed:false` (6.15 / sem destino). O `file_id` da voz
+  // está garantido pelo schema (`message.voice.file_id`, types.ts) mas é OPCIONAL no
+  // stub (a resposta de diferimento não descarrega o ficheiro — C2/REC-6.14).
+  if (type === 'voice') {
+    dispatchVoiceToBridge(req, authorizedChatId, configuredSecret);
+    return jsonOk({ ok: true, routed: true, type: 'voice' });
+  }
   return jsonOk({ ok: true, routed: false, type });
 }
 
@@ -227,5 +254,31 @@ function dispatchTextToBridge(
     // Fire-and-forget: nunca propagar (o ACK ao Telegram já foi/será dado). NUNCA
     // silencioso (anti-M4 da 4.9) — log para observability.
     console.error('[telegram-webhook] falha ao despachar texto ao bridge', error);
+  });
+}
+
+/**
+ * Lança o `fetch` ao bridge Node `/api/telegram/process-voice` em fire-and-forget
+ * (Story 6.14 — AC5/C1/C3) — mesmo padrão de `dispatchTextToBridge`. No stub o
+ * bridge só responde a mensagem de diferimento PT-PT, mas a chamada é na mesma
+ * fire-and-forget para preservar o ACK imediato ao Telegram (<5s, orçamento Edge) e
+ * para que a activação futura da transcrição (que leva 10-30s) não exija mudar este
+ * ponto. O corpo leva apenas `{ chatId }` (o `file_id` é OPCIONAL no stub — a
+ * resposta de diferimento não descarrega o ficheiro; será adicionado em
+ * REC-6.14-TRANSCRIPTION-FUTURE). O shared-secret header (C4) é o mesmo da 6.13.
+ */
+function dispatchVoiceToBridge(req: Request, chatId: string, sharedSecret: string): void {
+  const bridgeUrl = `${new URL(req.url).origin}${PROCESS_VOICE_PATH}`;
+  void fetch(bridgeUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      [BRIDGE_SECRET_HEADER]: sharedSecret,
+    },
+    body: JSON.stringify({ chatId }),
+  }).catch((error) => {
+    // Fire-and-forget: nunca propagar (o ACK ao Telegram já foi dado). NUNCA
+    // silencioso (anti-M4 da 4.9) — log para observability.
+    console.error('[telegram-webhook] falha ao despachar voz ao bridge', error);
   });
 }

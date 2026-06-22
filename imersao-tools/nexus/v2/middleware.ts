@@ -41,6 +41,15 @@ import { NextRequest, NextResponse } from 'next/server';
  * contra `TELEGRAM_WEBHOOK_SECRET`, fail-closed → 403 incondicional se o segredo
  * estiver ausente), exactamente como o dispatch usa `CRON_SECRET` e o webhook usa o
  * `secret_token`.
+ *
+ * Story 6.14 (C4 — achado `@architect`, paralelo EXACTO ao 4.8/6.12/6.13) —
+ * `/api/telegram/process-voice` (bridge Node voz → resposta de diferimento) é
+ * exemptado do redirect de cookie pela MESMA razão: o webhook Edge cookieless
+ * chama-o fire-and-forget; sem a excepção o middleware redireccionava o POST interno
+ * para `/login` (307) e o canal de voz ficava mudo em produção. A excepção NÃO abre
+ * buraco: o bridge impõe a sua própria auth via o mesmo shared-secret header
+ * (`x-telegram-bridge-secret` contra `TELEGRAM_WEBHOOK_SECRET`, fail-closed → 403
+ * incondicional se o segredo estiver ausente).
  */
 
 const PUBLIC_PATHS = [
@@ -50,6 +59,7 @@ const PUBLIC_PATHS = [
   '/api/push/dispatch',
   '/api/telegram/webhook',
   '/api/telegram/process-text',
+  '/api/telegram/process-voice',
 ];
 const PUBLIC_PREFIXES = ['/_next/', '/icons/', '/favicon', '/manifest', '/sw.js', '/api/auth/'];
 
