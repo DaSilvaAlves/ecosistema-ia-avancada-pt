@@ -477,6 +477,8 @@ describe('6.14 — despacho de voz ao bridge (AC5/AC6)', () => {
     expect(await res.json()).toEqual({ ok: true, routed: true, type: 'voice' });
     // Dar uma microtask para o `.catch` correr e registar o erro (anti-M4).
     await Promise.resolve();
+    // Asserir a observability da rejeição: regressões que larguem o `.catch` são apanhadas.
+    expect(errSpy).toHaveBeenCalled();
     errSpy.mockRestore();
   });
 

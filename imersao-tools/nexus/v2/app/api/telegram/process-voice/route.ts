@@ -110,13 +110,18 @@ export async function POST(req: Request): Promise<Response> {
   let chatId: string;
   try {
     const raw = (await req.json()) as ProcessVoiceBody;
-    if (
-      (typeof raw.chatId !== 'string' && typeof raw.chatId !== 'number') ||
-      String(raw.chatId).length === 0
-    ) {
+    // Normalizar e rejeitar edge cases: strings só com whitespace, NaN e Infinity
+    // (CR 6.14 Minor — endpoint público, hardening de input antes de `sendMessage`).
+    const normalizedChatId =
+      typeof raw.chatId === 'string'
+        ? raw.chatId.trim()
+        : typeof raw.chatId === 'number' && Number.isFinite(raw.chatId)
+          ? String(raw.chatId)
+          : '';
+    if (normalizedChatId.length === 0) {
       return new Response('bad request', { status: 400 });
     }
-    chatId = String(raw.chatId);
+    chatId = normalizedChatId;
   } catch {
     return new Response('bad request', { status: 400 });
   }
