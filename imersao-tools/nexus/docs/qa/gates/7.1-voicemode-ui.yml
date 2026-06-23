@@ -1,0 +1,39 @@
+schema: 1
+story: '7.1'
+gate: PASS
+status_reason: 'Os 9 AC cumpridos com evidência ficheiro:linha; fronteira 7.1/7.2 limpa (zero SpeechRecognition instanciado); lint 0, typecheck 0, vitest 2358 PASS (1 flake oauth-status isolado-PASS, sem relação); CodeRabbit --base main sem findings.'
+reviewer: 'Quinn'
+updated: '2026-06-23T22:05:00Z'
+top_issues: []
+waiver: { active: false }
+
+# Detalhe do gate (Story 7.1 — VoiceMode UI, FR77)
+executor: '@ux-design-expert (Uma)'
+quality_gate: '@qa (Quinn)'
+separation_of_roles: 'PASS — executor != gate'
+confidence: high
+
+acceptance_criteria:
+  AC1: { verdict: PASS, evidence: 'VoiceModeButton.tsx:135 export; aria-label dinâmico :180; <button> nativo :176; aria-pressed dinâmico :169/:182' }
+  AC2: { verdict: PASS, evidence: 'STATE_STYLE 5 estados VoiceModeButton.tsx:41-70 — idle cyan #00F5FF, listening lime #39FF14 + voicePulse :165, processing cyan + spinner :188-201, error magenta #FF006E, unsupported grey #8892A4 disabled' }
+  AC3: { verdict: PASS, evidence: 'isSpeechRecognitionSupported() useVoiceModeState.ts:32-37 (in window, não instancia); mount useEffect :69-75 → unsupported; disabled VoiceModeButton.tsx:184; aria-label "Modo voz não suportado neste browser" :86' }
+  AC4: { verdict: PASS, evidence: 'onVoiceToggle prop voice.ts:53; handleClick no-op em unsupported/processing VoiceModeButton.tsx:144-151 (isInteractive); testado C3/C5' }
+  AC5: { verdict: PASS, evidence: 'useVoiceModeState.ts:60-112 expõe state/toggle/setError/setProcessing/reset/errorMessage/isSupported; setProcessing :93-96 (should-fix #2 PO); detecção no mount :69-75' }
+  AC6: { verdict: PASS, evidence: 'InputBox.tsx:5-6 imports; :73 useVoiceModeState (D-7.1-PLACEMENT local); :188-198 <VoiceModeButton>; import Mic removido; ChatPanel.test 5/5 PASS' }
+  AC7: { verdict: PASS, evidence: 'VoiceModeButton.test.tsx 6 cenários — C1-C5 (1 por estado) + AC8 a11y; cada um valida cor design-system + aria-label PT-PT + clique; 6/6 PASS' }
+  AC8: { verdict: PASS, evidence: 'aria-live="polite" role=status VoiceModeButton.tsx:206-208; aria-pressed sincronizado :169 (omitido quando não-interactivo); <button> nativo → Tab/Enter/Space' }
+  AC9: { verdict: PASS, evidence: 'isSpeechRecognitionSupported() inclui webkit (Chrome/Edge); Firefox → unsupported PT-PT; SSR-safe typeof window useVoiceModeState.ts:34; sem crash' }
+
+quality_checks:
+  boundary_7_1_vs_7_2: { verdict: PASS, evidence: 'grep: zero new SpeechRecognition / .start() / .stop() / getUserMedia / <video>; única referência funcional é detecção in window (useVoiceModeState.ts:35); restantes são comentários JSDoc' }
+  no_regression: { verdict: PASS, evidence: 'ChatPanel.test.tsx 5/5 PASS após substituição do placeholder <Mic>' }
+  test_architecture: { verdict: PASS, evidence: '5 estados render >= 3 → teste obrigatório (react-component-test-criteria.md); 5 cenários significativos (asserts de cor real, aria-label, callback invoke/no-op) — não tautológicos' }
+  internal_state_contract_gate: { verdict: 'N/A', evidence: 'estado local a 1 camada (hook no browser, sem persistência multi-camada) — gate de ciclo de vida não se aplica' }
+  gates_rerun:
+    lint: '0 erros (1 warning NextResponse pré-existente em logout/route.ts, não tocado)'
+    typecheck: '0 erros'
+    vitest_full: '2358 passed / 1 failed (2359) — fail = flake oauth-status timeout, 6/6 PASS isolado, sem relação com 7.1'
+    vitest_7_1: 'VoiceModeButton 6/6 PASS; ChatPanel 5/5 PASS'
+  coderabbit_base_main: { verdict: PASS, finding_count: 0, evidence: 'review --plain --base main --dir nexus/v2 → No findings' }
+
+gap_7_5_csp: 'PASS — 7.1 não acede a microfone/câmara (sem getUserMedia, sem instanciação); só ícones Mic/MicOff/AlertCircle (sem <video>); CSP inalterada.'

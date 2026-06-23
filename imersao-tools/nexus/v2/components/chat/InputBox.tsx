@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState, KeyboardEvent, ReactElement } from 'react';
-import { Mic, Paperclip, Send } from 'lucide-react';
+import { Paperclip, Send } from 'lucide-react';
+import { VoiceModeButton } from '@/components/chat/VoiceModeButton';
+import { useVoiceModeState } from '@/hooks/useVoiceModeState';
 
 /**
  * Nexus v2 — InputBox / ChatInput (Story 0.4 + Story 1.9 AC6 + AC9)
@@ -14,8 +16,11 @@ import { Mic, Paperclip, Send } from 'lucide-react';
  * - Story 1.9 AC6 — estados `streamingState` (`idle`/`streaming`/`preview-pending`),
  *   placeholders contextuais, opacity 60% durante streaming, mic placeholder idle-only
  * - Story 1.9 AC9 — `aria-disabled`, `aria-describedby`, `aria-label` específico
- * - GAP-2 (PO Pax 08/05/2026) — `<Mic>` é placeholder visual idle-only;
- *   funcionalidade voice completa fica para Epic 7 (FR77-80)
+ * - GAP-2 (PO Pax 08/05/2026) — `<Mic>` ERA placeholder visual idle-only;
+ *   Story 7.1 (FR77) substitui-o pelo `<VoiceModeButton>` real (5 estados)
+ * - Story 7.1 — integra `VoiceModeButton` + `useVoiceModeState` (estado local
+ *   ao InputBox, D-7.1-PLACEMENT). A lógica de Web Speech (start/stop) chega na
+ *   Story 7.2 via callback `onVoiceToggle` — a 7.1 só entrega a UI/estado.
  * - Front-end-spec §2.2 — tokens visuais (background blur, border)
  * - Front-end-spec §4.4 estado `idle` do `VoiceModeButton`
  *
@@ -63,6 +68,9 @@ export function InputBox({
   const effectivePlaceholder = placeholder ?? STATE_PLACEHOLDERS[streamingState];
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Story 7.1 — estado de voz local ao InputBox (D-7.1-PLACEMENT). A 7.2
+  // ligará `voice.toggle` ao SpeechRecognition; a 7.1 só mantém o estado visual.
+  const voice = useVoiceModeState();
 
   // Foco global com `/`
   useEffect(() => {
@@ -170,30 +178,25 @@ export function InputBox({
           }}
         />
 
-        <button
-          type="button"
-          /*
-           * GAP-2 (Story 1.9 PO Pax) — placeholder visual idle-only.
-           * Funcionalidade voice completa (FR77-80) fica para Epic 7. Não há
-           * onClick handler activo — clicar é no-op (UX parity sem regressão
-           * de scope para Epic 1).
-           */
-          aria-label="Voz (em breve — disponível em Epic 7)"
-          title="Voz (em breve — disponível em Epic 7)"
-          disabled={disabled}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: '#8892A4',
-            cursor: disabled ? 'not-allowed' : 'default',
-            padding: 8,
-            display: 'flex',
-            alignItems: 'center',
-            opacity: 0.6,
-          }}
-        >
-          <Mic size={18} />
-        </button>
+        {/*
+         * Story 7.1 (FR77) — substitui o placeholder `<Mic>` (GAP-2) pelo
+         * VoiceModeButton real. Estado local via `useVoiceModeState`. O clique
+         * só alterna o modo voz quando o input NÃO está em streaming/preview
+         * (respeita o `disabled` legacy do InputBox). A lógica de Web Speech
+         * (start/stop) chega na Story 7.2 — aqui o callback só faz `voice.toggle()`.
+         */}
+        <VoiceModeButton
+          state={voice.state}
+          errorMessage={voice.errorMessage}
+          onVoiceToggle={
+            disabled
+              ? undefined
+              : () => {
+                  voice.toggle();
+                }
+          }
+        />
+
 
         <button
           type="button"
