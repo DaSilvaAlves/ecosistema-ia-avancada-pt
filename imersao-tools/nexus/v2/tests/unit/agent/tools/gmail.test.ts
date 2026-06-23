@@ -107,8 +107,8 @@ describe('gmail tools — registo no registry (AC1, C5, C7)', () => {
     ]);
   });
 
-  it('all() === 37 após o barrel importar ./gmail (34 + 3)', () => {
-    expect(toolRegistry.all()).toHaveLength(37);
+  it('all() === 38 após o barrel importar ./gmail + ./telegram (34 + 3 + 1)', () => {
+    expect(toolRegistry.all()).toHaveLength(38);
   });
 
   it('requiresPreview/reversible por tool (D-6.10-PREVIEW = a)', () => {

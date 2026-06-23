@@ -557,7 +557,7 @@ describe('registo no toolRegistry', () => {
     // D-6.6-GAP65-DOMAIN standalone). Story 6.10: + gmail (3 tools —
     // D-6.10-GAP-DOMAIN standalone). Finanças permanece 6.
     expect(toolRegistry.byDomain('finance')).toHaveLength(6);
-    expect(toolRegistry.all().length).toBe(37);
+    expect(toolRegistry.all().length).toBe(38);
   });
 
   it('T20 — toAnthropicTools não lança para as 6 tools de finanças', () => {

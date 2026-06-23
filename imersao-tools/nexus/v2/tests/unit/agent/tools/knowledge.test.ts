@@ -508,8 +508,8 @@ describe('pesquisar_web_e_criar_nota (T23-T25 — W1)', () => {
 });
 
 describe('Tool Registry — Epic 5 (T26-T27)', () => {
-  it('T26 — toolRegistry.all().length === 37 após import (+ 3 calendar 6.6 + 3 gmail 6.10)', () => {
-    expect(toolRegistry.all().length).toBe(37);
+  it('T26 — toolRegistry.all().length === 38 após import (+ 3 calendar 6.6 + 3 gmail 6.10 + 1 telegram 6.17)', () => {
+    expect(toolRegistry.all().length).toBe(38);
     expect(toolRegistry.byDomain('journal')).toHaveLength(4);
     expect(toolRegistry.byDomain('knowledge')).toHaveLength(5);
   });

@@ -160,7 +160,7 @@ describe('consultar_projecto', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 describe('toolRegistry integration', () => {
-  it('T22 — 34 tools registadas após import do barrel (7 Epic 2 + 6 Epic 3 + 9 Epic 4 + 9 Epic 5 + 3 Epic 6)', () => {
+  it('T22 — 38 tools registadas após import do barrel (7 Epic 2 + 6 Epic 3 + 9 Epic 4 + 9 Epic 5 + 7 Epic 6)', () => {
     // Story 3.11: o barrel importa `./finance` (6 tools domínio 'finance').
     // Story 4.10: o barrel importa habits/goals/reminders (9 tools domínio
     // 'habits' — D-DOMAIN Opção A: metas/lembretes partilham o bucket 'habits').
@@ -168,8 +168,9 @@ describe('toolRegistry integration', () => {
     // Opção A: 4 'journal' incl. brain_dump + 5 'knowledge').
     // Story 6.6: o barrel importa `./calendar` (3 tools domínio 'calendar' —
     // D-6.6-GAP65-DOMAIN standalone). Story 6.10: + `./gmail` (3 tools domínio
-    // 'gmail' — D-6.10-GAP-DOMAIN standalone).
-    expect(toolRegistry.all()).toHaveLength(37);
+    // 'gmail' — D-6.10-GAP-DOMAIN standalone). Story 6.17: + `./telegram` (1 tool
+    // domínio 'telegram' — enviar_telegram, D-6.17-RUNTIME/CHATID).
+    expect(toolRegistry.all()).toHaveLength(38);
     expect(toolRegistry.byDomain('tasks')).toHaveLength(7);
     expect(toolRegistry.byDomain('finance')).toHaveLength(6);
     expect(toolRegistry.byDomain('habits')).toHaveLength(9);
@@ -177,6 +178,7 @@ describe('toolRegistry integration', () => {
     expect(toolRegistry.byDomain('knowledge')).toHaveLength(5);
     expect(toolRegistry.byDomain('calendar')).toHaveLength(3);
     expect(toolRegistry.byDomain('gmail')).toHaveLength(3);
+    expect(toolRegistry.byDomain('telegram')).toHaveLength(1);
 
     const nomes = toolRegistry.all().map((t) => t.name).sort();
     expect(nomes).toEqual([
@@ -207,6 +209,7 @@ describe('toolRegistry integration', () => {
       'criar_parcelada',
       'criar_projecto',
       'criar_tarefa',
+      'enviar_telegram',
       'listar_atrasadas',
       'listar_emails_importantes',
       'listar_eventos',
