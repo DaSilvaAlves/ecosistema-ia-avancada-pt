@@ -7,7 +7,11 @@
 - **from_agent:** `@devops` (Gage) — fechou a fase devops da 6.16 (push PR #89 + auto-merge + push do close-story)
 - **to_agent:** any — preferencialmente `@sm` (River) para `*draft 6.17`
 - **created:** 23/06/2026
-- **status:** pending
+- **status:** consumed
+- **consumed:** true
+- **consumed_at:** 2026-06-23T00:00:00Z
+- **consumed_by:** `@po` (Pax)
+- **consumed_note:** Pipeline 6.17 completo. Story FECHADA via `*close-story 6.17` — merged PR #90 squash `5f3ab475` (CR 2 iter, waiver 0); Status → Done; `git mv` active→completed; EPIC-6 15/17→16/17, sub-módulo Telegram 5/7→6/7 (última do sub-módulo). Handoff arquivado. Push do commit de fecho docs-only fica para o `@devops`.
 - **projecto:** Nexus v2 (`imersao-tools/nexus/`)
 
 ---
