@@ -33,8 +33,20 @@ import type { TelegramSendResponse } from '@/app/api/telegram/send/route';
  */
 
 let sessionValid = true;
+// F2 (CR Iter 1): quando `cookieAware` está activo, a validade da sessão deriva da
+// PRESENÇA real do cookie no pedido (não de `sessionValid`). Isto faz o teste de
+// "cookie ausente" falhar pela razão certa — sem cookie → sessão inválida —
+// em vez de ser tautológico (o mock antigo ignorava o cookie e dependia só de
+// `sessionValid=false`, pelo que não provava nada sobre o gate de cookie).
+let cookieAware = false;
 vi.mock('@/lib/auth/session', () => ({
-  getSession: vi.fn(async () => ({ valid: sessionValid, userId: 'eurico' })),
+  getSession: vi.fn(async (req: Request) => {
+    if (cookieAware) {
+      const hasCookie = (req.headers.get('cookie') ?? '').includes('nexus_session=');
+      return { valid: hasCookie, userId: 'eurico' };
+    }
+    return { valid: sessionValid, userId: 'eurico' };
+  }),
 }));
 
 let mockChatId: string | undefined = '987654321';
@@ -43,6 +55,12 @@ vi.mock('@/lib/shared/env', () => ({
 }));
 
 const VALID_BOT_TOKEN = '7654321:AAExampleBotTokenForTests';
+
+// F3 (CR Iter 1): captura o valor original de `TELEGRAM_BOT_TOKEN` para o restaurar
+// em `afterAll` — evita fuga de estado global do env entre ficheiros de teste
+// (testes order-dependent). O `beforeEach`/casos individuais mutam-no; aqui
+// garante-se que o ambiente fica como estava no fim da suite.
+const ORIGINAL_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 async function callSend(
   body: unknown,
@@ -63,11 +81,20 @@ const SEND_ENDPOINT = `https://api.telegram.org/bot${VALID_BOT_TOKEN}/sendMessag
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+afterAll(() => {
+  server.close();
+  // F3 — restaura o env ao estado original (em vez de `delete`), sem fuga global.
+  if (ORIGINAL_BOT_TOKEN === undefined) {
+    delete process.env.TELEGRAM_BOT_TOKEN;
+  } else {
+    process.env.TELEGRAM_BOT_TOKEN = ORIGINAL_BOT_TOKEN;
+  }
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
   sessionValid = true;
+  cookieAware = false;
   mockChatId = '987654321';
   process.env.TELEGRAM_BOT_TOKEN = VALID_BOT_TOKEN;
 });
@@ -80,11 +107,27 @@ describe('telegram/send — auth (AC4, C2)', () => {
     expect((await res.json()).error).toBe('not_authenticated');
   });
 
-  it('cookie ausente (sessão inválida) → 401 not_authenticated', async () => {
-    sessionValid = false;
+  it('cookie ausente → 401 not_authenticated (gate de cookie, não tautológico — F2)', async () => {
+    // `cookieAware`: a validade deriva da PRESENÇA do cookie no pedido. Com
+    // `sessionValid=true` (default), o 401 só pode vir da ausência do cookie —
+    // o teste falha pela razão certa.
+    cookieAware = true;
     const res = await callSend({ text: 'olá' }, { withCookie: false });
     expect(res.status).toBe(401);
     expect((await res.json()).error).toBe('not_authenticated');
+  });
+
+  it('cookie presente (cookieAware) → passa o gate de auth (controlo do F2)', async () => {
+    // Prova que o gate de cookie distingue presença de ausência: com cookie
+    // presente, a auth passa (segue para o caminho de envio, 200).
+    cookieAware = true;
+    server.use(
+      http.post(SEND_ENDPOINT, () =>
+        HttpResponse.json({ ok: true, result: { message_id: 1 } }),
+      ),
+    );
+    const res = await callSend({ text: 'olá' });
+    expect(res.status).toBe(200);
   });
 });
 
@@ -113,6 +156,27 @@ describe('telegram/send — validação do corpo (AC5, C3)', () => {
       method: 'POST',
       headers: { cookie: 'nexus_session=abc', 'Content-Type': 'application/json' },
       body: 'isto não é json',
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('invalid_request');
+  });
+
+  // F1 (CR Iter 1): `req.json()` aceita JSON escalar/null/array válidos. Destructurar
+  // `const { text } = payload` sobre estes lançaria TypeError → 500. A route tem de
+  // devolver 400 `invalid_request`, NUNCA 500.
+  it.each([
+    ['null', 'null'],
+    ['número escalar', '123'],
+    ['string escalar', '"texto solto"'],
+    ['array', '["olá"]'],
+    ['boolean', 'true'],
+  ])('corpo JSON %s (não-objecto) → 400 invalid_request, nunca 500', async (_label, rawBody) => {
+    const { POST } = await import('@/app/api/telegram/send/route');
+    const req = new Request('http://localhost:3001/api/telegram/send', {
+      method: 'POST',
+      headers: { cookie: 'nexus_session=abc', 'Content-Type': 'application/json' },
+      body: rawBody,
     });
     const res = await POST(req);
     expect(res.status).toBe(400);

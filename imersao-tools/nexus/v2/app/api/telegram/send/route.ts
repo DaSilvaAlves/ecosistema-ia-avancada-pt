@@ -74,13 +74,21 @@ export async function POST(req: Request): Promise<Response> {
 
   // (ii) Validação do corpo `{ text }` (C3): defesa em profundidade. `chat_id`
   // NUNCA é lido do body (anti-SSRF) — só `text`.
-  let payload: SendRequestBody;
+  let parsed: unknown;
   try {
-    payload = (await req.json()) as SendRequestBody;
+    parsed = await req.json();
   } catch {
+    // Body não-JSON (vazio, malformado) → 400 (nunca 500).
     return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
   }
-  const { text } = payload;
+  // `req.json()` pode devolver `null` ou um JSON escalar/array válido (`123`,
+  // `"texto"`, `[]`). Destructurar isso directamente lançaria `TypeError` → 500,
+  // violando a promessa de 400 `invalid_request` do AC5. Guarda a forma de objecto
+  // ANTES do destructuring (CR Iter 1 F1).
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
+  }
+  const { text } = parsed as SendRequestBody;
   if (typeof text !== 'string' || text.length === 0 || text.length > MAX_TEXT_LENGTH) {
     return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
   }
