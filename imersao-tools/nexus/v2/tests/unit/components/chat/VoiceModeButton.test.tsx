@@ -110,6 +110,20 @@ describe('VoiceModeButton — AC7 (5 estados de render)', () => {
     expect(onVoiceToggle).not.toHaveBeenCalled();
   });
 
+  it('CR Iter 1 C3: state="idle" sem onVoiceToggle → botão não-interactivo (sem cursor pointer, aria-disabled=true, sem aria-pressed, clique no-op)', () => {
+    // Path real do InputBox em modo disabled/streaming: passa onVoiceToggle=undefined.
+    render(<VoiceModeButton state="idle" />);
+
+    const btn = screen.getByTestId('voice-mode-button');
+    // Afordância correcta: não-interactivo apesar do estado idle, porque não há handler.
+    expect(btn).toHaveStyle({ cursor: 'not-allowed' });
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
+    // aria-pressed omitido em botão não-interactivo (evita leitura ambígua).
+    expect(btn).not.toHaveAttribute('aria-pressed');
+    // Clique é seguro (no-op) — sem handler nada é invocado, sem crash.
+    fireEvent.click(btn);
+  });
+
   it('AC8: anúncio aria-live="polite" presente para leitores de ecrã', () => {
     render(<VoiceModeButton state="idle" />);
     const live = screen.getByRole('status');

@@ -141,8 +141,14 @@ export function VoiceModeButton({
   const isUnsupported = state === 'unsupported';
   const isProcessing = state === 'processing';
   const isListening = state === 'listening';
-  // AC4: clique no-op em `unsupported` e `processing`.
-  const isInteractive = !isUnsupported && !isProcessing;
+  // CR Iter 1 C3 — o botão só é interactivo se houver handler. Quando o
+  // `InputBox` passa `onVoiceToggle={undefined}` (path disabled/streaming), o
+  // botão tem de reflectir o estado não-interactivo (cursor not-allowed,
+  // aria-disabled="true", sem aria-pressed) em vez de mostrar afordâncias
+  // enganosas para um clique que seria no-op.
+  const hasHandler = typeof onVoiceToggle === 'function';
+  // AC4: clique no-op em `unsupported`, `processing` e quando não há handler.
+  const isInteractive = !isUnsupported && !isProcessing && hasHandler;
 
   function handleClick(): void {
     if (!isInteractive) return;
