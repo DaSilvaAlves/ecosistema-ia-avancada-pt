@@ -7,8 +7,13 @@
 - **from_agent:** orquestrador pipeline `/sdc` 6.16 (River `@sm` + Pax `@po` + Aria `@architect` + Dex `@dev` + Quinn `@qa`)
 - **to_agent:** any — preferencialmente `@devops` (push/PR/merge) → `@po` (close-story)
 - **created:** 23/06/2026
-- **status:** pending
+- **status:** consumed
+- **consumed:** true
+- **consumed_at:** 2026-06-23T00:00:00Z
+- **consumed_by:** @po (Pax)
 - **projecto:** Nexus v2 (`imersao-tools/nexus/`)
+
+> **[CONSUMIDO 23/06/2026 por Pax `@po`]** — A cadeia `@devops` (push branch `feat/story-6.16-lembretes-briefing` + PR + CR `--base main` + auto-merge) e o `@po *close-story 6.16` foram executados. Story 6.16 MERGED em `main` via **PR #89 (squash `476d66ae`)** e FECHADA (Status→Done, `git mv active/ → completed/`, **EPIC-6 14/17→15/17**, sub-módulo **Telegram 4/7→5/7**, fecho docs-only). A 6.16 desbloqueia a 6.17. Próximo: `/sdc 6.17` (`enviar_telegram`, FR76, gate `@architect`); a 6.15 (foto→OCR) fica diferida ao Epic 7.
 
 ---
 
