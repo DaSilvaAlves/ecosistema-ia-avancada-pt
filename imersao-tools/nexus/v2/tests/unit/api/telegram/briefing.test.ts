@@ -99,7 +99,15 @@ beforeEach(() => {
   server.use(
     http.post('https://api.telegram.org/bot:token/sendMessage', async ({ request }) => {
       const body = (await request.json()) as { chat_id?: unknown; text?: unknown };
-      sentMessages.push({ chat_id: body.chat_id, text: String(body.text) });
+      // Não coagir: um payload com `text` não-string é malformado e o handler
+      // deve revelá-lo (400, como a Bot API real) em vez de o mascarar com String().
+      if (typeof body.text !== 'string') {
+        return HttpResponse.json(
+          { ok: false, error_code: 400, description: 'Bad Request: text must be a string' },
+          { status: 400 },
+        );
+      }
+      sentMessages.push({ chat_id: body.chat_id, text: body.text });
       return HttpResponse.json({
         ok: true,
         result: { message_id: 9, chat: { id: body.chat_id, type: 'private' }, text: body.text },
@@ -109,6 +117,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   server.resetHandlers();
   vi.useRealTimers();
 });

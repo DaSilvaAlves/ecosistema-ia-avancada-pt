@@ -96,6 +96,11 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     // (C9) Idempotência diária — comparada em data de Lisboa.
+    // NOTA: este check-then-send-then-set NÃO é atómico. Duas invocações
+    // sobrepostas no mesmo minuto podem ambas ver `last_sent !== today` e
+    // enviar o briefing antes de qualquer uma gravar o marcador. Risco baixo
+    // (scheduler invoca de hora a hora); lease atómico per-dia diferido em
+    // REC-6.16-BRIEFING-LEASE (CR F4, aceite-diferido pelo @qa).
     const today = lisbonDateKey(now);
     const lastSent = await getBriefingLastSent();
     if (lastSent === today) {

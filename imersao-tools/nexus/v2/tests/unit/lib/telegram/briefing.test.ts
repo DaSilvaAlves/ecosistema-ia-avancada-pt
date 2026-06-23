@@ -40,6 +40,10 @@ describe('lisbonHour — DST (Intl Europe/Lisbon)', () => {
   it('Janeiro (WET, UTC+0): UTC 07:00 → Lisboa 07:00', () => {
     expect(lisbonHour(new Date(Date.UTC(2026, 0, 15, 7, 0, 0)))).toBe(7);
   });
+
+  it('meia-noite (WET, UTC+0): UTC 00:00 → Lisboa 00:00 (normaliza "24" → 0)', () => {
+    expect(lisbonHour(new Date(Date.UTC(2026, 0, 15, 0, 0, 0)))).toBe(0);
+  });
 });
 
 describe('lisbonDateKey — fuso Lisboa, não UTC', () => {
