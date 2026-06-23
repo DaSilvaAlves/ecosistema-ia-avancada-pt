@@ -50,6 +50,17 @@ import { NextRequest, NextResponse } from 'next/server';
  * buraco: o bridge impõe a sua própria auth via o mesmo shared-secret header
  * (`x-telegram-bridge-secret` contra `TELEGRAM_WEBHOOK_SECRET`, fail-closed → 403
  * incondicional se o segredo estiver ausente).
+ *
+ * Story 6.16 (C13 — achado `@architect`, paralelo EXACTO ao hotfix 4.8) —
+ * `/api/telegram/briefing` (endpoint Node do briefing matinal) é exemptado do
+ * redirect de cookie. É chamado por scheduler externo (cron-job.org)
+ * server-to-server, sem cookie de sessão; sem a excepção o middleware
+ * redireccionava o POST para `/login` (307) e o briefing nunca corria. A excepção
+ * NÃO abre buraco: o handler impõe a sua própria auth `CRON_SECRET` (`Authorization:
+ * Bearer`, timing-safe; 503 se o secret estiver ausente, 401 se o Bearer estiver
+ * errado), exactamente como o `/api/push/dispatch`. Os testes Vitest chamam `POST`
+ * directamente (não passam pelo middleware) — a exempção é verificada por revisão
+ * de `middleware.ts` (paralelo ao 4.8/6.12/6.13/6.14, M4 da 4.9).
  */
 
 const PUBLIC_PATHS = [
@@ -60,6 +71,7 @@ const PUBLIC_PATHS = [
   '/api/telegram/webhook',
   '/api/telegram/process-text',
   '/api/telegram/process-voice',
+  '/api/telegram/briefing',
 ];
 const PUBLIC_PREFIXES = ['/_next/', '/icons/', '/favicon', '/manifest', '/sw.js', '/api/auth/'];
 

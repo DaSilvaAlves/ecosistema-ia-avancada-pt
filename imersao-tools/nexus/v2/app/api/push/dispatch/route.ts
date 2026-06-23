@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerEnv } from '@/lib/shared/env';
 import { sendPushNotification } from '@/lib/push/send-notification';
 import { secretsMatch, extractBearer } from '@/lib/push/cron-auth';
+import { sendMessage } from '@/lib/telegram/bot-api';
 import {
   listSchedules,
   markScheduleSent,
@@ -34,6 +35,66 @@ export const runtime = 'nodejs';
 // same-origin (D-ACTION-AUTH-COOKIE), não este secret. `secretsMatch`/`extractBearer`
 // em `lib/push/cron-auth.ts`.
 
+/**
+ * Canais de entrega efectivos de uma entrada. [D-6.16-CHANNEL-COUPLING]:
+ * `channels` ausente ou vazio → `['push']` por defeito (retrocompatibilidade
+ * Epic 4 — entradas escritas pela 4.8 não têm o campo). C1/C2.
+ */
+function effectiveChannels(entry: ScheduleEntry): Array<'push' | 'telegram'> {
+  const channels: Array<'push' | 'telegram'> =
+    entry.channels && entry.channels.length > 0 ? entry.channels : ['push'];
+  // CR Iter 1 (F3 Minor): deduplica — um `channels` com duplicados (ex.:
+  // `['push','push']`) não deve produzir entregas repetidas no mesmo tick.
+  return [...new Set(channels)];
+}
+
+/**
+ * Entrega um lembrete via Web Push (Epic 4). Lógica byte-a-byte preservada da
+ * 4.8 (C2): `sendPushNotification` best-effort (`{ok}`/`{ok:false}` — NÃO lança);
+ * o caller distingue `ok` de `!ok` (anti-M4). Devolve sucesso do canal push.
+ */
+async function dispatchPushChannel(entry: ScheduleEntry): Promise<boolean> {
+  const result = await sendPushNotification({
+    title: 'Lembrete',
+    body: entry.text,
+    // `reminderId` permite à 4.9 accionar "marcar feito"/"snooze" no SW.
+    data: { reminderId: entry.id },
+  });
+  return result.ok;
+}
+
+/**
+ * Entrega um lembrete via Telegram (Story 6.16 — AC1/AC4/C5). `sendMessage`
+ * LANÇA em `{ok:false}`/rede (`BotApiError`) — o caller TEM de apanhar (a
+ * distinção sucesso vs erro é explícita, não um shape ambíguo). Falha → regista
+ * (anti-M4, observability) e devolve `false`: o canal conta como falhado, o
+ * lembrete fica `pending` para nova tentativa, e o lote NÃO aborta (AC4).
+ * `TELEGRAM_CHAT_ID` ausente → [D-6.16-CHAT-ID]: canal falhado gracioso, sem
+ * invocar `sendMessage` com `chat_id` vazio (C11).
+ */
+async function dispatchTelegramChannel(entry: ScheduleEntry): Promise<boolean> {
+  const chatId = getServerEnv().TELEGRAM_CHAT_ID;
+  if (!chatId) {
+    console.error(
+      '[push/dispatch] TELEGRAM_CHAT_ID ausente — canal telegram saltado',
+      entry.id,
+    );
+    return false;
+  }
+  try {
+    await sendMessage(chatId, entry.text);
+    return true;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'erro desconhecido';
+    console.error(
+      '[push/dispatch] falha ao entregar lembrete via telegram:',
+      entry.id,
+      message,
+    );
+    return false;
+  }
+}
+
 async function dispatchDue(now: number): Promise<{
   total: number;
   dispatched: number;
@@ -48,17 +109,26 @@ async function dispatchDue(now: number): Promise<{
   let failed = 0;
 
   for (const entry of due) {
-    const result = await sendPushNotification({
-      title: 'Lembrete',
-      body: entry.text,
-      // `reminderId` permite à 4.9 accionar "marcar feito"/"snooze" no SW.
-      data: { reminderId: entry.id },
-    });
+    const channels = effectiveChannels(entry);
 
-    if (result.ok) {
-      // Idempotência (AC4): a transição `pending → sent` impede re-disparo. Só
-      // marcamos `sent` quando o envio teve êxito — uma falha (sem subscrição,
-      // erro) deixa o lembrete `pending` para nova tentativa no próximo tick.
+    // Processa um lembrete de cada vez, tentando TODOS os canais declarados.
+    // [D-6.16-STATE-CONTRACT] / C3: `markScheduleSent` SÓ após todos os canais
+    // declarados terem sucesso (silent-loss guard M1 da 4.9). Se QUALQUER canal
+    // falhar, o lembrete fica `pending` → re-tentado no próximo tick. C4 opção
+    // (i): na re-tentativa o canal já bem-sucedido é re-enviado (duplicado raro,
+    // nunca silent loss) — o sub-estado por canal (`sentChannels`) é o débito
+    // diferido REC-6.16-SENT-CHANNELS.
+    let allOk = true;
+    for (const channel of channels) {
+      const ok =
+        channel === 'telegram'
+          ? await dispatchTelegramChannel(entry)
+          : await dispatchPushChannel(entry);
+      if (!ok) allOk = false;
+    }
+
+    if (allOk) {
+      // Idempotência (AC3/AC4): a transição `pending → sent` impede re-disparo.
       await markScheduleSent(entry);
       dispatched++;
     } else {

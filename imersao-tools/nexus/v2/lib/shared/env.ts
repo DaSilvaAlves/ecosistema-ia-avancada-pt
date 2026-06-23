@@ -10,7 +10,7 @@ import { z } from 'zod';
  * `NEXT_PUBLIC_*` são acessíveis ao client por design Next.js.
  */
 
-const ServerEnvSchema = z.object({
+const ServerEnvObject = z.object({
   ANTHROPIC_API_KEY: z.string().min(10, 'ANTHROPIC_API_KEY ausente ou demasiado curta'),
   NEXUS_PASSWORD_HASH: z.string().min(10, 'NEXUS_PASSWORD_HASH ausente'),
   SESSION_SECRET: z.string().min(16, 'SESSION_SECRET ausente ou demasiado curta'),
@@ -31,11 +31,34 @@ const ServerEnvSchema = z.object({
   // a operar se ausente); provisionado pelo @devops em prod. NUNCA logado (NFR5).
   CRON_SECRET: z.string().optional(),
 
+  // Story 6.16 [D-6.16-BRIEFING-SCHEDULE] — janela horária do briefing matinal
+  // (hora local de Lisboa, `[start, end[`). Config estática (não estado) → env,
+  // não KV (evita leitura KV no caminho quente). Default 7/9 quando ausentes.
+  // `z.coerce.number()`: as env vars chegam sempre como string; coerce converte.
+  BRIEFING_HOUR_START: z.coerce.number().int().min(0).max(23).optional(),
+  BRIEFING_HOUR_END: z.coerce.number().int().min(0).max(24).optional(),
+
   KV_REST_API_URL: z.string().url().optional(),
   KV_REST_API_TOKEN: z.string().optional(),
 
   NODE_ENV: z.enum(['development', 'production', 'test']).optional(),
 });
+
+// Story 6.16 [D-6.16-BRIEFING-SCHEDULE] — quando ambas as horas estão definidas,
+// `start` tem de ser estritamente menor que `end`. Caso contrário a janela
+// `[start, end[` é vazia e o briefing devolve `outside_window` em TODAS as
+// execuções, silenciosamente. Validar aqui falha no arranque (não em runtime).
+const ServerEnvSchema = ServerEnvObject.refine(
+  (env) =>
+    env.BRIEFING_HOUR_START === undefined ||
+    env.BRIEFING_HOUR_END === undefined ||
+    env.BRIEFING_HOUR_START < env.BRIEFING_HOUR_END,
+  {
+    message:
+      'BRIEFING_HOUR_START tem de ser menor que BRIEFING_HOUR_END (janela [start, end[ vazia caso contrário)',
+    path: ['BRIEFING_HOUR_START'],
+  },
+);
 
 const PublicEnvSchema = z.object({
   NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC: z.string().optional(),
@@ -56,8 +79,10 @@ export function getServerEnv(): ServerEnv {
   if (_serverEnv) return _serverEnv;
 
   if (process.env.NODE_ENV === 'test') {
-    // Test mode: tolera ausências, retorna parsed-best-effort
-    const result = ServerEnvSchema.partial().safeParse(process.env);
+    // Test mode: tolera ausências, retorna parsed-best-effort.
+    // `.partial()` é do `ZodObject` base (o `.refine()` produz `ZodEffects`,
+    // que não expõe `.partial()`); o refine start<end não é crítico em test.
+    const result = ServerEnvObject.partial().safeParse(process.env);
     _serverEnv = (result.success ? result.data : {}) as ServerEnv;
     return _serverEnv;
   }

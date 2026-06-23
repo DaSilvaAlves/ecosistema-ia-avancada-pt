@@ -17,11 +17,25 @@ import type { Reminder } from '@/types/db';
  */
 
 /**
- * Espelha (upsert) a agenda de um lembrete `pending`. Só espelha lembretes com
- * canal `'push'` (lembretes só-`telegram` são ignorados — FR37 = Epic 6).
+ * Espelha (upsert) a agenda de um lembrete `pending`. Espelha lembretes com
+ * canal `'push'` E/OU `'telegram'` ([D-6.16-CHANNEL-COUPLING], Story 6.16 —
+ * FR74/FR37). Antes da 6.16 os lembretes só-`telegram` eram ignorados (FR37
+ * adiado para o Epic 6); agora o canal `telegram` é despachado server-side, por
+ * isso o mirror tem de o conhecer. O campo `channels` é incluído no body para o
+ * dispatcher unificado saber que canais entregar (entradas sem `channels` —
+ * legado 4.8 — são tratadas como `['push']`). Lembretes sem qualquer canal de
+ * entrega declarado não são espelhados (nada a disparar server-side).
  */
 export async function putReminderSchedule(reminder: Reminder): Promise<void> {
-  if (!reminder.channels.includes('push')) return;
+  // CR Iter 1 (F1 Critical): `channels` é não-opcional no tipo `Reminder`, mas
+  // linhas Dexie legadas (anteriores ao campo) podem trazê-lo `undefined` —
+  // optional-chaining + `?? false` evita um `TypeError` e trata o legado como
+  // "sem canal a espelhar" (graceful, coerente com o contrato 4.8).
+  const hasPush = reminder.channels?.includes('push') ?? false;
+  const hasTelegram = reminder.channels?.includes('telegram') ?? false;
+  if (!hasPush && !hasTelegram) {
+    return;
+  }
   try {
     const resp = await fetch('/api/push/schedule', {
       method: 'PUT',
@@ -31,6 +45,7 @@ export async function putReminderSchedule(reminder: Reminder): Promise<void> {
         fireAt: reminder.fireAt,
         text: reminder.text,
         status: 'pending',
+        channels: reminder.channels,
       }),
     });
     if (!resp.ok) {
