@@ -11,7 +11,10 @@
 **Agente que sai:** @po (Pax) — fechou a 7.2 e prepara o arranque da 7.3
 **Próximo agente:** @sm (River) — `*draft 7.3`
 **Branch:** `main` (HEAD `0c44ae4a`, fecho da 7.2) · `main` == `origin/main` (0/0) · sem branches `feat/` pendentes · sem trabalho devops pendente
-**from_agent:** @po (Pax) · **to_agent:** @sm (River) · **status:** pending
+**from_agent:** @po (Pax) · **to_agent:** @sm (River) · **status:** consumed
+**consumed:** true · **consumed_at:** 2026-06-24T00:00:00Z · **consumed_by:** @po (Pax)
+
+> **[CONSUMIDO 24/06/2026 por @po (Pax) — `*close-story 7.3`]** O `next_action` deste handoff (`@sm *draft 7.3`) foi cumprido: a Story 7.3 foi draftada, validada (PO GO 9/10), implementada (`@dev`), gated (`@qa` PASS), merged em `main` via **PR #93 squash `deecfd25`** e FECHADA (Status → Done, `git mv` active→completed). **EPIC-7 2/10 → 3/10**, sub-âmbito Voice **2/4 → 3/4**. A decisão de design em aberto da §3 (FR79 "directo": A manual-com-revisão vs B envio automático) foi resolvida no draft como **D-7.3-PIPELINE-ROUTE = Opção A (manual-com-revisão)**, com trace tríplice (FR79 "directo" = sem transformação; D-7.2-TRANSCRIPT-CONTRACT opção b já implementa o caminho; EPIC-7 §2/§5 "não cria fluxo novo"); opção B rejeitada. Próxima story: **7.4** (Web Speech synthesis PT-PT, FR80) — handoff de arranque `RETOMA-20260624-story-7.4-ARRANQUE-epic-7-3de10-speech-synthesis.md`.
 
 ---
 
