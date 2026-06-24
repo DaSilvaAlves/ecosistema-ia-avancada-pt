@@ -56,3 +56,67 @@ export interface VoiceModeButtonProps {
   /** Tamanho do ícone em px (default 18, consistente com `InputBox`). */
   iconSize?: number;
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * Story 7.2 (FR78) — Contrato da Web Speech API (browser nativo)
+ *
+ * ADITIVO (não altera os tipos da 7.1 acima). O `lib.dom.d.ts` do TypeScript
+ * inclui `SpeechRecognitionResult`/`SpeechRecognitionAlternative`/
+ * `SpeechRecognitionResultList`, mas NÃO declara `SpeechRecognition`,
+ * `SpeechRecognitionEvent`, `SpeechRecognitionErrorEvent` nem os globais
+ * `window.SpeechRecognition`/`window.webkitSpeechRecognition`. Estas declarações
+ * mínimas reflectem o shape REAL do protocolo (mock-protocol-fidelity.md):
+ * `event.results[0][0].transcript` e `event.error` (string).
+ * Trace: PRD §6.14 FR78 + arch §6 ("Voice = Web Speech API browser nativo").
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Evento de resultado (`onresult`). Shape real: `results[0][0].transcript`.
+ * `results` é indexável (`SpeechRecognitionResultList` → `SpeechRecognitionResult`
+ * → `SpeechRecognitionAlternative`), todos já presentes no `lib.dom.d.ts`.
+ */
+export interface SpeechRecognitionEventLike {
+  readonly results: SpeechRecognitionResultList;
+  readonly resultIndex: number;
+}
+
+/**
+ * Evento de erro (`onerror`). `error` é o código (`'not-allowed'`,
+ * `'no-speech'`, `'network'`, `'audio-capture'`, ...); `message` é texto livre.
+ */
+export interface SpeechRecognitionErrorEventLike {
+  readonly error: string;
+  readonly message: string;
+}
+
+/**
+ * Instância de `SpeechRecognition`. Só os membros usados pela 7.2 são tipados —
+ * configuração (`lang`/`continuous`/`interimResults`), ciclo de vida
+ * (`start`/`stop`/`abort`) e os 3 handlers de evento.
+ */
+export interface SpeechRecognitionInstance {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives?: number;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+  onend: ((event: Event) => void) | null;
+}
+
+/** Construtor nativo (`new SpeechRecognition()`). */
+export interface SpeechRecognitionConstructor {
+  new (): SpeechRecognitionInstance;
+}
+
+declare global {
+  interface Window {
+    /** Construtor nativo (Chrome/Edge recentes). */
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    /** Construtor com prefixo `webkit` (Chrome/Edge legados). */
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  }
+}
