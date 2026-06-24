@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   isSpeechRecognitionSupported,
   type UseVoiceModeStateResult,
@@ -46,6 +46,11 @@ export const VOICE_ERROR_MIC_DENIED = 'Permissão de microfone negada';
 export const VOICE_ERROR_NO_SPEECH = 'Sem resposta de voz detectada';
 /** Prefixo para códigos de erro não mapeados explicitamente (AC4 — linha 3). */
 export const VOICE_ERROR_GENERIC_PREFIX = 'Erro de reconhecimento: ';
+/**
+ * Falha ao instanciar/configurar `SpeechRecognition` (VOICE-002 — o construtor
+ * nativo lançou; ex.: Firefox AR7 PT-PT). Nunca crash silencioso (AC4/AC8).
+ */
+export const VOICE_ERROR_INIT_FAILED = 'Erro ao iniciar reconhecimento de voz';
 
 export interface UseVoiceOptions {
   /**
@@ -67,6 +72,14 @@ export interface UseVoiceResult {
    * Ligar a `VoiceModeButton.onVoiceToggle`.
    */
   toggle: () => void;
+  /**
+   * Cancela imediatamente qualquer reconhecimento activo: descarta a instância
+   * (microfone libertado) e repõe a UI para `idle`. Idempotente / no-op se não
+   * houver sessão activa. VOICE-004 (CR Major 3 — Security/Privacy): o
+   * consumidor usa isto quando o input é desactivado durante `listening`, para
+   * o microfone NÃO ficar activo num input desactivado.
+   */
+  cancel: () => void;
 }
 
 /**
@@ -98,7 +111,7 @@ function createRecognition(): SpeechRecognitionInstance | null {
 }
 
 export function useVoice({ voiceState, onTranscript }: UseVoiceOptions): UseVoiceResult {
-  const { state, toggle: toggleMode, setProcessing, setError } = voiceState;
+  const { state, toggle: toggleMode, setProcessing, setError, reset } = voiceState;
 
   // Instância efémera de SpeechRecognition (AC5). `null` quando não há
   // reconhecimento activo.
@@ -147,13 +160,28 @@ export function useVoice({ voiceState, onTranscript }: UseVoiceOptions): UseVoic
     // Já há uma sessão activa — não reinstancia.
     if (recognitionRef.current) return false;
 
-    const recognition = createRecognition();
-    if (!recognition) return false;
-
-    // AC1/AC3: configuração obrigatória. `lang` SEMPRE 'pt-PT'.
-    recognition.lang = 'pt-PT';
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    // VOICE-002 (CR Major 1 — Stability, AC4/AC8): a instanciação nativa
+    // (`new SpeechRecognition()`) e a configuração podem lançar (ex.: browser
+    // com a API presente mas a falhar para PT-PT — Firefox AR7). Tem de estar
+    // dentro de try/catch, senão a excepção escapa de `toggle()` → crash
+    // silencioso (nunca `setError`). No catch: mensagem PT-PT, teardown e
+    // `false` (a UI não transita — coerente com VOICE-001 (b)).
+    let recognition: SpeechRecognitionInstance | null;
+    try {
+      recognition = createRecognition();
+      if (!recognition) return false;
+      // AC1/AC3: configuração obrigatória. `lang` SEMPRE 'pt-PT'.
+      recognition.lang = 'pt-PT';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+    } catch {
+      // Falha ao instanciar/configurar — nunca crash silencioso (AC4/AC8).
+      if (mountedRef.current) {
+        setError(VOICE_ERROR_INIT_FAILED);
+      }
+      recognitionRef.current = null;
+      return false;
+    }
 
     gotResultRef.current = false;
 
@@ -178,7 +206,19 @@ export function useVoice({ voiceState, onTranscript }: UseVoiceOptions): UseVoic
       }
       // AC2: transição para `processing` antes de entregar o texto.
       setProcessing();
-      onTranscript?.(trimmed);
+      // VOICE-003 (CR Major 2 — Functional Correctness): `onTranscript` é
+      // opcional na interface pública do hook. Sem ele, `setProcessing()`
+      // deixaria a UI presa em `processing` (estado sem saída — não há quem
+      // faça `reset`). A máquina de estados TEM de sair de `processing`
+      // independentemente da presença do callback: quando há `onTranscript`,
+      // o consumidor (InputBox) entrega o texto e faz `voice.reset()`; sem
+      // callback, o próprio hook repõe a UI para `idle` (não há para onde
+      // entregar, mas o estado nunca fica inalcançável).
+      if (onTranscript) {
+        onTranscript(trimmed);
+      } else {
+        reset();
+      }
       teardownRecognition();
     };
 
@@ -215,7 +255,7 @@ export function useVoice({ voiceState, onTranscript }: UseVoiceOptions): UseVoic
       return false;
     }
     return true;
-  }, [onTranscript, setError, setProcessing, teardownRecognition]);
+  }, [onTranscript, reset, setError, setProcessing, teardownRecognition]);
 
   /**
    * Pára o reconhecimento. Devolve `true` se havia sessão activa e `stop()` foi
@@ -254,6 +294,25 @@ export function useVoice({ voiceState, onTranscript }: UseVoiceOptions): UseVoic
     }
   }, [start, stop, toggleMode]);
 
+  /**
+   * VOICE-004 (CR Major 3): cancela o reconhecimento activo e repõe a UI.
+   * Liberta o microfone (teardown descarta a instância) e leva a UI de volta a
+   * `idle`. Idempotente — se não houver sessão activa, é no-op (não toca na UI
+   * fora de `listening`/`processing`). Usado pelo `InputBox` quando o input é
+   * desactivado a meio de uma sessão de voz, para o microfone não ficar activo
+   * num input desactivado.
+   */
+  const cancel = useCallback((): void => {
+    if (!recognitionRef.current) return;
+    teardownRecognition();
+    if (
+      mountedRef.current &&
+      (stateRef.current === 'listening' || stateRef.current === 'processing')
+    ) {
+      reset();
+    }
+  }, [reset, teardownRecognition]);
+
   // Cleanup no unmount (AC5 + Focus secundário CR): pára o reconhecimento e
   // evita state update em componente desmontado.
   useEffect(() => {
@@ -264,5 +323,7 @@ export function useVoice({ voiceState, onTranscript }: UseVoiceOptions): UseVoic
     };
   }, [teardownRecognition]);
 
-  return { toggle };
+  // Retorno estável (`toggle`/`cancel` são `useCallback`) — evita re-execução
+  // de efeitos do consumidor que dependam do objecto do hook.
+  return useMemo<UseVoiceResult>(() => ({ toggle, cancel }), [toggle, cancel]);
 }

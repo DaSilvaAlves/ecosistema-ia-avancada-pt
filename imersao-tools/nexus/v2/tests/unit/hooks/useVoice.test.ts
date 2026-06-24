@@ -23,7 +23,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useVoice } from '@/hooks/useVoice';
+import { useVoice, VOICE_ERROR_INIT_FAILED } from '@/hooks/useVoice';
 import type { UseVoiceModeStateResult } from '@/hooks/useVoiceModeState';
 import type { VoiceModeState } from '@/types/voice';
 
@@ -39,6 +39,11 @@ class MockSpeechRecognition {
   static instances: MockSpeechRecognition[] = [];
   /** Se true, o próximo `start()` lança de forma síncrona (VOICE-001 (b)). */
   static throwOnStart = false;
+  /**
+   * Se true, o construtor (`new SpeechRecognition()`) lança (VOICE-002 — CR
+   * Major 1: Firefox AR7 PT-PT, instanciação nativa pode falhar).
+   */
+  static throwOnConstruct = false;
 
   lang = '';
   continuous = false;
@@ -58,6 +63,9 @@ class MockSpeechRecognition {
   abort = vi.fn();
 
   constructor() {
+    if (MockSpeechRecognition.throwOnConstruct) {
+      throw new DOMException('construction failed', 'NotSupportedError');
+    }
     MockSpeechRecognition.instances.push(this);
   }
 
@@ -119,6 +127,7 @@ function makeVoiceState(
 function installMock(): void {
   MockSpeechRecognition.instances = [];
   MockSpeechRecognition.throwOnStart = false;
+  MockSpeechRecognition.throwOnConstruct = false;
   (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition =
     MockSpeechRecognition;
 }
@@ -391,5 +400,82 @@ describe('useVoice — stop + cleanup (AC5)', () => {
     expect(rec.onerror).toBeNull();
     expect(rec.onend).toBeNull();
     expect(rec.stop).toHaveBeenCalled();
+  });
+});
+
+/* ─── VOICE-002 (CR Major 1) — construtor lança → nunca crash silencioso ──── */
+
+describe('useVoice — VOICE-002 instanciação lança (AC4/AC8)', () => {
+  it('o construtor nativo lança → setError(init failed), UI não transita, sem crash', () => {
+    const voiceState = makeVoiceState('idle');
+    MockSpeechRecognition.throwOnConstruct = true;
+    const onTranscript = vi.fn();
+    const { result } = renderHook(() => useVoice({ voiceState, onTranscript }));
+
+    // A excepção do construtor TEM de ser capturada — toggle() não pode lançar.
+    expect(() => act(() => result.current.toggle())).not.toThrow();
+
+    // Nenhuma instância foi registada (o construtor lançou antes do push).
+    expect(MockSpeechRecognition.instances).toHaveLength(0);
+    // AC4/AC8: falha explícita, nunca sucesso silencioso.
+    expect(voiceState.setError).toHaveBeenCalledWith(VOICE_ERROR_INIT_FAILED);
+    // VOICE-001 (b): start() devolveu false → a UI não transita (idle⇄listening).
+    expect(voiceState.toggle).not.toHaveBeenCalled();
+    expect(onTranscript).not.toHaveBeenCalled();
+  });
+});
+
+/* ─── VOICE-003 (CR Major 2) — sem onTranscript não fica preso em processing ─ */
+
+describe('useVoice — VOICE-003 sem onTranscript (AC2 — estado sem saída)', () => {
+  it('onresult sem callback onTranscript → setProcessing seguido de reset (não fica preso)', () => {
+    const voiceState = makeVoiceState('idle');
+    // Sem `onTranscript` — a interface pública permite omiti-lo.
+    const { result } = renderHook(() => useVoice({ voiceState }));
+
+    act(() => result.current.toggle());
+    const rec = MockSpeechRecognition.instances[0];
+
+    act(() => rec.emitResult('cria uma tarefa'));
+
+    // A máquina de estados TEM de sair de `processing`: sem callback, o hook
+    // repõe a UI para `idle` via reset (estado nunca inalcançável).
+    expect(voiceState.setProcessing).toHaveBeenCalledTimes(1);
+    expect(voiceState.reset).toHaveBeenCalledTimes(1);
+    expect(voiceState.setError).not.toHaveBeenCalled();
+  });
+});
+
+/* ─── VOICE-004 (CR Major 3) — cancel() liberta o microfone ───────────────── */
+
+describe('useVoice — VOICE-004 cancel() (AC5 / Security)', () => {
+  it('cancel() em listening → teardown da instância (microfone libertado) + reset da UI', () => {
+    const voiceState = makeVoiceState('idle');
+    const { result, rerender } = renderHook(() => useVoice({ voiceState }));
+
+    act(() => result.current.toggle()); // idle → listening
+    const rec = MockSpeechRecognition.instances[0];
+    rerender(); // sincroniza stateRef → 'listening'
+
+    act(() => result.current.cancel());
+
+    // A instância foi descartada (handlers removidos + stop chamado) → microfone
+    // libertado; a UI volta a idle.
+    expect(rec.onresult).toBeNull();
+    expect(rec.onerror).toBeNull();
+    expect(rec.onend).toBeNull();
+    expect(rec.stop).toHaveBeenCalled();
+    expect(voiceState.reset).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancel() sem sessão activa → no-op (não toca na UI)', () => {
+    const voiceState = makeVoiceState('idle');
+    const { result } = renderHook(() => useVoice({ voiceState }));
+
+    act(() => result.current.cancel());
+
+    expect(MockSpeechRecognition.instances).toHaveLength(0);
+    expect(voiceState.reset).not.toHaveBeenCalled();
+    expect(voiceState.setError).not.toHaveBeenCalled();
   });
 });

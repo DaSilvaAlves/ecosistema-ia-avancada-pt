@@ -91,6 +91,19 @@ export function InputBox({
     },
   });
 
+  // Story 7.2 (FR78) — VOICE-004 (CR Major 3 — Security/Privacy): se o input
+  // for desactivado (`disabled` → true) durante `listening`/`processing`, o
+  // `onVoiceToggle` do botão fica `undefined` e deixa de poder parar o
+  // reconhecimento — mas o recognizer manteria o microfone activo e poderia
+  // injectar transcrição num input desactivado. Este efeito cancela o
+  // reconhecimento e repõe a UI quando o input transita para desactivado,
+  // garantindo que o microfone NÃO fica activo num input desactivado.
+  useEffect(() => {
+    if (disabled && (voice.state === 'listening' || voice.state === 'processing')) {
+      recognizer.cancel();
+    }
+  }, [disabled, voice.state, recognizer]);
+
   // Foco global com `/`
   useEffect(() => {
     function onSlash(e: globalThis.KeyboardEvent): void {
