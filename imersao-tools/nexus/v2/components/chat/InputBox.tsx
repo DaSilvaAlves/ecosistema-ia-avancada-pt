@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, KeyboardEvent, ReactElement } from 'react'
 import { Paperclip, Send } from 'lucide-react';
 import { VoiceModeButton } from '@/components/chat/VoiceModeButton';
 import { useVoiceModeState } from '@/hooks/useVoiceModeState';
+import { useVoice } from '@/hooks/useVoice';
 
 /**
  * Nexus v2 — InputBox / ChatInput (Story 0.4 + Story 1.9 AC6 + AC9)
@@ -69,8 +70,39 @@ export function InputBox({
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Story 7.1 — estado de voz local ao InputBox (D-7.1-PLACEMENT). A 7.2
-  // ligará `voice.toggle` ao SpeechRecognition; a 7.1 só mantém o estado visual.
+  // liga `voice.toggle` ao SpeechRecognition; a 7.1 mantém o estado visual.
   const voice = useVoiceModeState();
+  // Story 7.2 (FR78) — reconhecimento Web Speech PT-PT. DEV-DECISION
+  // D-7.2-COMPOSE: o `useVoice` recebe o contrato da 7.1 (não duplica estado).
+  // DEV-DECISION D-7.2-TRANSCRIPT-CONTRACT (opção b, precedente 6.13): a
+  // transcrição é injectada no campo de texto — aparece como se o utilizador a
+  // tivesse escrito, ficando disponível no pipeline `onSend` existente (a 7.3
+  // consome o texto sem alterar ficheiros da 7.2). Após injectar, volta a `idle`.
+  const recognizer = useVoice({
+    voiceState: voice,
+    onTranscript: (transcript: string) => {
+      setText((prev) => {
+        const trimmed = prev.trimEnd();
+        return trimmed.length > 0 ? `${trimmed} ${transcript}` : transcript;
+      });
+      // O texto está entregue; o reconhecimento terminou. Volta a `idle` para
+      // o utilizador poder rever/enviar (estado `processing` é transitório).
+      voice.reset();
+    },
+  });
+
+  // Story 7.2 (FR78) — VOICE-004 (CR Major 3 — Security/Privacy): se o input
+  // for desactivado (`disabled` → true) durante `listening`/`processing`, o
+  // `onVoiceToggle` do botão fica `undefined` e deixa de poder parar o
+  // reconhecimento — mas o recognizer manteria o microfone activo e poderia
+  // injectar transcrição num input desactivado. Este efeito cancela o
+  // reconhecimento e repõe a UI quando o input transita para desactivado,
+  // garantindo que o microfone NÃO fica activo num input desactivado.
+  useEffect(() => {
+    if (disabled && (voice.state === 'listening' || voice.state === 'processing')) {
+      recognizer.cancel();
+    }
+  }, [disabled, voice.state, recognizer]);
 
   // Foco global com `/`
   useEffect(() => {
@@ -182,8 +214,9 @@ export function InputBox({
          * Story 7.1 (FR77) — substitui o placeholder `<Mic>` (GAP-2) pelo
          * VoiceModeButton real. Estado local via `useVoiceModeState`. O clique
          * só alterna o modo voz quando o input NÃO está em streaming/preview
-         * (respeita o `disabled` legacy do InputBox). A lógica de Web Speech
-         * (start/stop) chega na Story 7.2 — aqui o callback só faz `voice.toggle()`.
+         * (respeita o `disabled` legacy do InputBox).
+         * Story 7.2 (FR78) — o callback agora delega a `recognizer.toggle()`, que
+         * conduz o `SpeechRecognition` (start/stop) e o estado de UI da 7.1.
          */}
         <VoiceModeButton
           state={voice.state}
@@ -192,7 +225,7 @@ export function InputBox({
             disabled
               ? undefined
               : () => {
-                  voice.toggle();
+                  recognizer.toggle();
                 }
           }
         />
