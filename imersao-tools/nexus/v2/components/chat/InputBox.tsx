@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState, KeyboardEvent, ReactElement } from 'react';
 import { Paperclip, Send } from 'lucide-react';
 import { VoiceModeButton } from '@/components/chat/VoiceModeButton';
+import { SynthesisToggleButton } from '@/components/chat/SynthesisToggleButton';
 import { useVoiceModeState } from '@/hooks/useVoiceModeState';
 import { useVoice } from '@/hooks/useVoice';
+import type { SynthesisToggleState } from '@/types/voice';
 
 /**
  * Nexus v2 — InputBox / ChatInput (Story 0.4 + Story 1.9 AC6 + AC9)
@@ -44,6 +46,14 @@ interface InputBoxProps {
   placeholder?: string;
   /** Story 1.9 — estado da agent stream. Default `'idle'`. */
   streamingState?: InputBoxStreamingState;
+  /**
+   * Story 7.4 (FR80) — estado de render do toggle de SÍNTESE de voz (saída).
+   * `undefined` → o toggle não é renderizado (retrocompat com callers da 7.3).
+   * O `ChatPanel` deriva o estado de `useSpeechSynthesis` + `useSynthesisToggle`.
+   */
+  synthesisState?: SynthesisToggleState;
+  /** Story 7.4 — invocado ao alternar a síntese on/off. */
+  onSynthesisToggle?: () => void;
 }
 
 const MIN_HEIGHT = 64;
@@ -62,6 +72,8 @@ export function InputBox({
   disabled: disabledProp = false,
   placeholder,
   streamingState = 'idle',
+  synthesisState,
+  onSynthesisToggle,
 }: InputBoxProps): ReactElement {
   const isStreaming = streamingState === 'streaming';
   const isPreviewPending = streamingState === 'preview-pending';
@@ -230,6 +242,20 @@ export function InputBox({
           }
         />
 
+        {/*
+         * Story 7.4 (FR80) — toggle de SÍNTESE de voz (saída). Só é renderizado
+         * quando o `ChatPanel` fornece `synthesisState` (deriva-o de
+         * `useSpeechSynthesis` + `useSynthesisToggle`). Em `unsupported` o botão
+         * fica não-interactivo (AC5). Diferente do toggle de entrada (voz), este
+         * não depende do `disabled` legacy do input: a preferência de leitura
+         * pode ser alterada mesmo durante streaming.
+         */}
+        {synthesisState !== undefined && (
+          <SynthesisToggleButton
+            state={synthesisState}
+            onToggle={onSynthesisToggle}
+          />
+        )}
 
         <button
           type="button"

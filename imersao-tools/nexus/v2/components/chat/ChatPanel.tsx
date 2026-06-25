@@ -1,12 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import type { ExecutorSSEEvent } from '@/lib/agent/executor';
 import { MessageList } from '@/components/chat/MessageList';
 import { InputBox, type InputBoxStreamingState } from '@/components/chat/InputBox';
 import { UndoToast } from '@/components/chat/UndoToast';
 import { useAgentStream } from '@/hooks/useAgentStream';
 import { useConversationMessages } from '@/hooks/useChatMessages';
+import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
+import { useSynthesisToggle } from '@/hooks/useSynthesisToggle';
+import type { SynthesisToggleState } from '@/types/voice';
 
 /**
  * Nexus v2 — ChatPanel (Story 0.4 + Story 1.9 AC4 + AC8)
@@ -51,6 +54,22 @@ interface PreviewError {
 export function ChatPanel(): ReactElement {
   const stream = useAgentStream();
   const persistedMessages = useConversationMessages();
+
+  // Story 7.4 (FR80) — síntese de voz da SAÍDA do cérebro.
+  // - `synthesis` encapsula `SpeechSynthesisUtterance` (`speak`/`cancel`/`isSupported`).
+  // - `synthesisToggle` é a preferência on/off persistida em `localStorage`
+  //   (D-7.4-TOGGLE, OFF por omissão).
+  const synthesis = useSpeechSynthesis();
+  const synthesisToggle = useSynthesisToggle();
+
+  // D-7.4-SOURCE (Opção A): acumulador LOCAL do texto dos `text_delta` da run
+  // activa — padrão de `accumulatedTextRef` do `useAgentStream` (NÃO exposto, é
+  // interno ao hook; aqui acumula-se localmente, open-closed). Limpo antes de
+  // cada `stream.submit` (R1) e lido ao receber `done`.
+  const synthesisTextRef = useRef<string>('');
+  // runId já sintetizado — impede o `done` de disparar `speak` mais do que uma
+  // vez (o efeito que observa `stream.events` corre a cada novo evento).
+  const spokenRunIdRef = useRef<string | null>(null);
 
   const [pendingPreview, setPendingPreview] = useState<PendingPreview | null>(null);
   const [undoToasts, setUndoToasts] = useState<ActiveUndoToast[]>([]);
@@ -131,11 +150,65 @@ export function ChatPanel(): ReactElement {
     });
   }, [stream.events]);
 
+  // Story 7.4 (FR80) — D-7.4-SOURCE + D-7.4-TRIGGER.
+  // Observa `stream.events`: acumula o texto dos `text_delta` e, ao receber
+  // `done` com status `success`/`partial`, lê a resposta em voz alta SE o toggle
+  // estiver ON (AC2). Toggle OFF → nenhuma síntese (AC2). `spokenRunIdRef`
+  // garante que cada run é falada no máximo uma vez (o efeito re-corre a cada
+  // novo evento da stream).
+  useEffect(() => {
+    if (stream.events.length === 0) return;
+
+    // Reconstrói o texto acumulado da run a partir dos `text_delta` (idempotente:
+    // `stream.events` é o array completo da run em ordem de chegada).
+    synthesisTextRef.current = stream.events
+      .filter(
+        (e): e is Extract<ExecutorSSEEvent, { type: 'text_delta' }> =>
+          e.type === 'text_delta'
+      )
+      .map((e) => e.delta)
+      .join('');
+
+    const last = stream.events[stream.events.length - 1];
+    if (last.type !== 'done') return;
+    if (last.status !== 'success' && last.status !== 'partial') return;
+    // AC2: só sintetiza com o toggle ON. OFF → não fala — e NÃO marca a run como
+    // falada. Marcar aqui (antes do check do toggle) impediria erradamente a
+    // leitura se o utilizador ligasse o toggle enquanto este `done` ainda é o
+    // último evento; o estado inicial do toggle (OFF por omissão) é reconciliado
+    // com o `localStorage` num efeito posterior, pelo que o primeiro passe deste
+    // efeito vê `enabled=false` mesmo quando a preferência persistida é ON.
+    if (!synthesisToggle.enabled) return;
+    // Já falámos esta run? (o efeito corre a cada evento; o `done` é estável).
+    if (spokenRunIdRef.current === last.runId) return;
+    spokenRunIdRef.current = last.runId;
+
+    synthesis.speak(synthesisTextRef.current);
+  }, [stream.events, synthesisToggle.enabled, synthesis]);
+
+  // Story 7.4 (FR80) — CR Iter 1 (M1): desligar o toggle DURANTE uma leitura em
+  // curso tem de parar a fala IMEDIATAMENTE. Sem isto, `synthesis.cancel()` só
+  // corria no `handleSend`, pelo que a utterance actual continuava a tocar até ao
+  // próximo send/unmount — o toggle (OFF) e o estado de áudio (a falar) divergiam.
+  // Cancela sempre que `enabled` transita para `false`. No mount com OFF (a
+  // omissão, reconciliada com `localStorage` num efeito posterior) é inofensivo:
+  // `cancel()` é idempotente / no-op quando não há fala em curso.
+  useEffect(() => {
+    if (!synthesisToggle.enabled) {
+      synthesis.cancel();
+    }
+  }, [synthesisToggle.enabled, synthesis]);
+
   const handleSend = useCallback(
     (text: string) => {
+      // Story 7.4 — ordem R1 (PO): cancelar síntese em curso (AC3) → limpar o
+      // acumulador (evitar que `text_delta` de uma run anterior contamine a
+      // próxima) → iniciar a nova run.
+      synthesis.cancel();
+      synthesisTextRef.current = '';
       stream.submit(text);
     },
-    [stream]
+    [stream, synthesis]
   );
 
   // Story 1.9 Iter 2 — Minor #4 — não silenciar 4xx/5xx do confirm endpoint.
@@ -216,6 +289,14 @@ export function ChatPanel(): ReactElement {
     return 'idle';
   }, [pendingPreview, stream.isStreaming]);
 
+  // Story 7.4 (FR80) — estado de render do toggle de síntese (AC1/AC5):
+  // `unsupported` se o browser não suporta `SpeechSynthesis`; senão `active`/
+  // `idle` conforme a preferência persistida.
+  const synthesisState: SynthesisToggleState = useMemo(() => {
+    if (!synthesis.isSupported) return 'unsupported';
+    return synthesisToggle.enabled ? 'active' : 'idle';
+  }, [synthesis.isSupported, synthesisToggle.enabled]);
+
   return (
     <section
       aria-label="Chat principal"
@@ -272,7 +353,12 @@ export function ChatPanel(): ReactElement {
         </div>
       )}
 
-      <InputBox onSend={handleSend} streamingState={streamingState} />
+      <InputBox
+        onSend={handleSend}
+        streamingState={streamingState}
+        synthesisState={synthesisState}
+        onSynthesisToggle={synthesisToggle.toggle}
+      />
 
       {undoToasts.map((toast) => (
         <UndoToast
