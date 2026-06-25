@@ -112,6 +112,37 @@ export interface SpeechRecognitionConstructor {
   new (): SpeechRecognitionInstance;
 }
 
+/* ───────────────────────────────────────────────────────────────────────────
+ * Story 7.4 (FR80) — Estado de render do toggle de síntese de voz (saída)
+ *
+ * ADITIVO (não altera os tipos da 7.1/7.2 acima). O toggle de síntese tem 3
+ * estados de render distintos (`react-component-test-criteria.md`):
+ *   - `idle`        → suportado, síntese OFF (estado por omissão — D-7.4-TOGGLE)
+ *   - `active`      → suportado, síntese ON (lê a resposta do cérebro após `done`)
+ *   - `unsupported` → browser sem `SpeechSynthesis` (não-interactivo — AC5)
+ * Trace: PRD §6.14 FR80 + EPIC-7.md §5 row 7.4 ("Toggle de voz on/off").
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/** Os 3 estados de render do toggle de síntese de voz (Story 7.4). */
+export type SynthesisToggleState = 'idle' | 'active' | 'unsupported';
+
+/**
+ * Props do `SynthesisToggleButton`. Componente prop-driven puro: o estado é
+ * derivado pelo caller (tipicamente o `ChatPanel`/`InputBox`) a partir do
+ * suporte do browser e da preferência persistida em `localStorage`.
+ */
+export interface SynthesisToggleButtonProps {
+  /** Estado de render actual. */
+  state: SynthesisToggleState;
+  /**
+   * Callback invocado ao alternar a síntese on/off. Não invocado em
+   * `unsupported` (clique no-op — AC5).
+   */
+  onToggle?: () => void;
+  /** Tamanho do ícone em px (default 18, consistente com `InputBox`). */
+  iconSize?: number;
+}
+
 declare global {
   interface Window {
     /** Construtor nativo (Chrome/Edge recentes). */
