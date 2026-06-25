@@ -186,6 +186,19 @@ export function ChatPanel(): ReactElement {
     synthesis.speak(synthesisTextRef.current);
   }, [stream.events, synthesisToggle.enabled, synthesis]);
 
+  // Story 7.4 (FR80) — CR Iter 1 (M1): desligar o toggle DURANTE uma leitura em
+  // curso tem de parar a fala IMEDIATAMENTE. Sem isto, `synthesis.cancel()` só
+  // corria no `handleSend`, pelo que a utterance actual continuava a tocar até ao
+  // próximo send/unmount — o toggle (OFF) e o estado de áudio (a falar) divergiam.
+  // Cancela sempre que `enabled` transita para `false`. No mount com OFF (a
+  // omissão, reconciliada com `localStorage` num efeito posterior) é inofensivo:
+  // `cancel()` é idempotente / no-op quando não há fala em curso.
+  useEffect(() => {
+    if (!synthesisToggle.enabled) {
+      synthesis.cancel();
+    }
+  }, [synthesisToggle.enabled, synthesis]);
+
   const handleSend = useCallback(
     (text: string) => {
       // Story 7.4 — ordem R1 (PO): cancelar síntese em curso (AC3) → limpar o

@@ -114,6 +114,20 @@ function doneSuccess(runId = RUN_ID): ExecutorSSEEvent {
   };
 }
 
+function doneFailed(runId = RUN_ID): ExecutorSSEEvent {
+  return {
+    type: 'done',
+    runId,
+    status: 'failed',
+    intents: [],
+    inputTokens: 0,
+    outputTokens: 0,
+    durationMs: 10,
+    errorMessage: 'erro simulado',
+    totals: { intents: 0, toolCalls: 0 },
+  };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   Element.prototype.scrollTo = vi.fn() as unknown as typeof Element.prototype.scrollTo;
@@ -218,18 +232,62 @@ describe('ChatPanel síntese — C2 toggle OFF → não fala (AC2)', () => {
 /* ─── C3 — nova run → cancel antes do submit (AC3) ────────────────────────── */
 
 describe('ChatPanel síntese — C3 nova run → cancel (AC3)', () => {
-  it('handleSend cancela a síntese em curso e depois submete', () => {
+  it('com síntese em curso, handleSend cancela ANTES de submeter (ordem)', () => {
     window.localStorage.setItem(SYNTHESIS_ENABLED_STORAGE_KEY, 'true');
-    render(<ChatPanel />);
 
-    // Enviar uma mensagem (via textarea + Enter).
+    // Põe o painel em estado "a falar": done success com toggle ON → speak 1x.
+    // Sem este pré-estado, a asserção de ordem seria vazia (cancel incondicional
+    // passaria mesmo que o submit corresse primeiro).
+    streamStateRef.current = {
+      ...streamStateRef.current,
+      isStreaming: false,
+      currentRunId: RUN_ID,
+      events: [
+        metaStart(),
+        { type: 'text_delta', runId: RUN_ID, delta: 'A ler em voz alta.' },
+        doneSuccess(),
+      ],
+    };
+    render(<ChatPanel />);
+    expect(speakSpy).toHaveBeenCalledTimes(1);
+
+    // Enviar uma nova mensagem (via textarea + Enter).
     const textarea = screen.getByRole('textbox', { name: /prompt/i });
     fireEvent.change(textarea, { target: { value: 'nova pergunta' } });
     fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
 
-    // AC3 / R1: cancel chamado, submit chamado.
+    // AC3 / R1: cancel E submit chamados, com cancel ANTES do submit (ordem).
+    // Usa-se a ÚLTIMA invocação de cancel (a do `handleSend`) — o mount pode ter
+    // cancelado uma vez ao reconciliar o toggle OFF→ON (efeito M1, inofensivo).
     expect(cancelSpy).toHaveBeenCalled();
     expect(submitSpy).toHaveBeenCalledWith('nova pergunta');
+    const cancelOrders = cancelSpy.mock.invocationCallOrder;
+    const lastCancelOrder = cancelOrders[cancelOrders.length - 1];
+    const submitOrder = submitSpy.mock.invocationCallOrder[0];
+    expect(lastCancelOrder).toBeLessThan(submitOrder);
+  });
+});
+
+/* ─── done não-success → não fala (AC2, branch de status) ─────────────────── */
+
+describe('ChatPanel síntese — done não-success (AC2)', () => {
+  it('toggle ON + done status failed → speak NÃO chamado', () => {
+    window.localStorage.setItem(SYNTHESIS_ENABLED_STORAGE_KEY, 'true');
+
+    streamStateRef.current = {
+      ...streamStateRef.current,
+      isStreaming: false,
+      currentRunId: RUN_ID,
+      events: [
+        metaStart(),
+        { type: 'text_delta', runId: RUN_ID, delta: 'tentativa' },
+        doneFailed(),
+      ],
+    };
+    render(<ChatPanel />);
+
+    // O guard `status !== 'success' && status !== 'partial'` impede a síntese.
+    expect(speakSpy).not.toHaveBeenCalled();
   });
 });
 

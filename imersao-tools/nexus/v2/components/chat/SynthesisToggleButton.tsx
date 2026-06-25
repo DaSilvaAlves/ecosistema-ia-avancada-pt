@@ -136,7 +136,7 @@ export function SynthesisToggleButton({
         aria-pressed={ariaPressed}
         aria-disabled={!isInteractive}
         title={ariaLabelFor(state)}
-        disabled={isUnsupported}
+        disabled={!isInteractive}
         onClick={handleClick}
         style={style}
       >
