@@ -179,7 +179,7 @@ imersao-tools/nexus/
 └── docs/                                  # já existe — PRD, validations, handoffs
 ```
 
-**Após Epic 0 estabilizar (todos os widgets v1 portados, build verde, deploy Vercel funcional), Epic 8 Story 8.10 elimina `src/` v1.** Decisão deferida para que ocorra apenas quando v2 cobrir 100% da utilidade actual.
+**Após Epic 0 estabilizar (todos os widgets v1 portados, build verde, deploy Vercel funcional), Epic 9 Story 9.10 elimina `src/` v1.** Decisão deferida para que ocorra apenas quando v2 cobrir 100% da utilidade actual.
 
 ---
 
@@ -312,7 +312,7 @@ export async function migrateV1ToV2(): Promise<MigrationResult> {
   });
 
   localStorage.setItem(MIGRATION_FLAG_KEY, 'true');
-  // localStorage v1 mantém-se para rollback emergência (Epic 8 Story 8.10 limpa)
+  // localStorage v1 mantém-se para rollback emergência (Epic 9 Story 9.10 limpa)
   return { migrated: tasksV2.length, status: 'success' };
 }
 ```
@@ -859,7 +859,7 @@ Webhook é registado uma vez via `setWebhook` com `secret_token` correspondente.
 | Cold start Edge function | < 200ms | Vercel logs |
 | Cold start Node function | < 800ms | Vercel logs |
 
-Bundle analyzer (`@next/bundle-analyzer`) está no Epic 8 hardening.
+Bundle analyzer (`@next/bundle-analyzer`) está no Epic 9 hardening.
 
 ---
 
@@ -1091,11 +1091,11 @@ Tabela de cobertura — cada NFR tem componente architectural responsável:
 | NFR15 (ESLint+TS strict) | Story 0.9 |
 | NFR16 (Vitest+Playwright) | §5 |
 | NFR17 (cobertura 60%) | §5.4 |
-| NFR18 (CodeRabbit) | §13 + Epic 8 |
+| NFR18 (CodeRabbit) | §13 + Epic 9 |
 | NFR19 (deploy <2min) | Vercel default |
 | NFR20 (rollback <30s) | Vercel UI |
 | NFR21 (PWA offline) | §11 |
-| NFR22 (backup export) | Epic 8 Story 8.6 — Dexie `db.export()` (dexie-export-import) → JSON → ZIP |
+| NFR22 (backup export) | Epic 9 Story 9.6 — Dexie `db.export()` (dexie-export-import) → JSON → ZIP |
 | NFR23 (Chrome/Edge/FF 110+) | suportado por Next 15 + APIs nativas |
 | NFR24 (mobile responsive) | Tailwind responsive utilities + PWA |
 
@@ -1134,7 +1134,7 @@ Mantém ordem do PRD (0→1→2→3→4→5→6→7→8) mas explicita pontos cr
 - Cron Vercel diário 06:00 chama `/api/push/schedule-day` que lê `reminders` do dia e agenda envios
 
 ### Epic 5 — Pontos críticos arch
-- Tiptap config: extensions limitados (StarterKit + TaskList + Link + Placeholder). Sem images iniciais (Epic 8 se necessário)
+- Tiptap config: extensions limitados (StarterKit + TaskList + Link + Placeholder). Sem images iniciais (Epic 9 se necessário)
 - Brain Dump usa Sonnet com tools `criar_tarefa`/`criar_projecto`/`criar_nota` em modo **preview obrigatório** (`requiresPreview: true` por chamada)
 - Pesquisa web: tentar Anthropic web search (a partir do Sonnet 4); fallback DuckDuckGo HTML scraping (`lib/shared/web-search-ddg.ts` server-side)
 
@@ -1149,10 +1149,10 @@ Mantém ordem do PRD (0→1→2→3→4→5→6→7→8) mas explicita pontos cr
 - OCR: Anthropic Vision via `/api/ocr/receipt` (Node) — body limit 4.5MB. UI valida tamanho antes de upload.
 - Foto via Telegram (FR73): webhook detecta `message.photo`, baixa via Telegram API, encaminha para `/api/ocr/receipt`
 
-### Epic 8 — Pontos críticos arch
+### Epic 9 — Pontos críticos arch
 - Bundle analyzer activado em CI (gate informativo, não bloqueante)
 - Backup ZIP: `dexie-export-import` plugin → JSON; service worker zipia e devolve blob
-- **Story 8.10 elimina `src/` v1** apenas se `tests/e2e/migration-smoke.spec.ts` passar
+- **Story 9.10 elimina `src/` v1** apenas se `tests/e2e/migration-smoke.spec.ts` passar
 
 ---
 
@@ -1215,7 +1215,7 @@ Mantém ordem do PRD (0→1→2→3→4→5→6→7→8) mas explicita pontos cr
 | # | Risco | Severidade | Mitigação |
 |---|-------|-----------|-----------|
 | AR1 | Edge runtime não suportar lib X | Alta | Manter qualquer endpoint Node se SDK exigir; matriz §4.1 |
-| AR2 | Dexie schema migration falhar mid-upgrade | Média | Versão sempre incrementa, `upgrade()` em transaction, fallback localStorage v1 mantido até Epic 8 |
+| AR2 | Dexie schema migration falhar mid-upgrade | Média | Versão sempre incrementa, `upgrade()` em transaction, fallback localStorage v1 mantido até Epic 9 |
 | AR3 | Tool registry tornar-se dump-of-tools sem coesão | Média | Lint rule custom: cada tool deve ter `domain` válido + Zod schema + descrição PT-PT >50 chars. Cobertura no test set canónico. |
 | AR4 | Vercel KV exceder 10MB free | Baixa | TTL agressivo no cache Gmail (7d). Push subs tipicamente <5KB cada |
 | AR5 | OAuth Google requer verification se >100 users | Baixa | Single-user — sempre <100. Documentar em README de setup |

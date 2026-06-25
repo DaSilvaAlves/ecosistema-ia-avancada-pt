@@ -367,9 +367,12 @@
 | **5** | Diário + Brain Dump + Conhecimento | AI organiza + áreas/cadernos/notas + pesquisa web + tools cérebro | — |
 | **6** | OAuth Google (Calendar + Gmail) + Telegram Bot | Sync calendário 2-way + classificação Gmail + canal Telegram + tools cérebro | 7 |
 | **7** | Voice + OCR | Web Speech (browser) + Claude Vision (recibo→finança) + integração Telegram | — |
-| **8** | Hardening + Deploy + PWA | Tests + service worker offline + deploy Vercel + backup export | — |
+| **8** | Migração de Provider de Inferência | Dual-provider OpenAI (Anthropic→OpenAI) atrás das interfaces existentes — flag `LLM_PROVIDER`, factory, `OpenAIExecutor`/`OpenAIClassifier`, proxy Edge, parity cross-provider, cutover (ADR-10) | — |
+| **9** | Hardening + Deploy + PWA | Tests + service worker offline + deploy Vercel + backup export | — |
 
-**Ordem sugerida:** 0 → 1 → (2 || 3) → 4 → 5 → 6 → 7 → 8.
+> **Nota (25/06/2026):** o **Epic 8 = Migração de Provider** foi inserido em resposta a um gatilho de produção (saldo Anthropic esgotado — `400 credit balance too low`); o Hardening, antes reservado como Epic 8, deslizou para **Epic 9**. Decisão ratificada pelo Eurico. Fonte: `ADR-10-dual-provider-openai-migration.md` + `EPIC-8.md`.
+
+**Ordem sugerida:** 0 → 1 → (2 || 3) → 4 → 5 → 6 → 7 → 8 → 9.
 **Paralelizável:** 2 e 3 podem correr em paralelo se @sm criar stories independentes.
 
 ---
@@ -601,23 +604,47 @@
 
 ---
 
-### Epic 8 — Hardening + Deploy + PWA
+### Epic 8 — Migração de Provider de Inferência (dual-provider OpenAI)
+
+> **Epic não previsto no roadmap original**, inserido em 25/06/2026 em resposta a um gatilho de produção (saldo Anthropic esgotado — `400 credit balance too low`, cérebro em prod down). **Sem FR novo** — é uma migração de infra/arquitectura da camada de inferência, derivada do **ADR-10** (aceite em `main`, decisor Eurico — NÃO reabrir). Detalhe completo em `EPIC-8.md`.
+
+**Goal:** Migrar a inferência de Anthropic para OpenAI sob modelo **dual-provider com feature flag** (`LLM_PROVIDER` = `anthropic` | `openai`), sem partir o caminho Anthropic nem os ~2400 testes. A OpenAI é adicionada em paralelo atrás das interfaces `ClassifierProvider`/`ExecutorProvider` existentes; a Anthropic mantém-se como fallback. Critério: correcção, não uptime (ADR-10 §1.2.3).
+
+**Stories (6 — ADR-10 §8):**
+- 8.1 Fundação: interface, flag `LLM_PROVIDER`/`NEXT_PUBLIC_LLM_PROVIDER`, `OPENAI_API_KEY`, factory, `toolsToOpenAIShape`, defaults OpenAI, dep `openai` (gate `@architect`)
+- 8.2 `OpenAIExecutor` (server, streaming, reagregação `tool_calls` por `index`, `toOpenAIMessages`) (gate `@architect`)
+- 8.3 `OpenAIClassifier` (server, JSON nativo `response_format:json_object`) (gate `@architect`)
+- 8.4 Proxy `/api/openai/proxy` (Edge) + `OpenAIInferenceTransport` + selecção client + `sse-lines.ts` (gate `@architect`, CR `--base main`)
+- 8.5 MSW `handlers/openai.ts` (SSE fiel) + suite de parity cross-provider (gate `@qa` → `@architect` se autorar fixtures)
+- 8.6 Cutover em produção + smoke test + runbook de rollback (gate `@qa` + manual; deploy `@devops`)
+
+**AC Epic 8 (ADR-10):**
+- AC1: Com `LLM_PROVIDER` ausente/`anthropic`, comportamento byte-a-byte o de hoje; ~2400 testes verdes por construção
+- AC2: Com `LLM_PROVIDER=openai`, `LLMStreamEvent`/`ExecutorSSEEvent` idênticos aos da Anthropic nos 6 cenários de parity
+- AC3: Produção responde via OpenAI após cutover; runbook de rollback testado
+- AC4: `OPENAI_API_KEY` server-only (NFR5); proxy OpenAI Edge com upstream constante (sem SSRF)
+
+**Quality gates:** Epic 1 + não-regressão Anthropic (~2400 verdes) + parity cross-provider falsificável + CR `--base main` nas stories sensíveis (8.1 secret/env, 8.4 endpoint Edge).
+
+---
+
+### Epic 9 — Hardening + Deploy + PWA
 
 **Goal:** Production-ready: tests, PWA offline, deploy contínuo, backup.
 
 **Stories sugeridas:**
-- 8.1 Cobertura tests >= 60% packages core (cérebro, tarefas, finanças)
-- 8.2 E2E Playwright: login → primeiro prompt → criar tarefa via UI → verificar
-- 8.3 Service Worker registro + cache strategy (network-first para chat, cache-first para assets)
-- 8.4 Manifest PWA + ícones todos os tamanhos
-- 8.5 Modo offline degradado: banner + dashboard lê localStorage, chat mostra "sem rede"
-- 8.6 Backup: botão export ZIP em definições (JSON + markdown notas)
-- 8.7 Restore: botão import ZIP em definições
-- 8.8 GitHub Actions CI: lint + typecheck + test bloqueante em PRs
-- 8.9 CodeRabbit setup + review obrigatório
-- 8.10 Vercel preview deploys + production deploy automatizado em main
+- 9.1 Cobertura tests >= 60% packages core (cérebro, tarefas, finanças)
+- 9.2 E2E Playwright: login → primeiro prompt → criar tarefa via UI → verificar
+- 9.3 Service Worker registro + cache strategy (network-first para chat, cache-first para assets)
+- 9.4 Manifest PWA + ícones todos os tamanhos
+- 9.5 Modo offline degradado: banner + dashboard lê localStorage, chat mostra "sem rede"
+- 9.6 Backup: botão export ZIP em definições (JSON + markdown notas)
+- 9.7 Restore: botão import ZIP em definições
+- 9.8 GitHub Actions CI: lint + typecheck + test bloqueante em PRs
+- 9.9 CodeRabbit setup + review obrigatório
+- 9.10 Vercel preview deploys + production deploy automatizado em main
 
-**AC Epic 8:**
+**AC Epic 9:**
 - AC1: Tests passam em CI < 5 min
 - AC2: Lighthouse score >= 85 mobile, 90 desktop
 - AC3: PWA instalável (Add to Home Screen funciona Chrome/Edge)
@@ -634,7 +661,7 @@
 |---|-------|-----------|-----------|
 | 1 | Web Speech API recognition em PT-PT é imprecisa em Chrome | Média | Fallback: utilizador escreve em vez de falar; reavaliar Whisper backend só se for crítico |
 | 2 | Custo tokens Anthropic dispara com voice + multi-intent + classificações Gmail | Alta | Cache agressiva resultados classifier; limitar Gmail classifier a emails novos não classificados; rate limit por dia |
-| 3 | localStorage > 5MB força migração IndexedDB | Baixa | Estimativa: 6 meses de uso intensivo ~3MB. Fallback Dexie em Epic 8 se necessário |
+| 3 | localStorage > 5MB força migração IndexedDB | Baixa | Estimativa: 6 meses de uso intensivo ~3MB. Fallback Dexie em Epic 9 (Hardening) se necessário |
 | 4 | OAuth Google requer aprovação verification se >100 utilizadores; <100 funciona em test mode | Baixa | Single-user — sempre < 100, fica sempre em test mode. Documentar |
 | 5 | Telegram Bot perde mensagens se webhook Vercel cair | Baixa | Telegram retry built-in 24h; logs Vercel suficientes para debug |
 

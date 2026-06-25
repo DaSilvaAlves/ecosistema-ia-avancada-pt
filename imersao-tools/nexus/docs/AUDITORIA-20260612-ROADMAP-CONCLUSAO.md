@@ -39,7 +39,8 @@
 | Epic 5 restante (5.7-5.13) | 7 + 1 draft | FR46, FR48-FR50, FR52-FR57 | 40-50h |
 | Epic 6 — OAuth Google Calendar/Gmail + Telegram bot | ~17 | FR58-FR76 | 50-60h |
 | Epic 7 — Voice + OCR recibos | ~10 | FR77-FR85 | 30-35h |
-| Epic 8 — Hardening + PWA offline + backup + CI/CD | ~10 | FR86-FR96 | 40-50h |
+| Epic 8 — Migração de Provider de Inferência (dual-provider OpenAI, ADR-10) | 6 | — (migração de infra, sem FR novo) | ≈ 6 stories S1-S6 |
+| Epic 9 — Hardening + PWA offline + backup + CI/CD | ~10 | FR86-FR96 | 40-50h |
 
 Timeline nominal (cadência Epics 1-4): Epic 5 fecha fim de Junho; projecto completo fim de Agosto 2026 (~160-180h restantes).
 
