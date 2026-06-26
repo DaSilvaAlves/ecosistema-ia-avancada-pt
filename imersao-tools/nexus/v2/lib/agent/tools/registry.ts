@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import type {
   AnthropicToolShape,
+  OpenAIToolShape,
   ToolDefinition,
   ToolDomain,
 } from '@/lib/agent/tools/types';
@@ -25,6 +26,15 @@ import type {
  */
 
 const TOOL_NAME_PATTERN = /^[a-z][a-z0-9_]*$/;
+
+/**
+ * Story 8.1 (ADR-10 §7.1) — limite de comprimento do nome de tool imposto pela
+ * OpenAI (`^[a-zA-Z0-9_-]{1,64}$`). O `TOOL_NAME_PATTERN` (snake_case lowercase)
+ * já é subconjunto estrito do padrão de caracteres OpenAI; o único guard que
+ * falta para fechar a classe é o de comprimento ≤64. Os nomes actuais estão
+ * muito abaixo deste limite — o guard protege contra tools futuras.
+ */
+const TOOL_NAME_MAX_LENGTH = 64;
 
 /**
  * Schema interno para validação runtime de `defineTool`.
@@ -123,6 +133,57 @@ export function toolsToAnthropicShape(
 }
 
 /**
+ * Converte uma `ToolDefinition` para o envelope de função OpenAI Chat Completions
+ * (Story 8.1, ADR-10 §4.2). Irmão de `convertToolToAnthropicShape`.
+ *
+ * Reusa o **mesmo** `zodToJsonSchema(tool.argsSchema, {target:'openApi3'})` e o
+ * **mesmo** fail-loud (shape sem `type === 'object'` → Error com a tool culpada),
+ * apenas embrulhando o resultado em `{ type:'function', function:{ name, description, parameters } }`.
+ *
+ * Invariante (AC7, falsificável): o `function.parameters` aqui produzido é igual,
+ * por construção, ao `input_schema` de `convertToolToAnthropicShape` para a mesma
+ * tool — ambos derivam da mesma conversão determinística. Um teste de igualdade
+ * falharia se as duas conversões divergissem.
+ */
+function convertToolToOpenAIShape(tool: ToolDefinition): OpenAIToolShape {
+  const jsonSchema = zodToJsonSchema(tool.argsSchema, { target: 'openApi3' });
+
+  if (
+    jsonSchema === null ||
+    typeof jsonSchema !== 'object' ||
+    !('type' in jsonSchema) ||
+    (jsonSchema as { type?: unknown }).type !== 'object'
+  ) {
+    throw new Error(
+      `Tool registry: zodToJsonSchema produziu shape inesperado para tool "${tool.name}" (envelope OpenAI) — ` +
+        `esperado { type: "object", ... }, recebido: ${JSON.stringify(
+          jsonSchema
+        ).slice(0, 200)}`
+    );
+  }
+
+  return {
+    type: 'function',
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: jsonSchema as OpenAIToolShape['function']['parameters'],
+    },
+  };
+}
+
+/**
+ * Helper exportado para conversão pura sem instanciar registry — irmão de
+ * `toolsToAnthropicShape`. Usado pelo `OpenAIExecutor` (Story 8.2) quando
+ * `LLM_PROVIDER=openai`. Reutiliza a mesma conversão e o mesmo fail-loud.
+ */
+export function toolsToOpenAIShape(
+  tools: ToolDefinition[]
+): OpenAIToolShape[] {
+  return tools.map(convertToolToOpenAIShape);
+}
+
+/**
  * Validation helper para criação tipada de tools com checks runtime.
  *
  * Apanha defs malformadas (e.g., `requiresPreview` ausente, `argsSchema` não
@@ -154,6 +215,12 @@ export class ToolRegistry {
     if (!TOOL_NAME_PATTERN.test(def.name)) {
       throw new Error(
         `Tool registry: nome "${def.name}" inválido — usar snake_case lowercase (a-z, 0-9, _) começando por letra`
+      );
+    }
+    if (def.name.length > TOOL_NAME_MAX_LENGTH) {
+      throw new Error(
+        `Tool registry: nome "${def.name}" excede ${TOOL_NAME_MAX_LENGTH} caracteres (${def.name.length}) — ` +
+          `limite OpenAI para nomes de função (^[a-zA-Z0-9_-]{1,64}$, ADR-10 §7.1)`
       );
     }
     if (this.tools.has(def.name)) {
