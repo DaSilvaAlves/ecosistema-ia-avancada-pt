@@ -319,6 +319,39 @@ describe('Story 8.1 — toolsToOpenAIShape FAIL-LOUD em shape inesperado (AC6, C
   });
 });
 
+describe('Story 8.1 — toolsToOpenAIShape guard de nome no caminho puro (CR Iter 1 Major)', () => {
+  // O caminho `toolsToOpenAIShape()` NÃO passa por `register()`. Sem este guard,
+  // um nome inválido geraria um payload OpenAI inválido que só falharia na
+  // fronteira do provider. `assertValidToolName` fecha a classe de falha aqui.
+  it('lança em nome > 64 caracteres (limite OpenAI) sem passar por register()', () => {
+    const longName = 'a' + '_a'.repeat(32); // 65 chars
+    expect(longName.length).toBe(65);
+    const tool = dummyTool({ name: longName });
+    expect(() => toolsToOpenAIShape([tool])).toThrow(/excede 64 caracteres/);
+  });
+
+  it('lança em nome não-snake_case sem passar por register()', () => {
+    const tool = dummyTool({ name: 'Foo-Bar' });
+    expect(() => toolsToOpenAIShape([tool])).toThrow(
+      /inválido — usar snake_case lowercase/,
+    );
+  });
+
+  it('lança em nome vazio sem passar por register()', () => {
+    const tool = dummyTool({ name: '' });
+    expect(() => toolsToOpenAIShape([tool])).toThrow(
+      'Tool registry: nome da tool não pode estar vazio',
+    );
+  });
+
+  it('nome válido de exactamente 64 caracteres converte sem lançar', () => {
+    const name64 = 'a' + 'b'.repeat(63); // 64 chars
+    expect(name64.length).toBe(64);
+    const tool = dummyTool({ name: name64 });
+    expect(() => toolsToOpenAIShape([tool])).not.toThrow();
+  });
+});
+
 describe('ToolRegistry — toAnthropicTools FAIL-LOUD (AC5)', () => {
   beforeEach(() => {
     toolRegistry.clear();

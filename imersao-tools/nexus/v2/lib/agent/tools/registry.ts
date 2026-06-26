@@ -37,6 +37,37 @@ const TOOL_NAME_PATTERN = /^[a-z][a-z0-9_]*$/;
 const TOOL_NAME_MAX_LENGTH = 64;
 
 /**
+ * Story 8.1 (CR Iter 1, ADR-10 §7.1) — guard partilhado do nome de tool.
+ *
+ * Valida, na mesma ordem e com as MESMAS mensagens PT-PT: (1) não-vazio,
+ * (2) `TOOL_NAME_PATTERN` (snake_case lowercase), (3) ≤ `TOOL_NAME_MAX_LENGTH`
+ * (64, limite OpenAI `^[a-zA-Z0-9_-]{1,64}$`).
+ *
+ * Centralizado para fechar a classe de falha apontada pelo CR: o caminho de
+ * conversão puro `toolsToOpenAIShape()` / `convertToolToOpenAIShape()` aceita
+ * `ToolDefinition[]` arbitrários SEM passar por `register()`, pelo que um nome
+ * inválido (>64 chars ou não-snake_case) só falharia mais tarde na fronteira do
+ * provider OpenAI. Chamar este guard no início da conversão faz falhar-loud aqui,
+ * identificando a tool culpada — em vez de gerar um payload OpenAI inválido.
+ */
+function assertValidToolName(name: string): void {
+  if (!name || name.length === 0) {
+    throw new Error('Tool registry: nome da tool não pode estar vazio');
+  }
+  if (!TOOL_NAME_PATTERN.test(name)) {
+    throw new Error(
+      `Tool registry: nome "${name}" inválido — usar snake_case lowercase (a-z, 0-9, _) começando por letra`
+    );
+  }
+  if (name.length > TOOL_NAME_MAX_LENGTH) {
+    throw new Error(
+      `Tool registry: nome "${name}" excede ${TOOL_NAME_MAX_LENGTH} caracteres (${name.length}) — ` +
+        `limite OpenAI para nomes de função (^[a-zA-Z0-9_-]{1,64}$, ADR-10 §7.1)`
+    );
+  }
+}
+
+/**
  * Schema interno para validação runtime de `defineTool`.
  *
  * `z.custom<...>(predicate)` para `argsSchema`/`resultSchema` em vez de
@@ -146,6 +177,11 @@ export function toolsToAnthropicShape(
  * falharia se as duas conversões divergissem.
  */
 function convertToolToOpenAIShape(tool: ToolDefinition): OpenAIToolShape {
+  // CR Iter 1 (Major): valida o nome ANTES de converter — o caminho puro
+  // `toolsToOpenAIShape()` não passa por `register()`, logo este é o único ponto
+  // que fecha o guard de nome (pattern + ≤64) para chamadores directos.
+  assertValidToolName(tool.name);
+
   const jsonSchema = zodToJsonSchema(tool.argsSchema, { target: 'openApi3' });
 
   if (
@@ -209,20 +245,10 @@ export class ToolRegistry {
   private tools = new Map<string, ToolDefinition>();
 
   register(def: ToolDefinition): void {
-    if (!def.name || def.name.length === 0) {
-      throw new Error('Tool registry: nome da tool não pode estar vazio');
-    }
-    if (!TOOL_NAME_PATTERN.test(def.name)) {
-      throw new Error(
-        `Tool registry: nome "${def.name}" inválido — usar snake_case lowercase (a-z, 0-9, _) começando por letra`
-      );
-    }
-    if (def.name.length > TOOL_NAME_MAX_LENGTH) {
-      throw new Error(
-        `Tool registry: nome "${def.name}" excede ${TOOL_NAME_MAX_LENGTH} caracteres (${def.name.length}) — ` +
-          `limite OpenAI para nomes de função (^[a-zA-Z0-9_-]{1,64}$, ADR-10 §7.1)`
-      );
-    }
+    // CR Iter 1 (Major): guard de nome partilhado com o caminho de conversão
+    // OpenAI puro — mesma validação, mesmas mensagens PT-PT (não-vazio + pattern
+    // + ≤64). Antes era inline aqui; agora é a única fonte de verdade.
+    assertValidToolName(def.name);
     if (this.tools.has(def.name)) {
       throw new Error(
         `Tool registry: tool "${def.name}" já registada — usar unregister() primeiro ou escolher outro nome`

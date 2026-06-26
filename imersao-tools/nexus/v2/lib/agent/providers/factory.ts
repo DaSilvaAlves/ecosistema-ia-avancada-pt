@@ -38,9 +38,13 @@ import {
  */
 
 function readApiKey(provider: LLMProvider): string {
+  // CR Iter 1 (Minor): `key.trim().length === 0` (não `key.length === 0`) —
+  // uma key whitespace-only (ex: '   ', vinda de uma env var mal preenchida)
+  // tem length > 0 mas é tão inválida como ausente. Fail-loud também nesse caso,
+  // em vez de a passar ao SDK e falhar mais tarde com erro 401 opaco.
   if (provider === 'openai') {
     const key = process.env.OPENAI_API_KEY;
-    if (!key || key.length === 0) {
+    if (!key || key.trim().length === 0) {
       throw new Error(
         'OPENAI_API_KEY não configurada — não é possível inicializar provider OpenAI'
       );
@@ -49,7 +53,7 @@ function readApiKey(provider: LLMProvider): string {
   }
 
   const key = process.env.ANTHROPIC_API_KEY;
-  if (!key || key.length === 0) {
+  if (!key || key.trim().length === 0) {
     throw new Error(
       'ANTHROPIC_API_KEY não configurada — não é possível inicializar provider Anthropic'
     );

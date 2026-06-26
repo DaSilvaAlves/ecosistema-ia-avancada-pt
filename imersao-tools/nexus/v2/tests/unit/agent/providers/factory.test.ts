@@ -120,6 +120,30 @@ describe('factory — C4 key do provider activo ausente → fail-loud PT-PT', ()
       /OPENAI_API_KEY não configurada/,
     );
   });
+
+  // CR Iter 1 (Minor m2) — uma key whitespace-only tem length > 0 mas é tão
+  // inválida como ausente. Tratada como fail-loud (não aceite), não passada ao SDK.
+  it('Anthropic activo + ANTHROPIC_API_KEY whitespace-only → Error PT-PT', () => {
+    process.env.ANTHROPIC_API_KEY = '   ';
+    expect(() => getExecutor()).toThrowError(
+      /ANTHROPIC_API_KEY não configurada/,
+    );
+    expect(() => getClassifier()).toThrowError(
+      /ANTHROPIC_API_KEY não configurada/,
+    );
+  });
+
+  it('OpenAI activo + OPENAI_API_KEY whitespace-only → Error de key (antes do not-implemented)', () => {
+    process.env.LLM_PROVIDER = 'openai';
+    process.env.NEXT_PUBLIC_LLM_PROVIDER = 'openai';
+    process.env.OPENAI_API_KEY = '   ';
+    expect(() => getExecutor()).toThrowError(
+      /OPENAI_API_KEY não configurada/,
+    );
+    expect(() => getClassifier()).toThrowError(
+      /OPENAI_API_KEY não configurada/,
+    );
+  });
 });
 
 describe('factory — CONCERN @po #1: LLM_PROVIDER inválido → fail-loud', () => {
