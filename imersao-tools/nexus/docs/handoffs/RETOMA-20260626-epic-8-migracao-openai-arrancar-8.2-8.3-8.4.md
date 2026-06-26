@@ -14,6 +14,20 @@
 
 ---
 
+> ## ⏩ ACTUALIZAÇÃO 26/06/2026 (sessão de execução) — STORY 8.2 FECHADA
+>
+> Ciclo completo da **8.2** corrido por Orion (`@aiox-master`) orquestrando subagentes: `@po` GO (9/10) → Architect Gate de entrada PASS (resolveu 2 `[AUTO-DECISION]`: `max_completion_tokens` condicional; sentinela duplicada) → `@dev` implementou (`openai.ts` 460L NOVO + factory branch + MSW + 19 testes) → Architect Gate de saída PASS (D-8.2-DRAIN ratificada; 3 eixos do contrato de estado PASS; CR `--base main` 0 findings) → `@devops` PR #96 → **merge squash `29ba4046`** (6 condições `merge-authority.md` verdes; 4 nitpicks Minor — 2 doc corrigidos, 2 testes → dívida `REC-8.2-TEST-COVERAGE`) → close-story `f8508efa`.
+>
+> **Estado Epic 8: 2/6 Done** (8.1 + 8.2). Gates: typecheck 0 · lint 0 · `test:unit` **2471 PASS** (+19) · AC14 diff vazio nos 6 ficheiros intocados · waiver 0%.
+>
+> **A RETOMA passa a ser 8.3 → 8.4** (o detalhe técnico de ambas, abaixo, mantém-se válido). A **8.3 (`OpenAIClassifier`)** assenta no `lib/agent/providers/openai.ts` que a 8.2 estabeleceu — reutiliza os helpers `isOpenAITestEnv`/`buildOpenAIClientOptions` e a sentinela `StreamErrorAlreadyEmitted` (já lá estão; NÃO recriar). A 8.3 só **adiciona** o `OpenAIClassifier` (não-streaming + `response_format:json_object`) e troca o branch `getClassifier()` `openai` de fail-loud para `new OpenAIClassifier(...)`. Story draft já existe: `stories/active/8.3.story.md`.
+>
+> **Branch de partida actualizada:** `main` sincronizado em **`f8508efa`** (não `3965b2bf`).
+>
+> **Nota de limite:** a sessão de execução da 8.2 esgotou o limite de uso (reset 22:00 Europe/Lisbon, 26/06) — o subagente `@devops` chegou a bater nele a meio (a parte final do merge/close foi feita directamente por Orion). Arrancar a 8.3 com contexto fresco após o reset.
+
+---
+
 ## 1. Resumo executivo (1 parágrafo)
 
 A produção do Nexus v2 (`imersao.ia.expressia.pt`) está **sem cérebro**: a 25/06/2026 a Anthropic Messages API começou a devolver `400 credit balance too low`. O Eurico decidiu **NÃO recarregar a Anthropic** (recusa explícita, não voltar a propor) e **migrar a camada de inferência para a OpenAI** (decisão vinculativa — ADR-10). A migração é o **Epic 8** (dual-provider com flag `LLM_PROVIDER`; Anthropic fica como fallback/testes; OpenAI **directo**, `api.openai.com`, não Azure/gateway; o critério é correcção, não uptime). A **Story 8.1 (fundação)** já está **Done e merged em main** (PR #95, `dec0b203`) — instalou a "cablagem" (flag + factory branch + `OPENAI_API_KEY` + `toolsToOpenAIShape` + defaults), mas **o branch `openai` da factory falha-loud de propósito** porque o código que fala com a OpenAI ainda não existe. **Esta retoma implementa esse código**: 8.2 (executor streaming), 8.3 (classifier JSON), 8.4 (proxy Edge + transport client — o caminho QUENTE de produção, ADR-9). Só depois de 8.2+8.3+8.4 (+ 8.5 parity + 8.6 cutover) é que a produção volta a ter cérebro via OpenAI. As stories **8.2 e 8.3 já estão em Draft e committed em main** (`stories/active/8.2.story.md`, `8.3.story.md`); a **8.4 ainda não foi draftada**.
