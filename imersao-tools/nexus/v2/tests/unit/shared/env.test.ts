@@ -21,6 +21,10 @@ const TOUCHED = [
   // Story 6.16 — janela do briefing matinal (C15 — teste de parsing).
   'BRIEFING_HOUR_START',
   'BRIEFING_HOUR_END',
+  // Story 8.1 — flags dual-provider + secret OpenAI.
+  'LLM_PROVIDER',
+  'NEXT_PUBLIC_LLM_PROVIDER',
+  'OPENAI_API_KEY',
 ] as const;
 
 const saved: Record<string, string | undefined> = {};
@@ -144,5 +148,153 @@ describe('getPublicEnv', () => {
     delete process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC;
     const { getPublicEnv } = await import('@/lib/shared/env');
     expect(getPublicEnv().NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC).toBeUndefined();
+  });
+});
+
+describe('Story 8.1 — LLM_PROVIDER no ServerEnvSchema (AC1)', () => {
+  it('LLM_PROVIDER ausente → default "anthropic" (retrocompat)', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-0123456789';
+    process.env.NEXUS_PASSWORD_HASH = 'hash-0123456789';
+    process.env.SESSION_SECRET = 'session-secret-0123456789';
+    delete process.env.LLM_PROVIDER;
+    const { getServerEnv } = await import('@/lib/shared/env');
+    expect(getServerEnv().LLM_PROVIDER).toBe('anthropic');
+  });
+
+  it('LLM_PROVIDER="openai" → validado e resolvido', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-0123456789';
+    process.env.OPENAI_API_KEY = 'sk-openai-0123456789'; // provider activo exige a sua key
+    process.env.NEXUS_PASSWORD_HASH = 'hash-0123456789';
+    process.env.SESSION_SECRET = 'session-secret-0123456789';
+    process.env.LLM_PROVIDER = 'openai';
+    const { getServerEnv } = await import('@/lib/shared/env');
+    expect(getServerEnv().LLM_PROVIDER).toBe('openai');
+  });
+
+  it('LLM_PROVIDER inválido → rejeitado pelo schema (Zod enum)', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-0123456789';
+    process.env.NEXUS_PASSWORD_HASH = 'hash-0123456789';
+    process.env.SESSION_SECRET = 'session-secret-0123456789';
+    process.env.LLM_PROVIDER = 'foobar';
+    const { getServerEnv } = await import('@/lib/shared/env');
+    expect(() => getServerEnv()).toThrow(/LLM_PROVIDER/);
+  });
+
+  it('OPENAI_API_KEY é opcional quando LLM_PROVIDER=anthropic (provider activo)', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-0123456789';
+    process.env.NEXUS_PASSWORD_HASH = 'hash-0123456789';
+    process.env.SESSION_SECRET = 'session-secret-0123456789';
+    delete process.env.LLM_PROVIDER; // default anthropic
+    delete process.env.OPENAI_API_KEY;
+    const { getServerEnv } = await import('@/lib/shared/env');
+    expect(() => getServerEnv()).not.toThrow();
+    expect(getServerEnv().OPENAI_API_KEY).toBeUndefined();
+  });
+
+  it('boot OpenAI-only: LLM_PROVIDER=openai + OPENAI_API_KEY presente + ANTHROPIC ausente → resolve openai (não exige ANTHROPIC)', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    delete process.env.ANTHROPIC_API_KEY;
+    process.env.OPENAI_API_KEY = 'sk-openai-0123456789';
+    process.env.NEXUS_PASSWORD_HASH = 'hash-0123456789';
+    process.env.SESSION_SECRET = 'session-secret-0123456789';
+    process.env.LLM_PROVIDER = 'openai';
+    const { getServerEnv } = await import('@/lib/shared/env');
+    expect(() => getServerEnv()).not.toThrow();
+    expect(getServerEnv().LLM_PROVIDER).toBe('openai');
+    expect(getServerEnv().OPENAI_API_KEY).toBe('sk-openai-0123456789');
+  });
+
+  it('boot OpenAI sem OPENAI_API_KEY → rejeita (key do provider activo obrigatória)', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-0123456789';
+    process.env.NEXUS_PASSWORD_HASH = 'hash-0123456789';
+    process.env.SESSION_SECRET = 'session-secret-0123456789';
+    process.env.LLM_PROVIDER = 'openai';
+    delete process.env.OPENAI_API_KEY;
+    const { getServerEnv } = await import('@/lib/shared/env');
+    expect(() => getServerEnv()).toThrow(/Key do provider activo ausente/);
+  });
+
+  it('boot Anthropic sem ANTHROPIC_API_KEY → rejeita (retrocompat fail-loud preservado)', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    delete process.env.ANTHROPIC_API_KEY;
+    process.env.NEXUS_PASSWORD_HASH = 'hash-0123456789';
+    process.env.SESSION_SECRET = 'session-secret-0123456789';
+    delete process.env.LLM_PROVIDER; // default anthropic
+    const { getServerEnv } = await import('@/lib/shared/env');
+    expect(() => getServerEnv()).toThrow(/Env vars inválidas/);
+  });
+});
+
+describe('Story 8.1 — resolveLLMProvider (CONCERN @po #1, fail-loud)', () => {
+  it('ausente → "anthropic" (default válido)', async () => {
+    delete process.env.LLM_PROVIDER;
+    const { resolveLLMProvider } = await import('@/lib/shared/env');
+    expect(resolveLLMProvider()).toBe('anthropic');
+  });
+
+  it('"openai" → "openai"', async () => {
+    process.env.LLM_PROVIDER = 'openai';
+    const { resolveLLMProvider } = await import('@/lib/shared/env');
+    expect(resolveLLMProvider()).toBe('openai');
+  });
+
+  it('valor inválido NÃO cai para anthropic — lança Error PT-PT', async () => {
+    process.env.LLM_PROVIDER = 'foobar';
+    const { resolveLLMProvider } = await import('@/lib/shared/env');
+    expect(() => resolveLLMProvider()).toThrow(/LLM_PROVIDER inválido/);
+    expect(() => resolveLLMProvider()).toThrow(/foobar/);
+  });
+});
+
+describe('Story 8.1 — assertProviderFlagsAgree (AC5, C5)', () => {
+  it('ambas ausentes → concordam (ambas default anthropic), sem erro', async () => {
+    delete process.env.LLM_PROVIDER;
+    delete process.env.NEXT_PUBLIC_LLM_PROVIDER;
+    const { assertProviderFlagsAgree } = await import('@/lib/shared/env');
+    expect(() => assertProviderFlagsAgree()).not.toThrow();
+  });
+
+  it('ambas "openai" → concordam, sem erro', async () => {
+    process.env.LLM_PROVIDER = 'openai';
+    process.env.NEXT_PUBLIC_LLM_PROVIDER = 'openai';
+    const { assertProviderFlagsAgree } = await import('@/lib/shared/env');
+    expect(() => assertProviderFlagsAgree()).not.toThrow();
+  });
+
+  it('mismatch (server openai, público anthropic) → lança Error', async () => {
+    process.env.LLM_PROVIDER = 'openai';
+    process.env.NEXT_PUBLIC_LLM_PROVIDER = 'anthropic';
+    const { assertProviderFlagsAgree } = await import('@/lib/shared/env');
+    expect(() => assertProviderFlagsAgree()).toThrow(
+      /Mismatch de flags de provider/,
+    );
+  });
+
+  it('NEXT_PUBLIC_LLM_PROVIDER inválido → lança Error', async () => {
+    process.env.LLM_PROVIDER = 'anthropic';
+    process.env.NEXT_PUBLIC_LLM_PROVIDER = 'foobar';
+    const { assertProviderFlagsAgree } = await import('@/lib/shared/env');
+    expect(() => assertProviderFlagsAgree()).toThrow(
+      /NEXT_PUBLIC_LLM_PROVIDER inválido/,
+    );
+  });
+});
+
+describe('Story 8.1 — getPublicEnv cabla NEXT_PUBLIC_LLM_PROVIDER (CONCERN @po #2)', () => {
+  it('lê NEXT_PUBLIC_LLM_PROVIDER do process.env', async () => {
+    process.env.NEXT_PUBLIC_LLM_PROVIDER = 'openai';
+    const { getPublicEnv } = await import('@/lib/shared/env');
+    expect(getPublicEnv().NEXT_PUBLIC_LLM_PROVIDER).toBe('openai');
+  });
+
+  it('ausente → default "anthropic"', async () => {
+    delete process.env.NEXT_PUBLIC_LLM_PROVIDER;
+    const { getPublicEnv } = await import('@/lib/shared/env');
+    expect(getPublicEnv().NEXT_PUBLIC_LLM_PROVIDER).toBe('anthropic');
   });
 });

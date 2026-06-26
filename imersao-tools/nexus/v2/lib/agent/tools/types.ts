@@ -127,3 +127,31 @@ export interface AnthropicToolShape {
     [k: string]: unknown;
   };
 }
+
+/**
+ * Shape OpenAI Chat Completions para `tools` em `chat.completions.create({ tools: [...] })`.
+ * Irmão de `AnthropicToolShape` (Story 8.1, ADR-10 §4.2).
+ *
+ * Envelope OpenAI: `{ type: 'function', function: { name, description, parameters } }`,
+ * onde `parameters` é o **mesmo** JSON Schema (`zodToJsonSchema(argsSchema, {target:'openApi3'})`)
+ * que o caminho Anthropic usa em `input_schema` — ver `toolsToOpenAIShape` em `registry.ts`.
+ *
+ * `[k: string]: unknown` em `parameters` espelha o `input_schema` Anthropic (campos extra
+ * opcionais que `zodToJsonSchema` produz, e.g. `format`, `pattern`, `enum`).
+ */
+export interface OpenAIToolShape {
+  type: 'function';
+  function: {
+    name: string;
+    description: string;
+    parameters: {
+      type: 'object';
+      properties?: Record<string, unknown>;
+      required?: string[];
+      // `zodToJsonSchema` pode produzir `additionalProperties` como boolean OU
+      // como sub-schema (e.g. `z.object().catchall(...)`) — aceitar ambos.
+      additionalProperties?: boolean | Record<string, unknown>;
+      [k: string]: unknown;
+    };
+  };
+}

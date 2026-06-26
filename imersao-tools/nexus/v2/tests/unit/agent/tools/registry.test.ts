@@ -5,6 +5,7 @@ import {
   ToolRegistry,
   toolRegistry,
   toolsToAnthropicShape,
+  toolsToOpenAIShape,
 } from '@/lib/agent/tools/registry';
 import type { ToolDefinition, ToolDomain } from '@/lib/agent/tools/types';
 
@@ -119,6 +120,37 @@ describe('ToolRegistry — register validation errors', () => {
       toolRegistry.register(dummyTool({ name: 'tool_v2_with_numbers123' }))
     ).not.toThrow();
   });
+
+  // Story 8.1 (AC8, C9, ADR-10 §7.1) — guard de comprimento ≤64 (limite OpenAI).
+  it('lança em nome > 64 caracteres (limite OpenAI)', () => {
+    // 65 chars snake_case válido no padrão mas demasiado longo.
+    const longName = 'a' + '_a'.repeat(32); // 'a' + 64 = 65 chars
+    expect(longName.length).toBe(65);
+    expect(() =>
+      toolRegistry.register(dummyTool({ name: longName }))
+    ).toThrow(/excede 64 caracteres/);
+  });
+
+  it('aceita nome de exactamente 64 caracteres (limite incl.)', () => {
+    const name64 = 'a' + 'b'.repeat(63); // 64 chars
+    expect(name64.length).toBe(64);
+    expect(() =>
+      toolRegistry.register(dummyTool({ name: name64 }))
+    ).not.toThrow();
+  });
+
+  it('nomes actuais (snake_case curtos) passam o guard de comprimento', () => {
+    for (const name of [
+      'listar_tarefas',
+      'processar_recibo',
+      'pesquisar_web_e_criar_nota',
+    ]) {
+      toolRegistry.clear();
+      expect(() =>
+        toolRegistry.register(dummyTool({ name }))
+      ).not.toThrow();
+    }
+  });
 });
 
 describe('ToolRegistry — unregister', () => {
@@ -208,6 +240,115 @@ describe('ToolRegistry — toAnthropicTools (happy path)', () => {
 
   it('toolsToAnthropicShape([]) retorna []', () => {
     expect(toolsToAnthropicShape([])).toEqual([]);
+  });
+});
+
+describe('Story 8.1 — toolsToOpenAIShape envelope (AC6, C6)', () => {
+  it('produz envelope { type:"function", function:{ name, description, parameters } }', () => {
+    const tool = dummyTool({
+      name: 'criar_tarefa',
+      description: 'Cria uma nova tarefa',
+      argsSchema: z.object({
+        titulo: z.string(),
+        prazo: z.string().nullable(),
+        prioridade: z.enum(['alta', 'media', 'baixa']),
+      }),
+    });
+
+    const result = toolsToOpenAIShape([tool]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].type).toBe('function');
+    expect(result[0].function.name).toBe('criar_tarefa');
+    expect(result[0].function.description).toBe('Cria uma nova tarefa');
+    expect(result[0].function.parameters.type).toBe('object');
+    expect(result[0].function.parameters.properties).toHaveProperty('titulo');
+    expect(result[0].function.parameters.properties).toHaveProperty('prazo');
+    expect(result[0].function.parameters.properties).toHaveProperty(
+      'prioridade',
+    );
+  });
+
+  it('toolsToOpenAIShape([]) retorna []', () => {
+    expect(toolsToOpenAIShape([])).toEqual([]);
+  });
+
+  it('aceita subset explícito de tools', () => {
+    const t1 = dummyTool({ name: 'tool_a' });
+    const t2 = dummyTool({ name: 'tool_b' });
+    const result = toolsToOpenAIShape([t2]);
+    expect(result).toHaveLength(1);
+    expect(result[0].function.name).toBe('tool_b');
+  });
+});
+
+describe('Story 8.1 — parity parameters === input_schema (AC7, C7 falsificável)', () => {
+  it('function.parameters (OpenAI) deep-equals input_schema (Anthropic) para a mesma tool', () => {
+    // Schema rico para exercer properties/required/enum/nullable — se as duas
+    // conversões divergissem no JSON Schema, este deep-equal falharia.
+    const tool = dummyTool({
+      name: 'tool_parity',
+      description: 'Tool para comparar conversões',
+      argsSchema: z.object({
+        titulo: z.string().min(1),
+        quantidade: z.number().int(),
+        categoria: z.enum(['a', 'b', 'c']),
+        nota: z.string().optional(),
+        valido: z.boolean(),
+      }),
+    });
+
+    const anthropic = toolsToAnthropicShape([tool]);
+    const openai = toolsToOpenAIShape([tool]);
+
+    expect(openai[0].function.parameters).toEqual(anthropic[0].input_schema);
+  });
+});
+
+describe('Story 8.1 — toolsToOpenAIShape FAIL-LOUD em shape inesperado (AC6, C8)', () => {
+  it('lança identificando a tool culpada quando schema não é object', () => {
+    const malformedTool = dummyTool({
+      name: 'tool_openai_malformed',
+      argsSchema: z.string() as unknown as z.ZodObject<z.ZodRawShape>,
+    });
+
+    expect(() => toolsToOpenAIShape([malformedTool])).toThrow(
+      /tool "tool_openai_malformed"/,
+    );
+    expect(() => toolsToOpenAIShape([malformedTool])).toThrow(/envelope OpenAI/);
+  });
+});
+
+describe('Story 8.1 — toolsToOpenAIShape guard de nome no caminho puro (CR Iter 1 Major)', () => {
+  // O caminho `toolsToOpenAIShape()` NÃO passa por `register()`. Sem este guard,
+  // um nome inválido geraria um payload OpenAI inválido que só falharia na
+  // fronteira do provider. `assertValidToolName` fecha a classe de falha aqui.
+  it('lança em nome > 64 caracteres (limite OpenAI) sem passar por register()', () => {
+    const longName = 'a' + '_a'.repeat(32); // 65 chars
+    expect(longName.length).toBe(65);
+    const tool = dummyTool({ name: longName });
+    expect(() => toolsToOpenAIShape([tool])).toThrow(/excede 64 caracteres/);
+  });
+
+  it('lança em nome não-snake_case sem passar por register()', () => {
+    const tool = dummyTool({ name: 'Foo-Bar' });
+    expect(() => toolsToOpenAIShape([tool])).toThrow(
+      /inválido — usar snake_case lowercase/,
+    );
+  });
+
+  it('lança em nome vazio sem passar por register()', () => {
+    const tool = dummyTool({ name: '' });
+    expect(() => toolsToOpenAIShape([tool])).toThrow(
+      'Tool registry: nome da tool não pode estar vazio',
+    );
+  });
+
+  it('nome válido de exactamente 64 caracteres converte sem lançar', () => {
+    const name64 = 'a' + 'b'.repeat(63); // 64 chars
+    expect(name64.length).toBe(64);
+    const tool = dummyTool({ name: name64 });
+    expect(() => toolsToOpenAIShape([tool])).not.toThrow();
   });
 });
 

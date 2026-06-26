@@ -17,3 +17,19 @@
 
 export const DEFAULT_CLASSIFIER_MODEL = 'claude-haiku-4-5-20251001';
 export const DEFAULT_EXECUTOR_MODEL = 'claude-sonnet-4-6';
+
+/**
+ * Nexus v2 — Default OpenAI Models (Story 8.1, ADR-10 §4.5)
+ *
+ * Defaults recomendados quando `LLM_PROVIDER=openai` (configuráveis por env —
+ * ponto de partida, não contrato; ver ADR-10 §4.5):
+ * - `gpt-4.1-mini` — classifier rápido/barato para classificação JSON multi-intent
+ *   (`response_format:json_object`, temperature 0) — usado pelo `OpenAIClassifier` (Story 8.3)
+ * - `gpt-4.1` — executor com function calling fiável e streaming a custo contido —
+ *   usado pelo `OpenAIExecutor` (Story 8.2)
+ *
+ * Aditivo: as constantes Anthropic acima ficam intactas. O default `LLM_PROVIDER=anthropic`
+ * garante que estas constantes não têm efeito até o cutover (Story 8.6).
+ */
+export const DEFAULT_OPENAI_CLASSIFIER_MODEL = 'gpt-4.1-mini';
+export const DEFAULT_OPENAI_EXECUTOR_MODEL = 'gpt-4.1';

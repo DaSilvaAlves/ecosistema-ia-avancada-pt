@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import type {
   AnthropicToolShape,
+  OpenAIToolShape,
   ToolDefinition,
   ToolDomain,
 } from '@/lib/agent/tools/types';
@@ -25,6 +26,46 @@ import type {
  */
 
 const TOOL_NAME_PATTERN = /^[a-z][a-z0-9_]*$/;
+
+/**
+ * Story 8.1 (ADR-10 §7.1) — limite de comprimento do nome de tool imposto pela
+ * OpenAI (`^[a-zA-Z0-9_-]{1,64}$`). O `TOOL_NAME_PATTERN` (snake_case lowercase)
+ * já é subconjunto estrito do padrão de caracteres OpenAI; o único guard que
+ * falta para fechar a classe é o de comprimento ≤64. Os nomes actuais estão
+ * muito abaixo deste limite — o guard protege contra tools futuras.
+ */
+const TOOL_NAME_MAX_LENGTH = 64;
+
+/**
+ * Story 8.1 (CR Iter 1, ADR-10 §7.1) — guard partilhado do nome de tool.
+ *
+ * Valida, na mesma ordem e com as MESMAS mensagens PT-PT: (1) não-vazio,
+ * (2) `TOOL_NAME_PATTERN` (snake_case lowercase), (3) ≤ `TOOL_NAME_MAX_LENGTH`
+ * (64, limite OpenAI `^[a-zA-Z0-9_-]{1,64}$`).
+ *
+ * Centralizado para fechar a classe de falha apontada pelo CR: o caminho de
+ * conversão puro `toolsToOpenAIShape()` / `convertToolToOpenAIShape()` aceita
+ * `ToolDefinition[]` arbitrários SEM passar por `register()`, pelo que um nome
+ * inválido (>64 chars ou não-snake_case) só falharia mais tarde na fronteira do
+ * provider OpenAI. Chamar este guard no início da conversão faz falhar-loud aqui,
+ * identificando a tool culpada — em vez de gerar um payload OpenAI inválido.
+ */
+function assertValidToolName(name: string): void {
+  if (!name || name.length === 0) {
+    throw new Error('Tool registry: nome da tool não pode estar vazio');
+  }
+  if (!TOOL_NAME_PATTERN.test(name)) {
+    throw new Error(
+      `Tool registry: nome "${name}" inválido — usar snake_case lowercase (a-z, 0-9, _) começando por letra`
+    );
+  }
+  if (name.length > TOOL_NAME_MAX_LENGTH) {
+    throw new Error(
+      `Tool registry: nome "${name}" excede ${TOOL_NAME_MAX_LENGTH} caracteres (${name.length}) — ` +
+        `limite OpenAI para nomes de função (^[a-zA-Z0-9_-]{1,64}$, ADR-10 §7.1)`
+    );
+  }
+}
 
 /**
  * Schema interno para validação runtime de `defineTool`.
@@ -123,6 +164,62 @@ export function toolsToAnthropicShape(
 }
 
 /**
+ * Converte uma `ToolDefinition` para o envelope de função OpenAI Chat Completions
+ * (Story 8.1, ADR-10 §4.2). Irmão de `convertToolToAnthropicShape`.
+ *
+ * Reusa o **mesmo** `zodToJsonSchema(tool.argsSchema, {target:'openApi3'})` e o
+ * **mesmo** fail-loud (shape sem `type === 'object'` → Error com a tool culpada),
+ * apenas embrulhando o resultado em `{ type:'function', function:{ name, description, parameters } }`.
+ *
+ * Invariante (AC7, falsificável): o `function.parameters` aqui produzido é igual,
+ * por construção, ao `input_schema` de `convertToolToAnthropicShape` para a mesma
+ * tool — ambos derivam da mesma conversão determinística. Um teste de igualdade
+ * falharia se as duas conversões divergissem.
+ */
+function convertToolToOpenAIShape(tool: ToolDefinition): OpenAIToolShape {
+  // CR Iter 1 (Major): valida o nome ANTES de converter — o caminho puro
+  // `toolsToOpenAIShape()` não passa por `register()`, logo este é o único ponto
+  // que fecha o guard de nome (pattern + ≤64) para chamadores directos.
+  assertValidToolName(tool.name);
+
+  const jsonSchema = zodToJsonSchema(tool.argsSchema, { target: 'openApi3' });
+
+  if (
+    jsonSchema === null ||
+    typeof jsonSchema !== 'object' ||
+    !('type' in jsonSchema) ||
+    (jsonSchema as { type?: unknown }).type !== 'object'
+  ) {
+    throw new Error(
+      `Tool registry: zodToJsonSchema produziu shape inesperado para tool "${tool.name}" (envelope OpenAI) — ` +
+        `esperado { type: "object", ... }, recebido: ${JSON.stringify(
+          jsonSchema
+        ).slice(0, 200)}`
+    );
+  }
+
+  return {
+    type: 'function',
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: jsonSchema as OpenAIToolShape['function']['parameters'],
+    },
+  };
+}
+
+/**
+ * Helper exportado para conversão pura sem instanciar registry — irmão de
+ * `toolsToAnthropicShape`. Usado pelo `OpenAIExecutor` (Story 8.2) quando
+ * `LLM_PROVIDER=openai`. Reutiliza a mesma conversão e o mesmo fail-loud.
+ */
+export function toolsToOpenAIShape(
+  tools: ToolDefinition[]
+): OpenAIToolShape[] {
+  return tools.map(convertToolToOpenAIShape);
+}
+
+/**
  * Validation helper para criação tipada de tools com checks runtime.
  *
  * Apanha defs malformadas (e.g., `requiresPreview` ausente, `argsSchema` não
@@ -148,14 +245,10 @@ export class ToolRegistry {
   private tools = new Map<string, ToolDefinition>();
 
   register(def: ToolDefinition): void {
-    if (!def.name || def.name.length === 0) {
-      throw new Error('Tool registry: nome da tool não pode estar vazio');
-    }
-    if (!TOOL_NAME_PATTERN.test(def.name)) {
-      throw new Error(
-        `Tool registry: nome "${def.name}" inválido — usar snake_case lowercase (a-z, 0-9, _) começando por letra`
-      );
-    }
+    // CR Iter 1 (Major): guard de nome partilhado com o caminho de conversão
+    // OpenAI puro — mesma validação, mesmas mensagens PT-PT (não-vazio + pattern
+    // + ≤64). Antes era inline aqui; agora é a única fonte de verdade.
+    assertValidToolName(def.name);
     if (this.tools.has(def.name)) {
       throw new Error(
         `Tool registry: tool "${def.name}" já registada — usar unregister() primeiro ou escolher outro nome`

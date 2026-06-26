@@ -10,10 +10,38 @@ import { z } from 'zod';
  * `NEXT_PUBLIC_*` são acessíveis ao client por design Next.js.
  */
 
+/**
+ * Story 8.1 (ADR-10 §1.2/§3.2) — providers de inferência suportados pela
+ * feature flag dual-provider. Single source of truth do enum.
+ */
+export const LLM_PROVIDERS = ['anthropic', 'openai'] as const;
+export type LLMProvider = (typeof LLM_PROVIDERS)[number];
+
 const ServerEnvObject = z.object({
-  ANTHROPIC_API_KEY: z.string().min(10, 'ANTHROPIC_API_KEY ausente ou demasiado curta'),
+  // Story 8.1 [ADR-10 S1] — a key de cada provider é OPCIONAL no objecto base;
+  // a obrigatoriedade é CONDICIONAL ao `LLM_PROVIDER` activo (ver `.refine` da
+  // key do provider abaixo). Assim, um deployment OpenAI não exige
+  // ANTHROPIC_API_KEY e vice-versa. O `.min(10)` aplica-se só quando presente.
+  ANTHROPIC_API_KEY: z
+    .string()
+    .min(10, 'ANTHROPIC_API_KEY ausente ou demasiado curta')
+    .optional(),
   NEXUS_PASSWORD_HASH: z.string().min(10, 'NEXUS_PASSWORD_HASH ausente'),
   SESSION_SECRET: z.string().min(16, 'SESSION_SECRET ausente ou demasiado curta'),
+
+  // Story 8.1 [ADR-10 S1] — feature flag dual-provider (server-only). Escolhe a
+  // implementação na factory. Default 'anthropic' = comportamento byte-a-byte
+  // o de hoje (retrocompat total; 2400+ testes verdes por construção).
+  LLM_PROVIDER: z.enum(LLM_PROVIDERS).default('anthropic'),
+
+  // Story 8.1 [ADR-10 S1, NFR5/D-8.1-SECRET] — key OpenAI (secret server-only,
+  // espelha ANTHROPIC_API_KEY). NUNCA `NEXT_PUBLIC_*` — não pode entrar no client
+  // bundle. Opcional no objecto base; obrigatória só quando LLM_PROVIDER=openai
+  // (refine abaixo). Provisionada em prod via Vercel UI. NUNCA logada (NFR5).
+  OPENAI_API_KEY: z
+    .string()
+    .min(10, 'OPENAI_API_KEY ausente ou demasiado curta')
+    .optional(),
 
   // Opcionais em dev (preenchidas em prod via Vercel UI)
   GOOGLE_OAUTH_CLIENT_ID: z.string().optional(),
@@ -58,10 +86,32 @@ const ServerEnvSchema = ServerEnvObject.refine(
       'BRIEFING_HOUR_START tem de ser menor que BRIEFING_HOUR_END (janela [start, end[ vazia caso contrário)',
     path: ['BRIEFING_HOUR_START'],
   },
-);
+)
+  // Story 8.1 [ADR-10 S1/AC4] — a key do provider ACTIVO é obrigatória; a do
+  // outro provider não. LLM_PROVIDER tem default 'anthropic' (sempre definido
+  // pós-parse), por isso este refine resolve sempre um provider concreto.
+  // Mantém o fail-loud de arranque para Anthropic (retrocompat) e estende-o à
+  // OpenAI sem exigir as duas keys ao mesmo tempo.
+  .refine(
+    (env) =>
+      env.LLM_PROVIDER === 'openai'
+        ? Boolean(env.OPENAI_API_KEY)
+        : Boolean(env.ANTHROPIC_API_KEY),
+    {
+      message:
+        'Key do provider activo ausente — define ANTHROPIC_API_KEY (LLM_PROVIDER=anthropic) ou OPENAI_API_KEY (LLM_PROVIDER=openai)',
+      path: ['LLM_PROVIDER'],
+    },
+  );
 
 const PublicEnvSchema = z.object({
   NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC: z.string().optional(),
+
+  // Story 8.1 [ADR-10 §3.4/D-8.1-FLAGS] — espelho PÚBLICO de LLM_PROVIDER, lido
+  // pelo `client-executor.ts` no browser para escolher o transport (Story 8.4).
+  // Apenas o NOME do provider é público (não um secret). TEM de concordar com
+  // LLM_PROVIDER (server) — ver `assertProviderFlagsAgree`. Default 'anthropic'.
+  NEXT_PUBLIC_LLM_PROVIDER: z.enum(LLM_PROVIDERS).default('anthropic'),
 });
 
 export type ServerEnv = z.infer<typeof ServerEnvSchema>;
@@ -101,5 +151,62 @@ export function getServerEnv(): ServerEnv {
 export function getPublicEnv(): PublicEnv {
   return PublicEnvSchema.parse({
     NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC: process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC,
+    // Story 8.1 — cablar a flag pública. Sem isto, a `.default('anthropic')` do
+    // schema nunca via o valor real de `process.env` (campo não passado → undefined
+    // → default), mascarando um `NEXT_PUBLIC_LLM_PROVIDER=openai` definido.
+    NEXT_PUBLIC_LLM_PROVIDER: process.env.NEXT_PUBLIC_LLM_PROVIDER,
   });
+}
+
+/**
+ * Story 8.1 (AC1/AC2, CONCERN @po #1) — resolve o provider activo lendo
+ * `process.env.LLM_PROVIDER` DIRECTAMENTE (Edge-safe, sem parse global do schema),
+ * com o mesmo default 'anthropic' do schema.
+ *
+ * Fail-loud: um valor desconhecido (ex: 'foobar') **não** cai silenciosamente
+ * para 'anthropic' — lança `Error` PT-PT claro. Ausente → 'anthropic' (válido).
+ * É a leitura canónica usada pela factory no caminho quente.
+ */
+export function resolveLLMProvider(): LLMProvider {
+  const raw = process.env.LLM_PROVIDER ?? 'anthropic';
+  if (raw !== 'anthropic' && raw !== 'openai') {
+    throw new Error(
+      `LLM_PROVIDER inválido: "${raw}" — valores aceites: 'anthropic' | 'openai' ` +
+        `(ausente → 'anthropic'). Corrige a variável de ambiente.`
+    );
+  }
+  return raw;
+}
+
+/**
+ * Story 8.1 (AC5/D-8.1-FLAGS) — asserção de concordância das flags no boot do
+ * server. `NEXT_PUBLIC_LLM_PROVIDER` (client transport) TEM de igualar
+ * `LLM_PROVIDER` (server upstream); um mismatch faria o client construir um body
+ * de um provider e postá-lo no proxy do outro. Fail-loud em mismatch (não
+ * silencioso). Lê `process.env` directamente (Edge-safe); ambas ausentes →
+ * ambas 'anthropic' → concordam. Reusa `resolveLLMProvider` para validar também
+ * o enum de cada flag (valor inválido em qualquer uma → erro).
+ *
+ * Invocada lazy pela factory na primeira resolução de provider (ponto de
+ * arranque server-side; ver Dev Notes da Story 8.1).
+ */
+export function assertProviderFlagsAgree(): void {
+  const server = resolveLLMProvider();
+
+  const rawPublic = process.env.NEXT_PUBLIC_LLM_PROVIDER ?? 'anthropic';
+  if (rawPublic !== 'anthropic' && rawPublic !== 'openai') {
+    throw new Error(
+      `NEXT_PUBLIC_LLM_PROVIDER inválido: "${rawPublic}" — valores aceites: ` +
+        `'anthropic' | 'openai' (ausente → 'anthropic').`
+    );
+  }
+
+  if (server !== rawPublic) {
+    throw new Error(
+      `Mismatch de flags de provider: LLM_PROVIDER='${server}' mas ` +
+        `NEXT_PUBLIC_LLM_PROVIDER='${rawPublic}'. As duas TÊM de concordar — ` +
+        `o transport client (NEXT_PUBLIC_*) e o upstream server (LLM_PROVIDER) ` +
+        `escolhem o mesmo provider. Alinha ambas (ADR-10 §3.4).`
+    );
+  }
 }
