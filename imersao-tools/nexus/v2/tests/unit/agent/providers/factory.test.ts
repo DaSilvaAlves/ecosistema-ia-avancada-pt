@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { getClassifier, getExecutor } from '@/lib/agent/providers/factory';
+import { OpenAIExecutor } from '@/lib/agent/providers/openai';
 
 /**
  * Story 8.1 (ADR-10 S1) — Factory dual-provider tests.
@@ -64,19 +65,20 @@ describe('factory — C1/C2 default anthropic (retrocompat)', () => {
   });
 });
 
-describe('factory — C3 LLM_PROVIDER=openai sem impl → fail-loud', () => {
+describe('factory — C3/AC10 LLM_PROVIDER=openai → executor implementado, classifier ainda fail-loud', () => {
   beforeEach(() => {
     process.env.LLM_PROVIDER = 'openai';
     process.env.NEXT_PUBLIC_LLM_PROVIDER = 'openai';
     process.env.OPENAI_API_KEY = MOCK_OPENAI_KEY;
   });
 
-  it('getExecutor lança Error "ainda não implementado" (NÃO devolve Anthropic)', () => {
-    expect(() => getExecutor()).toThrowError(/ainda não implementado/);
-    expect(() => getExecutor()).toThrowError(/OpenAIExecutor/);
+  it('getExecutor devolve OpenAIExecutor (Story 8.2 — deixa de fail-loud)', () => {
+    const executor = getExecutor();
+    expect(executor).toBeInstanceOf(OpenAIExecutor);
+    expect(typeof executor.execute).toBe('function');
   });
 
-  it('getClassifier lança Error "ainda não implementado" (NÃO devolve Anthropic)', () => {
+  it('getClassifier ainda lança Error "ainda não implementado" (Story 8.3 pendente)', () => {
     expect(() => getClassifier()).toThrowError(/ainda não implementado/);
     expect(() => getClassifier()).toThrowError(/OpenAIClassifier/);
   });
