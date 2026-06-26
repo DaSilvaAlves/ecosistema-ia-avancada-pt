@@ -1,4 +1,5 @@
 import { AnthropicClassifier, AnthropicExecutor } from '@/lib/agent/providers/anthropic';
+import { OpenAIExecutor } from '@/lib/agent/providers/openai';
 import type {
   ClassifierProvider,
   ExecutorProvider,
@@ -105,8 +106,11 @@ export function getClassifier(): ClassifierProvider {
 export function getExecutor(): ExecutorProvider {
   const provider = resolveActiveProvider();
   if (provider === 'openai') {
-    readApiKey('openai');
-    throwOpenAINotImplemented('executor');
+    // Story 8.2 (ADR-10 S2): o executor OpenAI está implementado. Valida a key
+    // do provider activo e instancia o `OpenAIExecutor` — deixa de fail-loud no
+    // caminho executor server. O `getClassifier()` openai MANTÉM o fail-loud
+    // "não implementado" até a Story 8.3 (S3).
+    return new OpenAIExecutor(readApiKey('openai'));
   }
   return new AnthropicExecutor(readApiKey('anthropic'));
 }
