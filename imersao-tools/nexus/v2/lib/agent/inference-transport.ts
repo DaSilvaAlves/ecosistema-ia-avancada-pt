@@ -6,6 +6,7 @@ import { DEFAULT_CLASSIFIER_MODEL, DEFAULT_EXECUTOR_MODEL } from '@/lib/agent/mo
 import { EXECUTOR_SYSTEM_PROMPT } from '@/lib/agent/prompts/executor-system';
 import { toolsToAnthropicShape } from '@/lib/agent/tools/registry';
 import { stripJsonMarkdownFences } from '@/lib/agent/classifier-json';
+import { iterateSseData } from '@/lib/agent/sse-lines';
 import type {
   ClassifierProvider,
   ClassifierOpts,
@@ -123,58 +124,10 @@ function toAnthropicMessages(
   });
 }
 
-/**
- * Itera as linhas SSE de um `ReadableStream` (`data: <json>\n\n`), devolvendo
- * cada bloco de dados JSON parseado.
- *
- * O proxy faz pass-through do wire SSE da Anthropic, cujo formato é
- * `event: <tipo>\ndata: <json>\n\n`. Aqui só precisamos das linhas `data:` —
- * o `type` interno do JSON discrimina o evento (o JSON da Anthropic inclui
- * `"type": "..."` no payload, ver mock `buildExecutorSse`).
- *
- * AsyncGenerator para integração natural com o `for await` do executor.
- */
-async function* iterateSseData(
-  body: ReadableStream<Uint8Array>
-): AsyncGenerator<unknown> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const blocks = buffer.split('\n\n');
-      buffer = blocks.pop() ?? '';
-      for (const block of blocks) {
-        const dataLine = block
-          .split('\n')
-          .find((l) => l.startsWith('data:'));
-        if (!dataLine) continue;
-        const raw = dataLine.slice('data:'.length).trim();
-        if (raw.length === 0 || raw === '[DONE]') continue;
-        yield JSON.parse(raw);
-      }
-    }
-    // Flush do bloco final sem `\n\n` terminador.
-    if (buffer.trim().length > 0) {
-      const dataLine = buffer.split('\n').find((l) => l.startsWith('data:'));
-      if (dataLine) {
-        const raw = dataLine.slice('data:'.length).trim();
-        if (raw.length > 0 && raw !== '[DONE]') {
-          yield JSON.parse(raw);
-        }
-      }
-    }
-  } finally {
-    try {
-      reader.releaseLock();
-    } catch {
-      // releaseLock pode lançar se o reader já está fechado — silencia.
-    }
-  }
-}
+// `iterateSseData` (framing SSE puro `data: …\n\n`) foi extraída para
+// `@/lib/agent/sse-lines` na Story 8.4 (D-8.4-SSE-LINES) para ser partilhada
+// byte-a-byte com o `OpenAIInferenceTransport` — refactor DRY zero-comportamento
+// (ADR-10 §3.3 "Nota DRY de baixo risco"). Importada acima.
 
 /**
  * Lê o corpo de erro do proxy de forma tolerante (JSON ou texto) e devolve uma

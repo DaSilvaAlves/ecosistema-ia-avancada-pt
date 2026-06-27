@@ -2,6 +2,12 @@
 
 import { runAgent, type ExecutorSSEEvent } from '@/lib/agent/executor';
 import { InferenceTransport } from '@/lib/agent/inference-transport';
+import { OpenAIInferenceTransport } from '@/lib/agent/providers/openai-inference-transport';
+import { getPublicEnv } from '@/lib/shared/env';
+import type {
+  ClassifierProvider,
+  ExecutorProvider,
+} from '@/lib/agent/providers/types';
 import type { ClientConfirmationProvider } from '@/lib/agent/client-confirmation-provider';
 import { clientUndoStore } from '@/lib/agent/client-undo-store';
 import { db } from '@/lib/db/client';
@@ -61,18 +67,34 @@ import '@/lib/agent/tools';
  *   resolve os pedidos de preview gate. Quando omitido, o gate auto-confirma
  *   (comportamento Story 1.5 — útil em testes que não exercitam o gate).
  * @param transport - Override do transport de inferência (testes injectam um
- *   mock que espelha o wire SSE da Anthropic). Default: `InferenceTransport`.
+ *   mock que espelha o wire SSE do provider). Quando OMITIDO, o transport é
+ *   seleccionado por `NEXT_PUBLIC_LLM_PROVIDER` (Story 8.4, ADR-10 §3.4,
+ *   D-8.4-CLIENT-SELECT): `'openai'` → `OpenAIInferenceTransport`; `'anthropic'`
+ *   (default) → `InferenceTransport`. O argumento explícito tem PRIORIDADE TOTAL
+ *   sobre a selecção automática — testes que injectam um mock não mudam.
  * @returns AsyncGenerator de `ExecutorSSEEvent` até `done`.
  */
 export async function* runClientAgent(
   prompt: string,
   confirmationProvider?: ClientConfirmationProvider,
-  transport: InferenceTransport = new InferenceTransport()
+  transport?: ClassifierProvider & ExecutorProvider
 ): AsyncGenerator<ExecutorSSEEvent> {
+  // Selecção por flag PÚBLICA, via `getPublicEnv()` → `PublicEnvSchema` (CR Iter 2
+  // #2): valida o valor contra `z.enum(['anthropic','openai']).default('anthropic')`.
+  // AUSENTE → default 'anthropic' (seguro na migração); valor INVÁLIDO (`''`,
+  // `'openia'`) → ZodError VISÍVEL (fail-visible, ADR-10 §3.4) em vez de fallback
+  // mudo para anthropic (que bypassava o schema). Só quando o argumento `transport`
+  // não é fornecido (prioridade total ao override). `getPublicEnv` lê apenas
+  // `NEXT_PUBLIC_*` (browser-safe; sem secrets).
+  const resolvedTransport =
+    transport ??
+    (getPublicEnv().NEXT_PUBLIC_LLM_PROVIDER === 'openai'
+      ? new OpenAIInferenceTransport()
+      : new InferenceTransport());
   yield* runAgent(prompt, {
     db,
-    executor: transport,
-    classifier: transport,
+    executor: resolvedTransport,
+    classifier: resolvedTransport,
     ...(confirmationProvider ? { confirmationProvider } : {}),
     // Story 1.12 (Phase 2, ADR-9 A4): store de undo client-side real (memória +
     // timer 30s). O executor volta a emitir `undo_registered` e o `UndoToast`
