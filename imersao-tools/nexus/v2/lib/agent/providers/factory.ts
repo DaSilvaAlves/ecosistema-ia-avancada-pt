@@ -1,5 +1,5 @@
 import { AnthropicClassifier, AnthropicExecutor } from '@/lib/agent/providers/anthropic';
-import { OpenAIExecutor } from '@/lib/agent/providers/openai';
+import { OpenAIClassifier, OpenAIExecutor } from '@/lib/agent/providers/openai';
 import type {
   ClassifierProvider,
   ExecutorProvider,
@@ -23,8 +23,9 @@ import {
  * - flag `LLM_PROVIDER` com valor inválido → erro (via `resolveLLMProvider`);
  * - mismatch `LLM_PROVIDER` ≠ `NEXT_PUBLIC_LLM_PROVIDER` → erro (asserção de boot);
  * - key do provider activo ausente → erro;
- * - `LLM_PROVIDER=openai` sem impl ainda (S2/S3) → erro claro "ainda não
- *   implementado" (NÃO cai para Anthropic — mascararia má configuração).
+ * - `LLM_PROVIDER=openai`: classifier (S3 / Story 8.3) e executor (S2 / Story 8.2)
+ *   implementados — instancia a impl OpenAI; NUNCA cai para Anthropic (um fallback
+ *   silencioso mascararia má configuração).
  *
  * Default `anthropic` garante retrocompatibilidade byte-a-byte: sem a flag, o
  * comportamento é o de hoje → os 2400+ testes server-side ficam verdes por
@@ -74,31 +75,16 @@ function resolveActiveProvider(): LLMProvider {
   return resolveLLMProvider();
 }
 
-/**
- * Fail-loud para provider ainda não implementado (S2/S3). Centraliza a mensagem
- * para que o branch `openai` de classifier e executor seja consistente.
- */
-function throwOpenAINotImplemented(role: 'classifier' | 'executor'): never {
-  const story = role === 'classifier' ? 'Story 8.3' : 'Story 8.2';
-  const symbol = role === 'classifier' ? 'OpenAIClassifier' : 'OpenAIExecutor';
-  throw new Error(
-    `Provider OpenAI ainda não implementado — ${symbol} chega em ${story} (ADR-10 S${
-      role === 'classifier' ? '3' : '2'
-    }). ` +
-      `Define LLM_PROVIDER=anthropic (ou remove a flag) para usar o provider actual.`
-  );
-}
-
 export function getClassifier(): ClassifierProvider {
   // Override de opts (model/maxTokens) é feito via parâmetro de `classify()`.
   // Factory apenas resolve o provider, garante a key e instancia.
   const provider = resolveActiveProvider();
   if (provider === 'openai') {
-    // Valida a key do provider activo PRIMEIRO (AC3 fail-loud; exercita
-    // `readApiKey('openai')`) — config incompleta apanha-se antes do sinal de
-    // "ainda não implementado". OPENAI_API_KEY ausente → erro de key, não o de impl.
-    readApiKey('openai');
-    throwOpenAINotImplemented('classifier');
+    // Story 8.3 (ADR-10 S3): o classifier OpenAI está implementado. Valida a key
+    // do provider activo (fail-loud se ausente — `readApiKey('openai')`) e
+    // instancia o `OpenAIClassifier` — deixa de fail-loud no caminho classifier
+    // server (espelho do `getExecutor()` openai, Story 8.2).
+    return new OpenAIClassifier(readApiKey('openai'));
   }
   return new AnthropicClassifier(readApiKey('anthropic'));
 }
