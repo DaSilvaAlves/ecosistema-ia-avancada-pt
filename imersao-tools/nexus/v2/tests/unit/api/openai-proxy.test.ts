@@ -136,6 +136,26 @@ describe('OpenAI proxy', () => {
     }
   });
 
+  it('devolve 502 quando o fetch ao upstream OpenAI rejeita (rede) — CR Iter 2 #5', async () => {
+    // `HttpResponse.error()` simula um erro de rede → o `fetch(OPENAI_URL)` do
+    // proxy rejeita → catch → 502 com detalhe PT-PT (sem vazar a key).
+    server.use(
+      http.post('https://api.openai.com/v1/chat/completions', () => HttpResponse.error())
+    );
+    const resp = await callProxy({
+      hasCookie: true,
+      body: {
+        messages: [{ role: 'user', content: 'olá' }],
+        model: 'gpt-4.1-mini',
+      },
+    });
+    expect(resp.status).toBe(502);
+    const json = (await resp.json()) as { error?: string };
+    expect(json.error).toContain('Falha ao contactar OpenAI');
+    const text = JSON.stringify(json);
+    expect(text).not.toContain('sk-openai-test-FAKE-KEY');
+  });
+
   it('GET devolve 405', async () => {
     const { GET } = await import('@/app/api/openai/proxy/route');
     const resp = await GET();

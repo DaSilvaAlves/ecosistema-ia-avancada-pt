@@ -173,6 +173,28 @@ describe('OpenAIInferenceTransport.classify (AC3)', () => {
       /não contém choices\[0\].message.content/
     );
   });
+
+  it('CR Iter 2 #3: fetchFn rejeitado (rede) → erro PT-PT normalizado', async () => {
+    const fetchFn = (async () => {
+      throw new Error('network down');
+    }) as typeof fetch;
+    const transport = new OpenAIInferenceTransport(fetchFn);
+    await expect(transport.classify('sys', 'prompt')).rejects.toThrow(
+      /falha de rede ao contactar o proxy de inferência OpenAI — network down/
+    );
+  });
+
+  it('CR Iter 2 #3: corpo da resposta não-JSON (res.json lança) → erro PT-PT normalizado', async () => {
+    const fetchFn = (async () =>
+      new Response('<<não é json>>', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })) as typeof fetch;
+    const transport = new OpenAIInferenceTransport(fetchFn);
+    await expect(transport.classify('sys', 'prompt')).rejects.toThrow(
+      /resposta do proxy de inferência OpenAI não é JSON válido \(corpo malformado\)/
+    );
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

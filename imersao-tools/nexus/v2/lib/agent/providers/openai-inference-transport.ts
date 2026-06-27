@@ -297,30 +297,52 @@ export class OpenAIInferenceTransport
       throw new Error('OpenAIInferenceTransport: userPrompt obrigatório');
     }
 
-    const res = await this.fetchFn(OPENAI_PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: opts.model ?? DEFAULT_OPENAI_CLASSIFIER_MODEL,
-        // SF-1: `max_completion_tokens` (NÃO `max_tokens`). Valor 1024 (paridade).
-        max_completion_tokens: opts.maxTokens ?? DEFAULT_OPENAI_CLASSIFIER_MAX_TOKENS,
-        temperature: opts.temperature ?? 0,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-      }),
-    });
+    // CR Iter 2 #3: normalizar TODOS os caminhos de falha do transporte
+    // (rede rejeitada / corpo não-JSON), não só `!res.ok`, para um erro PT-PT
+    // consistente — paridade com o tratamento de erro do `execute()`/proxy.
+    let res: Response;
+    try {
+      res = await this.fetchFn(OPENAI_PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: opts.model ?? DEFAULT_OPENAI_CLASSIFIER_MODEL,
+          // SF-1: `max_completion_tokens` (NÃO `max_tokens`). Valor 1024 (paridade).
+          max_completion_tokens: opts.maxTokens ?? DEFAULT_OPENAI_CLASSIFIER_MAX_TOKENS,
+          temperature: opts.temperature ?? 0,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+        }),
+      });
+    } catch (err) {
+      throw new Error(
+        `OpenAIInferenceTransport: falha de rede ao contactar o proxy de inferência OpenAI — ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
+    }
 
     if (!res.ok) {
       throw new Error(await proxyErrorMessage(res));
     }
 
-    const data = (await res.json()) as {
+    let data: {
       choices?: Array<{ message?: { content?: string | null } }>;
       usage?: { prompt_tokens?: number; completion_tokens?: number };
     };
+    try {
+      data = (await res.json()) as {
+        choices?: Array<{ message?: { content?: string | null } }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number };
+      };
+    } catch {
+      throw new Error(
+        'OpenAIInferenceTransport: resposta do proxy de inferência OpenAI não é JSON válido (corpo malformado)'
+      );
+    }
 
     const content = data.choices?.[0]?.message?.content;
     if (!content) {

@@ -3,6 +3,7 @@
 import { runAgent, type ExecutorSSEEvent } from '@/lib/agent/executor';
 import { InferenceTransport } from '@/lib/agent/inference-transport';
 import { OpenAIInferenceTransport } from '@/lib/agent/providers/openai-inference-transport';
+import { getPublicEnv } from '@/lib/shared/env';
 import type {
   ClassifierProvider,
   ExecutorProvider,
@@ -78,12 +79,16 @@ export async function* runClientAgent(
   confirmationProvider?: ClientConfirmationProvider,
   transport?: ClassifierProvider & ExecutorProvider
 ): AsyncGenerator<ExecutorSSEEvent> {
-  // Selecção por flag PÚBLICA (inlined pelo Next.js em build-time — a selecção é
-  // determinística por build/deployment, não por request). Só quando o argumento
-  // `transport` não é fornecido (prioridade total ao override).
+  // Selecção por flag PÚBLICA, via `getPublicEnv()` → `PublicEnvSchema` (CR Iter 2
+  // #2): valida o valor contra `z.enum(['anthropic','openai']).default('anthropic')`.
+  // AUSENTE → default 'anthropic' (seguro na migração); valor INVÁLIDO (`''`,
+  // `'openia'`) → ZodError VISÍVEL (fail-visible, ADR-10 §3.4) em vez de fallback
+  // mudo para anthropic (que bypassava o schema). Só quando o argumento `transport`
+  // não é fornecido (prioridade total ao override). `getPublicEnv` lê apenas
+  // `NEXT_PUBLIC_*` (browser-safe; sem secrets).
   const resolvedTransport =
     transport ??
-    ((process.env.NEXT_PUBLIC_LLM_PROVIDER ?? 'anthropic') === 'openai'
+    (getPublicEnv().NEXT_PUBLIC_LLM_PROVIDER === 'openai'
       ? new OpenAIInferenceTransport()
       : new InferenceTransport());
   yield* runAgent(prompt, {

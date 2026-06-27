@@ -52,10 +52,44 @@ describe('runClientAgent — selecção de transport por NEXT_PUBLIC_LLM_PROVIDE
   });
 
   it('com NEXT_PUBLIC_LLM_PROVIDER ausente usa o proxy Anthropic (default)', async () => {
-    vi.stubEnv('NEXT_PUBLIC_LLM_PROVIDER', '');
+    // Ausente de verdade (undefined) → `getPublicEnv` aplica default 'anthropic'.
+    vi.stubEnv('NEXT_PUBLIC_LLM_PROVIDER', undefined);
     const url = await captureFirstFetchUrl();
     expect(url).toContain('/api/anthropic/proxy');
     expect(url).not.toContain('/api/openai/proxy');
+  });
+
+  it("FAIL-VISIBLE (CR Iter 2 #2): valor INVÁLIDO ('openia') lança ZodError, NÃO faz fallback mudo", async () => {
+    // Antes do fix, `?? 'anthropic'` mascarava um typo → caminho Anthropic
+    // silencioso. Agora `getPublicEnv()`/`PublicEnvSchema` rejeita o enum inválido.
+    vi.stubEnv('NEXT_PUBLIC_LLM_PROVIDER', 'openia');
+    let threw = false;
+    try {
+      for await (const _ of runClientAgent('olá', undefined)) {
+        void _;
+      }
+    } catch (err) {
+      threw = true;
+      // Confirma que NÃO é o ABORT do fetch stub (a falha é ANTES do fetch, na
+      // validação da flag) — nem sequer chega a construir um transport.
+      expect(err instanceof Error ? err.message : String(err)).not.toContain(
+        'ABORT_AFTER_CAPTURE'
+      );
+    }
+    expect(threw).toBe(true);
+  });
+
+  it("FAIL-VISIBLE (CR Iter 2 #2): string vazia '' lança (não é ausência)", async () => {
+    vi.stubEnv('NEXT_PUBLIC_LLM_PROVIDER', '');
+    let threw = false;
+    try {
+      for await (const _ of runClientAgent('olá', undefined)) {
+        void _;
+      }
+    } catch {
+      threw = true;
+    }
+    expect(threw).toBe(true);
   });
 
   it('o argumento transport explícito tem prioridade sobre a flag', async () => {

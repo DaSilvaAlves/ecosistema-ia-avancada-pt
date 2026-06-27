@@ -54,6 +54,12 @@ export async function* iterateSseData(
         yield JSON.parse(raw);
       }
     }
+    // CR Iter 2 #4: flush final do `TextDecoder` (sem `{ stream: true }`) — emite
+    // quaisquer bytes multibyte UTF-8 que tenham ficado pendentes na fronteira do
+    // último chunk do stream. Para streams terminados em ASCII (`\n\n`/`[DONE]`)
+    // devolve `''` → zero mudança de comportamento (correcção de robustez
+    // simétrica, partilhada com o caminho Anthropic — não divergente).
+    buffer += decoder.decode();
     // Flush do bloco final sem `\n\n` terminador.
     if (buffer.trim().length > 0) {
       const dataLine = buffer.split('\n').find((l) => l.startsWith('data:'));

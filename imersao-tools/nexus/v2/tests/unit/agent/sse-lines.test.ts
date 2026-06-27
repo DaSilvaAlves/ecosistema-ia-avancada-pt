@@ -85,4 +85,24 @@ describe('iterateSseData (AC2)', () => {
     const out = await drain(streamFrom(raw));
     expect(out).toEqual([{ a: 1 }]);
   });
+
+  it('decodifica char multibyte UTF-8 partido entre chunks de rede (#4)', async () => {
+    // 'ã' (em "pão") = bytes 0xC3 0xA3. Partir o byte-array EXACTAMENTE entre os
+    // dois bytes do char multibyte — o `TextDecoder` com `{stream:true}` tem de
+    // reagregar across-reads; o flush final garante que nenhum byte se perde.
+    const enc = new TextEncoder();
+    const full = enc.encode('data: {"v":"pão"}\n\n');
+    const idx = full.indexOf(0xc3); // 1.º byte de 'ã'
+    const part1 = full.slice(0, idx + 1); // inclui 0xC3, exclui 0xA3
+    const part2 = full.slice(idx + 1);
+    const stream = new ReadableStream<Uint8Array>({
+      start(c) {
+        c.enqueue(part1);
+        c.enqueue(part2);
+        c.close();
+      },
+    });
+    const out = await drain(stream);
+    expect(out).toEqual([{ v: 'pão' }]);
+  });
 });
