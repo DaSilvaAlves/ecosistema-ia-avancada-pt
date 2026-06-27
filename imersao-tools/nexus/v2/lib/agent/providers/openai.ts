@@ -1,12 +1,19 @@
 import OpenAI from 'openai';
-import { LLMStreamEventSchema } from '@/lib/agent/schemas';
+import {
+  ClassificationResultSchema,
+  LLMStreamEventSchema,
+} from '@/lib/agent/schemas';
 import {
   DEFAULT_OPENAI_CLASSIFIER_MODEL,
   DEFAULT_OPENAI_EXECUTOR_MODEL,
 } from '@/lib/agent/models';
 import { EXECUTOR_SYSTEM_PROMPT } from '@/lib/agent/prompts/executor-system';
 import { toolsToOpenAIShape } from '@/lib/agent/tools/registry';
+import { stripJsonMarkdownFences } from '@/lib/agent/classifier-json';
 import type {
+  ClassifierProvider,
+  ClassifierOpts,
+  ClassificationResult,
   ExecutorProvider,
   ExecutorOpts,
   LLMMessage,
@@ -91,6 +98,127 @@ export function buildOpenAIClientOptions(
     apiKey,
     ...(isOpenAITestEnv() ? { dangerouslyAllowBrowser: true } : {}),
   };
+}
+
+/**
+ * Default de `max_completion_tokens` do classifier OpenAI (Story 8.3).
+ *
+ * Paridade comportamental com o classifier Anthropic
+ * (`DEFAULT_CLASSIFIER_MAX_TOKENS = 1024`, `anthropic.ts:37`) — a classificação
+ * JSON multi-intent é uma resposta pequena e determinística (`temperature 0`),
+ * logo um cap de 1024 é seguro (ao contrário do executor, que NÃO fixa default
+ * para não truncar `arguments` multi-tool — `openai.ts` `execute()`).
+ *
+ * [AUTO-DECISION] valor 1024 (paridade Anthropic); o NOME do campo é
+ * `max_completion_tokens` (NÃO `max_tokens`, deprecated e incompatível com
+ * modelos reasoning — decisão do Architect Gate da 8.2, `openai.ts` `execute()`).
+ * Sobreponível por `opts.maxTokens`.
+ */
+const DEFAULT_OPENAI_CLASSIFIER_MAX_TOKENS = 1024;
+
+/**
+ * Classifier baseado em OpenAI Chat Completions (non-streaming, Story 8.3 /
+ * ADR-10 S3). Espelho non-streaming do `AnthropicClassifier`
+ * (`anthropic.ts:98-159`), com o wire OpenAI.
+ *
+ * `classify()` chama `client.chat.completions.create({...})` **non-streaming**
+ * (sem `stream:true`) com `response_format:{type:'json_object'}` — a garantia
+ * **primária** de que `choices[0].message.content` é JSON puro sem markdown
+ * fences (elimina a saga de hotfixes do Haiku, ADR-10 §4.4). Mantém
+ * `stripJsonMarkdownFences` como **rede defensiva de custo zero** (D-8.3-JSON-OBJECT):
+ * sobre JSON já puro o strip é no-op (Caso 4, `classifier-json.ts:145-146`).
+ *
+ * Devolve um `ClassificationResult` **byte-compatível** com o do
+ * `AnthropicClassifier` (`{ intents, confidence, rawResponse, inputTokens,
+ * outputTokens }`), validado pelo **mesmo** `ClassificationResultSchema.parse`
+ * (`schemas.ts:69-75`) — contrato canónico agnóstico ao provider (ADR-10 §2,
+ * D-8.3-CONTRATO). Usage mapeada dos nomes OpenAI (`prompt_tokens`/
+ * `completion_tokens`), NÃO dos nomes Anthropic.
+ *
+ * Em caso de output malformado da API, lança `Error` PT-PT (não-JSON) ou
+ * `ZodError` (shape inválido) — fail-loud, paridade com Anthropic.
+ */
+export class OpenAIClassifier implements ClassifierProvider {
+  private readonly client: OpenAI;
+
+  constructor(apiKey: string) {
+    this.client = new OpenAI(buildOpenAIClientOptions(apiKey));
+  }
+
+  async classify(
+    systemPrompt: string,
+    userPrompt: string,
+    opts: ClassifierOpts = {}
+  ): Promise<ClassificationResult> {
+    if (!systemPrompt || systemPrompt.length === 0) {
+      throw new Error('Classifier: systemPrompt obrigatório');
+    }
+    if (!userPrompt || userPrompt.length === 0) {
+      throw new Error('Classifier: userPrompt obrigatório');
+    }
+
+    const response = await this.client.chat.completions.create({
+      model: opts.model ?? DEFAULT_OPENAI_CLASSIFIER_MODEL,
+      max_completion_tokens: opts.maxTokens ?? DEFAULT_OPENAI_CLASSIFIER_MAX_TOKENS,
+      temperature: opts.temperature ?? 0,
+      // Garantia primária de JSON puro sem fences (ADR-10 §4.4). O system prompt
+      // vai como mensagem `role:'system'` (a OpenAI não tem param top-level
+      // `system` como o Anthropic), o user prompt como `role:'user'`.
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+    });
+
+    // Guard ANTES de aceder choices[0] (defensivo — AC7; espelho do guard
+    // `choices.length===0` do executor).
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error(
+        'Classifier: resposta da API OpenAI não contém choices[0].message.content'
+      );
+    }
+    const rawResponse = content;
+    // Rede defensiva de custo zero (D-8.3-JSON-OBJECT): com `response_format:
+    // json_object` o conteúdo já é JSON puro e o strip devolve-o intacto; se um
+    // modelo futuro regredir e envolver em fences, o strip protege. `rawResponse`
+    // preserva o conteúdo ORIGINAL (antes do strip) — paridade Anthropic.
+    const cleanedResponse = stripJsonMarkdownFences(rawResponse);
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(cleanedResponse);
+    } catch {
+      throw new Error(
+        `Classifier: resposta da API não é JSON válido — recebido: ${rawResponse.slice(0, 200)}`
+      );
+    }
+    // `JSON.parse('null')` (ou um primitivo/`true`/número) passa o parse mas NÃO
+    // é o objecto `{intents,confidence}` esperado — desreferenciar daria um
+    // TypeError opaco. Converter num fail-loud PT-PT limpo (CR Iter 1 minor;
+    // reforça AC4/AC8 sem divergir do contrato — o caminho continua fail-loud).
+    if (parsed === null || typeof parsed !== 'object') {
+      throw new Error(
+        `Classifier: resposta da API não é um objecto JSON — recebido: ${rawResponse.slice(0, 200)}`
+      );
+    }
+    const parsedObj = parsed as { intents?: unknown; confidence?: unknown };
+
+    // Mapeamento de usage com os nomes OpenAI (`prompt_tokens`/`completion_tokens`),
+    // NÃO os nomes Anthropic (`input_tokens`/`output_tokens`). Usage ausente →
+    // `undefined` → ZodError no `.parse` (fail-loud; `schemas.ts:73-74` exige int
+    // não-negativo). O teste falsificável (C3) fixa este mapeamento.
+    const usage = response.usage;
+    const candidate = {
+      intents: parsedObj.intents,
+      confidence: parsedObj.confidence,
+      rawResponse,
+      inputTokens: usage?.prompt_tokens,
+      outputTokens: usage?.completion_tokens,
+    };
+    return ClassificationResultSchema.parse(candidate);
+  }
 }
 
 /**

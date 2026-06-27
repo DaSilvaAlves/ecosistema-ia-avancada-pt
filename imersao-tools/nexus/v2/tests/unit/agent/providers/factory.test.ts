@@ -1,13 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { getClassifier, getExecutor } from '@/lib/agent/providers/factory';
-import { OpenAIExecutor } from '@/lib/agent/providers/openai';
+import { OpenAIClassifier, OpenAIExecutor } from '@/lib/agent/providers/openai';
 
 /**
  * Story 8.1 (ADR-10 S1) — Factory dual-provider tests.
  *
  * Cobre AC1/AC2/AC3 + cenários C1-C5 da Testing section:
  * - LLM_PROVIDER ausente/'anthropic' → instância Anthropic (default, retrocompat);
- * - LLM_PROVIDER='openai' (sem impl S2/S3) → fail-loud claro, NÃO cai para Anthropic;
+ * - LLM_PROVIDER='openai' → instância OpenAI (executor S2 / Story 8.2, classifier
+ *   S3 / Story 8.3 — ambos implementados), NÃO cai para Anthropic;
  * - key do provider activo ausente → fail-loud PT-PT;
  * - LLM_PROVIDER inválido (CONCERN @po #1) → fail-loud, NÃO default silencioso;
  * - mismatch LLM_PROVIDER ≠ NEXT_PUBLIC_LLM_PROVIDER → fail-loud (asserção de boot).
@@ -65,7 +66,7 @@ describe('factory — C1/C2 default anthropic (retrocompat)', () => {
   });
 });
 
-describe('factory — C3/AC10 LLM_PROVIDER=openai → executor implementado, classifier ainda fail-loud', () => {
+describe('factory — C3/AC10 LLM_PROVIDER=openai → executor e classifier implementados', () => {
   beforeEach(() => {
     process.env.LLM_PROVIDER = 'openai';
     process.env.NEXT_PUBLIC_LLM_PROVIDER = 'openai';
@@ -78,9 +79,10 @@ describe('factory — C3/AC10 LLM_PROVIDER=openai → executor implementado, cla
     expect(typeof executor.execute).toBe('function');
   });
 
-  it('getClassifier ainda lança Error "ainda não implementado" (Story 8.3 pendente)', () => {
-    expect(() => getClassifier()).toThrowError(/ainda não implementado/);
-    expect(() => getClassifier()).toThrowError(/OpenAIClassifier/);
+  it('getClassifier devolve OpenAIClassifier (Story 8.3 — deixa de fail-loud)', () => {
+    const classifier = getClassifier();
+    expect(classifier).toBeInstanceOf(OpenAIClassifier);
+    expect(typeof classifier.classify).toBe('function');
   });
 });
 
