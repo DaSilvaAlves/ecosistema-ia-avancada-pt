@@ -9,11 +9,11 @@ import {
 } from 'vitest';
 import { z } from 'zod';
 import { http, HttpResponse } from 'msw';
-import { server } from '../../../mocks/server';
+import { server } from '@/tests/mocks/server';
 import { AnthropicExecutor, AnthropicClassifier } from '@/lib/agent/providers/anthropic';
 import { OpenAIExecutor, OpenAIClassifier } from '@/lib/agent/providers/openai';
 import { OpenAIInferenceTransport } from '@/lib/agent/providers/openai-inference-transport';
-import { createMockOpenAIProxyFetch } from '../../../mocks/proxy-fetch-openai';
+import { createMockOpenAIProxyFetch } from '@/tests/mocks/proxy-fetch-openai';
 import type {
   LLMMessage,
   LLMStreamEvent,
@@ -194,6 +194,139 @@ function anthropicNoArgsSse(model: string): ReadableStream<Uint8Array> {
   });
 }
 
+/**
+ * SSE OpenAI com 2 tool calls (índices 0/1) e fragmentos de `arguments`
+ * **INTERCALADOS** entre índices — codifica a MESMA resposta lógica que
+ * `anthropicMultiToolSse` (mesmos `name`+`input`; ids provider-specific). A
+ * intercalação é o que prova a não-mistura: se o `Map<index>` cruzasse
+ * fragmentos, o `input` sairia trocado/inválido e a parity de valor falharia.
+ *   T0: criar_tarefa {titulo:'A'}   T1: criar_evento_calendar {cidade:'B'}
+ */
+function openaiMultiToolSse(model: string): ReadableStream<Uint8Array> {
+  const enc = new TextEncoder();
+  const chunk = (choices: unknown[]): string =>
+    `data: ${JSON.stringify({
+      id: 'chatcmpl_parity_c3',
+      object: 'chat.completion.chunk',
+      created: 1700000000,
+      model,
+      choices,
+    })}\n\n`;
+  const parts = [
+    chunk([
+      {
+        index: 0,
+        delta: {
+          tool_calls: [
+            { index: 0, id: 'call_a', type: 'function', function: { name: 'criar_tarefa', arguments: '' } },
+          ],
+        },
+        finish_reason: null,
+      },
+    ]),
+    chunk([
+      {
+        index: 0,
+        delta: {
+          tool_calls: [
+            { index: 1, id: 'call_b', type: 'function', function: { name: 'criar_evento_calendar', arguments: '' } },
+          ],
+        },
+        finish_reason: null,
+      },
+    ]),
+    chunk([{ index: 0, delta: { tool_calls: [{ index: 0, function: { arguments: '{"titulo":' } }] }, finish_reason: null }]),
+    chunk([{ index: 0, delta: { tool_calls: [{ index: 1, function: { arguments: '{"cidade":' } }] }, finish_reason: null }]),
+    chunk([{ index: 0, delta: { tool_calls: [{ index: 0, function: { arguments: '"A"}' } }] }, finish_reason: null }]),
+    chunk([{ index: 0, delta: { tool_calls: [{ index: 1, function: { arguments: '"B"}' } }] }, finish_reason: null }]),
+    chunk([{ index: 0, delta: {}, finish_reason: 'tool_calls' }]),
+  ];
+  return new ReadableStream({
+    start(c) {
+      for (const p of parts) c.enqueue(enc.encode(p));
+      c.enqueue(enc.encode('data: [DONE]\n\n'));
+      c.close();
+    },
+  });
+}
+
+/** SSE Anthropic com os 2 mesmos tool calls lógicos de `openaiMultiToolSse`. */
+function anthropicMultiToolSse(model: string): ReadableStream<Uint8Array> {
+  const enc = new TextEncoder();
+  const events = [
+    {
+      event: 'message_start',
+      data: {
+        type: 'message_start',
+        message: {
+          id: 'msg_parity_c3',
+          type: 'message',
+          role: 'assistant',
+          content: [],
+          model,
+          stop_reason: null,
+          stop_sequence: null,
+          usage: { input_tokens: 40, output_tokens: 0 },
+        },
+      },
+    },
+    {
+      event: 'content_block_start',
+      data: {
+        type: 'content_block_start',
+        index: 0,
+        content_block: { type: 'tool_use', id: 'toolu_a', name: 'criar_tarefa', input: {} },
+      },
+    },
+    { event: 'content_block_delta', data: { type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: '{"titulo":' } } },
+    { event: 'content_block_delta', data: { type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: '"A"}' } } },
+    { event: 'content_block_stop', data: { type: 'content_block_stop', index: 0 } },
+    {
+      event: 'content_block_start',
+      data: {
+        type: 'content_block_start',
+        index: 1,
+        content_block: { type: 'tool_use', id: 'toolu_b', name: 'criar_evento_calendar', input: {} },
+      },
+    },
+    { event: 'content_block_delta', data: { type: 'content_block_delta', index: 1, delta: { type: 'input_json_delta', partial_json: '{"cidade":' } } },
+    { event: 'content_block_delta', data: { type: 'content_block_delta', index: 1, delta: { type: 'input_json_delta', partial_json: '"B"}' } } },
+    { event: 'content_block_stop', data: { type: 'content_block_stop', index: 1 } },
+    {
+      event: 'message_delta',
+      data: { type: 'message_delta', delta: { stop_reason: 'tool_use', stop_sequence: null }, usage: { output_tokens: 22 } },
+    },
+    { event: 'message_stop', data: { type: 'message_stop' } },
+  ];
+  return new ReadableStream({
+    start(c) {
+      for (const e of events) {
+        c.enqueue(enc.encode(`event: ${e.event}\ndata: ${JSON.stringify(e.data)}\n\n`));
+      }
+      c.close();
+    },
+  });
+}
+
+/** Tool no-args real (alinhada com o cenário C5 — não exige `titulo`). */
+const listarTarefasTool: ToolDefinition = {
+  name: 'listar_tarefas',
+  description: 'Lista as tarefas do utilizador',
+  domain: 'tasks',
+  argsSchema: z.object({ filtro: z.string().optional() }),
+  resultSchema: z.object({ total: z.number() }),
+  requiresPreview: false,
+  reversible: false,
+  execute: vi.fn().mockResolvedValue({ total: 0 }),
+};
+
+/** {name,input} canónico de cada tool, ordenado por name (comparável entre providers). */
+function toolShapes(c: Canon): Array<{ name: string; input: unknown }> {
+  return c.tools
+    .map((t) => ({ name: t.name, input: t.input }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 const EXECUTOR_SCENARIOS: ExecutorScenario[] = [
   {
     id: 'C1',
@@ -239,20 +372,42 @@ const EXECUTOR_SCENARIOS: ExecutorScenario[] = [
     id: 'C3',
     label: 'multi tool call (≥2 índices)',
     tools: [sampleTool],
-    openaiUser: 'MOCK_OPENAI_MULTITOOL cria tarefa e evento',
-    anthropicUser: 'MOCK_EXECUTOR_TWO_TOOLS cria tarefa e evento',
+    openaiUser: 'cria tarefa e evento (multi-tool)',
+    anthropicUser: 'cria tarefa e evento (multi-tool)',
+    // Fixtures emparelhadas (mesma resposta lógica, ids provider-specific) para
+    // uma parity de VALOR genuína (CR thread 3 Major). Os fragmentos OpenAI são
+    // INTERCALADOS entre índices → se o Map<index> misturasse, os valores
+    // sairiam trocados e a comparação `toEqual` falharia (não-mistura provada).
+    setup: () => {
+      server.use(
+        http.post('https://api.openai.com/v1/chat/completions', () =>
+          new HttpResponse(openaiMultiToolSse('gpt-4.1'), {
+            headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' },
+          })
+        ),
+        http.post('https://api.anthropic.com/v1/messages', async ({ request }) => {
+          const body = (await request.json()) as { model: string };
+          return new HttpResponse(anthropicMultiToolSse(body.model), {
+            headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' },
+          });
+        })
+      );
+    },
     assert: (o, a) => {
-      // Prova-chave (internal-state-contract-gate): cada provider emite
-      // EXACTAMENTE 2 tool_use com ids DISTINTOS não-vazios — o `Map<index>`
-      // (OpenAI) / multi-block (Anthropic) NÃO mistura ids entre índices.
       expect(o.toolCount).toBe(2);
       expect(a.toolCount).toBe(2);
+      // Parity de VALOR: name+input idênticos por tool entre providers.
+      expect(toolShapes(o)).toEqual(toolShapes(a));
+      expect(toolShapes(o)).toEqual([
+        { name: 'criar_evento_calendar', input: { cidade: 'B' } },
+        { name: 'criar_tarefa', input: { titulo: 'A' } },
+      ]);
+      // Não-mistura (internal-state-contract-gate): 2 ids DISTINTOS não-vazios
+      // em cada provider — o Map<index>/multi-block não cruza índices.
       expect(new Set(o.toolIds).size).toBe(2);
       expect(new Set(a.toolIds).size).toBe(2);
       expect(o.toolIds.every((id) => id.length > 0)).toBe(true);
       expect(a.toolIds.every((id) => id.length > 0)).toBe(true);
-      for (const t of o.tools) expect(typeof t.input).toBe('object');
-      for (const t of a.tools) expect(typeof t.input).toBe('object');
       expect(o.hasDone).toBe(true);
       expect(a.hasDone).toBe(true);
     },
@@ -278,7 +433,9 @@ const EXECUTOR_SCENARIOS: ExecutorScenario[] = [
   {
     id: 'C5',
     label: 'tool sem args → {}',
-    tools: [sampleTool],
+    // Tool no-args REAL (`listar_tarefas`, não exige `titulo`) — alinhada com o
+    // `name` emitido por ambos os mocks (CR thread 4 Major).
+    tools: [listarTarefasTool],
     openaiUser: 'MOCK_OPENAI_NOARGS lista tarefas',
     anthropicUser: 'lista as minhas tarefas sem argumentos',
     setup: () => {
@@ -296,6 +453,9 @@ const EXECUTOR_SCENARIOS: ExecutorScenario[] = [
     assert: (o, a) => {
       expect(o.toolCount).toBe(1);
       expect(a.toolCount).toBe(1);
+      // Parity de VALOR: mesmo `name` emitido + `input` vazio `{}` em ambos.
+      expect(o.tools[0]?.name).toBe('listar_tarefas');
+      expect(o.tools[0]?.name).toBe(a.tools[0]?.name);
       expect(o.tools[0]?.input).toEqual({});
       expect(a.tools[0]?.input).toEqual({});
       expect(o.tools[0]?.input).toEqual(a.tools[0]?.input);
@@ -363,6 +523,21 @@ describe('Parity classifier cross-provider (AC4 — C6, ADR-10 §6.3)', () => {
     expect(aRes.outputTokens).toBeGreaterThanOrEqual(0);
     expect(oRes.rawResponse.length).toBeGreaterThan(0);
     expect(aRes.rawResponse.length).toBeGreaterThan(0);
+  });
+
+  it('C6b — classifier malformed: ambos os providers fail-loud com Error PT-PT', async () => {
+    // Exercita o branch `MOCK_OPENAI_CLASSIFIER_MALFORMED` do handler estendido
+    // (conteúdo não-JSON, defensivo mesmo com response_format:json_object) e o
+    // equivalente Anthropic `MOCK_CLASSIFIER_NOT_JSON` — paridade de fail-loud.
+    const openaiClassifier = new OpenAIClassifier(OAI_KEY);
+    const anthropicClassifier = new AnthropicClassifier(ANT_KEY);
+
+    await expect(
+      openaiClassifier.classify('system', 'MOCK_OPENAI_CLASSIFIER_MALFORMED qualquer')
+    ).rejects.toThrow(/não é JSON válido/);
+    await expect(
+      anthropicClassifier.classify('MOCK_CLASSIFIER_NOT_JSON — system', 'qualquer prompt')
+    ).rejects.toThrow(/não é JSON válido/);
   });
 });
 

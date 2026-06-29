@@ -132,6 +132,16 @@ function buildOpenAiSseStream(
   }
 
   for (const tc of turn.toolCalls ?? []) {
+    // Contrato de fidelidade (mock-protocol-fidelity.md): um tool call COM args
+    // tem de fragmentar em ≥2 deltas. Um único delta com os args completos
+    // tornaria o acumulador `Map<index>` trivialmente verde (fidelidade falsa,
+    // classe do bug da Story 1.2). No-args (`argChunks: []`) é legítimo (→ {}).
+    const joinedArgs = tc.argChunks.join('');
+    if (joinedArgs.length > 0 && tc.argChunks.length < 2) {
+      throw new Error(
+        `createMockOpenAIProxyFetch: argChunks de "${tc.name}" deve fragmentar os arguments em ≥2 deltas (mock-protocol-fidelity) — recebido ${tc.argChunks.length}`
+      );
+    }
     // 1.º chunk do `index`: id + name + arguments vazio (wire real).
     chunks.push(
       streamChunk(model, [
@@ -239,9 +249,22 @@ export function createMockOpenAIProxyFetch(
   const requests: Array<Record<string, unknown>> = [];
 
   const fetchFn = (async (
-    _input: RequestInfo | URL,
+    input: RequestInfo | URL,
     init?: RequestInit
   ): Promise<Response> => {
+    // Falha rápido se o transport contactar uma URL diferente do proxy OpenAI —
+    // um erro de routing no transport não deve passar despercebido como sucesso.
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : (input as Request).url;
+    if (!url.includes('/api/openai/proxy')) {
+      throw new Error(
+        `createMockOpenAIProxyFetch: URL inesperada "${url}" — esperado /api/openai/proxy`
+      );
+    }
     const body = init?.body
       ? (JSON.parse(init.body as string) as Record<string, unknown>)
       : {};
