@@ -17,6 +17,14 @@ import { http, HttpResponse } from 'msw';
  * (espelha o padrão dos handlers Anthropic). A 8.5 consolida/estende este
  * handler no canónico + suite de parity cross-provider — a 8.2 só os fixtures
  * de executor necessários aos seus próprios testes de streaming/reagregação.
+ *
+ * Story 8.5 (ADR-10 S5) — ESTENDIDO com o caminho **não-streaming** (classifier):
+ * quando `body.stream !== true`, devolve um `ChatCompletion` JSON
+ * (`{choices:[{message:{content:'<json>'}}], usage}`) com `prompt_tokens`/
+ * `completion_tokens` (nomes OpenAI), discriminado pelas magic strings
+ * `MOCK_OPENAI_CLASSIFIER_*`. Consolida no handler canónico o que a 8.3 tinha
+ * disperso em `server.use(...)` local (D-8.5-HANDLER-EXTEND). Os 5 fixtures SSE
+ * streaming da 8.2 ficam **byte-a-byte intactos** (AC6 — zero regressão).
  */
 
 interface OpenAIRequestBody {
@@ -326,6 +334,84 @@ function sseResponse(stream: ReadableStream<Uint8Array>) {
   });
 }
 
+// ── Story 8.5 — caminho NÃO-STREAMING (classifier) ──────────────────────────
+
+/** Fixture do classifier non-streaming: conteúdo + tokens (nomes OpenAI). */
+interface ClassifierFixture {
+  content: string;
+  promptTokens: number;
+  completionTokens: number;
+}
+
+/**
+ * Resposta `ChatCompletion` non-streaming canónica OpenAI Chat Completions —
+ * `choices[0].message.content` + `usage` com `prompt_tokens`/`completion_tokens`
+ * (NÃO `input_tokens`/`output_tokens`). Espelho do que a 8.3 montava local.
+ */
+function classifierCompletionJson(model: string, fixture: ClassifierFixture) {
+  return HttpResponse.json({
+    id: 'chatcmpl_clf_mock_8_5',
+    object: 'chat.completion',
+    created: 1700000000,
+    model,
+    choices: [
+      {
+        index: 0,
+        message: { role: 'assistant', content: fixture.content },
+        finish_reason: 'stop',
+      },
+    ],
+    usage: {
+      prompt_tokens: fixture.promptTokens,
+      completion_tokens: fixture.completionTokens,
+      total_tokens: fixture.promptTokens + fixture.completionTokens,
+    },
+  });
+}
+
+/**
+ * Selecciona a fixture do classifier non-streaming pela magic string na última
+ * mensagem `user`. O `MOCK_OPENAI_CLASSIFIER_MULTI_INTENT` devolve **os mesmos
+ * `intents`/`confidence`** que o lado Anthropic (`MOCK_CLASSIFIER_MULTI_INTENT`
+ * em `handlers/anthropic.ts` → `['calendar','finance']`/`{calendar:0.95,
+ * finance:0.93}`), para a parity C6 ser semanticamente significativa (rec. @po).
+ * Os `tokens` são propositadamente DISTINTOS dos Anthropic (80/40) — a parity
+ * NÃO compara tokens entre providers, só shape e `intents`/`confidence`.
+ */
+function classifierFixtureFor(userText: string): ClassifierFixture {
+  if (userText.includes('MOCK_OPENAI_CLASSIFIER_MULTI_INTENT')) {
+    return {
+      content: JSON.stringify({
+        intents: ['calendar', 'finance'],
+        confidence: { calendar: 0.95, finance: 0.93 },
+      }),
+      promptTokens: 64,
+      completionTokens: 28,
+    };
+  }
+  if (userText.includes('MOCK_OPENAI_CLASSIFIER_SINGLE')) {
+    return {
+      content: JSON.stringify({ intents: ['tasks'], confidence: { tasks: 0.9 } }),
+      promptTokens: 40,
+      completionTokens: 12,
+    };
+  }
+  if (userText.includes('MOCK_OPENAI_CLASSIFIER_MALFORMED')) {
+    // Conteúdo não-JSON (defensivo — mesmo com response_format:json_object).
+    return {
+      content: 'isto não é JSON de todo — texto livre do modelo',
+      promptTokens: 10,
+      completionTokens: 6,
+    };
+  }
+  // Fallback: single-intent válido (paridade com o fallback Anthropic).
+  return {
+    content: JSON.stringify({ intents: ['tasks'], confidence: { tasks: 0.88 } }),
+    promptTokens: 80,
+    completionTokens: 40,
+  };
+}
+
 export const openaiHandlers = [
   http.post('https://api.openai.com/v1/chat/completions', async ({ request }) => {
     const body = (await request.json()) as OpenAIRequestBody;
@@ -336,6 +422,15 @@ export const openaiHandlers = [
     const userMsgs = body.messages.filter((m) => m.role === 'user');
     const last = userMsgs[userMsgs.length - 1];
     const userText = typeof last?.content === 'string' ? last.content : '';
+
+    // ── Story 8.5 — caminho NÃO-STREAMING (classifier) ───────────────────────
+    // O `OpenAIClassifier`/`OpenAIInferenceTransport.classify` chama
+    // chat.completions SEM `stream:true`. Discriminar ANTES das fixtures SSE
+    // (que assumem streaming). Os testes da 8.3 que registam um handler local
+    // via `server.use(...)` continuam a ter precedência sobre este global.
+    if (body.stream !== true) {
+      return classifierCompletionJson(model, classifierFixtureFor(userText));
+    }
 
     let fixture: Fixture;
     if (userText.includes('MOCK_OPENAI_MULTITOOL')) {
