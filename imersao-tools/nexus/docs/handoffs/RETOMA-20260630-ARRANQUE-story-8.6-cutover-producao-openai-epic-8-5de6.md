@@ -4,6 +4,13 @@
 > ANTES DE CRIAR OU MOVER QUALQUER HANDOFF, CONSULTAR `.claude/rules/handoff-location.md`.
 > HANDOFFS SÓ VIVEM DENTRO DA PASTA DO PROJECTO A QUE SE REFEREM.
 
+## PROGRESSO (actualizado 30/06/2026 — Orion @aiox-master)
+
+- **Draft 8.6 JÁ CRIADO** por @sm (River) em `docs/stories/active/8.6.story.md` (Status: Draft, 6 AC, story-draft-checklist READY). **NÃO repetir o `*draft 8.6`.**
+- Conclusão do draft (D-8.6-SCOPE): a 8.6 NÃO toca código de produção — todo o código já está em `main` (8.1-8.4). Único artefacto a escrever = runbook `docs/runbooks/cutover-openai-rollback.md`. Cutover = flip de 2 flags na Vercel UI + redeploy.
+- **PRÓXIMO PASSO PENDENTE: gate `@po *validate-story-draft 8.6`** — ficou por completar (limite de sessão da conta atingido 30/06, reset 03:40 Lisboa). Retomar daqui.
+- Cadeia restante: @po gate → @dev/@qa runbook → @devops PR → cutover (Eurico autoriza + key na Vercel + @devops deploy).
+
 ## Passo 0 — arranque em terminal novo (LER PRIMEIRO)
 
 **Porque este handoff existe:** a sessão anterior estava presa ao agente @devops (Gage), que só tem autoridade de push/PR/merge. Os comandos `@sm *draft 8.6`, `/sdc` e `/AIOX:agents:aiox-master` **não trocam de agente** dentro de uma sessão spawned de @devops. Para arrancar a 8.6 é preciso um terminal/sessão fresca.
