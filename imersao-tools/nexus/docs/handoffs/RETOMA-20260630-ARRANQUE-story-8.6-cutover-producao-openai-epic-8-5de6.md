@@ -8,8 +8,9 @@
 
 - **Draft 8.6 JÁ CRIADO** por @sm (River) em `docs/stories/active/8.6.story.md` (Status: Draft, 6 AC, story-draft-checklist READY). **NÃO repetir o `*draft 8.6`.**
 - Conclusão do draft (D-8.6-SCOPE): a 8.6 NÃO toca código de produção — todo o código já está em `main` (8.1-8.4). Único artefacto a escrever = runbook `docs/runbooks/cutover-openai-rollback.md`. Cutover = flip de 2 flags na Vercel UI + redeploy.
-- **PRÓXIMO PASSO PENDENTE: gate `@po *validate-story-draft 8.6`** — ficou por completar (limite de sessão da conta atingido 30/06, reset 03:40 Lisboa). Retomar daqui.
-- Cadeia restante: @po gate → @dev/@qa runbook → @devops PR → cutover (Eurico autoriza + key na Vercel + @devops deploy).
+- **PO gate COMPLETADO** — Pax (`@po`) validou com GO 9/10 em 30/06/2026 (`docs/PO-VALIDATION-STORY-8.6.md`).
+- **Runbook CRIADO** (`@dev` Dex) + **gate de pré-cutover PASS** (`@qa` Quinn, baseline 2536 PASS / 0 FAIL real). PR #100 aberto.
+- **PRÓXIMO PASSO PENDENTE:** merge do PR #100 (runbook) → cutover (Eurico autoriza + `OPENAI_API_KEY` na Vercel + `@devops` deploy) → smoke test (Eurico) → `@po *close-story 8.6`.
 
 ## Passo 0 — arranque em terminal novo (LER PRIMEIRO)
 

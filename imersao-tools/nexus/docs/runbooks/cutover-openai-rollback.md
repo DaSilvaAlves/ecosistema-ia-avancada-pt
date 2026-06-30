@@ -66,14 +66,16 @@ As duas flags **TÊM de ser actualizadas em conjunto e concordar entre si** (amb
 Via Vercel CLI (remover o valor antigo e adicionar o novo):
 
 ```bash
-vercel env rm LLM_PROVIDER production
+vercel env rm LLM_PROVIDER production 2>/dev/null || echo "Variável não existia (corria no default 'anthropic'); a criar"
 vercel env add LLM_PROVIDER production
 # valor a introduzir: openai
 
-vercel env rm NEXT_PUBLIC_LLM_PROVIDER production
+vercel env rm NEXT_PUBLIC_LLM_PROVIDER production 2>/dev/null || echo "Variável não existia (corria no default 'anthropic'); a criar"
 vercel env add NEXT_PUBLIC_LLM_PROVIDER production
 # valor a introduzir: openai
 ```
+
+> **Nota (cutover inicial):** se a produção estava a correr no default `anthropic` **sem** estas flags explicitamente definidas, `vercel env rm` termina com "Environment variable not found" (saída não-zero). O guard `2>/dev/null || echo ...` impede que isso bloqueie o `vercel env add` seguinte. Em alternativa, omitir o `vercel env rm` e correr apenas o `vercel env add` quando a variável ainda não existe.
 
 Alternativa: Vercel UI > Settings > Environment Variables > editar cada variável para `openai` no environment `Production`.
 
@@ -109,14 +111,16 @@ Se alguma aparecer, corrigir a configuração correspondente e repetir o redeplo
 ### 4.1 Repor as flags em `anthropic`
 
 ```bash
-vercel env rm LLM_PROVIDER production
+vercel env rm LLM_PROVIDER production 2>/dev/null || echo "Variável não existia; a criar"
 vercel env add LLM_PROVIDER production
 # valor a introduzir: anthropic
 
-vercel env rm NEXT_PUBLIC_LLM_PROVIDER production
+vercel env rm NEXT_PUBLIC_LLM_PROVIDER production 2>/dev/null || echo "Variável não existia; a criar"
 vercel env add NEXT_PUBLIC_LLM_PROVIDER production
 # valor a introduzir: anthropic
 ```
+
+> No rollback, as flags já existem (foram criadas no cutover), pelo que o `vercel env rm` normalmente terá sucesso; o guard mantém-se por consistência e segurança.
 
 > Manter ambas concordantes (`anthropic`), pela mesma razão de 3.2. A `OPENAI_API_KEY` pode permanecer provisionada — não tem efeito enquanto `LLM_PROVIDER=anthropic` (só é lida quando o provider activo é `openai`).
 
