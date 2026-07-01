@@ -1,0 +1,200 @@
+# Epic 9 — Hardening + Deploy + PWA
+
+> **Projecto:** Nexus v2 (`imersao-tools/nexus/`)
+> **Criado por:** Morgan (`@pm`) em 01/07/2026
+> **Estado:** **Planeado — 0/11 stories (por iniciar).** Último epic do roadmap do PRD (§9 linha "Epic 9 — Hardening + Deploy + PWA"). Sucessor natural do Epic 8 (Migração de Provider, **FECHADO 6/6**, waiver 0%, closure `8e370829`) e do Epic 7 (Voice + OCR — em curso 4/10, corre em paralelo no que resta). É o epic que leva o Nexus v2 a **production-ready**: cobertura de testes, E2E, PWA/service worker offline, backup/restore, CI/CD bloqueante e deploy contínuo Vercel. Não introduz um módulo funcional novo — endurece e operacionaliza os 15 módulos já entregues (PRD §G2). Decomposição directa das "Stories sugeridas" do PRD §10 Epic 9 (9.1-9.10) + **1 story técnica** que absorve o débito `REC-8.6-ISOLAMENTO-TESTES` (acção A3 da retrospectiva Epic 8). **Não iniciar `@sm *draft` sem antes resolver as duas incógnitas de estado de produção do §10 (razão do cérebro estar via Anthropic + reconciliação do commit paralelo `4e2b1c4`/J-6).**
+> **Fonte da verdade:** `PRD-NEXUS-V2.md` §9 (roadmap — linha "Epic 9 — Hardening + Deploy + PWA", coluna "Bloqueia" vazia), §10 Epic 9 (Stories sugeridas 9.1-9.10 + AC1-AC5 + quality gate "todos os anteriores + CodeRabbit zero CRITICAL"), §7 (NFR19-NFR24: deploy <2min, PWA/SW offline, backup export, mobile responsive), §G5/G7 (goals de deploy contínuo e offline degradado). Trace de arquitectura: `architecture-v2.md` §11 (Service Worker manual sem Workbox), §16 "Epic 9 — Pontos críticos arch", §14 (mapa NFR→secção: NFR21 §11, NFR22 Story 9.6 Dexie export). Constitution Artigo IV (No Invention): cada story, AC e gate abaixo traça a uma linha do PRD §10 Epic 9 ou a uma decisão de arquitectura já fechada; a única story sem trace ao PRD (9.11) traça a um débito rastreado da retrospectiva Epic 8 (A3), declarado como tal.
+> **Arquitectura:** os 5 ADRs base (ADR-1 a ADR-8) e o ADR-9 (executor client-side) **não são reabertos**. O Service Worker é **manual em `public/sw.js`, não Workbox** (arch §11 — decisão fechada): install (cache static), activate (limpeza de caches antigos), fetch (network-first para `/api/*` com fallback `503 {offline:true}`, cache-first para assets) e handler `push` (já usado pelo Epic 4). O backup usa `dexie-export-import` (já em `dependencies`, arch §17) → JSON → ZIP (arch §16, NFR22 Story 9.6). O bundle analyzer (`@next/bundle-analyzer`) entra como gate **informativo, não bloqueante** (arch §10, §16). A Story 9.10 (eliminar `src/` v1) só corre se `tests/e2e/migration-smoke.spec.ts` passar (arch §16). A migração condicional localStorage→IndexedDB (Risco #3 do PRD, fallback Dexie) só se materializa neste epic **se necessário** — não é assumida.
+> **Lições aplicadas:** Retrospectivas Epic 1 a Epic 8. Regras em vigor aplicadas preventivamente, com destaque para a **regra nova nascida do Epic 8**: `production-state-verification-gate.md` (A1 Epic 8) — crítica neste epic porque várias stories tocam configuração de deploy e estado de produção (9.8 CI, 9.10 deploy automatizado, e qualquer flip de estado LIVE). Também: `cr-base-main-no-gate-saida` (CI/CD e SW são território sensível), `not-tested-trailer-rules.md` (config de CI/test-runner/build são contextos bloqueadores — `Not-tested:` não é waiver, exige `Evidence:`), `separation-of-roles.md`, `mock-protocol-fidelity.md`, `internal-state-contract-gate.md` (o SW distribui estado offline por várias camadas), `react-component-test-criteria.md` (banner offline tem estados de render).
+
+---
+
+> **NOTA DE NUMERAÇÃO — RATIFICADA PELO EURICO (25/06/2026):**
+>
+> Este epic é o **antigo "Epic 8 = Hardening + Deploy + PWA"** do roadmap original do PRD (§9) e dos EPIC-*.md anteriores. Quando a **Migração de Provider de Inferência** (dual-provider OpenAI, ADR-10) foi inserida em resposta a um gatilho de produção (saldo Anthropic esgotado — `400 credit balance too low`, 25/06/2026), o Eurico **ratificou** que a migração toma o número **Epic 8** (urgente, devolve cérebro à produção) e o Hardening desliza para **Epic 9**. Razão (ADR-10 §1.2.3): fazer hardening de um cérebro que não funciona não faz sentido antes da migração; o Hardening não existia ainda como artefacto, logo desliza sem custo.
+>
+> Este `EPIC-9.md` é a **reconciliação da numeração 9.x** prometida no `EPIC-8.md` (nota de numeração) e cumpre a **acção A6 da retrospectiva Epic 8** (`@pm *create-epic 9`). As referências históricas a "Epic 8" que significam Hardening em documentos point-in-time (PRD §11 Risco #3 "Fallback Dexie em Epic 9 (Hardening)", arch §16 "Epic 9 — Pontos críticos", stories 0.x que dizem "limpo no Epic 9") já foram renumeradas nos documentos vivos; onde uma referência histórica não foi reescrita, lê-se como "Epic 9 (Hardening)".
+
+---
+
+## 1. Goal
+
+Levar o Nexus v2 a **production-ready** sem introduzir módulo funcional novo: (1) cobertura de testes ≥60% nos packages core + suite E2E Playwright do caminho crítico; (2) **PWA instalável com Service Worker manual** e **modo offline degradado** (dashboard/widgets lêem localStorage/IndexedDB; o chat mostra "sem rede" honestamente); (3) **backup/restore** por export/import ZIP dos dados do utilizador; (4) **CI/CD bloqueante** (lint + typecheck + test em PR, CodeRabbit obrigatório) e **deploy contínuo Vercel** (preview + production automatizado em `main`, <2 min). Adicionalmente, saldar o **débito de isolamento de testes** herdado do Epic 8 (full-suite não-determinístico sob carga). Trace: PRD §9 (linha Epic 9) + §10 Epic 9 (9.1-9.10, AC1-AC5) + §7 (NFR19-NFR24) + §G5/G7. Custo zero adicional de infra: Vercel + GitHub Actions + CodeRabbit já em uso desde o Epic 0.
+
+## 2. Contexto e posicionamento
+
+| Dimensão | Detalhe |
+|----------|---------|
+| Último epic do roadmap | PRD §9 ordem `0 → 1 → (2 || 3) → 4 → 5 → 6 → 7 → 8 → 9`. O Epic 9 **não bloqueia nenhum** (coluna "Bloqueia" vazia) e é o **último** — fecha o projecto Nexus v2 na sua versão MVP. Depois dele, o produto está production-hardened; qualquer trabalho posterior é evolução, não âmbito do MVP. |
+| Natureza | **Hardening / operacionalização, sem FR funcional novo.** Os 15 módulos funcionais (PRD §G2) já estão entregues (Epics 0-6 fechados; Epic 7 fecha o Voice/OCR; Epic 8 deu a capacidade dual-provider). Este epic endurece qualidade (testes, cobertura), resiliência (PWA/offline), continuidade (backup/restore) e operação (CI/CD, deploy). Traça sobretudo a **NFRs** (NFR19-24), não a FRs. |
+| Produção já LIVE | O Nexus v2 está em produção contínua em `https://imersao.ia.expressia.pt` desde 04/05/2026 (Epic 0). O deploy Vercel já existe e funciona; este epic **formaliza e automatiza** o pipeline (preview + prod em `main` <2 min, NFR19/G5), não o cria de raiz. O CodeRabbit já está integrado (NFR18) desde os primeiros epics — a 9.9 formaliza a obrigatoriedade. |
+| Estado de produção a re-verificar | **CRÍTICO (production-state-verification-gate.md, A1 Epic 8):** o gate de fecho do Epic 8 revelou que o deployment activo em produção é o commit `4e2b1c4` ("observabilidade J-6") — **trabalho paralelo de outra sessão, fora dos handoffs**. A produção **não** está necessariamente no estado que os handoffs assumem. Antes de qualquer story de deploy/CI deste epic, o estado real de produção (env vars, SHA activo, saldo/provider do cérebro) tem de ser verificado contra a plataforma — não herdado. Ver §10 incógnitas. |
+| Continuidade (visão) | O backup/restore (9.6/9.7) e o offline degradado (9.5) servem directamente a visão "sistema de continuidade pessoal" (`project_nexus_vision.md`): os dados do Eurico têm de ser exportáveis (não presos num browser) e o dashboard tem de continuar legível sem rede. |
+| Corre em paralelo com | Epic 7 (Voice + OCR — em curso, sub-âmbito OCR 7.5-7.10 por fazer). Os dois são independentes (PRD §9). O hardening pode arrancar mesmo com o Epic 7 aberto, mas a **cobertura E2E (9.2) e o gate CI (9.8)** ganham em fechar depois do Epic 7 para cobrirem o produto completo. Decisão de sequenciamento em §10. |
+
+## 3. Dependências
+
+| Relação | Epic / Artefacto | Estado |
+|---------|------------------|--------|
+| Depende de | Epic 0 (Next.js 15 + Vercel deploy + Vitest/Playwright/MSW + ESLint/TS strict — stories 0.9/0.10) — a base de CI/deploy que este epic formaliza | DONE — em main |
+| Depende de | Epics 1-6 (os 13 módulos que a suite de testes e o E2E cobrem) | DONE — em main |
+| Depende de | Epic 8 (capacidade dual-provider + baseline 2536 PASS) — a suite que a cobertura (9.1) e o isolamento (9.11) endurecem | DONE — em main (closure `8e370829`) |
+| Beneficia de (não bloqueia) | Epic 7 (Voice + OCR) — a E2E (9.2) e o gate CI (9.8) cobrem melhor o produto se o Epic 7 estiver fechado; mas o hardening pode arrancar antes | Epic 7 em curso (4/10) |
+| Reutiliza (arch fechada) | Service Worker manual `public/sw.js` com handler `push` já usado pelo Epic 4 (Web Push) — a 9.3 estende o mesmo SW (arch §11) | DONE — em main |
+| Reutiliza (dep já instalada) | `dexie-export-import` (arch §17) para o backup (9.6) — não requer nova dependência | DONE — em `package.json` |
+| Absorve (do Epic 8) | Débito `REC-8.6-ISOLAMENTO-TESTES` (acção A3 da retro Epic 8) — full-suite dá ~10 failures sob carga que isolam verde (contaminação cross-test) + flake `oauth-status` | Débito → entra como 9.11 |
+| Herda item on-demand (não bloqueia) | `REC-8.6-CUTOVER-DEFERIDO` (cutover LIVE Anthropic→OpenAI) — alavanca on-demand do Eurico + `@devops`, **fora do âmbito deste epic**; o cérebro está vivo via Anthropic | Deferido on-demand |
+| Bloqueia / Precede | **Nenhum.** É o último epic do roadmap PRD §9 | — |
+
+Ordem PRD §9: `... → 7 → 8 → 9`. Epic 9 não bloqueia nenhum epic e encerra o roadmap MVP.
+
+## 4. Requisitos cobertos — NFRs (não FRs)
+
+Este epic é o único do roadmap cujo âmbito traça **primariamente a NFRs**, não a FRs. Cópia fiel do PRD §7:
+
+| NFR | Descrição (PRD §7) | Stories |
+|-----|--------------------|---------|
+| NFR17 | Cobertura ≥60% em packages core (cérebro, tarefas, finanças) | 9.1, 9.11 |
+| NFR18 | CodeRabbit obrigatório; CRITICAL bloqueia | 9.9 |
+| NFR19 | Deploy `main` → Vercel <2 min | 9.10 |
+| NFR21 | PWA com Service Worker para modo offline degradado (dashboard/widgets lêem localStorage; chat precisa de rede) | 9.3, 9.4, 9.5 |
+| NFR22 | Backup export (arch §14: Dexie `db.export()` via `dexie-export-import` → JSON → ZIP) | 9.6, 9.7 |
+| NFR24 | Mobile responsive via PWA | 9.4 |
+
+> **Constitution Artigo IV (No Invention):** este epic **não inventa FRs**. As stories 9.1-9.10 são a decomposição directa do PRD §10 Epic 9; a 9.11 é um débito rastreado da retro Epic 8, declarado como não-PRD. **Ver §7 para a reconciliação dos FR86-FR96** — que o auditoria de 12/06 bucketou sob "Epic 9" mas que o PRD §10 Epic 9 **não lista** como stories de hardening (são FRs de módulos funcionais §6.16-6.18, largamente entregues no Epic 0). Essa divergência é uma **incógnita a reconciliar com o Eurico**, não um âmbito a assumir.
+
+## 5. Stories (11) — trace PRD §10 Epic 9 + débito Epic 8 A3
+
+> **Decomposição directa das "Stories sugeridas" do PRD §10 Epic 9 (9.1 a 9.10)** — nenhuma story do PRD omitida nem inventada. Acrescenta-se **uma story técnica (9.11)** que absorve o débito `REC-8.6-ISOLAMENTO-TESTES` (acção A3 da retro Epic 8), explicitamente marcada como não-PRD. Os pares executor/quality-gate são **previsões** (Quality-First Planning) e respeitam `separation-of-roles.md` (executor ≠ quality_gate). `@sm` (River) finaliza a atribuição em cada draft; `@po` (Pax) valida. Território de risco (CI/CD config, test-runner config, build config, SW com estado offline distribuído) tem gate `@architect` (contexto bloqueador de `not-tested-trailer-rules.md`).
+
+| # | Story | Descrição (1 linha — PRD §10 Epic 9) | NFR | Executor previsto | Quality gate previsto | Estado |
+|---|-------|--------------------------------------|-----|-------------------|------------------------|--------|
+| 9.1 | Cobertura ≥60% packages core | Elevar/consolidar cobertura de testes ≥60% em cérebro, tarefas, finanças (packages core). Foco em helpers puros. **GAP — ver §7 GAP-9.1** | NFR17 | `@dev` | `@qa` | Não iniciado |
+| 9.2 | E2E Playwright caminho crítico | E2E: login → primeiro prompt → criar tarefa via UI → verificar persistência. Reutiliza padrão ADR-8 (`page.route()` em endpoint interno). **GAP — ver §7 GAP-9.2** | NFR17 | `@dev` | `@qa` | Não iniciado |
+| 9.3 | Service Worker + cache strategy | Registo do SW manual (`public/sw.js`, arch §11) + estratégia network-first para `/api/*` (fallback `503 {offline:true}`) e cache-first para assets. **CR `--base main` no gate de saída (SW toca fetch de toda a app). GAP — ver §7 GAP-9.3** | NFR21 | `@dev` | `@architect` | Não iniciado |
+| 9.4 | Manifest PWA + ícones | `manifest.json` + ícones em todos os tamanhos (192/512 + maskable); instalável (Add to Home Screen). Mobile responsive (NFR24) | NFR21, NFR24 | `@ux-design-expert` | `@dev` | Não iniciado |
+| 9.5 | Modo offline degradado | Banner "sem rede" + dashboard/widgets lêem localStorage/IndexedDB; chat mostra "sem rede" honestamente (não finge sucesso). **Estados de render do banner → `react-component-test-criteria.md`; estado offline distribuído → `internal-state-contract-gate.md`. GAP — ver §7 GAP-9.3** | NFR21 | `@dev` | `@architect` | Não iniciado |
+| 9.6 | Backup export ZIP | Botão em definições → export ZIP (Dexie `db.export()` via `dexie-export-import` → JSON + markdown das notas). Trace arch §14/§16 | NFR22 | `@dev` | `@qa` | Não iniciado |
+| 9.7 | Restore import ZIP | Botão em definições → import ZIP → reconstrói estado. **Estado distribuído (import → validação → escrita Dexie → reconciliação UI) → `internal-state-contract-gate.md` (idempotência, import parcial/corrompido, colisão com dados existentes). GAP — ver §7 GAP-9.4** | NFR22 | `@dev` | `@architect` | Não iniciado |
+| 9.8 | GitHub Actions CI bloqueante | CI: lint + typecheck + test bloqueante em PRs. **Contexto bloqueador `not-tested-trailer-rules.md` (config de CI) — exige `Evidence:` local, não `Not-tested:`. CR `--base main` no gate de saída** | NFR18 | `@devops` | `@architect` | Não iniciado |
+| 9.9 | CodeRabbit setup + review obrigatório | Formalizar CodeRabbit obrigatório; CRITICAL bloqueia (NFR18). Já em uso — esta story formaliza a obrigatoriedade e a config | NFR18 | `@devops` | `@qa` | Não iniciado |
+| 9.10 | Vercel preview + prod automatizado | Preview deploys por PR + production deploy automatizado em `main` (<2 min, NFR19/G5). **Toca estado de produção → `production-state-verification-gate.md` obrigatório no arranque. GAP — ver §7 GAP-9.5** | NFR19 | `@devops` | `@architect` | Não iniciado |
+| 9.11 | **[Não-PRD — débito Epic 8 A3] Isolamento de testes full-suite** | Resolver `REC-8.6-ISOLAMENTO-TESTES`: full-suite dá ~10 failures sob carga (6 ficheiros: classifier, executor, cron/sync, telegram, transactions, oauth-status) que **isolam verde** — contaminação cross-test por estado global partilhado (MSW handlers/singletons não resetados entre suites). Tornar o full-suite determinístico. **Contexto bloqueador `not-tested-trailer-rules.md` (test-runner config) — exige `Evidence:` (output do full-suite verde repetível)** | — (débito) | `@dev` | `@qa` | Não iniciado |
+
+> **Padrão de gate herdado dos Epics 2-8:** config de CI/CD / test-runner / build / SW com estado offline distribuído / restore com escrita em Dexie (território bloqueador de `not-tested-trailer-rules.md` + `internal-state-contract-gate.md`) → gate `@architect`; UI pura com estados de render (manifest/ícones, banner) → executor `@ux-design-expert`, gate `@dev`; cobertura/E2E/backup sem efeito destrutivo → gate `@qa`. `@sm`/`@po` confirmam a atribuição final em cada draft. A 9.8 (CI) e a 9.10 (deploy) são executadas por `@devops` (Gage) — autoridade exclusiva de CI/git/deploy.
+
+> **Nota (`separation-of-roles.md`) — 9.8/9.9/9.10 executadas por `@devops`:** quando `@devops` é o executor da story de CI/deploy, o quality gate **não pode** ser `@devops`. Segue a matriz de escalação: `@architect` (config de infra com efeito cross-app) para a 9.8/9.10; `@qa` para a 9.9 (formalização de review). Registado no draft de cada story.
+
+## 6. Acceptance Criteria (nível epic) — trace PRD §10 Epic 9
+
+Cópia fiel dos AC Epic 9 do PRD §10 (linhas 647-652), com trace à story principal:
+
+| # | Critério (PRD §10 Epic 9) | Story principal | Verificabilidade |
+|---|---------------------------|-----------------|------------------|
+| AC1 | Tests passam em CI <5 min | 9.8, 9.11 | CI (GitHub Actions) — mensurável |
+| AC2 | Lighthouse score ≥85 mobile, 90 desktop | 9.4 | Lighthouse CI/manual — mensurável |
+| AC3 | PWA instalável (Add to Home Screen funciona Chrome/Edge) | 9.3, 9.4 | Manual (Chrome/Edge) — só-de-produção parcial |
+| AC4 | Backup export devolve ZIP com todos os dados | 9.6 | CI (mock Dexie) + manual |
+| AC5 | Restore importa ZIP e reconstrói estado | 9.7 | CI + manual (round-trip export→import) |
+
+> **Quality gate do PRD §10 Epic 9:** "todos os anteriores + **CodeRabbit zero CRITICAL**" (NFR18). A instalabilidade PWA (AC3) e o Lighthouse (AC2) são plenamente verificáveis só em Chrome/Edge reais sobre o deployment de produção — verificação manual deferida ao Eurico + `@devops` (padrão AC13 da 4.9 / AC6 da 7.3), mapeada no draft das stories respectivas. O backup/restore round-trip (AC4/AC5) é verificável em CI com Dexie mockado + validação manual com dados reais.
+
+## 7. Reconciliação PRD ↔ Arquitectura ↔ estado real — GAPs para o draft
+
+> Os pontos abaixo são marcados para resolução por `@architect`/`@devops` no draft das stories respectivas — **não preenchidos com suposição** (Constitution Artigo IV, precedente `[GAP-7.x]` do EPIC-7.md e `[GAP-6.x]` do EPIC-6.md). Nenhum dos ADRs base é reaberto.
+
+| Ponto | PRD/Arch diz | Realidade a confirmar | GAP a resolver no draft |
+|-------|--------------|-----------------------|-------------------------|
+| **[GAP-9.1]** Baseline de cobertura actual | PRD §10 9.1 "≥60% packages core"; NFR17; auditoria P1.1 subiu o threshold para 60% (PR #68, cobertura global real 91,81%) | O threshold já está a 60% desde 13/06 (auditoria P1.1); a cobertura global real era 91,81% então | `@qa`/`@dev` confirmam no draft da 9.1 a cobertura **actual por package core** (cérebro/tarefas/finanças) pós-Epic 8. Se já ≥60%, a 9.1 é de **consolidação/verificação** (não de subir threshold) — o âmbito ajusta-se ao que falta, sem inventar défice. |
+| **[GAP-9.2]** E2E — o que já existe | PRD §10 9.2 "login → primeiro prompt → criar tarefa"; auditoria P1.2 reactivou 2 E2E `auth.spec.ts`; arch §16 menciona `tests/e2e/migration-smoke.spec.ts` | Já existem E2E (`auth.spec.ts` 4/4, `migration-smoke.spec.ts` referida na 9.10) | `@dev` confirma no draft da 9.2 quais fluxos E2E já existem vs. o que falta para o caminho crítico completo (login→prompt→tarefa→verificar). Reutiliza ADR-8 (`page.route()` em endpoint interno, `USE_REAL_API` opcional). |
+| **[GAP-9.3]** Service Worker vs Web Push já existente | Arch §11 SW manual com handlers `install`/`activate`/`fetch`/`push`; PRD §10 9.3 "network-first chat, cache-first assets" | O handler `push` do SW **já existe** (Epic 4, Web Push). A 9.3 **estende** o SW existente com a estratégia de cache/offline — não cria um SW novo | `@architect` confirma no draft da 9.3/9.5: (a) o SW actual e o que a 9.3 acrescenta (fetch strategy + offline fallback) sem partir o handler `push` do Epic 4; (b) análise de ciclo de vida do estado offline (`internal-state-contract-gate.md`): o chat distingue "sem rede" de erro real? o dashboard lê a fonte local correcta (localStorage vs Dexie)? o `503 {offline:true}` é tratado honestamente pelo cliente (anti-M4/silent-success da 4.9)? |
+| **[GAP-9.4]** Restore — colisão e idempotência | PRD §10 9.7 "import ZIP reconstrói estado"; arch §14 Dexie export/import | Import sobre uma base com dados existentes | `@architect` faz no draft da 9.7 a análise de ciclo de vida (`internal-state-contract-gate.md`): (a) import substitui ou funde com dados existentes? (decisão explícita — risco de perda de dados); (b) import parcial/corrompido → falha honesta sem estado a meio (transaction Dexie); (c) idempotência (reimportar o mesmo ZIP duas vezes não duplica); (d) compatibilidade de versão de schema Dexie entre export e import. |
+| **[GAP-9.5]** Deploy automatizado vs estado real de produção | PRD §10 9.10 "prod automatizado em main <2min"; NFR19; G5 | **O deploy Vercel já existe e está LIVE**; o deployment activo é `4e2b1c4` (J-6, sessão paralela); pode não haver auto-deploy-on-push configurado (precedente Moreira landing: deploy por CLI, não por push) | `@devops` aplica no draft da 9.10 a `production-state-verification-gate.md`: **verificar contra a plataforma** (a) se o auto-deploy on-push em `main` está ligado ou se o deploy é manual/CLI; (b) o SHA activo e as env vars de produção; (c) reconciliar o commit paralelo `4e2b1c4`/J-6 (§10 incógnita b) antes de automatizar. Só depois desenhar a automação. |
+| **[GAP-9.6]** FR86-FR96 — âmbito funcional vs hardening | Auditoria 12/06 bucketou "Epic 9 = FR86-FR96 (~10)"; mas o PRD §10 Epic 9 lista stories 9.1-9.10 **puramente de hardening** (traçam a NFRs, não a estes FRs) | FR86-FR89 (briefing §6.16), FR90-FR92 (auth §6.17), FR93-FR96 (widgets §6.18) — os widgets e o auth foram migrados no Epic 0 (story 0.3/0.6/0.7); o briefing AI-enhanced (FR86-89) pode estar parcial | **INCÓGNITA para o Eurico (não resolver por invenção — ver §10):** confirmar quais dos FR86-FR96 estão Done (Epic 0) e se o briefing AI (FR86-89) precisa de uma story funcional própria. Se sim, **não pertence a este epic de hardening** — é decisão de âmbito do `@pm`/`@po`/Eurico. Este epic **não assume** défice funcional. |
+
+## 8. Qualidade e processo — lições das Retrospectivas Epic 1 a 8 + hard-stop
+
+| Acção / lição | Aplicação no Epic 9 |
+|---------------|---------------------|
+| **A1 Epic 8 — `production-state-verification-gate.md` (REGRA NOVA)** | **Crítica neste epic.** A 9.10 (deploy automatizado) e qualquer story que toque estado LIVE **verificam o estado real de produção no arranque** (`vercel env ls`, `vercel logs`, SHA activo) — não herdam a premissa. Foi exactamente o ponto cego da 8.6. As incógnitas (a)/(b) do §10 são a materialização directa desta regra. |
+| **`not-tested-trailer-rules.md` (contexto bloqueador)** | **Crítica em 9.8/9.9/9.10/9.11.** Config de CI (`.github/workflows/**`), test-runner (`vitest.config`/`playwright.config`), build (`next.config`, `tsconfig`) e scripts (`package.json`) são **contextos bloqueadores**: `Not-tested:` **não** é waiver — exige `Evidence:` (output local de `--list`/dry-run/full-suite verde). Origem: incidente 1.10 (`testIgnore` Playwright). |
+| **A1 Epic 4 — `internal-state-contract-gate.md`** | Aplica-se à **9.5** (estado offline distribuído por SW + dashboard + chat) e à **9.7** (restore: import → validação → escrita Dexie → reconciliação UI). Análise dos 3 eixos (classes de estado, transição-já-ocorrida, caminhos de falha) obrigatória no gate `@architect`. |
+| **A1 Epic 1 — `mock-protocol-fidelity.md`** | Aplica-se à **9.2** (E2E): os mocks E2E mantêm fidelidade ao protocolo `ExecutorSSEEvent` na fronteira `/api/anthropic/proxy` (ADR-8). O mock não pode "passar" divergindo do wire real. |
+| **A3 Epic 3 — `react-component-test-criteria.md`** | O **banner offline (9.5)** tem múltiplos estados de render (online / sem-rede / a-reconectar) → teste de componente obrigatório, contado no gate antes do CodeRabbit. |
+| **A6 Epic 1 — `separation-of-roles.md`** | Aplicada na tabela §5 — nenhum executor é o seu próprio gate. **Nota especial 9.8/9.9/9.10:** `@devops` executa → gate sobe a `@architect`/`@qa` (nunca `@devops` a auto-aprovar CI/deploy que ele próprio configurou). |
+| **A1 Epic 5 + A1 Epic 6 — `cr-base-main-no-gate-saida`** | Crítica em 9.3 (SW toca fetch de toda a app), 9.8 (CI) e 9.10 (deploy): território de infra onde findings de classe escapam ao `-t uncommitted`. Gate de saída corre CR `--base main`; **o CR no PR continua parte não-opcional do ciclo** (lição §5.5 da retro Epic 8 — o CR server-side apanha semântica que o `--base main` local não apanha). |
+| **A3 Epic 8 — destino do débito `REC-8.6-ISOLAMENTO-TESTES`** | **Resolvido neste epic:** entra como story **9.11** (isolamento de testes full-suite). Ver §5 e §10. |
+| **A2 Epic 8 — reconciliação de handoff contra estado real (amenda `handoff-central.md`)** | Aplicada no arranque: os handoffs do Epic 8 assumiam um estado de produção que trabalho paralelo (`4e2b1c4`/J-6) alterou. Antes de arrancar, verificar as afirmações-chave contra git + disco + produção. |
+| **Verificabilidade só-de-produção (A3 Epic 4)** | AC2 (Lighthouse) e AC3 (PWA instalável) exigem Chrome/Edge reais sobre produção — mapear por AC no draft, padrão AC13 da 4.9. |
+| **Hard-stop QA loop (§8 herdado dos Epics 1-8)** | **Máximo 2 iterações** de `qa-loop-fix`/CR por story; **Iter 3+ ou merge waived exigem autorização humana explícita do Eurico no commit** (trailer `Authorized-by: Eurico`). Mantido sem alteração. |
+| **Alvo de waiver rate** | Epic 8 fechou 0/6 (0%); Epic 6 0/16; Epic 5 0/13; Epic 4 0/10; Epic 2 0/10. **Alvo Epic 9: 0%.** |
+| **Backlog de débitos Baixa (A3 Epic 6/8)** | Decisão de `@pm`/`@po` no arranque: os débitos Baixa acumulados (Epics 3-6: D-3.x, D-4.x, D6) + `REC-ADR10-PROXY-DRY` (liga-se a REC-8.4-CR-1) + P1.3/P2.x da auditoria — entram como housekeeping neste epic ou ficam em backlog? Não assumido — ver §10. |
+
+### Pré-requisitos a confirmar antes do arranque (bloqueantes do arranque, não da criação do epic)
+
+| # | Item | Responsável | Estado |
+|---|------|-------------|--------|
+| 1 | **Verificar o estado real de produção** (`vercel env ls`, `vercel logs`, SHA activo) e reconciliar o commit paralelo `4e2b1c4`/J-6 — `production-state-verification-gate.md` | `@devops` + Eurico | Pendente — bloqueia 9.10 |
+| 2 | **Confirmar razão do cérebro estar via Anthropic / estado do saldo** (a premissa "saldo esgotado" evaporou no fecho do Epic 8) — impacta se algum smoke test do hardening usa o cérebro | Eurico | Pendente — incógnita (a) do §10 |
+| 3 | **Decisão FR86-FR96** (GAP-9.6): confirmar quais estão Done vs. outstanding; se o briefing AI (FR86-89) precisa de story funcional própria (fora deste epic de hardening) | Eurico + `@pm` (Morgan) + `@po` (Pax) | Em aberto — incógnita do §10 |
+| 4 | **Decisão do backlog de débitos Baixa** (A3 Epic 6/8): housekeeping neste epic ou backlog | `@pm` (Morgan) + `@po` (Pax) | A decidir no arranque |
+| 5 | **Estado das vulnerabilidades npm** (auditoria P0: 2 critical na cadeia `request` via `node-telegram-bot-api`, 11 moderate — "decididos no Epic 6") — confirmar se foram resolvidas no Epic 6 ou se entram no hardening | `@devops` + `@dev` | Pendente — confirmar |
+
+## 9. Quality gates do epic
+
+Trace PRD §10 Epic 9: "todos os anteriores + CodeRabbit zero CRITICAL".
+
+| Gate | Detalhe |
+|------|---------|
+| Pré-requisito | Epics 0-6 + Epic 8 consolidados em main; Epic 7 idealmente fechado antes da E2E/CI cobrirem o produto completo (não bloqueante) — ver §10 sequência |
+| **Verificação de estado de produção** | `production-state-verification-gate.md` (A1 Epic 8): 9.10 e qualquer story de estado LIVE verificam o estado real de produção **no arranque do draft/gate de entrada**, não no gate final. Evidência registada na story |
+| **Contexto bloqueador de `Not-tested:`** | `not-tested-trailer-rules.md`: 9.8 (CI config), 9.9 (CodeRabbit config), 9.10 (deploy config), 9.11 (test-runner) exigem `Evidence:` (output local), nunca `Not-tested:` como waiver |
+| Cobertura | NFR17: ≥60% em packages core — a 9.1 confirma o estado actual (GAP-9.1) e consolida o que falte; helpers puros ~100% (padrão Epics 3-8) |
+| Estado distribuído | `internal-state-contract-gate.md`: 9.5 (offline) e 9.7 (restore) fazem análise de ciclo de vida no gate `@architect` |
+| Teste de componente | `react-component-test-criteria.md`: banner offline (9.5) e UI de manifest/definições com ≥3 estados de render → teste de componente antes do CR |
+| Mock fidelity | `mock-protocol-fidelity.md`: E2E (9.2) mantém fidelidade a `ExecutorSSEEvent` na fronteira `/api/anthropic/proxy` (ADR-8) |
+| Por story | lint + typecheck + `npm run test:unit` + CodeRabbit (CRITICAL bloqueia — NFR18); **CR `--base main`** no gate de saída das stories de infra (9.3 SW, 9.8 CI, 9.10 deploy) |
+| CI bloqueante | A própria 9.8 institui o gate CI bloqueante (lint + typecheck + test em PR) — a partir daí, gate automático em todos os PRs |
+| Determinismo do full-suite | A 9.11 torna o full-suite determinístico (fecha `REC-8.6-ISOLAMENTO-TESTES`) — pré-condição para o CI (AC1 "tests <5 min") ser credível |
+| Verificabilidade só-de-produção | AC2 (Lighthouse) e AC3 (PWA instalável) verificados manualmente em Chrome/Edge sobre produção (padrão AC13 da 4.9) — mapear por AC no draft |
+
+## 10. Fecho do epic
+
+> **Estado: Epic 9 PLANEADO — 0/11 stories (por iniciar).** Último epic do roadmap PRD §9. **Não bloqueia nenhum epic** (coluna "Bloqueia" vazia). Critério de fecho: **11/11 stories Done** com CI bloqueante activo (9.8), PWA instalável verificada (AC3), backup/restore round-trip validado (AC4/AC5), deploy contínuo automatizado (9.10, NFR19) e o full-suite determinístico (9.11). Com o Epic 9 fechado, o Nexus v2 está **production-ready** e o roadmap MVP (PRD §9) fica completo. Próximo passo: resolver as incógnitas abaixo com o Eurico e, quando destrancado, `@sm *draft 9.1` (ou 9.11 primeiro, para estabilizar a baseline de testes antes de endurecer a cobertura).
+
+**Epic 9 = Hardening + Deploy + PWA.** Antigo "Epic 8" do roadmap, renumerado para 9 (ratificado pelo Eurico 25/06/2026) quando a Migração de Provider tomou o nº 8. Último epic do roadmap MVP; não introduz módulo funcional novo — endurece qualidade (testes/cobertura), resiliência (PWA/offline), continuidade (backup/restore) e operação (CI/CD, deploy). Decomposição directa do PRD §10 Epic 9 (9.1-9.10) + 1 story técnica (9.11) que absorve o débito `REC-8.6-ISOLAMENTO-TESTES` (retro Epic 8 A3). Zero invenção — 9.1-9.10 traçam ao PRD §10 e a NFR19-24; 9.11 é débito rastreado declarado como não-PRD. Os FR86-FR96 (que o auditoria bucketou aqui) **não** são assumidos como âmbito de hardening — são reconciliação funcional para o Eurico (GAP-9.6).
+
+### Sequência sugerida (não rígida — `@sm`/`@po` confirmam paralelizabilidade)
+
+- **9.11** (isolamento de testes) **primeiro** → torna o full-suite determinístico antes de endurecer cobertura (9.1) e de instituir o CI bloqueante (9.8). Sem isto, o CI herda o não-determinismo do Epic 8. `@qa` gate.
+- **9.1** (cobertura) → depois de 9.11; **9.2** (E2E) → independente, pode paralelizar.
+- **9.3** (SW) → fundação da PWA; **9.4** (manifest/ícones) → depende de 9.3 para instalabilidade; **9.5** (offline degradado) → depende de 9.3. Architect Gate (9.3/9.5).
+- **9.6** (backup) → independente; **9.7** (restore) → depende de 9.6 (round-trip). Architect Gate (9.7).
+- **9.8** (CI bloqueante) → depende de 9.11 (full-suite verde); **9.9** (CodeRabbit obrigatório) → formalização, paralela; **9.10** (deploy automatizado) → **só após verificar o estado real de produção** (pré-requisito 1). `@devops` executa 9.8/9.9/9.10.
+
+### Incógnitas / pré-requisitos que exigem decisão do Eurico (NÃO inventadas — a confirmar)
+
+| # | Incógnita | Porquê importa | Acção |
+|---|-----------|----------------|-------|
+| (a) | **Razão pela qual o cérebro voltou via Anthropic + estado do saldo** | O fecho do Epic 8 (8.6) descobriu que a produção responde via Anthropic e que a premissa "saldo esgotado" (25/06) evaporou. Impacta qualquer smoke test do hardening que use o cérebro e a decisão de manter/comutar provider | Eurico confirma o estado do saldo/provider antes do arranque; `production-state-verification-gate.md` no arranque das stories de estado LIVE |
+| (b) | **Reconciliar o commit paralelo `4e2b1c4` ("observabilidade J-6")** | Trabalho de outra sessão, fora dos handoffs, é o deployment activo em produção. O estado real de produção diverge do que os handoffs assumem — hardening sobre um estado desconhecido é arriscado | `@devops` + Eurico reconciliam o `4e2b1c4`/J-6 contra `main` (o que contém, se está mergeado, se há divergência) **antes** de automatizar deploy (9.10) |
+| (c) | **FR86-FR96 — funcional vs hardening (GAP-9.6)** | O auditoria 12/06 bucketou FR86-96 sob "Epic 9", mas o PRD §10 Epic 9 lista só hardening. FR90-92 (auth) e FR93-96 (widgets) foram migrados no Epic 0; o briefing AI (FR86-89) pode estar parcial. Assumir défice seria invenção | Eurico + `@pm`/`@po` confirmam o estado dos FR86-96; se o briefing AI precisar de story funcional, é decisão de âmbito **fora deste epic de hardening** |
+| (d) | **Destino do backlog de débitos Baixa** (A3 Epic 6/8) | D-3.x/D-4.x/D6 + `REC-ADR10-PROXY-DRY` + P1.3/P2.x da auditoria — housekeeping neste epic ou backlog? | `@pm`/`@po` decidem no arranque |
+| (e) | **Estado das vulnerabilidades npm** (auditoria P0: 2 critical `request`/`node-telegram-bot-api`, 11 moderate) | O auditoria dizia "decididos no Epic 6" — confirmar se resolvidas ou se entram no hardening | `@devops` + `@dev` confirmam com `npm audit` actual |
+
+### Riscos do Epic 9
+
+| # | Risco | Probabilidade | Impacto | Mitigação |
+|---|-------|---------------|---------|-----------|
+| R1 | **Hardening sobre um estado de produção desconhecido** (commit paralelo `4e2b1c4`/J-6) — automatizar deploy sobre um estado não reconciliado | Média | Alto | `production-state-verification-gate.md` no arranque; reconciliar `4e2b1c4` antes da 9.10 (incógnita b) |
+| R2 | **Full-suite não-determinístico contamina o CI** (`REC-8.6-ISOLAMENTO-TESTES`) — CI bloqueante (9.8) herda ~10 flakes sob carga | Alta | Médio | 9.11 **primeiro** na sequência; full-suite determinístico é pré-condição do CI credível (AC1 <5min) |
+| R3 | **Restore destrói dados existentes** (9.7) — import funde/substitui sem decisão explícita | Média | Alto | Gate `@architect` da 9.7 faz análise de ciclo de vida (`internal-state-contract-gate.md`): decisão substituir-vs-fundir explícita, transaction Dexie, idempotência |
+| R4 | **SW parte o Web Push do Epic 4** (9.3) — nova fetch strategy interfere com o handler `push` existente | Média | Médio | 9.3 **estende** o SW manual existente sem tocar o handler `push` (GAP-9.3); CR `--base main`; E2E do push mantém-se verde |
+| R5 | **Offline finge sucesso** (9.5) — chat mostra "ok" quando `503 {offline:true}` — anti-padrão M4 da 4.9 | Média | Médio | Gate `@architect` (`internal-state-contract-gate.md`): cliente distingue sucesso de `503`/erro de rede; banner honesto |
+| R6 | **`Not-tested:` usado como waiver em config de CI/build** (9.8/9.10/9.11) — repete o incidente 1.10 (`testIgnore` Playwright) | Média | Médio | `not-tested-trailer-rules.md`: contexto bloqueador exige `Evidence:` local; gate `@architect`/`@devops` rejeita `Not-tested:` |
+| R7 | **Assumir défice funcional inexistente** (FR86-96) — inventar stories de briefing/auth já entregues no Epic 0 | Baixa | Médio | GAP-9.6 + incógnita (c): não assumir; confirmar com o Eurico antes de qualquer story funcional (que, se existir, é fora deste epic) |
+| R8 | **Hard-stop §8 excedido** (Iter 3+ CR) | Baixa | Baixo | PRs pequenos, um concern por story; Iter 3+ exige `Authorized-by: Eurico` |
+
+---
+
+*Epic 9 preparado por Morgan (`@pm`) em 01/07/2026, cumprindo a acção A6 da retrospectiva Epic 8 (`@pm *create-epic 9`) e reconciliando a numeração 9.x do Hardening (renumeração 8→9 ratificada pelo Eurico 25/06/2026). Ancorado em `PRD-NEXUS-V2.md` §9 (roadmap, Epic 9 não bloqueia nenhum) + §10 Epic 9 (Stories 9.1-9.10, AC1-AC5, quality gate "todos os anteriores + CodeRabbit zero CRITICAL") + §7 (NFR17-NFR24) + §G5/G7, `architecture-v2.md` §11 (SW manual sem Workbox) + §14 (mapa NFR: NFR22 Dexie export) + §16 (Epic 9 pontos críticos: bundle analyzer informativo, backup dexie-export-import, 9.10 elimina src/ v1 se migration-smoke passar) + tabela ADR §1, `AUDITORIA-20260612-ROADMAP-CONCLUSAO.md` (scope restante Epic 9 ~10 stories + P0/P1/P2 débitos), `retrospectives/EPIC-8-retrospective.md` (A1 regra nova production-state-verification-gate, A3 débito isolamento de testes → 9.11, A6 create-epic 9) e Retrospectivas Epic 1-8. Absorve `REC-8.6-ISOLAMENTO-TESTES` como 9.11. Zero invenção — 9.1-9.10 traçam ao PRD §10 e a NFRs; 9.11 é débito rastreado declarado como não-PRD; os FR86-FR96 são reconciliação funcional para o Eurico (GAP-9.6), não âmbito assumido. As 6 GAPs (`[GAP-9.1]` a `[GAP-9.6]`) e as 5 incógnitas (a-e) estão marcadas para o draft/decisão. Próximo passo: resolver as incógnitas de estado de produção (a)/(b) com o Eurico → `@sm *draft 9.11` (estabilizar baseline) → `@sm *draft 9.1`.*
