@@ -18,6 +18,29 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/unit/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['tests/e2e/**', 'node_modules/**', '.next/**'],
+    // Story 9.11 — isolamento de testes full-suite (débito REC-8.6-ISOLAMENTO-TESTES).
+    //
+    // Causa-raiz confirmada (T1, 3/3 corridas): o único flake reproduzível não é
+    // contaminação cross-test — o Vitest 2.x isola o registo de módulos e os globals
+    // POR FICHEIRO (`pool: 'forks'` + `isolate: true`, defaults intactos), pelo que a
+    // instância `server` (MSW), o `process.env` e o fake-indexeddb são recriados a cada
+    // ficheiro. A falha é sempre um `Test timed out in 5000ms` no PRIMEIRO teste de
+    // ficheiros cujo corpo dispara um `await import()` dinâmico de grafos de módulo
+    // pesados (routes que puxam googleapis/openai/anthropic SDK). Sob paralelismo máximo
+    // (o tempo de collect/transform agregado da suite chega a 170-460s), essa compilação
+    // cold-start do primeiro import consome o orçamento de 5000ms do primeiro teste — que
+    // por si só faz trabalho trivial (ex: sessão mockada → 401). Os ficheiros isolam
+    // verdes porque, sozinhos, não competem por CPU.
+    //
+    // Correcção (AC2-b timing genuíno / AC3): elevar o orçamento de tempo por teste/hook.
+    // NÃO se desactiva concorrência (pool/isolate/maxWorkers ficam nos defaults) — isso
+    // seria mascarar o sintoma (AC3). NÃO se salta nenhum teste. 20000ms dá 4× de margem
+    // para o cold-start sob carga e continua a apanhar hangs reais (um teste pendurado
+    // falha à mesma, apenas mais tarde). Valor derivado da medição, não arbitrário.
+    // Território bloqueador de not-tested-trailer-rules.md → evidência local (≥3 corridas)
+    // registada na story; gate escalado a @architect (SF-1 do PO Gate).
+    testTimeout: 20000,
+    hookTimeout: 20000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
