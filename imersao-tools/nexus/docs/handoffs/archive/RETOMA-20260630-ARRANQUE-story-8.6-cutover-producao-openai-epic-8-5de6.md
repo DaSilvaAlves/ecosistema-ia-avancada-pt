@@ -1,5 +1,7 @@
 # RETOMA — Arranque Story 8.6 (cutover de produção OpenAI) — Epic 8 (5/6)
 
+> **CONSUMIDO 01/07/2026 por Pax (`@po`) — `*close-story 8.6`.** Resolução: correct-course 01/07 → cutover LIVE OpenAI **deferido** por decisão do Eurico (manter Anthropic, produção saudável). Story 8.6 fechada **`Done (âmbito revisto)`** pelo valor entregue (runbook AC4 + não-regressão AC5 + capacidade dual-provider 8.1–8.5, parity verde 2536 PASS); AC1/AC2/AC3(letra)/AC6 DEFERIDOS como operação on-demand via runbook (item `REC-8.6-CUTOVER-DEFERIDO`, dono Eurico + `@devops`). **Epic 8 FECHADO 6/6** (capacidade dual-provider), não bloqueia Epic 9. Runbook em `main` (PR #100 `eb5d18a5`). Fecho docs-only — commit/push do `@devops`. Handoff arquivado.
+
 > ATENÇÃO — ESTE HANDOFF SEGUE A REGRA OBRIGATÓRIA `handoff-location.md`.
 > ANTES DE CRIAR OU MOVER QUALQUER HANDOFF, CONSULTAR `.claude/rules/handoff-location.md`.
 > HANDOFFS SÓ VIVEM DENTRO DA PASTA DO PROJECTO A QUE SE REFEREM.
