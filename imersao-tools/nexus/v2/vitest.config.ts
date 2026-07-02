@@ -132,6 +132,15 @@ export default defineConfig({
         // alteração comportamental do test runner.
         'lib/telegram/**',
         'app/api/telegram/**',
+        // Story 9.1a — rotas proxy de inferência (o chat envia as mensagens ao
+        // LLM por aqui, ADR-8/ADR-10). Estas 2 rotas já tinham testes parciais
+        // mas nunca estiveram no allowlist do report — correcção de âmbito de
+        // MEDIÇÃO (não de comportamento). Precedente Stories
+        // 2.3/2.6/2.8/3.3/4.2/5.2/5.9/5.10/6.1/6.11 — thresholds globais
+        // inalterados; `pool`/`isolate`/`testTimeout`/`hookTimeout` intactos
+        // (D-9.11-TIMEOUT NÃO reaberta). Finanças NÃO entram aqui (vive em 9.1b).
+        'app/api/anthropic/**',
+        'app/api/openai/**',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold 60% (P1.1 — roadmap de conclusão, architecture §5.4).
