@@ -20,6 +20,41 @@ import { handlers } from '@/tests/mocks/handlers';
 
 const server = setupServer(...handlers);
 
+// Story 9.1a — URL fake do KV REST (Upstash) usada só nos testes de rate-limit.
+const KV_URL = 'https://kv.test';
+const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+
+/**
+ * Story 9.1a — regista handlers MSW do KV REST e activa o KV via env, para
+ * exercitar o bloco de rate-limit do proxy (linhas 54-98, só corre com
+ * `KV_REST_API_URL`/`KV_REST_API_TOKEN` definidos). Activar o KV faz `getSession`
+ * ir pelo caminho de produção (lookup KV), pelo que também se mocka o `/get/` da
+ * sessão a devolver sessão válida — espelhando o protocolo real do Upstash
+ * (INCR → `{result:<n>}`, GET → `{result:<json>}`).
+ */
+function useKvRateLimit(opts: {
+  incrResult?: number;
+  incrOk?: boolean;
+  incrNetworkError?: boolean;
+} = {}): void {
+  const sessionData = JSON.stringify({
+    sessionId: 'test-session-id',
+    createdAt: Date.now(),
+    userId: 'eurico',
+  });
+  server.use(
+    http.get(`${KV_URL}/get/*`, () => HttpResponse.json({ result: sessionData })),
+    http.get(`${KV_URL}/incr/*`, () => {
+      if (opts.incrNetworkError) return HttpResponse.error();
+      if (opts.incrOk === false) return HttpResponse.json({ error: 'kv down' }, { status: 500 });
+      return HttpResponse.json({ result: opts.incrResult ?? 1 });
+    }),
+    http.get(`${KV_URL}/expire/*`, () => HttpResponse.json({ result: 1 })),
+  );
+  vi.stubEnv('KV_REST_API_URL', KV_URL);
+  vi.stubEnv('KV_REST_API_TOKEN', 'kv-token-fake-do-not-leak');
+}
+
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
 afterAll(() => server.close());
 beforeEach(() => {
@@ -160,5 +195,52 @@ describe('OpenAI proxy', () => {
     const { GET } = await import('@/app/api/openai/proxy/route');
     const resp = await GET();
     expect(resp.status).toBe(405);
+  });
+
+  it('devolve 400 quando o body não é JSON válido — Story 9.1a', async () => {
+    const resp = await callProxy({ hasCookie: true, body: '{ isto nao e json valido' });
+    expect(resp.status).toBe(400);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Story 9.1a — rate-limit KV (linhas 54-98, antes a 0%)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('OpenAI proxy — rate limit KV (Story 9.1a)', () => {
+  const validBody = { messages: [{ role: 'user', content: 'olá' }], model: 'gpt-4.1-mini' };
+
+  it('1.ª request da janela → INCR=1, define EXPIRE e encaminha (200)', async () => {
+    useKvRateLimit({ incrResult: 1 });
+    server.use(
+      http.post(OPENAI_URL, () =>
+        HttpResponse.json({ choices: [{ message: { content: 'ok' } }] }),
+      ),
+    );
+    const resp = await callProxy({ hasCookie: true, body: validBody });
+    expect(resp.status).toBe(200);
+  });
+
+  it('contador acima do limite (> 60/min) → 429 com Retry-After', async () => {
+    useKvRateLimit({ incrResult: 61 }); // > RATE_LIMIT_PER_MIN (60)
+    const resp = await callProxy({ hasCookie: true, body: validBody });
+    expect(resp.status).toBe(429);
+    expect(resp.headers.get('Retry-After')).toBe('60');
+    const json = (await resp.json()) as { error?: string };
+    expect(json.error).toContain('Rate limit');
+  });
+
+  it('INCR responde não-ok (KV indisponível) → fail-open, encaminha (200)', async () => {
+    useKvRateLimit({ incrOk: false });
+    server.use(http.post(OPENAI_URL, () => HttpResponse.json({ choices: [] })));
+    const resp = await callProxy({ hasCookie: true, body: validBody });
+    expect(resp.status).toBe(200);
+  });
+
+  it('INCR lança (erro de rede no KV) → fail-open, encaminha (200)', async () => {
+    useKvRateLimit({ incrNetworkError: true });
+    server.use(http.post(OPENAI_URL, () => HttpResponse.json({ choices: [] })));
+    const resp = await callProxy({ hasCookie: true, body: validBody });
+    expect(resp.status).toBe(200);
   });
 });

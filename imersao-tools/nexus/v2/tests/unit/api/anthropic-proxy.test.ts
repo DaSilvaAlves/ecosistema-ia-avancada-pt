@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
 import { handlers } from '@/tests/mocks/handlers';
 
 /**
@@ -11,16 +12,60 @@ import { handlers } from '@/tests/mocks/handlers';
  *  - 401 sem cookie de sessão
  *  - 400 com body inválido
  *
- * Não cobre rate limiting (depende de KV em prod).
+ * Story 9.1a (cobertura) — adiciona os caminhos que estavam a 0%: bloco de
+ * rate-limit KV (INCR/EXPIRE/429/fail-open, linhas 45-85), 500 sem API key,
+ * 400 body não-JSON, 502 falha de upstream, streaming SSE e GET→405. Todos
+ * reutilizam o MSW já existente; os mocks do KV REST espelham o protocolo real
+ * do Upstash (INCR devolve `{result:<n>}`, GET de sessão devolve `{result:<json>}`).
  */
 
 const server = setupServer(...handlers);
+
+// Story 9.1a — URL fake do KV REST (Upstash) usada só nos testes de rate-limit.
+const KV_URL = 'https://kv.test';
+
+/**
+ * Story 9.1a — regista handlers MSW do KV REST e activa o KV via env, para
+ * exercitar o bloco de rate-limit do proxy (que só corre quando `KV_REST_API_URL`
+ * e `KV_REST_API_TOKEN` estão definidos). Como activar o KV faz `getSession` ir
+ * pelo caminho de produção (lookup KV), também se mocka o `/get/` da sessão a
+ * devolver uma sessão válida — espelhando o protocolo real do Upstash.
+ */
+function useKvRateLimit(opts: {
+  incrResult?: number;
+  incrOk?: boolean;
+  incrNetworkError?: boolean;
+} = {}): void {
+  const sessionData = JSON.stringify({
+    sessionId: 'test-session-id',
+    createdAt: Date.now(),
+    userId: 'eurico',
+  });
+  server.use(
+    // getSession (caminho prod) → sessão válida
+    http.get(`${KV_URL}/get/*`, () => HttpResponse.json({ result: sessionData })),
+    // checkRateLimit → INCR
+    http.get(`${KV_URL}/incr/*`, () => {
+      if (opts.incrNetworkError) return HttpResponse.error();
+      if (opts.incrOk === false) return HttpResponse.json({ error: 'kv down' }, { status: 500 });
+      return HttpResponse.json({ result: opts.incrResult ?? 1 });
+    }),
+    // checkRateLimit → EXPIRE (1.ª request da janela)
+    http.get(`${KV_URL}/expire/*`, () => HttpResponse.json({ result: 1 })),
+  );
+  vi.stubEnv('KV_REST_API_URL', KV_URL);
+  vi.stubEnv('KV_REST_API_TOKEN', 'kv-token-fake-do-not-leak');
+}
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
 afterAll(() => server.close());
 beforeEach(() => {
   server.resetHandlers(...handlers);
   vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-test-FAKE-KEY-do-not-leak');
+  // Sem KV por omissão → getSession aceita qualquer cookie não-vazio (dev mode) e
+  // o rate-limit é saltado. Os testes de rate-limit reativam o KV via useKvRateLimit.
+  vi.stubEnv('KV_REST_API_URL', '');
+  vi.stubEnv('KV_REST_API_TOKEN', '');
 });
 
 // Helper para invocar o route handler como uma function call simulada.
@@ -114,5 +159,106 @@ describe('Anthropic proxy', () => {
     const toolNames = json.content.filter((c) => c.type === 'tool_use').map((c) => c.name);
     expect(toolNames).toContain('criar_finança_variavel');
     expect(toolNames).toContain('criar_evento_calendar');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Story 9.1a — rate-limit KV (linhas 45-85, antes a 0%)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('Anthropic proxy — rate limit KV (Story 9.1a)', () => {
+  const validBody = {
+    messages: [{ role: 'user', content: 'olá' }],
+    model: 'claude-haiku-4-5-20251001',
+  };
+
+  it('1.ª request da janela → INCR=1, define EXPIRE e encaminha (200)', async () => {
+    useKvRateLimit({ incrResult: 1 });
+    const resp = await callProxy({ hasCookie: true, body: validBody });
+    expect(resp.status).toBe(200);
+  });
+
+  it('contador acima do limite (> 60/min) → 429 com Retry-After', async () => {
+    useKvRateLimit({ incrResult: 61 }); // > RATE_LIMIT_PER_MIN (60)
+    const resp = await callProxy({ hasCookie: true, body: validBody });
+    expect(resp.status).toBe(429);
+    expect(resp.headers.get('Retry-After')).toBe('60');
+    const json = (await resp.json()) as { error?: string };
+    expect(json.error).toContain('Rate limit');
+  });
+
+  it('INCR responde não-ok (KV indisponível) → fail-open, encaminha (200)', async () => {
+    useKvRateLimit({ incrOk: false });
+    const resp = await callProxy({ hasCookie: true, body: validBody });
+    expect(resp.status).toBe(200);
+  });
+
+  it('INCR lança (erro de rede no KV) → fail-open, encaminha (200)', async () => {
+    useKvRateLimit({ incrNetworkError: true });
+    const resp = await callProxy({ hasCookie: true, body: validBody });
+    expect(resp.status).toBe(200);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Story 9.1a — caminhos de erro + streaming + método (linhas 103-107/114-118/
+// 142-149/153-161/171-176, antes a 0%)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('Anthropic proxy — erros, streaming e método (Story 9.1a)', () => {
+  const validBody = {
+    messages: [{ role: 'user', content: 'olá' }],
+    model: 'claude-haiku-4-5-20251001',
+  };
+
+  it('devolve 500 quando ANTHROPIC_API_KEY não está configurada', async () => {
+    vi.stubEnv('ANTHROPIC_API_KEY', '');
+    const resp = await callProxy({ hasCookie: true, body: validBody });
+    expect(resp.status).toBe(500);
+    const json = (await resp.json()) as { error?: string };
+    expect(json.error).toContain('API key');
+  });
+
+  it('devolve 400 quando o body não é JSON válido', async () => {
+    const resp = await callProxy({ hasCookie: true, body: '{ isto nao e json valido' });
+    expect(resp.status).toBe(400);
+  });
+
+  it('devolve 502 quando o fetch ao upstream Anthropic rejeita (rede)', async () => {
+    server.use(
+      http.post('https://api.anthropic.com/v1/messages', () => HttpResponse.error()),
+    );
+    const resp = await callProxy({ hasCookie: true, body: validBody });
+    expect(resp.status).toBe(502);
+    const json = (await resp.json()) as { error?: string };
+    expect(json.error).toContain('Falha ao contactar Anthropic');
+    // NFR5 — a key nunca vaza, nem no caminho de erro.
+    expect(JSON.stringify(json)).not.toContain('sk-ant-test-FAKE-KEY');
+  });
+
+  it('encaminha streaming SSE → 200 text/event-stream (pass-through do corpo)', async () => {
+    server.use(
+      http.post(
+        'https://api.anthropic.com/v1/messages',
+        () =>
+          new HttpResponse('event: message_start\ndata: {"type":"message_start"}\n\n', {
+            headers: { 'Content-Type': 'text/event-stream' },
+          }),
+      ),
+    );
+    const resp = await callProxy({
+      hasCookie: true,
+      body: { ...validBody, stream: true },
+    });
+    expect(resp.status).toBe(200);
+    expect(resp.headers.get('content-type')).toBe('text/event-stream');
+    const text = await resp.text();
+    expect(text).toContain('data:');
+  });
+
+  it('GET devolve 405', async () => {
+    const { GET } = await import('@/app/api/anthropic/proxy/route');
+    const resp = await GET();
+    expect(resp.status).toBe(405);
   });
 });
