@@ -1,12 +1,14 @@
 # RETOMA — Story 9.11 FECHADA (Epic 9 1/11) — continuar noutro terminal com 9.1 (cobertura) ou 9.8 (CI bloqueante)
 
+> **CONSUMIDO / SUPERADO — 03/07/2026.** A decisão desta retoma foi tomada e executada: Eurico escolheu 9.1, que foi partida em 9.1a/9.1b; a **9.1a está FECHADA (merged `b21bb0c2`, PR #102)**. Handoff vivo actual: `RETOMA-20260703-story-9.1a-FECHADA-epic-9-proximo-9.1b-financas.md`. `consumed: true` · `consumed_by: @aiox-master (Orion)` · `status: consumed`. Mover para `archive/`.
+
 > ATENÇÃO — ESTE HANDOFF SEGUE A REGRA OBRIGATÓRIA `handoff-location.md`.
 > ANTES DE CRIAR OU MOVER QUALQUER HANDOFF, CONSULTAR `.claude/rules/handoff-location.md`.
 > HANDOFFS SÓ VIVEM DENTRO DA PASTA DO PROJECTO A QUE SE REFEREM.
 
 **Projecto:** Nexus v2 (`imersao-tools/nexus/`)
 **Epic:** 9 — Hardening + Deploy + PWA — `imersao-tools/nexus/docs/EPIC-9.md` (último epic do roadmap PRD §9)
-**Story desta retoma:** **9.11 (Isolamento de testes full-suite) FECHADA** → a seguir 9.1 (cobertura ≥60%) ou 9.8 (CI bloqueante)
+**Story desta retoma:** **9.11 (Isolamento de testes full-suite) FECHADA** → **próxima FIXADA: 9.1 (cobertura ≥60%)** — decidido pelo Eurico em 01/07/2026 (ver §4)
 **Data:** 01/07/2026
 **from_agent:** @devops (Gage) · **to_agent:** any (Eurico decide a próxima story no arranque) · **status:** pending
 **Branch de partida:** `main` (sincronizado — HEAD `d8f4d0bf`)
@@ -49,7 +51,21 @@ Estado do Epic 9 (`docs/EPIC-9.md`): **1/11 stories Done.**
 
 ---
 
-## 4. Próximas stories destrancadas (Eurico decide)
+## 4. Próximas stories destrancadas (DECIDIDO: 9.1)
+
+> **DECISÃO 01/07/2026 (Eurico):** próxima story fixada em **9.1 — Cobertura ≥60%** (Opção A). Ciclo arrancado por Orion (`@aiox-master`) com `@sm *draft 9.1`. A 9.8 fica em backlog do Epic 9 (candidata a correr depois do Epic 7). A 9.10 mantém-se BLOQUEADA (production-state-verification-gate).
+>
+> **RECONCILIAÇÃO DA NOTA GAP-9.1 (@sm, diagnóstico real 01/07/2026 — corrige a premissa abaixo):** a nota "cobertura real 91,81%, story de consolidação" estava **incompleta**. Global passa (88,99% lines) mas SÓ porque o `coverage.include` de `v2/vitest.config.ts` NUNCA incluiu `financas/**` nem `app/api/anthropic|openai/**`. Medido isoladamente: `components/financas/**` (10 comp., 3.604 linhas) = **0%**; 3 de 4 páginas `app/(app)/financas/**` = **0%** (só `patrimonio` testado); `anthropic/proxy/route.ts` = 45,61% (< 60%); `openai/proxy/route.ts` = 69,64%; tarefas sem GAP. Logo a 9.1 tem **trabalho real** (AC3 finanças ~6.145 linhas UI nunca testadas), não é trivial. Draft: `stories/active/9.1.story.md`, 8 AC.
+>
+> **VALIDAÇÃO @po (Pax) + DECISÃO DE DIMENSÃO 01/07/2026:** `@po` deu **GO-com-condições 9/10** (diagnóstico do @sm verificado contra código real). Recomendou **SPLIT** (motor: hard-stop §8 — PR único com config + ~13 ficheiros de teste excede provavelmente 2 iter CR). **Eurico CONFIRMOU o SPLIT.** Plano: **9.1a** (AC1 só rotas proxy `anthropic`/`openai` + package cérebro; ~130 linhas; baixo risco) → merge primeiro; **9.1b** (AC1 finanças `app/(app)/financas/**`+`components/financas/**` empacotado com os testes AC3; ~6.145 linhas UI). **SF-1/SF-2 (obrigatórias):** paths de finanças a 0% entram no `coverage.include` SÓ junto com os testes — NUNCA PR allowlist-only para finanças (senão threshold global 60% falha a meio, evidência AC6 enganadora). Gate de saída de ambas: `@qa` com CR `--base main`. `@sm` a partir em 9.1a/9.1b.
+>
+> **SPLIT EXECUTADO (@sm, 01-02/07/2026):** criados `stories/active/9.1a.story.md` (allowlist proxy `anthropic`/`openai` + package cérebro; ~130 linhas; merge PRIMEIRO) e `stories/active/9.1b.story.md` (allowlist finanças EMPACOTADO com testes AC + 10 comp. CRUD + 3 páginas; depende de 9.1a mergeada). `9.1.story.md` marcada SUPERSEDED (conteúdo preservado). `EPIC-9.md` §5 actualizado (9.1 → 9.1a+9.1b; epic continua 11 unidades de âmbito). SF-1/SF-2 incorporadas na ordem de tasks de cada uma; Evidence Gate presente em ambas; D-9.11-TIMEOUT não reaberta. **Ordem de execução: `@po` valida 9.1a/9.1b → `@dev *develop 9.1a` (branch `feat/9.1a-cobertura-proxy-cerebro`) → só após 9.1a Done/merged: `@dev *develop 9.1b`.**
+>
+> **VALIDAÇÃO DE ENTRADA DO SPLIT (@po Pax, 02/07/2026):** 9.1a **GO** (sem condições, Status Approved) — pronta para develop; 9.1b **GO** (SF-1/SF-2 já no texto, Status Approved) — arranca só após 9.1a mergeada. 7/7 no checklist do split (âmbito completo preservado, SF-2 com blindagem tripla em 9.1b, Evidence Gate em ambas, D-9.11-TIMEOUT intacta, dep 9.1b→9.1a declarada). Watch-item não-bloqueante 9.1b: hard-stop §8 (~13 ficheiros de teste).
+>
+> **9.1a IMPLEMENTADA (@dev Dex, 02/07/2026) — Ready for Review:** branch local `feat/9.1a-cobertura-proxy-cerebro`, commit `7e4c23ec` (NÃO pushed). Resultados: `anthropic/proxy` 45,61%→**100%**, `openai/proxy` 69,64%→**100%**, cérebro package **95,64%**, global **89,1%** (4 métricas ≥60), full-suite **2550 PASS/0 FAIL** 3× determinístico, typecheck+lint exit 0. `vitest.config.ts` diff = só +9 linhas no array `coverage.include` (D-9.11-TIMEOUT intacta). Trailer `Evidence:` (não `Not-tested:`). Sem FLAG @architect. Flake conhecido/pré-existente `google/oauth-status.test.ts` sob instrumentação de cobertura (isolado 6/6 PASS; não-regressão, doc Epic 8/9.11). **ESTADO ACTUAL: gate `@qa` (CR `--base main`) EM CURSO.** Após PASS → `@devops` push+PR+merge → `@po *close-story 9.1a` → desbloqueia 9.1b.
+>
+> **Ruído a NÃO committar (efeito do cwd):** agentes criaram `docs/handoffs/.claude/agent-memory/aiox-po|aiox-dev/` — memória de agente, fora-scope da story, não entra nos PRs.
 
 | Opção | Story | Executor / Gate | Notas |
 |-------|-------|-----------------|-------|
