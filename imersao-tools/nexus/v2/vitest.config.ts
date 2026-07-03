@@ -141,6 +141,17 @@ export default defineConfig({
         // (D-9.11-TIMEOUT NÃO reaberta). Finanças NÃO entram aqui (vive em 9.1b).
         'app/api/anthropic/**',
         'app/api/openai/**',
+        // Story 9.1b — package finanças (UI + componentes). O domínio financeiro
+        // é código de produção completo desde o Epic 3 mas as suas ~6.145 linhas
+        // de UI (3 páginas + 10 componentes CRUD) nunca estiveram no allowlist do
+        // report (só `lib/financas/**` entrou na Story 3.3). Correcção de âmbito de
+        // MEDIÇÃO (não de comportamento). Precedente Stories
+        // 2.3/2.6/2.8/3.3/4.2/5.2/5.9/5.10/6.1/6.11/9.1a — thresholds globais
+        // inalterados; `pool`/`isolate`/`testTimeout`/`hookTimeout` intactos
+        // (D-9.11-TIMEOUT NÃO reaberta). Empacotado no mesmo commit que os testes
+        // novos (SF-1/SF-2 do @po — nunca allowlist-only).
+        'app/(app)/financas/**',
+        'components/financas/**',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold 60% (P1.1 — roadmap de conclusão, architecture §5.4).
