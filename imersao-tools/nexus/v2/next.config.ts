@@ -46,6 +46,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  // Vários package-lock.json acima deste directório (monorepo) — fixa a raiz
+  // do file tracing ao projecto para o Next não inferir a raiz errada.
+  outputFileTracingRoot: __dirname,
+
   async headers() {
     return [
       {

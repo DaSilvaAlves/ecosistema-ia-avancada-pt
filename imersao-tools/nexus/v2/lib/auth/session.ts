@@ -129,13 +129,17 @@ export function buildSessionCookie(sessionId: string): string {
  * Constrói header `Set-Cookie` para apagar a sessão (logout).
  */
 export function buildClearSessionCookie(): string {
+  const isProd = process.env.NODE_ENV === 'production';
   return [
     `${SESSION_COOKIE}=`,
     'HttpOnly',
+    isProd ? 'Secure' : '',
     'SameSite=Strict',
     'Path=/',
     'Max-Age=0',
-  ].join('; ');
+  ]
+    .filter(Boolean)
+    .join('; ');
 }
 
 export { SESSION_COOKIE };
