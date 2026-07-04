@@ -20,6 +20,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Least-privilege (finding CR Major, Story 9.8): o GITHUB_TOKEN default herda
+# permissões de escrita amplas. Nenhum destes jobs escreve no repo (não faz push,
+# comment, deploy nem release) — só lê o código e corre lint/testes/build. Por isso
+# o mínimo `contents: read` a nível de workflow chega para todos os jobs; nenhum job
+# precisa de escalar. Reduz o blast-radius de um step comprometido (supply-chain).
+permissions:
+  contents: read
+
 jobs:
   # Detecção de alterações — corre SEMPRE para que os required checks tenham
   # sempre um resultado a reportar, mesmo em PRs que não tocam o Nexus v2.
@@ -31,6 +39,9 @@ jobs:
       nexus: ${{ steps.filter.outputs.nexus }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Não persistir o token no .git/config — nenhum job faz git push (CR Major).
+          persist-credentials: false
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -50,6 +61,8 @@ jobs:
         working-directory: imersao-tools/nexus/v2
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -70,6 +83,8 @@ jobs:
         working-directory: imersao-tools/nexus/v2
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -108,6 +123,8 @@ jobs:
       TEST_PASSWORD: nexus-test-password
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
