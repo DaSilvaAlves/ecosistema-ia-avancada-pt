@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test tests/e2e/auth.spec.ts tests/e2e/smoke.spec.ts",
+    "test:e2e": "playwright test tests/e2e/auth.spec.ts tests/e2e/smoke.spec.ts tests/e2e/critical-path.spec.ts",
     "test:ci": "npm run lint && npm run typecheck && npm run test:unit"
   },
   "dependencies": {
