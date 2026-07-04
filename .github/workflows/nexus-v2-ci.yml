@@ -20,13 +20,27 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Least-privilege (finding CR Major, Story 9.8): o GITHUB_TOKEN default herda
+# Least-privilege (finding CR Major #1, Story 9.8): o GITHUB_TOKEN default herda
 # permissões de escrita amplas. Nenhum destes jobs escreve no repo (não faz push,
 # comment, deploy nem release) — só lê o código e corre lint/testes/build. Por isso
 # o mínimo `contents: read` a nível de workflow chega para todos os jobs; nenhum job
 # precisa de escalar. Reduz o blast-radius de um step comprometido (supply-chain).
 permissions:
   contents: read
+
+# NOTA (finding CR Major #2, `persist-credentials: false` — DEFERIDO):
+# a mitigação canónica de não persistir o token no .git/config foi TENTADA e
+# revertida — quebra o `actions/checkout` neste repo. Com `persist-credentials:
+# false`, o checkout corre um passo "Removing auth" que executa
+# `git submodule foreach --recursive`; este repo tem 4 gitlinks (submódulos)
+# SEM `.gitmodules` (estado órfão pré-existente: comunidade, briefing-generator,
+# starter-builder, student-profiler), pelo que o foreach falha com
+# `fatal: No url found for submodule path ... in .gitmodules` (exit 128) e o job
+# `changes` fica RED (provado: run 28717404643 falhou vs baseline verde fe0463e8).
+# A causa é higiene de submódulos do monorepo INTEIRO — fora do âmbito da 9.8
+# (gate CI do Nexus v2). Corrigir a raiz (repor `.gitmodules` ou remover os
+# gitlinks órfãos) é trabalho de repo-hygiene separado; só então `persist-
+# credentials: false` pode ser reintroduzido aqui.
 
 jobs:
   # Detecção de alterações — corre SEMPRE para que os required checks tenham
@@ -39,9 +53,6 @@ jobs:
       nexus: ${{ steps.filter.outputs.nexus }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Não persistir o token no .git/config — nenhum job faz git push (CR Major).
-          persist-credentials: false
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -61,8 +72,6 @@ jobs:
         working-directory: imersao-tools/nexus/v2
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -83,8 +92,6 @@ jobs:
         working-directory: imersao-tools/nexus/v2
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -123,8 +130,6 @@ jobs:
       TEST_PASSWORD: nexus-test-password
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
