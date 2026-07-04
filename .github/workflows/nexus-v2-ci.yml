@@ -65,8 +65,15 @@ jobs:
     env:
       # Test env — chaves fake (não vão a prod)
       ANTHROPIC_API_KEY: sk-ant-test-fake-not-real
-      NEXUS_PASSWORD_HASH: '$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+      # bcrypt hash de "nexus-test-password" — par JÁ VALIDADO copiado de
+      # e2e-regression.yml (L37/L39). O placeholder anterior ('$2a$10$xxxx...') não
+      # era um hash bcrypt válido e não tinha TEST_PASSWORD, pelo que qualquer login
+      # falhava (bcrypt.compare) — latente porque auth/smoke só testam falha/redirect.
+      # A Story 9.2 (critical-path.spec.ts) é o 1º spec deste job a exigir login OK.
+      # F-CONCERNS-2 (Story 1.10): sem KV, getSession() aceita qualquer cookie não-vazio.
+      NEXUS_PASSWORD_HASH: '$2a$10$uibDFC5hXxc63B3pqCF4EufSXUsKMmkCKywf8pQ/hNeBSEAJic19K'
       SESSION_SECRET: '0000000000000000000000000000000000000000000000000000000000000000'
+      TEST_PASSWORD: nexus-test-password
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
