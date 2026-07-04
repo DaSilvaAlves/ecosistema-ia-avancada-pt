@@ -1,24 +1,50 @@
 name: Nexus v2 CI
 
 # Story 0.10 — CI gate para Nexus v2.
-# Corre apenas quando há alterações em imersao-tools/nexus/v2/**.
+# Story 9.8 — CI bloqueante: trigger sem paths: a nível de workflow; um job
+# `changes` (dorny/paths-filter@v3) decide se os 3 jobs correm de facto.
+# Quando o PR não toca imersao-tools/nexus/v2/**, os 3 jobs ficam skipped —
+# e um job skipped por `if:` conta como success para efeitos de required
+# status check (comportamento documentado do GitHub Actions), ao contrário de
+# um workflow que nunca dispara por path-filter (fica "Expected — waiting"
+# para sempre e prenderia PRs alheios ao Nexus v2 sob branch protection).
+# Padrão replicado de .github/workflows/ci.yml (job `changes` + jobs condicionais).
+# Um `workflow_dispatch` manual força os 3 jobs a correr (escape no `if:`) para
+# validação/debug independente dos paths alterados.
 # 3 jobs paralelos: lint-typecheck, unit-tests, e2e.
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'imersao-tools/nexus/v2/**'
-      - '.github/workflows/nexus-v2-ci.yml'
   pull_request:
-    paths:
-      - 'imersao-tools/nexus/v2/**'
-      - '.github/workflows/nexus-v2-ci.yml'
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
+  # Detecção de alterações — corre SEMPRE para que os required checks tenham
+  # sempre um resultado a reportar, mesmo em PRs que não tocam o Nexus v2.
+  changes:
+    name: Detect Nexus v2 Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      nexus: ${{ steps.filter.outputs.nexus }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            nexus:
+              - 'imersao-tools/nexus/v2/**'
+              - '.github/workflows/nexus-v2-ci.yml'
+
   lint-typecheck:
     name: Lint + TypeScript
+    needs: changes
+    if: ${{ needs.changes.outputs.nexus == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     defaults:
       run:
         working-directory: imersao-tools/nexus/v2
@@ -35,7 +61,10 @@ jobs:
 
   unit-tests:
     name: Vitest unit + coverage
+    needs: changes
+    if: ${{ needs.changes.outputs.nexus == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     defaults:
       run:
         working-directory: imersao-tools/nexus/v2
@@ -58,7 +87,10 @@ jobs:
 
   e2e:
     name: Playwright E2E + bundle key check
+    needs: changes
+    if: ${{ needs.changes.outputs.nexus == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: imersao-tools/nexus/v2
