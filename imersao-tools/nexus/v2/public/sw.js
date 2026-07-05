@@ -1,14 +1,19 @@
-// Nexus v2 Service Worker — push + notificationclick (Story 4.9)
+// Nexus v2 Service Worker — push + notificationclick (Story 4.9) + fetch strategy (Story 9.3)
 //
-// Handlers completos da Web Push API para o Epic 4:
-//   - install/activate  — registo mínimo (Story 4.7).
+// Handlers da Web Push API (Epic 4) + cache strategy (Epic 9):
+//   - install/activate  — registo mínimo (Story 4.7); activate estende-se com
+//                         limpeza de caches obsoletos (Story 9.3 AC4).
 //   - push              — mostra a notificação com botões accionáveis
 //                         "Marcar feito" / "Snooze 10min" (Story 4.9 AC1-AC3).
 //   - notificationclick — aplica a acção via /api/push/action sem abrir a app
 //                         (AC4/AC5), ou abre/foca a app quando não há acção (AC6).
+//   - fetch             — network-first para `/api/*` GET com fallback honesto
+//                         `503 {offline:true}` só em falha de rede; cache-first
+//                         para assets estáticos; navegação HTML não interceptada
+//                         (Story 9.3 AC2/AC3/AC10).
 //
-// FRONTEIRA EPIC 8 — Story 8.3: cache strategy (fetch handler, precache) aqui.
-// Não implementar neste ficheiro até ao Epic 8.
+// Story 9.3 estendeu este ficheiro SEM tocar nos handlers `push`/`notificationclick`
+// nem em `postAction`/`reshowNotification` (byte-a-byte intactos — Risco R4/AC1).
 //
 // Não é TypeScript — corre no scope global do browser (ServiceWorkerGlobalScope).
 
@@ -18,14 +23,39 @@ const ACTION_MARK_DONE = 'marcar-feito';
 const ACTION_SNOOZE = 'snooze';
 const SNOOZE_MINUTES = 10;
 
+// Story 9.3 (AC4) — nome de cache versionado. Uma subida de versão futura
+// (`nexus-static-v2`) purga automaticamente o cache antigo no próximo `activate`.
+// Identificador interno, não contrato externo (external-contract-identifiers.md N/A).
+const CACHE_NAME = 'nexus-static-v1';
+
 self.addEventListener('install', (event) => {
   // Activa imediatamente esta versão sem esperar por fecho de tabs antigas.
+  // Story 9.3 [AUTO-DECISION D-9.3-NO-PRECACHE]: NÃO se faz precache de uma lista
+  // estática de assets no install. Os ficheiros `/_next/static/**` têm nomes com
+  // hash desconhecidos no momento de escrita (só existem no build manifest — puxá-los
+  // seria território Workbox, excluído por arch §11). A estratégia cache-first do
+  // handler `fetch` (AC3) popula o cache preguiçosamente no primeiro pedido de cada
+  // asset, cumprindo "cache static" sem inventar uma lista (Constitution Art. IV).
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  // Assume controlo dos clients abertos sem reload.
-  event.waitUntil(clients.claim());
+  // Assume controlo dos clients abertos sem reload (Epic 4) E, Story 9.3 (AC4),
+  // limpa caches obsoletos: apaga qualquer cache cujo nome não seja o CACHE_NAME
+  // corrente. `caches` só é referenciado DENTRO do handler (nunca no module-load) —
+  // AC6: não rebenta os testes SW existentes que não fazem stub de `caches`.
+  event.waitUntil(
+    Promise.all([
+      clients.claim(),
+      caches.keys().then((names) =>
+        Promise.all(
+          names
+            .filter((name) => name !== CACHE_NAME)
+            .map((name) => caches.delete(name)),
+        ),
+      ),
+    ]),
+  );
 });
 
 // Story 4.9 (AC1/AC2/AC3) — handler `push` real.
@@ -168,4 +198,97 @@ self.addEventListener('notificationclick', (event) => {
 
   // AC6 — click no corpo (sem acção): abre/foca a app.
   event.waitUntil(openOrFocusApp());
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Story 9.3 — Fetch strategy (AC2/AC3/AC10).
+//
+// Contrato de estado que o SW passa a distribuir (internal-state-contract-gate.md),
+// TRÊS classes distintas, nunca colapsadas:
+//   1. Sucesso de rede            → resposta do servidor devolvida tal qual.
+//   2. Erro REAL do servidor 4xx/5xx → resposta do servidor devolvida TAL QUAL
+//                                    (NUNCA convertida em 503 sintético — anti-M4
+//                                    da Story 4.9 / D-SNOOZE-CONTRACT).
+//   3. Sem rede (fetch rejeita)   → `503 {offline:true}` sintético do SW.
+// O consumo deste sinal pela UI é âmbito da Story 9.5, não desta (AC9).
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Response sintética que sinaliza HONESTAMENTE "sem rede". Status 503 +
+// `{offline:true}` — inequivocamente distinguível de um `200 {ok:true}` de sucesso
+// (internal-state-contract-gate.md eixo (c)).
+function offlineResponse() {
+  return new Response(JSON.stringify({ offline: true }), {
+    status: 503,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+// Network-first para `/api/*` GET: tenta a rede primeiro. SÓ quando o `fetch()`
+// REJEITA (TypeError de rede, timeout, DNS, offline real) é que devolve o 503
+// honesto. Uma resposta HTTP de erro do próprio servidor (4xx/5xx) chega ao
+// `return await fetch(...)` sem lançar e é devolvida tal qual — não é "sem rede".
+async function networkFirstApi(request) {
+  try {
+    return await fetch(request);
+  } catch {
+    console.warn('[SW] rede indisponível para', request.url, '— 503 offline honesto');
+    return offlineResponse();
+  }
+}
+
+// Cache-first para assets estáticos: cache hit → devolve do cache sem tocar na
+// rede; cache miss → vai à rede, devolve a resposta e grava uma cópia no cache
+// SÓ se `response.ok` (nunca cacheia erros). `response.clone()` porque o body de
+// uma Response só pode ser lido uma vez (o original segue para o cliente).
+async function cacheFirstAsset(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(request, response.clone());
+  }
+  return response;
+}
+
+// Um pedido é um asset estático cacheável se for same-origin e cair sob
+// `/_next/static/**` (assets hashed imutáveis do Next). Ficheiros futuros de
+// `public/` (ícones/manifest da Story 9.4) ficam fora do âmbito desta story (AC3)
+// — quando existirem, o matcher alarga-se então, sem inventar paths agora.
+function isStaticAsset(url) {
+  return (
+    url.origin === self.location.origin &&
+    url.pathname.startsWith('/_next/static/')
+  );
+}
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
+  // C1 (PO Validation) — só GET é interceptado. Pedidos não-GET (POST/PUT/DELETE,
+  // ex: o prompt do chat `POST /api/anthropic/proxy`) passam DIRECTOS, sem
+  // fallback 503: re-tentar ou mascarar um POST offline é perigoso (efeitos
+  // colaterais duplicados). Offline, um não-GET falha com o `TypeError` nativo do
+  // `fetch` — sinal que a Story 9.5 trata na camada de UI.
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+
+  // /api/* GET → network-first com fallback 503 honesto (AC2).
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(networkFirstApi(request));
+    return;
+  }
+
+  // AC3 — NÃO intercepta navegações de documento HTML: deixa-as passar directas
+  // para a rede. Evita reintroduzir por acidente o "offline shell" de página HTML,
+  // que é âmbito da Story 9.5, não desta.
+  if (request.mode === 'navigate') return;
+
+  // AC3 — assets estáticos same-origin → cache-first. Qualquer outro pedido
+  // (rotas RSC, third-party, etc.) passa directo, sem intervenção do SW.
+  if (isStaticAsset(url)) {
+    event.respondWith(cacheFirstAsset(request));
+  }
 });
