@@ -49,16 +49,17 @@ fe028edc ci(nexus-v2): CI bloqueante — path-filter robusto + timeouts + branch
 
 ---
 
-## 4. ACÇÃO PENDENTE DO EURICO — activar branch protection (AC4)
+## 4. Branch protection (AC4) — ACTIVADA 05/07/2026 (RESOLVIDA)
 
-**A 9.8 está Done, mas o gate CI só passa a bloquear de facto quando a branch protection for activada.** Isto é decisão de governança do repo INTEIRO — o Eurico tem de consentir. Quando consentir, o `@devops` (token admin) corre o comando documentado na story `9.8.story.md` (secção AC4):
+**FEITO.** O Eurico consentiu (05/07); o `@devops` activou a branch protection em `main` e provou o C2. Commit docs `5d790e38`. **AC4 = DONE; Story 9.8 100% completa.**
 
-- `gh api PUT .../branches/main/protection` com **`required_status_checks.strict=false`** (não forçar rebase a todo o monorepo) e os **4 required contexts**: `Detect Nexus v2 Changes` + `Lint + TypeScript` + `Vitest unit + coverage` + `Playwright E2E + bundle key check` (**OBS-1: os 4, senão reabre o falso-verde**).
-- **Verificação C2 obrigatória pós-activação:** abrir um PR que NÃO toca `imersao-tools/nexus/v2/**` (ex: só `.aiox-core/`) e confirmar que fica **mesclável** (checks skipped/success, não "waiting for status"). É a prova definitiva do blast-radius — nunca foi exercida sob protecção neste repo.
+- Protecção viva: `strict=false`, `enforce_admins=false` (preserva o `--admin` override do `merge-authority.md`), **4 required contexts**: `Detect Nexus v2 Changes` + `Lint + TypeScript` + `Vitest unit + coverage` + `Playwright E2E + bundle key check`.
+- **C2 provado:** PR de teste #106 (ficheiro fora do Nexus) ficou `MERGEABLE`/`CLEAN` com os 3 jobs Nexus `SKIPPED`=success — nenhum preso em "waiting". Blast-radius confirmado seguro. PR/branch/probe limpos.
+- **Efeito de processo (novo):** `main` está agora protegido. Pushes directos docs-only passam com admin bypass (`Bypassed rule violations ... 4 of 4 required status checks are expected`). Considerar closure docs via PR daqui para a frente; o bypass admin é aceitável para docs-only. O auto-merge `--admin --squash` continua a funcionar (enforce_admins=false).
 
 ## 5. Próxima peça: 9.9 (herda a dependência do AC4) ou 9.3 (independente)
 
-- **9.9 — CodeRabbit obrigatório.** Acrescenta o contexto CodeRabbit como *required* — **depende da mesma activação de branch protection que a 9.8 deixou deferida**. Faz sentido fechar 9.9 **em conjunto com a activação do AC4** (um único acto de branch protection com todos os required contexts: 4 da 9.8 + CodeRabbit da 9.9). Executor `@devops`, gate `@qa`. Se o Eurico ainda não consentir a branch protection, a 9.9 fica igualmente à espera.
+- **9.9 — CodeRabbit obrigatório (DESBLOQUEADA).** Com a branch protection já activa (AC4 DONE), a 9.9 acrescenta o contexto `CodeRabbit` (SUCCESS no head) como **5º required context** ao ruleset existente — reutiliza directamente o `gh api PUT` da 9.8, agora só a estender a lista de contexts. Executor `@devops`, gate `@qa`. Já não espera por consentimento — a fundação está posta.
 - **9.3 — Service Worker + cache strategy (verdadeiramente independente).** Fundação PWA (NFR21). SW manual `public/sw.js` (NÃO Workbox, arch §11); handler `push` do Epic 4 INTOCADO (Risco R4). Executor `@dev`, gate `@architect`. Abre a cadeia 9.3→9.4→9.5. `internal-state-contract-gate.md` relevante. **Recomendada se se quiser avançar sem esperar pelo consentimento do AC4.**
 - **9.10 — deploy: BLOQUEADA** por `production-state-verification-gate.md` (`vercel env ls` + SHA activo + reconciliar `4e2b1c4`/J-6).
 
