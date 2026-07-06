@@ -88,6 +88,14 @@ beforeEach(async () => {
   // SW é um script sem exports (ServiceWorkerGlobalScope) — import por side-effect.
   // @ts-expect-error sw.js não é um módulo ESM tipado; carregamos pelos efeitos.
   await import('@/public/sw.js');
+
+  // CR-3 (Architect Gate 9.3): guard de registo dos listeners. Sem isto, se o
+  // `addEventListener` falhasse (ou o handler deixasse de ser registado), os
+  // cenários negativos (`expect(...).not.toHaveBeenCalled()`) passariam vaziamente
+  // — o `handlers.fetch?.(event)` seria um no-op silencioso. Provar que o listener
+  // existe transforma esses cenários em asserções reais.
+  expect(handlers.fetch).toBeTypeOf('function');
+  expect(handlers.activate).toBeTypeOf('function');
 });
 
 afterEach(() => {

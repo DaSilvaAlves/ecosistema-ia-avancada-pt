@@ -44,16 +44,25 @@ self.addEventListener('activate', (event) => {
   // limpa caches obsoletos: apaga qualquer cache cujo nome não seja o CACHE_NAME
   // corrente. `caches` só é referenciado DENTRO do handler (nunca no module-load) —
   // AC6: não rebenta os testes SW existentes que não fazem stub de `caches`.
+  //
+  // CR-1 (Architect Gate 9.3): a limpeza de cache é best-effort — uma rejeição
+  // (quota, cache API indisponível) NÃO pode bloquear a activação. O `.catch(() => {})`
+  // isola a cadeia de limpeza; `clients.claim()` fica FORA do catch e permanece no
+  // caminho crítico (resolve sempre), garantindo que o SW assume controlo mesmo que
+  // a purga de caches falhe.
   event.waitUntil(
     Promise.all([
       clients.claim(),
-      caches.keys().then((names) =>
-        Promise.all(
-          names
-            .filter((name) => name !== CACHE_NAME)
-            .map((name) => caches.delete(name)),
-        ),
-      ),
+      caches
+        .keys()
+        .then((names) =>
+          Promise.all(
+            names
+              .filter((name) => name !== CACHE_NAME)
+              .map((name) => caches.delete(name)),
+          ),
+        )
+        .catch(() => {}),
     ]),
   );
 });
