@@ -152,6 +152,17 @@ export default defineConfig({
         // novos (SF-1/SF-2 do @po — nunca allowlist-only).
         'app/(app)/financas/**',
         'components/financas/**',
+        // Story 9.4 — manifest PWA. `app/manifest.ts` é uma função pura
+        // totalmente coberta por `tests/unit/app/manifest.test.ts` (empacotada
+        // no MESMO commit — SF-1/SF-2, nunca allowlist-only). As rotas de ícone
+        // (`app/icons/**`) NÃO entram: são handlers `ImageResponse` de `next/og`
+        // (edge), sem teste unitário por design (AC8/Testing) — incluí-las
+        // mediria ficheiros não-testados-por-desenho e baixaria a cobertura.
+        // Precedente Stories 2.3/3.3/4.2/5.2/9.1a/9.1b — apenas adiciona path à
+        // allowlist do report; thresholds globais (60%) e comportamento do test
+        // runner inalterados (`pool`/`isolate`/`testTimeout`/`hookTimeout`
+        // intactos, D-9.11-TIMEOUT NÃO reaberta).
+        'app/manifest.ts',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold 60% (P1.1 — roadmap de conclusão, architecture §5.4).
