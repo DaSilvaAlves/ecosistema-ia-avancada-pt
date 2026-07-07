@@ -26,6 +26,15 @@ export const metadata: Metadata = {
   title: 'Nexus',
   description: 'Continuidade pessoal — assistente multi-intent chat-first.',
   applicationName: 'Nexus',
+  // Story 9.4 — apenas ADITIVO. `<link rel="manifest">` é auto-injectado pela
+  // existência de `app/manifest.ts` (não editado aqui). Estes ícones apontam
+  // para route handlers sob `/icons/*` (prefixo público de `middleware.ts`),
+  // evitando as rotas de convenção `/icon`/`/apple-icon` do Next — que caem
+  // FORA de `PUBLIC_PREFIXES` e seriam redireccionadas para `/login` (AC7).
+  icons: {
+    icon: '/icons/icon-192',
+    apple: '/icons/apple-touch-icon',
+  },
 };
 
 export const viewport: Viewport = {
