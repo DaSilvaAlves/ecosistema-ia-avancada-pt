@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Menu, Settings, Zap } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { HEADER_HEIGHT_PX } from '@/components/ui/layout-constants';
 
 /**
  * Nexus v2 — Header (Story 0.4 · indicador honesto + OfflineBanner Story 9.5)
@@ -36,7 +37,7 @@ export function Header({ onToggleSidebar, showSidebarToggle }: HeaderProps): Rea
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        height: 56,
+        height: HEADER_HEIGHT_PX,
         background: 'rgba(255,255,255,0.025)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',

@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { HEADER_HEIGHT_PX } from '@/components/ui/layout-constants';
 
 /**
  * Nexus v2 — OfflineBanner component (Story 9.5 AC3, AC10 eixo c)
@@ -19,9 +20,11 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
  *
  * Estilo: glassmorphism + paleta Magenta do design-system (erros/alertas críticos,
  * `#FF006E`), coerente com o render de erro do `ChatPanel` (rgba(255,0,110,0.08)
- * bg + rgba(255,0,110,0.4) border). Acessibilidade: `role="alert"` +
- * `aria-live="polite"` (mudança de estado de rede não é urgente ao ponto de
- * interromper o leitor de ecrã, tal como o `UndoToast`).
+ * bg + rgba(255,0,110,0.4) border). Acessibilidade: `role="status"` — que já
+ * implica `aria-live="polite"` implicitamente (a mudança de estado de rede não é
+ * urgente ao ponto de interromper o leitor de ecrã, tal como o `UndoToast`). Não
+ * se usa `role="alert"` (assertivo) nem se declara `aria-live` explícito: `alert`
+ * + `aria-live="polite"` seriam contraditórios (o `alert` força `assertive`).
  *
  * Montagem: irmão do `<header>` em `Header.tsx` (não filho — preserva o
  * `position: sticky` do header). Um único ponto de montagem cobre as 10 páginas
@@ -39,12 +42,11 @@ export function OfflineBanner(): ReactElement | null {
 
   return (
     <div
-      role="alert"
-      aria-live="polite"
+      role="status"
       data-testid="offline-banner"
       style={{
         position: 'sticky',
-        top: 56,
+        top: HEADER_HEIGHT_PX,
         zIndex: 49,
         display: 'flex',
         alignItems: 'center',

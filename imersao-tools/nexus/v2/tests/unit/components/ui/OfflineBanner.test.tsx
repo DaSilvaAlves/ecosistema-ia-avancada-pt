@@ -5,7 +5,7 @@
  * exigido pelo risco de UX/confiança. Cobre os 2 estados de render distintos +
  * a transição de reconexão:
  *   1. Online  → não renderiza nada (return null)
- *   2. Offline → banner visível com role="alert" + aria-live="polite" + mensagem
+ *   2. Offline → banner visível com role="status" (implica aria-live polite) + mensagem
  *   3. Reconexão (offline → online) → banner desaparece (AC10 eixo c)
  *
  * navigator.onLine mockado; transições via window.dispatchEvent — o hook
@@ -33,16 +33,15 @@ describe('OfflineBanner', () => {
     setNavigatorOnLine(true);
     const { container } = render(<OfflineBanner />);
     expect(container).toBeEmptyDOMElement();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('offline: renderiza banner acessível com mensagem PT-PT', () => {
     setNavigatorOnLine(false);
     render(<OfflineBanner />);
 
-    const banner = screen.getByRole('alert');
+    const banner = screen.getByRole('status');
     expect(banner).toBeInTheDocument();
-    expect(banner).toHaveAttribute('aria-live', 'polite');
     expect(banner).toHaveTextContent(
       'Sem ligação à internet — a mostrar os teus dados locais.'
     );
@@ -51,13 +50,13 @@ describe('OfflineBanner', () => {
   it('reconexão: banner desaparece quando o evento online dispara (AC10 eixo c)', () => {
     setNavigatorOnLine(false);
     render(<OfflineBanner />);
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
 
     act(() => {
       setNavigatorOnLine(true);
       window.dispatchEvent(new Event('online'));
     });
 
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('status')).toBeNull();
   });
 });

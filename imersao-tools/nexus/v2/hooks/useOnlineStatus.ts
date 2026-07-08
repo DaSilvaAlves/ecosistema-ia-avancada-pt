@@ -9,10 +9,15 @@ import { useEffect, useState } from 'react';
  * `true` quando online, `false` quando offline. Reutilizado pelo `Header`
  * (indicador honesto, AC2) e pelo `OfflineBanner` (AC3).
  *
- * SSR-safe: no servidor `navigator` é `undefined` — assume-se online até o
- * browser confirmar o contrário (mesmo padrão de guarda `typeof ... === 'undefined'`
- * usado em `useLocalStorage.ts` para `window`). Isto evita um flash de "offline"
- * na primeira render antes de o cliente hidratar.
+ * SSR-safe (sem hydration mismatch): o `useState` initializer devolve SEMPRE
+ * `true` — exactamente o que o servidor renderiza (no server `navigator` não
+ * existe, logo o markup HTML assume online). Ler `navigator.onLine` no
+ * initializer causaria divergência: se o cliente montasse offline, o primeiro
+ * render do cliente (`false`) não bateria certo com o markup do server (`true`)
+ * = hydration mismatch do React. A leitura real de `navigator.onLine` faz-se
+ * DENTRO do `useEffect` (que só corre no cliente, depois da hidratação), via
+ * `setOnline(navigator.onLine)` no mount + os listeners. Isto evita o mismatch
+ * e, para o caso comum (online), não há sequer re-render.
  *
  * Detecção via `navigator.onLine` + eventos nativos `online`/`offline` do `window`.
  * Os listeners são registados no mount e removidos na cleanup do `useEffect` —
@@ -28,13 +33,14 @@ import { useEffect, useState } from 'react';
  * - `EPIC-9.md` §5 linha 9.5 / NFR21 — modo offline degradado honesto
  */
 export function useOnlineStatus(): boolean {
-  const [online, setOnline] = useState<boolean>(() =>
-    typeof navigator === 'undefined' ? true : navigator.onLine
-  );
+  // Initializer devolve SEMPRE `true` para alinhar com o render do servidor
+  // (markup HTML assume online) — evita hydration mismatch. A leitura real de
+  // `navigator.onLine` acontece no `useEffect` abaixo (só corre no cliente).
+  const [online, setOnline] = useState<boolean>(true);
 
   useEffect(() => {
-    // Sincroniza no mount — cobre o caso de o estado ter mudado entre o
-    // lazy initial state (server → hydrate) e o primeiro effect no cliente.
+    // Leitura real de `navigator.onLine` no mount, já no cliente pós-hidratação —
+    // sincroniza o estado se a app montou offline (o initializer assumiu `true`).
     setOnline(navigator.onLine);
 
     const handleOnline = (): void => setOnline(true);
