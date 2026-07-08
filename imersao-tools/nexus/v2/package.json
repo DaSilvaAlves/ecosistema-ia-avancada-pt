@@ -33,6 +33,7 @@
     "dexie": "^4.0.0",
     "dexie-export-import": "^4.0.0",
     "dexie-react-hooks": "^4.0.0",
+    "fflate": "^0.8.2",
     "googleapis": "^144.0.0",
     "lucide-react": "^0.469.0",
     "next": "^15.0.0",

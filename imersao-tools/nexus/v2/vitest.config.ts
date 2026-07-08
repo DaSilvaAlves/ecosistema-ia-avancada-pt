@@ -176,6 +176,17 @@ export default defineConfig({
         'hooks/useOnlineStatus.ts',
         'components/ui/OfflineBanner.tsx',
         'components/ui/Header.tsx',
+        // Story 9.6 — backup export ZIP. `lib/backup/**` é lógica nova (export
+        // JSON via dexie-export-import + markdown das notas + ZIP via fflate)
+        // totalmente coberta por `tests/unit/lib/backup/export.test.ts`
+        // (empacotada no MESMO commit — SF-1/SF-2, nunca allowlist-only).
+        // `components/settings/**` e `app/(app)/settings/**` JÁ estão no allowlist
+        // (Story 6.1, linhas acima) — sem alteração aí. Precedente Stories
+        // 2.3/3.3/4.2/5.2/9.1a/9.1b/9.4/9.5 — apenas adiciona path à allowlist do
+        // report; thresholds globais (60%) e comportamento do test runner
+        // inalterados (`pool`/`isolate`/`testTimeout`/`hookTimeout` intactos,
+        // D-9.11-TIMEOUT NÃO reaberta).
+        'lib/backup/**',
       ],
       exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
       // Coverage threshold 60% (P1.1 — roadmap de conclusão, architecture §5.4).
