@@ -1,3 +1,4 @@
+import { BackupSettings } from '@/components/settings/BackupSettings';
 import { GmailSettings } from '@/components/settings/GmailSettings';
 import { GoogleCalendarSettings } from '@/components/settings/GoogleCalendarSettings';
 
@@ -74,6 +75,21 @@ export default async function SettingsPage({
         </h2>
         <GoogleCalendarSettings initialError={error} />
         <GmailSettings initialError={error} />
+      </section>
+
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <h2
+          style={{
+            margin: 0,
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '1.6rem',
+            fontWeight: 800,
+            color: '#F0F4FF',
+          }}
+        >
+          Backup
+        </h2>
+        <BackupSettings />
       </section>
     </main>
   );
