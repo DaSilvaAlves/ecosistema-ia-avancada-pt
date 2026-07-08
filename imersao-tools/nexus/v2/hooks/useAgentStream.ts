@@ -70,10 +70,24 @@ export interface UseAgentStreamResult {
 }
 
 /**
- * Mensagem de erro genérica em PT-PT — mantém-se concisa para a UI mostrar
- * em toast/badge. Detalhe técnico vai para `console.error` (NFR11 implícito).
+ * Mensagem de erro em PT-PT — concisa para a UI mostrar em toast/badge.
+ * Detalhe técnico vai para `console.error` (NFR11 implícito).
+ *
+ * Story 9.5 (AC6, AC10 eixo a/b): distingue honestamente "sem rede" de outros
+ * erros. O chat é sempre `POST /api/anthropic/proxy` — pelo contrato de dois
+ * sinais offline ratificado no Architect Gate da 9.3, um pedido não-GET passa
+ * DIRECTO ao browser (o SW não o intercepta) e, offline, o `fetch()` nativo
+ * rejeita com `TypeError` (nunca o 503 `{offline:true}` sintético, que é só para
+ * GET). Discriminamos por `e instanceof TypeError` — NUNCA por sniffing de string
+ * da mensagem (frágil: "Failed to fetch" no Chrome vs "NetworkError..." no
+ * Firefox). `TypeError` é subclasse de `Error`, por isso o ramo tem de vir ANTES
+ * do ramo genérico `Error`. Nenhuma run é marcada como sucesso quando isto ocorre
+ * (o catch do `submit` chama `setError`, comportamento inalterado — anti-M4/R5).
  */
 function networkErrorMessage(e: unknown): string {
+  if (e instanceof TypeError) {
+    return 'Sem rede — a tua mensagem não foi enviada. Tenta novamente quando a ligação voltar.';
+  }
   if (e instanceof Error) {
     return `Erro de rede: ${e.message}`;
   }
