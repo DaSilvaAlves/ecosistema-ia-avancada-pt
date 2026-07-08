@@ -397,6 +397,56 @@ describe('useAgentStream', () => {
     expect(result.current.isStreaming).toBe(false);
   });
 
+  // Story 9.5 AC6 — mensagem honesta e específica de "sem rede".
+  // O chat é sempre POST /api/anthropic/proxy → offline, o fetch nativo rejeita
+  // com TypeError (contrato de dois sinais da 9.3). Discriminado por instanceof
+  // TypeError, NÃO por sniffing de string. Distinto de outros Error genéricos.
+  describe('Story 9.5 AC6 — mensagem honesta de sem rede', () => {
+    it('TypeError (fetch offline) → mensagem específica de sem rede', async () => {
+      async function* offlineGenerator(): AsyncGenerator<ExecutorSSEEvent> {
+        // Web API nativa: fetch rejeita com TypeError quando não há rede.
+        throw new TypeError('Failed to fetch');
+        // eslint-disable-next-line no-unreachable
+        yield doneSuccess;
+      }
+      mockRunClientAgent.mockReturnValue(offlineGenerator());
+
+      const { result } = renderHook(() => useAgentStream());
+
+      await act(async () => {
+        result.current.submit('teste');
+      });
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+      expect(result.current.error).toBe(
+        'Sem rede — a tua mensagem não foi enviada. Tenta novamente quando a ligação voltar.'
+      );
+      expect(result.current.isStreaming).toBe(false);
+    });
+
+    it('Error genérico (não-TypeError) → mensagem genérica preservada (zero regressão)', async () => {
+      async function* failingGenerator(): AsyncGenerator<ExecutorSSEEvent> {
+        throw new Error('proxy de inferência indisponível');
+        // eslint-disable-next-line no-unreachable
+        yield doneSuccess;
+      }
+      mockRunClientAgent.mockReturnValue(failingGenerator());
+
+      const { result } = renderHook(() => useAgentStream());
+
+      await act(async () => {
+        result.current.submit('teste');
+      });
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+      expect(result.current.error).toBe(
+        'Erro de rede: proxy de inferência indisponível'
+      );
+      // Não confunde um erro genérico com "sem rede".
+      expect(result.current.error).not.toMatch(/Sem rede/);
+    });
+  });
+
   it('reset() limpa events, error e currentRunId', async () => {
     mockRunClientAgent.mockReturnValue(eventsGenerator([metaStart, doneSuccess]));
 

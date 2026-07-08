@@ -2,12 +2,22 @@
 
 import Link from 'next/link';
 import { Menu, Settings, Zap } from 'lucide-react';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { HEADER_HEIGHT_PX } from '@/components/ui/layout-constants';
 
 /**
- * Nexus v2 — Header (Story 0.4)
+ * Nexus v2 — Header (Story 0.4 · indicador honesto + OfflineBanner Story 9.5)
  *
  * Sticky top, h:56px, glass background.
  * Logo NEXUS Cyan + nav links [Tarefas][Finanças][Hábitos][Lembretes][Diário][Conhecimento][⚙️].
+ *
+ * Story 9.5 (AC2/AC3): o indicador de estado deixou de ser o `● online` Lime
+ * hardcoded (que mentia sempre) e passa a reflectir `useOnlineStatus()` — Lime
+ * `#39FF14` "● online" quando online, Magenta `#FF006E` "● offline" quando
+ * offline. O `OfflineBanner` é montado imediatamente a seguir ao `</header>`
+ * (irmão, não filho — preserva o `position: sticky` do header). Como o `Header`
+ * já é montado em todas as 10 páginas autenticadas, esta única edição cobre a app.
  *
  * Conforme front-end-spec-v2.md §2.2 e §3.1.
  */
@@ -18,13 +28,16 @@ interface HeaderProps {
 }
 
 export function Header({ onToggleSidebar, showSidebarToggle }: HeaderProps): React.ReactElement {
+  const isOnline = useOnlineStatus();
+
   return (
+    <>
     <header
       style={{
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        height: 56,
+        height: HEADER_HEIGHT_PX,
         background: 'rgba(255,255,255,0.025)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
@@ -67,17 +80,18 @@ export function Header({ onToggleSidebar, showSidebarToggle }: HeaderProps): Rea
           NEXUS
         </span>
         <span
+          data-testid="network-status"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: 4,
-            color: '#39FF14',
+            color: isOnline ? '#39FF14' : '#FF006E',
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: '0.7rem',
             marginLeft: 8,
           }}
         >
-          ● online
+          {isOnline ? '● online' : '● offline'}
         </span>
       </div>
 
@@ -112,6 +126,8 @@ export function Header({ onToggleSidebar, showSidebarToggle }: HeaderProps): Rea
         </Link>
       </nav>
     </header>
+    <OfflineBanner />
+    </>
   );
 }
 
