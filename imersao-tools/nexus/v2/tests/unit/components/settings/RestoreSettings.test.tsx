@@ -55,7 +55,11 @@ describe('RestoreSettings — estados de render (AC9)', () => {
     expect(confirmDestructive).toHaveBeenCalledOnce();
     expect(restoreZip).toHaveBeenCalledOnce();
 
+    // Resolve a importação e aguarda o flush final do UI (a-importar → sucesso)
+    // DENTRO de act(...), tornando o teste determinístico e silenciando o aviso
+    // React `act(...)` (REC-9.7-ACT-FLUSH — Architect Gate).
     resolveRestore?.({ tablesRestored: 22, rowsRestored: 100 });
+    expect(await screen.findByText(/22 tabelas/i)).toBeInTheDocument();
   });
 
   it('C3 — sucesso: confirmação Lime com contagem + botão "Recarregar página"', async () => {
