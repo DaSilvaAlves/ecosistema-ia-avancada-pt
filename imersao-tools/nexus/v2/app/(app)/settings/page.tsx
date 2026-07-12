@@ -1,6 +1,7 @@
 import { BackupSettings } from '@/components/settings/BackupSettings';
 import { GmailSettings } from '@/components/settings/GmailSettings';
 import { GoogleCalendarSettings } from '@/components/settings/GoogleCalendarSettings';
+import { RestoreSettings } from '@/components/settings/RestoreSettings';
 
 /**
  * Nexus v2 — Página de definições /settings (Story 6.1, T4 + Story 6.7, T4)
@@ -90,6 +91,7 @@ export default async function SettingsPage({
           Backup
         </h2>
         <BackupSettings />
+        <RestoreSettings />
       </section>
     </main>
   );
