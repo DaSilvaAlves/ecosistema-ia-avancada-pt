@@ -1010,7 +1010,7 @@ Vercel:
 | Node Version | `24.x` | |
 | `sourceFilesOutsideRootDirectory` | `true` | Permite usar workspace root para acessos cross-package |
 | `ssoProtection` | `null` (desactivada) | Era default Vercel — desactivada para permitir acesso público a previews |
-| Functions region | `iad1` (Washington) | Default Vercel — adequado para single-user no Algarve |
+| Functions region | `fra1` (Frankfurt) | Actualizado 15/07/2026 (Story 9.10) — região real confirmada na plataforma (Vercel API v13, deployment prod activo) **e** declarada em `imersao-tools/nexus/v2/vercel.json` (`regions:["fra1"]`). A entrada anterior `iad1 (Washington)` era a config observada em 04/05/2026 e ficou desactualizada; `fra1` (mais próximo do Algarve) é a real |
 | Function timeout | 300s default | Suficiente para chat cérebro Sonnet 4.6 |
 
 #### Como reproduzir esta configuração
