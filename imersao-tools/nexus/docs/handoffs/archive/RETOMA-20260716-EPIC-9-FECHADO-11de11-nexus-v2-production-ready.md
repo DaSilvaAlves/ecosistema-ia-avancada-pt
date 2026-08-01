@@ -8,8 +8,16 @@
 **Epic:** 9 — Hardening + Deploy + PWA — `imersao-tools/nexus/docs/EPIC-9.md` — **FECHADO 11/11**
 **Story desta retoma:** **9.10 (Deploy contínuo Vercel, NFR19) FECHADA (Done, merged)** — ÚLTIMA do Epic 9 e do roadmap MVP
 **Data:** 16/07/2026
-**from_agent:** @po (Pax) · **to_agent:** any (próxima acção = `@po *retrospective epic-9`) · **status:** pending
+**from_agent:** @po (Pax) · **to_agent:** any (próxima acção = `@po *retrospective epic-9`) · **status:** consumed
 **Branch de partida:** `main` (HEAD = `26a22080` + closure commit docs desta retoma)
+
+> **CONSUMIDO — `consumed: true` · `consumed_at: 2026-08-01` · `consumed_by: Orion (@aiox-master), executando `@po *retrospective epic-9``**
+>
+> **Verificação prévia ao consumo (regra `handoff-central.md`, amenda A2 do Epic 8):** este handoff estava pending há 16 dias (**stale >7 dias**). As afirmações-chave foram cruzadas com o estado real antes de qualquer acção — `main` em `8a555104`, **sincronizado com `origin/main`** (mesmo SHA), **zero commits desde 16/07/2026**, nada por commitar do Nexus (só o ruído untracked conhecido). **O handoff estava correcto e o estado não divergiu.**
+>
+> **`next_action` cumprido:** a retrospectiva do Epic 9 foi produzida em `docs/retrospectives/EPIC-9-retrospective.md` (01/08/2026). Os 5 temas sugeridos foram todos tratados. **Achado adicional não previsto no handoff:** o `EPIC-9.md` declara "roadmap MVP do PRD §9 completo", mas o **Epic 7 (Voice + OCR) está 4/10** — o sub-âmbito OCR (7.5-7.10) nunca arrancou. A retro regista a tensão em §6.1 e converte-a na **acção A1** (decisão de âmbito do Eurico, não reescrita de documentação).
+>
+> **Continuação:** `RETOMA-20260801-retrospectiva-epic-9-CONCLUIDA-decisao-A1-mvp-vs-epic-7.md`.
 
 **Porquê este handoff:** a 9.10 — a ÚLTIMA unidade do Epic 9 — percorreu o ciclo completo (verificação de produção → draft → validate → dev → gate `@architect` → CR Iter 1→2→3 → push → PR #113 → merge → close) e está DONE em `main`. **Com este fecho o Epic 9 fica 11/11 e o Nexus v2 fica production-ready.** Substitui e arquiva o handoff anterior (`RETOMA-20260712-story-9.7-...`).
 
